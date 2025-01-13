@@ -1,0 +1,54 @@
+@import url('./scss/bs-overwrite.scss');
+
+:root {
+	--border-radius: 8px;
+	--navbar-height: 1.75rem;
+	--dashboard-card-title-height: 27.75px;
+}
+
+.modal {
+	/* --bs-modal-header-padding: 0.5rem !important; */
+	/* --bs-modal-header-padding-x: 0.5rem !important; */
+	/* --bs-modal-header-padding-y: 0.5rem !important; */
+	--bs-modal-padding: 0.5rem !important;
+	--bs-modal-footer-gap: 0px !important;
+	/* --bs-modal-title-line-height: .75 !important; */
+}
+
+.modal-content {
+	border: none !important;
+	/* border-radius: 0px !important; */
+}
+
+.modal-footer * {
+	margin: 0;
+}
+
+.modal-footer .btn {
+	padding: 0.25rem 0.5rem;
+}
+
+.btn,
+button,
+.form-control,
+.form-select,
+.list-group,
+.card,
+.modal-content {
+	border-radius: 2px !important;
+}
+
+* {
+	/* border: none !important; */
+}
+
+.card {
+	/* padding: 0 !important; */
+}
+
+:root {
+	--bs-btn-font-weight: 500;
+	--bs-btn-padding-y: 0.5rem;
+	--bs-btn-padding-x: 1rem;
+	--bs-btn-border-radius: 0.3rem;
+}

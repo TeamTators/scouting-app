@@ -1,0 +1,46 @@
+name: Svelte Check
+
+on:
+  workflow_call:
+    # secrets:
+    #   GH_TOKEN:
+    #     description: 'GitHub Token'
+    #     required: true
+  push:
+    branches:
+      - '*'
+      - '!deploy'
+      - '!gh-pages'
+
+permissions:
+  contents: read
+
+jobs:
+  tsc:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Retrieve git dependencies
+        uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+          #  token: ${{ secrets.GH_TOKEN }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: v22.12.0
+
+      - name: Install dependencies
+        run: |
+          echo "Installing dependencies..."
+          pnpm install --frozen-lockfile
+
+      - name: Run
+        run: |
+          echo "Testing..."
+          pnpm run check

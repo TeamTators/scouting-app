@@ -1,0 +1,30 @@
+$white: #ffffff;
+
+$theme-colors: (
+	'light': #e0e7ff,
+	// Cool neon-like soft blue for contrast
+	'dark': #0a0e12,
+	// Deep dark blue-black for backgrounds
+	'primary': #3ea8fc,
+	// Vibrant electric blue for primary elements
+	'secondary': #8c5ad8,
+	// Futuristic purple for secondary highlights
+	'info': #2be3e7,
+	// Bright cyan for informational elements
+	'success': #34d399,
+	// Neon green for success indicators
+	'warning': #fbbf24,
+	// Warm amber for warnings
+	'danger': #ef4444 // Vibrant red for error and danger
+);
+
+@import 'bootstrap';
+
+// Generate CSS Custom Properties
+:root {
+	@each $name, $color in $theme-colors {
+		.glow.glow-#{$name} {
+			box-shadow: 0 0 8px 1px $color;
+		}
+	}
+}

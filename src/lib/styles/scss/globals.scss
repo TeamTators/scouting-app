@@ -1,0 +1,64 @@
+$cursors: (
+	pointer: 'pointer',
+	default: 'default',
+	not-allowed: 'not-allowed',
+	grab: 'grab',
+	grabbing: 'grabbing',
+	zoom-in: 'zoom-in',
+	zoom-out: 'zoom-out',
+	auto: 'auto',
+	text: 'text',
+	ew-resize: 'ew-resize',
+	ns-resize: 'ns-resize',
+	nesw-resize: 'nesw-resize',
+	nwse-resize: 'nwse-resize',
+	col-resize: 'col-resize',
+	row-resize: 'row-resize',
+	help: 'help',
+	wait: 'wait',
+	crosshair: 'crosshair',
+	move: 'move',
+	no-drop: 'no-drop',
+	vertical-text: 'vertical-text',
+	alias: 'alias',
+	copy: 'copy',
+	none: 'none',
+	context-menu: 'context-menu',
+	cell: 'cell',
+	progress: 'progress',
+	e-resize: 'e-resize',
+	w-resize: 'w-resize',
+	s-resize: 's-resize',
+	ne-resize: 'ne-resize',
+	se-resize: 'se-resize',
+	sw-resize: 'sw-resize',
+	nw-resize: 'nw-resize'
+);
+
+@each $name, $cursor in $cursors {
+	@if type-of($cursor) != 'string' {
+		@warn 'Cursor value for `#{$name}` is not a valid cursor.';
+	}
+
+	.cursor-#{$name} {
+		cursor: $cursor;
+	}
+}
+
+@for $i from 0 through 12 {
+	.rotate-#{$i} {
+		transform: rotate(#{$i * 30}deg) !important;
+	}
+}
+
+@for $i from 0 through 50 {
+	.z-index-#{$i} {
+		z-index: $i !important;
+	}
+}
+
+@for $i from 0 through 10 {
+	.opacity-#{$i} {
+		opacity: $i / 10 !important;
+	}
+}

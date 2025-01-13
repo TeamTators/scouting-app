@@ -1,0 +1,110 @@
+name: 'Merge Template'
+
+on:
+  push:
+    branches:
+      - deploy
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build
+        uses: ./.github/workflows/testing-build.yml
+      - name: Unit Tests
+        uses: ./.github/workflows/testing-unit.yml
+      - name: E2E
+        uses: ./.github/workflows/testing-e2e.yml
+      - name: Formatter
+        uses: ./.github/workflows/code-formatter.yml
+      - name: Svelte Check
+        uses: ./.github/workflows/testing-svelte-check.yml
+
+  merge-template:
+    runs-on: ubuntu-latest
+    needs: tests
+
+    strategy:
+      fail-fast: false
+      matrix:
+        templates: [tsaxking/tators-dashboard-kit, tsaxking/tators-app-kit]
+
+    steps:
+      - name: Retrieve git dependencies
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # Checkout everything to get access to the tags
+          ref: ${{github.event.pull_request.head.ref}}
+          repository: ${{github.event.pull_request.head.repo.full_name}}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 'Setup ssh-agent'
+        uses: 'webfactory/ssh-agent@v0.5.0'
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: v22.12.0
+
+      - name: 'Installing dependencies'
+        run: |
+          pnpm i
+
+      - name: 'Converting Readme'
+        run: |
+          pnpm dlx ts-node ./scripts/fix-readme.ts ${{ matrix.templates }}
+          rm -rf ./scripts/fix-readme.ts
+
+      - name: Send pull-request
+        run: |
+          echo "Creating variables"
+          LATEST_TAG=$(git describe --tags --always --abbrev=0)
+          LAST_COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+          REPOSITORY="${{ matrix.templates }}"
+          BRANCH_NAME="chore-update-scripts-to-$LATEST_TAG"
+          echo " latest tag: $LATEST_TAG"
+          echo " repository: $REPSOITORY"
+          echo "     folder: $FOLDER"
+          echo "branch name: $BRANCH_NAME"
+
+          echo "deleting workflow files we don't need in the other repositories"
+          rm -rf .github/workflows/merge-template.yaml
+
+          # Clone the remote repository and change working directory to the
+          # folder it was cloned to.
+          # echo "Cloning repository"
+          # cd ../
+          # git clone \
+          #   --depth=1 \
+          #   --branch=main \
+          #   git@github.com:${{ matrix.templates }}.git
+          # ls -la
+
+          # cd template-${{ matrix.templates }}
+
+          echo "Setting up identity"
+          # Setup the committers identity.
+          git config --global user.email "taylorking206@u.boisestate.edu"
+          git config --global user.name "Webpack Bot"
+
+          echo "Changing remote"
+          # Change the remote to the repository we want to push to.
+          git remote rm origin
+          git remote add origin git@github.com:${{ matrix.templates }}.git
+
+          echo "Checking out Branch: $BRANCH_NAME"
+          # Create a new feature branch for the changes.
+          git checkout -b $BRANCH_NAME
+
+          echo "Committing"
+          # Commit the changes and push the feature branch to origin
+          git add .
+          git commit -m "chore: update scripts to $LATEST_TAG"
+          git push origin --set-upstream $BRANCH_NAME
