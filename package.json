@@ -78,12 +78,14 @@
 		"drizzle-struct": "github:tsaxking/drizzle-struct",
 		"drizzle-zod": "^0.6.1",
 		"fuzzy-search": "^3.2.1",
-		"math": "github:tsaxking/calculations",
+		"math": "git+https://github.com/tsaxking/calculations.git",
 		"postgres": "^3.4.5",
 		"proper-lockfile": "^4.1.2",
 		"ts-utils": "github:tsaxking/global-ts-utilities",
 		"uuid": "^11.0.4",
 		"zod": "^3.24.1",
-		"colors": "git+https://github.com/tsaxking/colors.git"
+		"colors": "git+https://github.com/tsaxking/colors.git",
+		"canvas": "git+https://github.com/tsaxking/canvas.git",
+		"tatorscout-utils": "git+https://github.com/tsaxking/tatorscout-utils.git"
 	}
 }
