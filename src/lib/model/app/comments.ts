@@ -9,7 +9,10 @@ export const comments: {
     2025: CommentSection;
 } = {
     general: {
-        auto: ['Did not move in autonomous', 'Mobility only in auto'],
+        auto: [
+            'Did not move in autonomous', 
+            'Mobility only in auto'
+        ],
         tele: [
             '"Dead" after hard hit',
             'clever driver, adapts quickly',
@@ -54,6 +57,11 @@ export const comments: {
             'Good defense',
             'Very fast floor pick'
         ],
-        end: ['Climbs quickly', 'Cannot climb', 'Slow climb', 'Unstable climb']
+        end: [
+            'Climbs quickly', 
+            'Cannot climb', 
+            'Slow climb', 
+            'Unstable climb'
+        ]
     },
 };

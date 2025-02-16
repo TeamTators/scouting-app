@@ -15,26 +15,31 @@ import { Border } from 'canvas/border';
 import { Polygon } from 'canvas/polygon';
 import { Circle } from 'canvas/circle';
 import { Color } from 'colors/color';
-import { attemptAsync, Result } from 'ts-utils/check';
+import { attempt, attemptAsync, Result } from 'ts-utils/check';
 import { Container } from 'canvas/container';
 import {
     TraceArray,
     Action,
     TraceParse,
     Zones,
-    Match
+    Match,
+    Trace,
 } from 'tatorscout/trace';
+import { Requests } from '../../utils/requests';
 // import { generate2024App } from './2024-app';
 // import { ServerRequest } from '../../utilities/requests';
 // import { alert, confirm } from '../../utilities/notifications';
 import { sse } from '../../utils/sse';
-import { Assignment } from 'tatorscout/scout-groups';
+import { type Assignment, AssignmentSchema } from 'tatorscout/scout-groups';
 import {
     type CompLevel,
+    EventSchema,
+    MatchSchema,
     matchSort,
     TBAEvent,
     TBAMatch,
-    TBATeam
+    TBATeam,
+    TeamSchema
 } from 'tatorscout/tba';
 import { Icon } from 'canvas/material-icons';
 import { SVG } from 'canvas/svg';
@@ -45,8 +50,9 @@ import { Random } from 'ts-utils/math';
 import { Tick } from './tick';
 import { MatchData } from './match-data';
 import { Loop } from 'ts-utils/loop';
-import { type TabletState } from '../admin';
+import { type TabletState, TabletStateSchema } from '../admin';
 import { generate2025App } from './2025-app';
+import { z } from 'zod';
 
 /**
  * Description placeholder
@@ -243,9 +249,16 @@ export class App<
     public static $preScouting =
         window.localStorage.getItem('preScouting') === 'true';
 
-    public static $events: TBAEvent[] = JSON.parse(
-        window.localStorage.getItem('events') || '[]'
-    );
+    public static $events: TBAEvent[] = (() => {
+        try {
+            return z.array(EventSchema).parse(JSON.parse(
+                window.localStorage.getItem('events') || '[]'
+            ));
+        } catch (error) {
+            console.error(error);
+            return [];
+        }
+    })();
 
     public static get events() {
         return App.$events;
@@ -283,17 +296,6 @@ export class App<
     }
 
     public static current?: App<any, any, any>;
-    public static build(
-        year: 2024 | 2025,
-        alliance: 'red' | 'blue' | null = null
-    ) {
-        switch (year) {
-            case 2024:
-                return generate2024App(alliance);
-            case 2025:
-                return generate2025App(alliance);
-        }
-    }
 
     public static actionAnimation(
         icon: HTMLElement,
@@ -343,46 +345,60 @@ export class App<
         icon.addEventListener('animationend', onEnd);
     }
 
-    static cache(): {
-        trace: TraceArray;
-        tick: number;
-        location: Point2D;
-    } | null {
-        const data = window.localStorage.getItem('app');
-        if (!data) return null;
-        return JSON.parse(data);
+    static cache() {
+        return attempt<{
+            trace: TraceArray;
+            tick: number;
+            location: Point2D;
+        } | null>(() => {
+            const data = window.localStorage.getItem('app');
+            if (!data) return null;
+
+            const parsed = z.object({
+                trace: z.any(),
+                tick: z.number(),
+                location: z.tuple([z.number(), z.number()]),
+            }).parse(data);
+            return {
+                trace: Trace.parse(JSON.stringify(parsed.trace)).unwrap(),
+                tick: parsed.tick,
+                location: parsed.location
+            }
+        });
     }
 
     static restore(app: App) {
-        const d = App.cache();
-        if (!d) return;
-        const { trace, location, tick } = d;
-        const { currentTick } = app;
-
-        app.build();
-        // simulate ticks
-        for (let i = 0; i < app.ticks.length; i++) {
-            const tick = app.ticks[i];
-            const p = trace.find(p => p[0] === i);
-            if (!p) continue;
-
-            try {
-                app.currentTick = tick;
-                tick.point = [p[1], p[2]];
-                app.currentLocation = tick.point;
-                const obj = app.appObjects[p[3] as number] as AppObject<
-                    unknown,
-                    Action
-                >;
-                obj.change(app.currentLocation);
-            } catch (e) {
-                console.error(e);
+        attempt(() => {
+            const d = App.cache().unwrap();
+            if (!d) return;
+            const { trace, location, tick } = d;
+            const { currentTick } = app;
+    
+            app.build();
+            // simulate ticks
+            for (let i = 0; i < app.ticks.length; i++) {
+                const tick = app.ticks[i];
+                const p = trace.find(p => p[0] === i);
+                if (!p) continue;
+    
+                try {
+                    app.currentTick = tick;
+                    tick.point = [p[1], p[2]];
+                    app.currentLocation = tick.point;
+                    const obj = app.appObjects[p[3] as number] as AppObject<
+                        unknown,
+                        Action
+                    >;
+                    obj.change(app.currentLocation);
+                } catch (e) {
+                    console.error(e);
+                }
             }
-        }
-
-        app.currentLocation =
-            location !== undefined ? location : app.currentLocation;
-        app.currentTick = tick !== undefined ? app.ticks[tick] : currentTick;
+    
+            app.currentLocation =
+                location !== undefined ? location : app.currentLocation;
+            app.currentTick = tick !== undefined ? app.ticks[tick] : currentTick;
+        });
     }
 
     static save(app: App) {
@@ -495,7 +511,11 @@ export class App<
             const results = await Promise.all(
                 saved.map(async m => {
                     if (m.status === 'data parse error') return false; // don't try to upload if the data is bad, it may need to be changed manually
-                    const d = await ServerRequest.post('/submit', m.match);
+                    const d = await Requests.post('/submit', {
+                        body: m.match,
+                        expectStream: false,
+                        parser: z.unknown()
+                    });
                     return d.isOk();
                 })
             );
@@ -517,7 +537,11 @@ export class App<
         return attemptAsync(async () => {
             return await Promise.all(
                 matches.map(async m => {
-                    const d = await ServerRequest.post('/submit', m);
+                    const d = await Requests.post('/submit', {
+                        body: m,
+                        expectStream: false,
+                        parser: z.unknown()
+                    });
                     if (d.isOk()) return 'success';
 
                     if (d.error.message.includes('invalid'))
@@ -533,8 +557,18 @@ export class App<
             // console.log(!key, App.$eventData);
             if (!key && !!App.$eventData) return App.$eventData;
             // console.log('Requesting event data');
-            const res = await ServerRequest.post<EventData>('/event-data', {
-                key: key || ''
+            const res = await Requests.post('/event-data', {
+                body: {
+                    key: key || ''
+                },
+                expectStream: false,
+                parser: z.object({
+                    assignments: AssignmentSchema,
+                    matches: z.array(MatchSchema),
+                    teams: z.array(TeamSchema),
+                    eventKey: z.string(),
+                    event: EventSchema
+                }),
             });
             if (res.isOk()) {
                 const prev = App.$eventData;
@@ -551,13 +585,17 @@ export class App<
     }
 
     public static updateState() {
-        return ServerRequest.post('/api/tablet/update', {
-            compLevel: App.matchData.compLevel,
-            groupNumber: App.matchData.group,
-            matchNumber: App.matchData.matchNumber,
-            teamNumber: App.matchData.teamNumber,
-            scoutName: App.scoutName,
-            preScouting: App.preScouting
+        return Requests.post('/api/tablet/update', {
+            body: {
+                compLevel: App.matchData.compLevel,
+                groupNumber: App.matchData.group,
+                matchNumber: App.matchData.matchNumber,
+                teamNumber: App.matchData.teamNumber,
+                scoutName: App.scoutName,
+                preScouting: App.preScouting
+            },
+            expectStream: false,
+            parser: z.unknown(),
         });
     }
 
@@ -1931,9 +1969,14 @@ sse.on('connect', async () => {
     App.uploadFromLocalStorage();
 });
 
-sse.on('change-state', (obj: { id: string; data: TabletState }) => {
-    const { id, data: state } = obj;
-    if (id !== ServerRequest.metadata.get('tablet-id')) return;
+sse.on('change-state', (data) => {
+    const parsed = z.object({
+        id: z.string(),
+        data: TabletStateSchema,
+    }).safeParse(data);
+    if (!parsed.success) return console.error(parsed.error);
+    const { id, data: state } = parsed.data;
+    if (id !== Requests.metadata['tablet-id']) return;
     // update only the private properties as to not trigger updateState on each set
     const { matchData } = App;
 
@@ -1961,8 +2004,12 @@ sse.on('change-state', (obj: { id: string; data: TabletState }) => {
         App.preScouting = state.preScouting;
 });
 
-sse.on('abort', ({ id }: { id: string }) => {
-    if (id === ServerRequest.metadata.get('tablet-id')) App.abort();
+sse.on('abort', (data) => {
+    const parsed = z.object({
+        id: z.string(),
+    }).safeParse(data);
+    if (!parsed.success) return console.error(parsed.error);
+    if (parsed.data.id === Requests.metadata['tablet-id']) App.abort();
 });
 
 // Force submit is done in Post.svelte

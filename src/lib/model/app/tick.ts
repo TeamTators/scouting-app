@@ -1,6 +1,6 @@
 import { ActionState } from './app-object';
-import { Point2D } from '../../../shared/submodules/calculations/src/linear-algebra/point';
-import { Action } from '../../../shared/submodules/tatorscout-calculations/trace';
+import { Point2D } from 'math/point';
+import { Action } from 'tatorscout/trace';
 import { CollectedData } from './app';
 import { App } from './app';
 import { Section } from './app';

@@ -1,8 +1,9 @@
 import { attempt, attemptAsync } from 'ts-utils/check';
-import { ServerRequest } from '../utilities/requests';
+import { Requests } from '../utils/requests';
 import { EventEmitter } from 'ts-utils/event-emitter';
-import { socket } from '../utilities/socket';
+import { sse } from '../utils/sse';
 import { Loop } from 'ts-utils/loop';
+import { z } from 'zod';
 
 export type TabletState = {
     matchNumber: number;
@@ -12,6 +13,15 @@ export type TabletState = {
     scoutName: string;
     preScouting: boolean;
 };
+
+export const TabletStateSchema = z.object({
+    matchNumber: z.number().int(),
+    compLevel: z.string(),
+    teamNumber: z.number().int(),
+    groupNumber: z.number().int(),
+    scoutName: z.string(),
+    preScouting: z.boolean(),
+});
 
 type TabletEvents = {
     update: TabletState;
@@ -65,22 +75,34 @@ export class Tablet {
     }
 
     changeState(state: Partial<TabletState>) {
-        return ServerRequest.post('/api/tablet/change-state', {
-            ...this.state,
-            ...state,
-            id: this.id
+        return Requests.post('/api/tablet/change-state', {
+            body: {
+                ...this.state,
+                ...state,
+                id: this.id
+            },
+            expectStream: false,
+            parser: z.unknown(),
         });
     }
 
     abort() {
-        return ServerRequest.post('/api/tablet/abort', {
-            id: this.id
+        return Requests.post('/api/tablet/abort', {
+            body: {
+                id: this.id
+            },
+            expectStream: false,
+            parser: z.unknown(),
         });
     }
 
     submit() {
-        return ServerRequest.post('/api/tablet/submit', {
-            id: this.id
+        return Requests.post('/api/tablet/submit', {
+            body: {
+                id: this.id
+            },
+            expectStream: false,
+            parser: z.unknown(),
         });
     }
 
@@ -109,7 +131,13 @@ export class State {
             State.tablets.clear();
 
             const tablets = (
-                await ServerRequest.post<TabletSafe[]>('/api/tablet/pull-state')
+                await Requests.get<TabletSafe[]>('/api/tablet/pull-state', {
+                    expectStream: false,
+                    parser: z.array(z.object({
+                        state: TabletStateSchema,
+                        id: z.string(),
+                    })),
+                })
             ).unwrap();
             return tablets.map(t => {
                 const tab = new Tablet(t.id, t.state);
@@ -154,17 +182,22 @@ export class State {
 
 Object.assign(window, { State });
 
-socket.on('update-tablet', (data: { state: TabletState; id: string }) => {
-    console.log('Recieved tablet update!', data.id);
-    const { id, state } = data;
+sse.on('update-tablet', (data) => {
+    const parsed = z.object({
+        state: TabletStateSchema,
+        id: z.string(),
+    }).safeParse(data);
+    if (!parsed.success) return console.error('Failed to parse tablet update', parsed.error);
+    console.log('Recieved tablet update!', parsed.data.id);
+    const { id, state } = parsed.data;
     State.updateTablet(id, state);
 });
 
-socket.on('new-tablet', () => {
+sse.on('new-tablet', () => {
     State.refresh();
 });
 
-socket.on('delete-tablet', () => {
+sse.on('delete-tablet', () => {
     State.refresh();
 });
 

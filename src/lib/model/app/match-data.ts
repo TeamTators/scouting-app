@@ -1,9 +1,8 @@
-import { attemptAsync } from '../../../shared/check';
-import { sleep } from '../../../shared/sleep';
-import { teamsFromMatch } from '../../../shared/submodules/tatorscout-calculations/tba';
-import { TBAMatch } from '../../../shared/tba';
-import { confirm } from '../../utilities/notifications';
-import { socket } from '../../utilities/socket';
+import { attemptAsync } from 'ts-utils/check';
+import { sleep } from 'ts-utils/sleep';
+import { teamsFromMatch } from 'tatorscout/tba';
+import { type TBAMatch } from 'tatorscout/tba';
+import { confirm } from '../../utils/prompts';
 import { App } from './app';
 
 const filter = (m: TBAMatch): number[] =>
