@@ -11,12 +11,12 @@ import {
     zones
 } from 'tatorscout/2024-areas';
 import {
-    Action2024,
-    TraceParse2024,
-    Zones2024
+    type Action2024,
+    type TraceParse2024,
+    type Zones2024
 } from 'tatorscout/trace';
 import { App } from './app';
-import { Point2D } from 'math/point';
+import { type Point2D } from 'math/point';
 import { Icon } from 'canvas/material-icons';
 import { SVG } from 'canvas/svg';
 import { Img } from 'canvas/image';

@@ -136,7 +136,7 @@ importers:
         version: 0.2.2(filepond@4.32.7)
       tatorscout:
         specifier: github:TeamTators/tatorscout-utils
-        version: utils@https://codeload.github.com/TeamTators/tatorscout-utils/tar.gz/139c4677c5eb4f3cc43c95220b4751d5c09a237a(@types/node@22.10.4)
+        version: utils@https://codeload.github.com/TeamTators/tatorscout-utils/tar.gz/3e2ae8ea72f4812092008d49007b507230de2833(@types/node@22.10.4)
       ts-utils:
         specifier: github:tsaxking/global-ts-utilities
         version: https://codeload.github.com/tsaxking/global-ts-utilities/tar.gz/0a672fd110cfe845d5428a714906c9e79c7004ea
@@ -4385,8 +4385,8 @@ packages:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
 
-  utils@https://codeload.github.com/TeamTators/tatorscout-utils/tar.gz/139c4677c5eb4f3cc43c95220b4751d5c09a237a:
-    resolution: {tarball: https://codeload.github.com/TeamTators/tatorscout-utils/tar.gz/139c4677c5eb4f3cc43c95220b4751d5c09a237a}
+  utils@https://codeload.github.com/TeamTators/tatorscout-utils/tar.gz/3e2ae8ea72f4812092008d49007b507230de2833:
+    resolution: {tarball: https://codeload.github.com/TeamTators/tatorscout-utils/tar.gz/3e2ae8ea72f4812092008d49007b507230de2833}
     version: 1.0.0
 
   uuid@11.0.4:
@@ -8932,7 +8932,7 @@ snapshots:
 
   utils-merge@1.0.1: {}
 
-  utils@https://codeload.github.com/TeamTators/tatorscout-utils/tar.gz/139c4677c5eb4f3cc43c95220b4751d5c09a237a(@types/node@22.10.4):
+  utils@https://codeload.github.com/TeamTators/tatorscout-utils/tar.gz/3e2ae8ea72f4812092008d49007b507230de2833(@types/node@22.10.4):
     dependencies:
       '@eslint/compat': 1.2.6(eslint@9.20.1)
       eslint: 9.20.1
