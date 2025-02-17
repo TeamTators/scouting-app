@@ -21,12 +21,18 @@ import { Icon } from 'canvas/material-icons';
 import { SVG } from 'canvas/svg';
 import { Img } from 'canvas/image';
 import { Tick } from './tick';
+import type { CompLevel, TBAMatch } from 'tatorscout/tba';
 
 /**
  * Builds the app for the 2024 game
  * @date 1/25/2024 - 4:59:26 PM
  */
-export const generate2025App = (alliance: 'red' | 'blue' | null = null) => {
+export const generate2025App = (matchData: {
+    matches: TBAMatch[];
+    match: number;
+    team: number;
+    compLevel: CompLevel;
+}) => {
     const icons: {
         [key in Action2025]: Icon | SVG | Img;
     } = {
@@ -84,7 +90,7 @@ export const generate2025App = (alliance: 'red' | 'blue' | null = null) => {
         images[key as keyof typeof images].ondrag = e => e.preventDefault();
     }
 
-    const app = new App<Action2025, Zones2025, TraceParse2025>(2025, icons);
+    const app = new App<Action2025, Zones2025, TraceParse2025>(2025, icons, matchData);
 
     const isIn = (d: Drawable) =>
         app.currentLocation ? d.isIn(app.currentLocation) : false;
