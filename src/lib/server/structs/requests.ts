@@ -62,10 +62,16 @@ export namespace Requests {
             }
 
             const data = await res.json();
-            (await CachedRequests.new({
-                url,
-                response: JSON.stringify(data),
-            })).unwrap();
+            if (exists) {
+                (await exists.update({
+                    response: JSON.stringify(data),
+                })).unwrap();
+            } else {
+                (await CachedRequests.new({
+                    url,
+                    response: JSON.stringify(data),
+                })).unwrap();
+            }
             return data;
         });
     };
@@ -102,7 +108,7 @@ export namespace Requests {
         return attemptAsync(async () => {
             const res = (await get(
                 `/event/${eventKey}`,
-                1000 * 60 * 60 * 24, // 1 day
+                1000 * 60 * 60, // 1 hour
             )).unwrap();
 
             return z.object({
