@@ -1,6 +1,6 @@
 import { Scouting } from "./scouting";
 import { attemptAsync } from "ts-utils/check";
-import { SECRET_SERVER_API_KEY, SECRET_SERVER_DOMAIN } from "$env/static/private";
+// import { SECRET_SERVER_API_KEY, SECRET_SERVER_DOMAIN } from "$env/static/private";
 import { Struct } from "drizzle-struct/back-end";
 import { text } from "drizzle-orm/pg-core";
 import { z } from 'zod';
@@ -11,7 +11,9 @@ import { Loop } from "ts-utils/loop";
 import { TraceSchema } from 'tatorscout/trace';
 import { MatchSchema as MS, type MatchSchemaType } from "$lib/types/match";
 
+const { SECRET_SERVER_API_KEY, SECRET_SERVER_DOMAIN } = process.env;
 export namespace Requests {
+
     const post = (url: string, data: unknown) => {
         return attemptAsync(async () => {
             const res = await fetch(
@@ -20,7 +22,7 @@ export namespace Requests {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-AUTH-KEY': SECRET_SERVER_API_KEY,
+                        'X-AUTH-KEY': SECRET_SERVER_API_KEY || '',
                     },
                     body: JSON.stringify(data),
                 });
@@ -53,7 +55,7 @@ export namespace Requests {
                 {
                     method: 'GET',
                     headers: {
-                        'X-AUTH-KEY': SECRET_SERVER_API_KEY,
+                        'X-AUTH-KEY': SECRET_SERVER_API_KEY || '',
                     },
                 });
 
@@ -138,7 +140,7 @@ export namespace Requests {
                 {
                     method: 'GET',
                     headers: {
-                        'X-AUTH-KEY': SECRET_SERVER_API_KEY,
+                        'X-AUTH-KEY': SECRET_SERVER_API_KEY || '',
                     },
                 });
 

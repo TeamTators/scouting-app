@@ -1,7 +1,9 @@
 import type { App } from "./app";
 
-export class ButtonCircle {
+export class Timer {
     constructor(
         public readonly app: App,
     ) {}
+
+    init() {}
 }

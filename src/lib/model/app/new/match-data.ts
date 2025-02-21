@@ -6,5 +6,6 @@ export class MatchData {
         public readonly compLevel: CompLevel,
         public readonly match: number,
         public readonly team: number,
+        public readonly alliance: 'red' | 'blue' | null,
     ) {}
 }

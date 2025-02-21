@@ -1,10 +1,13 @@
 import type { Writable } from "svelte/store";
+import type { App } from "./app";
 
 export class Checks implements Writable<Set<string>> {
 
     public readonly data = new Set<string>();
 
-    constructor() {}
+    constructor(
+        public readonly app: App,
+    ) {}
 
     private readonly subscribers = new Set<(value: Set<string>) => void>();
 
@@ -23,4 +26,6 @@ export class Checks implements Writable<Set<string>> {
     public update(updater: (value: Set<string>) => Set<string>): void {
         this.set(updater(this.data));
     }
+
+    public init() {}
 }
