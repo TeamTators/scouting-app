@@ -6,6 +6,7 @@ import { AppState } from "./state";
 import { AppView } from "./view";
 import { Timer } from "./timer";
 import { EventEmitter } from "ts-utils/event-emitter";
+import type { Point2D } from "math/point";
 
 export const TICKS_PER_SECOND = 4;
 export const SECTIONS = {
@@ -22,6 +23,11 @@ export class App {
     private readonly emitter = new EventEmitter<{
         tick: Tick;
         section: Section;
+        action: {
+            action: string;
+            point: Point2D;
+            alliance: 'red' | 'blue' | null;
+        };
     }>();
 
     public readonly on = this.emitter.on.bind(this.emitter);
@@ -41,16 +47,15 @@ export class App {
             match: number;
             compLevel: CompLevel;
             team: number;
-            alliance: 'red' | 'blue' | null;
             target: HTMLElement;
         }>,
     ) {
         this.matchData = new MatchData(
+            this,
             config.eventKey,
             config.compLevel,
             config.match,
             config.team,
-            config.alliance,
         );
 
         this.ticks = Array.from({ length: 150 * TICKS_PER_SECOND}, (_, i) => new Tick(
@@ -68,5 +73,6 @@ export class App {
     init() {
         this.state.init();
         this.view.init();
+        this.matchData.init();
     }
 }

@@ -12,7 +12,12 @@ export const GET = async (event) => {
     }
 
     return new Response(
-        JSON.stringify(accounts.value.map(a => a.safe())),
+        JSON.stringify(accounts.value.map(a => ({
+            id: a.id,
+            username: a.data.username,
+            firstName: a.data.firstName,
+            lastName: a.data.lastName,
+        }))),
         {
             status: 200,
         }
