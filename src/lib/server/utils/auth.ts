@@ -1,3 +1,3 @@
-import { type RequestEvent } from "@sveltejs/kit";
+import { type RequestEvent } from '@sveltejs/kit';
 
-export const auth = async (event: RequestEvent): Promise<boolean> => false;
+export const auth = async (event: RequestEvent): Promise<boolean> => true;

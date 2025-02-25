@@ -1,9 +1,70 @@
-import type { App } from "./app";
+import { TOTAL_TICKS, type App } from './app';
+import TimerComponent from '$lib/components/app/Timer.svelte';
+import { mount } from 'svelte';
+import { type Writable } from 'svelte/store';
 
-export class Timer {
-    constructor(
-        public readonly app: App,
-    ) {}
+type TimerData = {
+	second: number;
+	section: string | null;
+	index: number;
+};
 
-    init() {}
+export class Timer implements Writable<{ second: number; section: string | null }> {
+	public component: TimerComponent | undefined;
+
+	public readonly data: TimerData = {
+		second: -1,
+		section: null,
+		index: -1
+	};
+
+	private readonly subscribers = new Set<(value: TimerData) => void>();
+
+	constructor(public readonly app: App) {}
+
+	inform() {
+		this.subscribers.forEach((s) => s(this.data));
+	}
+
+	set(data: TimerData) {
+		this.data.second = data.second;
+		this.data.section = data.section;
+		this.data.index = data.index;
+		this.inform();
+	}
+
+	subscribe(fn: (data: TimerData) => void) {
+		this.subscribers.add(fn);
+		fn(this.data);
+		return () => this.subscribers.delete(fn);
+	}
+
+	update(fn: (data: TimerData) => TimerData) {
+		this.set(fn(this.data));
+	}
+
+	init(target: HTMLElement) {
+		this.component = mount(TimerComponent, {
+			target,
+			props: {
+				timer: this
+			}
+		});
+
+		const offSecond = this.app.on('second', (second) => {
+			this.update((d) => ({ ...d, second }));
+		});
+		const offSection = this.app.on('section', (section) => {
+			this.update((d) => ({ ...d, section }));
+		});
+		const offTick = this.app.on('tick', (tick) => {
+			this.update((d) => ({ ...d, index: tick.index }));
+		});
+
+		return () => {
+			offSecond();
+			offSection();
+			offTick();
+		};
+	}
 }
