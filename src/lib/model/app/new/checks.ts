@@ -220,4 +220,16 @@ export class Checks implements Writable<Check[]> {
 
         return checks;
     }
+
+	serialize() {
+		const checks: string[] = [];
+		const comments: Record<string, string> = {};
+
+		for (const check of this.data) {
+			checks.push(check.data.name);
+			if (check.data.doComment && check.data.comment.length) comments[check.data.name] = check.data.comment;
+		}
+
+		return { checks, comments };
+	}
 }

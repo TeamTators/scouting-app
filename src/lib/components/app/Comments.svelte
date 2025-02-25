@@ -5,7 +5,7 @@
 	import { capitalize, fromCamelCase } from "ts-utils/text";
     import { writable, type Writable } from 'svelte/store';
 	import { Check } from "$lib/model/app/new/checks";
-    import CheckRow from '$lib/components/app/CheckRow.svelte';
+    import CheckRow from '$lib/components/app/Check.svelte';
     import Comment from '$lib/components/app/Comment.svelte';
 
     interface Props {
@@ -14,17 +14,13 @@
 
     const { app }: Props = $props();
 
-    const comments = app.collected.comments;
-    const checks = app.collected.checks;
+    const checks = app.checks;
 
     const success = checks.getType('success');
     const primary = checks.getType('primary');
     const warning = checks.getType('warning');
     const danger = checks.getType('danger');
 
-    onMount(() => {
-        return checks.subscribe(console.log);
-    });
 </script>
 
 

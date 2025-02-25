@@ -50,7 +50,7 @@
 	let deinit = () => {};
 
 	$effect(() => {
-		console.log('Regenerating...');
+		// console.log('Regenerating...');
 		deinit();
 		if (!target || browser) return console.error('Cannot initialize');
 
@@ -125,6 +125,7 @@
 
 	<div style="display: {page === 'post' ? 'block' : 'none'};">
 		<Comments {app} />
+		<button type="button" class="btn btn-success w-100" onclick={() => app.submit()}>Submit</button>
 	</div>
 </div>
 

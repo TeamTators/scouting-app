@@ -12,6 +12,8 @@ import { browser } from '$app/environment';
 import { Circle } from 'canvas/circle';
 import { Polygon } from 'canvas/polygon';
 import { Color } from 'colors/color';
+import { Checks } from './checks';
+import { AppData } from './data-pull';
 
 export const TICKS_PER_SECOND = 4;
 export const SECTIONS = {
@@ -49,7 +51,7 @@ export class App {
 	public readonly ticks: Tick[];
 	public readonly state: AppState;
 	public readonly view: AppView;
-	public readonly collected: CollectedData;
+	public readonly checks: Checks;
 	public readonly gameObjects: {
 		point: Point2D;
 		object: AppObject;
@@ -84,18 +86,22 @@ export class App {
 
 		this.state = new AppState(this);
 		this.view = new AppView(this);
-		this.collected = new CollectedData(this);
+		this.checks = new Checks(this);
 	}
 
 	serialize() {
-		console.log(this.state.serialize());
+		const trace = this.state.serialize();
+		const { checks, comments } = this.checks.serialize();
+		const { eventKey, compLevel, match, team, flipX, flipY } = this.config;
+
+		return { trace, checks, comments, eventKey, compLevel, match, team, flipX, flipY };
 	}
 
 	init(target: HTMLElement) {
 		const offState = this.state.init();
 		const offView = this.view.init(target);
 		const offData = this.matchData.init();
-		const offCollected = this.collected.init();
+		const offCollected = this.checks.init();
 
 		return () => {
 			offState();
@@ -330,5 +336,9 @@ To disable: ctrl + d`);
 		};
 
 		enabler();
+	}
+
+	submit() {
+		AppData.submitMatch(this.serialize());
 	}
 }

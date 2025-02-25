@@ -1,5 +1,5 @@
 import { AssignmentSchema } from 'tatorscout/scout-groups';
-import { EventSchema, MatchSchema, TeamSchema } from 'tatorscout/tba';
+import { EventSchema, MatchSchema, TeamSchema, type CompLevel } from 'tatorscout/tba';
 import { attemptAsync } from 'ts-utils/check';
 import { z } from 'zod';
 
@@ -47,6 +47,18 @@ export namespace AppData {
 		});
 	};
 
+	const post = async (url: string, body: unknown) => {
+		return attemptAsync(async () => {
+			await fetch('/api' + url, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(body),
+			}).then(r => r.json());
+		});
+	};
+
 	export const getAccounts = () => {
 		return attemptAsync(async () => {
 			const res = (await get('/accounts', 1000 * 60 * 60 * 24)).unwrap();
@@ -86,7 +98,16 @@ export namespace AppData {
 		});
 	};
 
-	export const submitMatch = () => {
-		return attemptAsync(async () => {});
+	export const submitMatch = (data: {
+		eventKey: string;
+		match: number;
+		team: number;
+		compLevel: CompLevel;
+		flipX: boolean;
+		flipY: boolean;
+		checks: string[];
+		comments: Record<string, string>;
+	}) => {
+		return post('/submit-match', data)
 	};
 }
