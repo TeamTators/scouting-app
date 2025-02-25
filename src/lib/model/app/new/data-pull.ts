@@ -1,7 +1,8 @@
 import { AssignmentSchema } from 'tatorscout/scout-groups';
 import { EventSchema, MatchSchema, TeamSchema, type CompLevel } from 'tatorscout/tba';
-import { attemptAsync } from 'ts-utils/check';
+import { attempt, attemptAsync } from 'ts-utils/check';
 import { z } from 'zod';
+import { downloadText, loadFileContents } from '$lib/utils/downloads';
 
 export namespace AppData {
 	const CACHE_VERSION = 'v1';
@@ -98,7 +99,7 @@ export namespace AppData {
 		});
 	};
 
-	export const submitMatch = (data: {
+	type Match = {
 		eventKey: string;
 		match: number;
 		team: number;
@@ -107,7 +108,57 @@ export namespace AppData {
 		flipY: boolean;
 		checks: string[];
 		comments: Record<string, string>;
-	}) => {
-		return post('/submit-match', data)
+	};
+
+	const matchSchema = z.object({
+		eventKey: z.string(),
+		match: z.number().int(),
+		team: z.number().int(),
+		compLevel: z.enum(['pr', 'qm', 'qf', 'sf', 'f']),
+		flipX: z.boolean(),
+		flipY: z.boolean(),
+		checks: z.array(z.string()),
+		comments: z.record(z.string()),
+	});
+
+	const saveMatches = (data: Match[]) => {
+		return attempt(() => {
+			const saved = localStorage.getItem(CACHE_VERSION + 'saved-matches') || '[]';
+			const parsed = z.array(matchSchema).parse(JSON.parse(saved));
+			parsed.push(...data);
+			localStorage.setItem(CACHE_VERSION + 'saved-matches', JSON.stringify(parsed));
+		});
+	};
+
+	const getMatches = () => {
+		return attempt<Match[]>(() => {
+			const saved = localStorage.getItem(CACHE_VERSION + 'saved-matches') || '[]';
+			return z.array(matchSchema).parse(JSON.parse(saved));
+		});
+	}
+
+	const downloadMatch = (data: Match) => {
+		return downloadText(JSON.stringify(data), `${data.eventKey}:${data.compLevel}:${data.match}:${data.team}.${CACHE_VERSION}.match`)
+	}
+
+	export const uploadMatch = () => {
+		return attemptAsync(async () => {
+			const matches = (await loadFileContents()).unwrap().filter(f => f.name.endsWith(`.${CACHE_VERSION}.match`));
+			return Promise.all(matches.map(async m => {
+				const parsed = matchSchema.safeParse(JSON.parse(m.text));
+				if (parsed.success) {
+					return (await submitMatch(parsed.data)).unwrap();
+				}
+			}));
+		});
+	};
+
+	export const submitMatch = (data: Match) => {
+		return attemptAsync(async () => {
+			const matches = getMatches().unwrap();
+			saveMatches([...matches, data]).unwrap();
+			(await downloadMatch(data)).unwrap();
+			return (await post('/submit-match', data)).unwrap();
+		});
 	};
 }
