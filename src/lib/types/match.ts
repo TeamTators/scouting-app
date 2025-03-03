@@ -10,6 +10,6 @@ export const MatchSchema = z.object({
 	scout: z.string(),
 	group: z.number().int(),
 	trace: TraceSchema,
-	prescouting: z.boolean()
+	prescouting: z.boolean(),
 });
 export type MatchSchemaType = z.infer<typeof MatchSchema>;

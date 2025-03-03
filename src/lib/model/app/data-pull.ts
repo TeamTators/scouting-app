@@ -118,6 +118,9 @@ export namespace AppData {
 		flipY: boolean;
 		checks: string[];
 		comments: Record<string, string>;
+		scout: string;
+		prescouting: boolean;
+		practice: boolean;
 	};
 
 	export const matchSchema = z.object({
@@ -128,7 +131,10 @@ export namespace AppData {
 		flipX: z.boolean(),
 		flipY: z.boolean(),
 		checks: z.array(z.string()),
-		comments: z.record(z.string())
+		comments: z.record(z.string()),
+		scout: z.string(),
+		prescouting: z.boolean(),
+		practice: z.boolean(),
 	});
 
 	const saveMatches = (data: Match[]) => {
@@ -163,18 +169,18 @@ export namespace AppData {
 				matches.map(async (m) => {
 					const parsed = matchSchema.safeParse(JSON.parse(m.text));
 					if (parsed.success) {
-						return (await submitMatch(parsed.data)).unwrap();
+						return (await submitMatch(parsed.data, false)).unwrap();
 					}
 				})
 			);
 		});
 	};
 
-	export const submitMatch = (data: Match) => {
+	export const submitMatch = (data: Match, download: boolean) => {
 		return attemptAsync(async () => {
 			const matches = getMatches().unwrap();
 			saveMatches([...matches, data]).unwrap();
-			(await downloadMatch(data)).unwrap();
+			if (download) (await downloadMatch(data)).unwrap();
 			return (await post('/submit-match', data)).unwrap();
 		});
 	};

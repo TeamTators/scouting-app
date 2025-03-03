@@ -9,8 +9,9 @@ import { MatchSchema, TeamSchema, EventSchema } from 'tatorscout/tba';
 import { AssignmentSchema } from 'tatorscout/scout-groups';
 import { Loop } from 'ts-utils/loop';
 import { TraceSchema } from 'tatorscout/trace';
-import { MatchSchema as MS, type MatchSchemaType } from '$lib/types/match';
+import { MatchSchema as MS, type MatchSchemaType } from '../../types/match';
 import terminal from '../utils/terminal';
+import { REMOTE } from '$env/static/private';
 
 const { SECRET_SERVER_API_KEY, SECRET_SERVER_DOMAIN } = process.env;
 export namespace Requests {
@@ -92,9 +93,15 @@ export namespace Requests {
 
 	export const submitMatch = (match: MatchSchemaType) => {
 		return attemptAsync(async () => {
+			const ok = MatchSchema.safeParse(match).success;
+			if (!ok) throw new Error('Invalid data: ' + JSON.stringify(match));
+			const body = {
+				...match,
+				remote: REMOTE === 'true',
+			};
 			(
 				await Scouting.Matches.new({
-					body: JSON.stringify(match),
+					body: JSON.stringify(body),
 					eventKey: match.eventKey,
 					team: match.teamNumber,
 					compLevel: match.compLevel,
@@ -102,7 +109,7 @@ export namespace Requests {
 				})
 			).unwrap();
 
-			return (await post('/submit-match', match)).unwrap();
+			return (await post('/submit-match', body)).unwrap();
 		});
 	};
 

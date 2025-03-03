@@ -16,6 +16,7 @@ import { Checks } from './checks';
 import { AppData } from './data-pull';
 import { writable } from 'svelte/store';
 import { attemptAsync } from 'ts-utils';
+import { globalData } from './global-data.svelte';
 
 export const TICKS_PER_SECOND = 4;
 export const SECTIONS = {
@@ -92,9 +93,9 @@ export class App {
 		const trace = this.state.serialize();
 		const { checks, comments } = this.checks.serialize();
 		const { eventKey, compLevel, match, team, flipX, flipY } = this.config;
-		console.log(trace);
+		const { scout, prescouting, practice } = globalData;
 
-		return { trace, checks, comments, eventKey, compLevel, match, team, flipX, flipY };
+		return { trace, checks, comments, eventKey, compLevel, match, team, flipX, flipY, scout, prescouting, practice };
 	}
 
 	private _offState = () => {};
@@ -394,7 +395,7 @@ To disable: ctrl + d`);
 
 	submit() {
 		return attemptAsync(async () => {
-			(await AppData.submitMatch(this.serialize())).unwrap();
+			(await AppData.submitMatch(this.serialize(), true)).unwrap();
 			this.reset();
 			return (await this.matchData.next()).unwrap();
 		});
