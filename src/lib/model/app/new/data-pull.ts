@@ -28,19 +28,22 @@ export namespace AppData {
 			}
 
 			try {
-				const res = await fetch('/api' + url, {
+				const response = await fetch('/api' + url, {
 					method: 'GET'
-				}).then((r) => r.json());
+				});
+				
+				if (!response.ok) throw new Error('Failed to fetch data');
+				const data = await response.json();
 
 				localStorage.setItem(
 					`${CACHE_VERSION}:${url}`,
 					JSON.stringify({
 						timestamp: Date.now(),
-						data: res
+						data: data
 					})
 				);
 
-				return res;
+				return data;
 			} catch (error) {
 				if (d) return d;
 				throw new Error(`Failed to fetch data: ${url} ${error}`);
@@ -91,6 +94,13 @@ export namespace AppData {
 		});
 	};
 
+	export const getEvents = (year: number) => {
+		return attemptAsync(async () => {
+			const res = (await get(`/events/${year}`, 1000 * 60 * 60 * 24)).unwrap();
+			return z.array(EventSchema).parse(res);
+		});
+	};
+
 	export const getScoutGroups = (eventKey: string) => {
 		return attemptAsync(async () => {
 			const res = (await get(`/event/${eventKey}/scout-groups`, 1000 * 60 * 60 * 24)).unwrap();
@@ -99,7 +109,7 @@ export namespace AppData {
 		});
 	};
 
-	type Match = {
+	export type Match = {
 		eventKey: string;
 		match: number;
 		team: number;
@@ -110,7 +120,7 @@ export namespace AppData {
 		comments: Record<string, string>;
 	};
 
-	const matchSchema = z.object({
+	export const matchSchema = z.object({
 		eventKey: z.string(),
 		match: z.number().int(),
 		team: z.number().int(),

@@ -10,6 +10,7 @@ import { sleep } from 'ts-utils/sleep';
 import { Polygon } from 'canvas/polygon';
 import type { Point2D } from 'math/point';
 import { browser } from '$app/environment';
+import { ButtonCircle } from './button-circle';
 
 export class AppView {
 	public readonly ctx: CanvasRenderingContext2D | undefined;
@@ -20,11 +21,12 @@ export class AppView {
 	public readonly timer: Timer;
 	public readonly background: Img | undefined;
 	public readonly areas: Polygon[] = [];
+	public readonly buttonCircle: ButtonCircle;
 
 	public drawing = false;
 	public clicking = false;
 
-	private _target: HTMLElement | undefined;
+	public target: HTMLElement | undefined;
 
 	constructor(public readonly app: App) {
 		this.timer = new Timer(app);
@@ -53,18 +55,61 @@ export class AppView {
 				color: new Color('red').setAlpha(0.5).toString('rgba')
 			};
 		}
+
+		this.buttonCircle = new ButtonCircle(this.app);
 	}
 
 	init(target: HTMLElement) {
 		if (!this.canvasEl) return () => {};
 		const canvas = this.canvas;
 		if (!canvas) return () => {};
-		this._target = target;
+		canvas.height = 500;
+		canvas.width = 1000;
+
+		const cover = document.createElement('div');
+		cover.innerHTML = `
+			<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 2em;">
+				Start tracing to start match <span class="text-info">${this.app.matchData.compLevel}${this.app.matchData.match}</span> for team <span class="text-info">${this.app.matchData.team}</span>
+			</div>
+		`;
+		cover.style.position = 'absolute';
+		cover.style.width = '100vw';
+		cover.style.height = '100vh';
+		cover.style.zIndex = '200';
+		cover.style.backgroundColor = 'black';
+		cover.style.opacity = '0.5';
+		const removeCover = (e: MouseEvent | TouchEvent) => {
+			if (e instanceof MouseEvent) {
+				canvas.ctx.canvas.dispatchEvent(new MouseEvent('mousedown', { ...e, }));
+			} 
+			if (e instanceof TouchEvent) {
+				canvas.ctx.canvas.dispatchEvent(new TouchEvent('touchstart', { 
+					touches: [
+						{
+							...e.touches[0]
+						}
+					]
+				}));
+			}
+
+			target.removeChild(cover);
+			cover.remove();
+			this.app.start();
+		};
+		cover.onmousedown = removeCover;
+		cover.onclick = removeCover;
+		cover.ontouchstart = removeCover;
+
+		this.target = target;
 		target.innerHTML = '';
 		target.style.position = 'relative';
 		// this.canvasEl.style.objectFit = 'contain';
 		this.canvasEl.style.position = 'absolute';
 		target.appendChild(this.canvasEl);
+		target.appendChild(cover);
+		for (const object of this.app.gameObjects) {
+			target.appendChild(object.element);
+		}
 		this.timer.init(target);
 
 		let timeout: NodeJS.Timeout;
@@ -88,17 +133,20 @@ export class AppView {
 		const down = (x: number, y: number) => {
 			if (this.clicking) return;
 			this.drawing = true;
+			if (x === -1 && y === -1) return;
 			push(x, y);
 		};
 		const move = (x: number, y: number) => {
 			if (this.clicking) return;
+			if (x === -1 && y === -1) return;
 			push(x, y);
 		};
 		const up = (x: number, y: number) => {
 			if (this.clicking) return;
 			this.drawing = false;
+			// this.app.state.currentLocation = null;
+			if (x === -1 && y === -1) return;
 			push(x, y);
-			this.app.state.currentLocation = null;
 		};
 		this.canvasEl.addEventListener('mousedown', (e) => {
 			// e.preventDefault();
@@ -152,7 +200,14 @@ export class AppView {
 
 		if (this.background) this.canvas.add(this.background);
 
-		this.canvas.add(this.border, this.path);
+		this.canvas.add(this.border, this.path, ...this.areas, this.buttonCircle);
+
+		this.setView();
+		const offButtonCircle = this.buttonCircle.init(target);
+
+		const offAnimate = this.app.on('action', ({ action, point, alliance }) => {
+			this.animateIcon(action, point, alliance);
+		});
 
 		return () => {
 			if (!this.canvasEl) return;
@@ -161,28 +216,34 @@ export class AppView {
 			const newEl = this.canvasEl.cloneNode(true) as HTMLCanvasElement;
 			this.canvasEl.parentNode?.replaceChild(newEl, this.canvasEl);
 			this.canvas.destroy();
+			offAnimate();
+			offButtonCircle();
 		};
 	}
 
+	public xOffset = 0;
+	public yOffset = 1;
+
 	setView() {
 		if (!this.canvas) return;
-		const target = this._target;
+		const target = this.target;
 		if (!target) return console.warn('No target set');
+		const alliance = this.app.matchData.getAlliance();
 
-		let xOffset = 0;
-		let yOffset = 0;
+		this.xOffset = 0;
+		this.yOffset = 0;
 
 		if (target.clientWidth > target.clientHeight * 2) {
-			xOffset = (target.clientWidth - target.clientHeight * 2) / 2;
+			this.xOffset = (target.clientWidth - target.clientHeight * 2) / 2;
 			this.canvas.ctx.canvas.width = target.clientHeight * 2;
 			this.canvas.ctx.canvas.height = target.clientHeight;
 		} else {
-			yOffset = (target.clientHeight - target.clientWidth / 2) / 2;
+			this.yOffset = (target.clientHeight - target.clientWidth / 2) / 2;
 			this.canvas.ctx.canvas.width = target.clientWidth;
 			this.canvas.ctx.canvas.height = target.clientWidth / 2;
 		}
-		this.canvas.ctx.canvas.style.top = `${yOffset}px`;
-		this.canvas.ctx.canvas.style.left = `${xOffset}px`;
+		this.canvas.ctx.canvas.style.top = `${this.yOffset}px`;
+		this.canvas.ctx.canvas.style.left = `${this.xOffset}px`;
 
 		for (const o of this.app.gameObjects) {
 			const { element, viewCondition } = o;
@@ -190,8 +251,8 @@ export class AppView {
 			x = this.app.config.flipY ? 1 - x : x;
 			y = this.app.config.flipX ? 1 - y : y;
 
-			element.style.left = `${x * this.canvas.width + xOffset}px`;
-			element.style.top = `${y * this.canvas.height + yOffset}px`;
+			element.style.left = `${x * this.canvas.width + this.xOffset}px`;
+			element.style.top = `${y * this.canvas.height + this.yOffset}px`;
 
 			if (viewCondition && this.app.state.tick) {
 				if (viewCondition(this.app.state.tick)) {
@@ -200,12 +261,28 @@ export class AppView {
 					element.style.display = 'none';
 				}
 			}
+
+			if (alliance) {
+				if (alliance === o.alliance) {
+					element.style.display = 'block';
+				} else {
+					element.style.display = 'none';
+				}
+			}
+		}
+
+		for (const button of this.buttonCircle.buttons) {
+			if (button.el) button.el.style.display = 'none';
 		}
 	}
 
 	start() {
-		if (!this.canvas) return;
-		console.log('Starting: ', this.canvas);
+		if (!this.canvas) return () => {};
+		const view = () => {
+			this.setView();
+			requestAnimationFrame(view);
+		};
+		requestAnimationFrame(view);
 		return this.canvas.animate();
 	}
 
@@ -225,7 +302,7 @@ export class AppView {
 
 		p.properties.doDraw = () => config.condition(p);
 		p.properties.fill = {
-			color: config.color.toString('rgba')
+			color: config.color.toString('rgba'),
 		};
 		p.properties.line = {
 			color: 'transparent'
@@ -233,9 +310,52 @@ export class AppView {
 
 		p.fade(5);
 
-		this.canvas.add(p);
 		this.areas.push(p);
 
 		return p;
+	}
+
+	animateIcon(icon: string, position: Point2D, alliance: 'red' | 'blue' | null) {
+		if (!browser) return;
+		if (!this.canvas) return;
+		const img = document.createElement('img');
+		img.src = `/icons/${icon}.png`;
+		img.style.position = 'absolute';
+		img.style.transform = 'translate(-50%, -50%) !important;';
+		img.style.height = '25px';
+		img.style.width = '25px';
+		img.style.zIndex = '200';
+		const [x, y] = position;
+		img.style.left = `${x * this.canvas.width + this.xOffset}px`;
+		img.style.top = `${y * this.canvas.height + this.yOffset}px`;
+		img.style.backgroundColor = (() => {
+            switch (alliance) {
+                case 'red':
+                    return Color.fromBootstrap('red');
+                case 'blue':
+                    return Color.fromBootstrap('blue');
+                default:
+                    return Color.fromBootstrap('dark');
+            }
+        })().setAlpha(0.75).toString('rgba');
+
+		img.classList.add('animate__animated', 'animate__bounceIn', 'circle');
+
+		this.target?.appendChild(img);
+
+		const onEnd = async () => {
+			img.removeEventListener('animationend', onEnd);
+			img.classList.remove('animate__animated', 'animate__bounceIn');
+			await sleep(500);
+
+			img.classList.add('animate__animated', 'animate__bounceOut');
+			const remove = () => {
+				img.remove();
+				img.removeEventListener('animationend', remove);
+			}
+			img.addEventListener('animationend', remove);
+		};
+
+		img.addEventListener('animationend', onEnd);
 	}
 }

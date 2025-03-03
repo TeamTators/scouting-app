@@ -193,6 +193,21 @@ export namespace Requests {
 		);
 		return loop;
 	};
+
+	export const getEvents = (year: number) => {
+		return attemptAsync(async () => {
+			const res = (
+				await get(
+					`/events/${year}`,
+					1000 * 60 * 60 * 24 // 1 day
+				)
+			).unwrap();
+
+			terminal.log(res);
+
+			return z.array(EventSchema).parse(res);
+		});
+	};
 }
 
 export const _requestsTable = Requests.CachedRequests.table;

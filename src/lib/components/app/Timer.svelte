@@ -2,8 +2,10 @@
 	import { TOTAL_TICKS } from '$lib/model/app/new/app';
 	import { globalData } from '$lib/model/app/new/global-data.svelte';
 	import { Timer } from '$lib/model/app/new/timer';
+	import { confirm } from '$lib/utils/prompts';
 
 	const minuteSecond = (seconds: number) => {
+		if (seconds === -1) return '0:00';
 		const m = String(Math.floor(seconds / 60));
 		const s = String(seconds % 60).padStart(2, '0');
 		return `${m}:${s}`;
@@ -14,6 +16,7 @@
 	}
 
 	const { timer }: Props = $props();
+	const running = timer.app.running;
 
 	const matchData = $derived(timer.app.matchData);
 </script>
@@ -48,35 +51,66 @@
 					class:bg-danger={$timer.section === 'end'}
 				></div>
 			</div>
-			<div class="button-group">
+			<div role="group" class="button-group">
 				<button
 					type="button"
-					class="btn"
+					class="btn btn-sm"
 					class:btn-outline-success={$timer.section !== 'auto'}
 					class:btn-success={$timer.section === 'auto'}
 					onclick={() => timer.app.goto('auto')}>Auto</button
 				>
 				<button
 					type="button"
-					class="btn"
+					class="btn btn-sm"
 					class:btn-outline-primary={$timer.section !== 'teleop'}
 					class:btn-primary={$timer.section === 'teleop'}
 					onclick={() => timer.app.goto('teleop')}>Tele</button
 				>
 				<button
 					type="button"
-					class="btn"
+					class="btn btn-sm"
 					class:btn-outline-warning={$timer.section !== 'endgame'}
 					class:btn-warning={$timer.section === 'endgame'}
 					onclick={() => timer.app.goto('endgame')}>Endgame</button
 				>
 				<button
 					type="button"
-					class="btn"
+					class="btn btn-sm"
 					class:btn-outline-danger={$timer.section !== 'end'}
 					class:btn-danger={$timer.section === 'end'}
 					onclick={() => timer.app.goto('end')}>End</button
 				>
+			</div>
+			<div role="group" class="button-group">
+				{#if $running} 
+					<button type="button" class="btn btn-warning btn-sm" onclick={() => timer.app.pause()}
+							style="width: 50%"
+						>
+						<i class="material-icons">pause</i>
+					</button>
+				{:else}
+					<button type="button" class="btn btn-success btn-sm" onclick={() => timer.app.resume()}
+						style="width: 50%"
+						>
+						<i class="material-icons">play_arrow</i>
+					</button>
+				{/if}
+				<button 
+					type="button" 
+					class="btn btn-sm btn-danger" 
+					onclick={() => {
+						confirm('Are you sure you want to reset the app?').then((res) => {
+							if (!res) return;
+							timer.app.stop();
+							timer.app.reset();
+						});
+					}}
+					style="width: 50%"
+					>
+						<i class="material-icons">
+							restart_alt
+						</i>
+					</button>
 			</div>
 		</div>
 	</div>

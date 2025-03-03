@@ -7,13 +7,15 @@ import { EventEmitter } from 'ts-utils/event-emitter';
 import type { Point2D } from 'math/point';
 import { Loop } from 'ts-utils/loop';
 import { CollectedData } from './collected-data';
-import type { ActionState, AppObject } from './app-object';
+import { ActionState, type AppObject } from './app-object';
 import { browser } from '$app/environment';
 import { Circle } from 'canvas/circle';
 import { Polygon } from 'canvas/polygon';
 import { Color } from 'colors/color';
 import { Checks } from './checks';
 import { AppData } from './data-pull';
+import { writable } from 'svelte/store';
+import { attemptAsync } from 'ts-utils';
 
 export const TICKS_PER_SECOND = 4;
 export const SECTIONS = {
@@ -39,6 +41,8 @@ export class App {
 		stopped: undefined;
 		end: undefined;
 		stop: undefined;
+		pause: undefined;
+		resume: undefined;
 		error: Error;
 	}>();
 
@@ -48,7 +52,6 @@ export class App {
 	public readonly emit = this.emitter.emit.bind(this.emitter);
 
 	public readonly matchData: MatchData;
-	public readonly ticks: Tick[];
 	public readonly state: AppState;
 	public readonly view: AppView;
 	public readonly checks: Checks;
@@ -59,6 +62,7 @@ export class App {
 		alliance: 'red' | 'blue' | null;
 		viewCondition?: (tick: Tick) => boolean;
 	}[] = [];
+	public readonly running = writable(false);
 
 	constructor(
 		public readonly config: Readonly<{
@@ -79,11 +83,6 @@ export class App {
 			config.team
 		);
 
-		this.ticks = Array.from(
-			{ length: TOTAL_TICKS },
-			(_, i) => new Tick(i * TICK_DURATION, i, this)
-		);
-
 		this.state = new AppState(this);
 		this.view = new AppView(this);
 		this.checks = new Checks(this);
@@ -93,21 +92,29 @@ export class App {
 		const trace = this.state.serialize();
 		const { checks, comments } = this.checks.serialize();
 		const { eventKey, compLevel, match, team, flipX, flipY } = this.config;
+		console.log(trace);
 
 		return { trace, checks, comments, eventKey, compLevel, match, team, flipX, flipY };
 	}
 
+	private _offState = () => {};
+	private _offView = () => {};
+	private _offData = () => {};
+	private _offCollected = () => {};
+	private _target: HTMLElement | undefined;
+
 	init(target: HTMLElement) {
-		const offState = this.state.init();
-		const offView = this.view.init(target);
-		const offData = this.matchData.init();
-		const offCollected = this.checks.init();
+		this._target = target;
+		this._offState = this.state.init();
+		this._offView = this.view.init(target);
+		this._offData = this.matchData.init();
+		this._offCollected = this.checks.init();
 
 		return () => {
-			offState();
-			offView();
-			offData();
-			offCollected();
+			this._offState();
+			this._offView();
+			this._offData();
+			this._offCollected();
 		};
 	}
 
@@ -115,8 +122,9 @@ export class App {
 	start(cb?: (tick: Tick) => void) {
 		let prevSection: Section | null = null;
 		this.state.currentIndex = 0;
+		this.running.set(true);
+
 		const loop = new Loop(() => {
-			this.view.setView();
 			const currentIndex = this.state.currentIndex;
 			// console.log('index', currentIndex);
 			const { section } = this.state;
@@ -125,12 +133,11 @@ export class App {
 			const tick = this.state.tick;
 			if (!tick) {
 				this.emit('end', undefined);
-				return loop.stop();
+				return fullStop();
 			}
 
 			if (!loop.active) {
-				this.emit('stopped', undefined);
-				return loop.stop();
+				return;
 			}
 			this.emit('tick', tick);
 			if (this.state.currentLocation) {
@@ -158,20 +165,62 @@ export class App {
 		}, TICK_DURATION);
 
 		loop.start();
-		this.view.start();
 
-		this.on('stop', () => {
+		const pause = () => {
+			const resume = () => {
+				this.on('pause', pause);
+				this.off('resume', resume);
+				this.running.set(true);
+				loop.start();
+			};
+			this.running.set(false);
+			this.on('resume', resume);
+			this.off('pause', pause);
 			loop.stop();
-			this.state.currentIndex = -1;
-		});
-
-		return () => {
-			loop.stop();
+			loop.destroyEvents();
 		};
+		this.on('pause', pause);
+
+		const fullStop = () => {
+			loop.stop();
+			this.running.set(false);
+			this.state.currentIndex = -1;
+			this.off('stop', fullStop);
+		};
+
+
+		this.on('stop', fullStop);
+
+		return fullStop;
+	}
+
+	animate() {
+		return this.view.start();
 	}
 
 	stop() {
+		this.state.currentIndex = -1;
+		this.view.timer.set({
+			section: null,
+			second: -1,
+			index: -1,
+		});
 		this.emit('stop', undefined);
+	}
+
+	pause() {
+		this.emit('pause', undefined);
+	}
+
+	resume() {
+		if (this.state.currentIndex !== -1) return this.emit('resume', undefined);
+		return this.start();
+	}
+
+	reset() {
+		this._offState = this.state.init();
+		this._offCollected = this.checks.init();
+		if (this._target) this._offView = this.view.init(this._target);
 	}
 
 	goto(section: Section) {
@@ -202,7 +251,6 @@ export class App {
 		config.button.style.transform = 'translate(-50%, -50%)';
 
 		config.object.on('change', (state) => {
-			this.state.tick?.set(state as ActionState<unknown>);
 			if (!state.state) {
 				config.button.innerHTML = defaultHTML;
 				return;
@@ -216,10 +264,15 @@ export class App {
 		config.button.onclick = () => {
 			config.object.update(this.state.currentLocation ?? undefined);
 			this.emit('action', {
-				action: config.object.config.name,
+				action: config.object.config.abbr,
 				alliance: config.alliance,
-				point: this.state.currentLocation || [-1, -1]
+				point: this.state.currentLocation || [0,0],
 			});
+			this.state.tick?.set(new ActionState({
+				object: config.object as AppObject<unknown>,
+				state: config.object.state,
+				point: this.state.currentLocation || [0,0],
+			}) as ActionState<unknown>);
 		};
 
 		// if the button is held down, change the state
@@ -339,6 +392,10 @@ To disable: ctrl + d`);
 	}
 
 	submit() {
-		AppData.submitMatch(this.serialize());
+		return attemptAsync(async () => {
+			(await AppData.submitMatch(this.serialize())).unwrap();
+			this.reset();
+			return (await this.matchData.next()).unwrap();
+		});
 	}
 }

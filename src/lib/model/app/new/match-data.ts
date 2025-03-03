@@ -53,6 +53,10 @@ export class MatchData implements Writable<MD> {
 		};
 	}
 
+	get year() {
+		return parseInt(this.eventKey.match(/^\d{4}/)?.[0] || '2023');
+	}
+
 	private readonly subscribers = new Set<(data: MD) => void>();
 	private inform() {
 		this.subscribers.forEach((fn) => fn(this.data));
@@ -89,25 +93,39 @@ export class MatchData implements Writable<MD> {
 	getScoutGroup() {
 		return attemptAsync<number | null>(async () => {
 			const [
-				eventRes
-				// groupsRes
+				eventRes,
+				groupsRes
 			] = await Promise.all([
-				this.getEvent()
-				// this.getScoutGroups(),
+				this.getEvent(),
+				this.getScoutGroups(),
 			]);
 
 			const event = eventRes.unwrap();
-			// const groups = groupsRes.unwrap();
+			const groups = groupsRes.unwrap();
 
-			const match = event.matches.find(
-				(m) => m.comp_level === this.compLevel && m.match_number === this.match
+			const match = event.matches.findIndex(
+				(m) => {
+					if (this.eventKey !== m.event_key) return false;
+					if (m.comp_level !== this.compLevel) return false;
+					if (m.comp_level === 'sf') return m.set_number === this.match;
+					return m.match_number === this.match;
+				}
 			);
-			if (!match) return null;
-			const teams = teamsFromMatch(match);
-			const index = teams.indexOf(this.team);
-			if (index === -1) return null;
-			return index;
+			if (match === -1) return null;
+			for (let i = 0; i < groups.matchAssignments.length; i++) {
+				if (groups.matchAssignments[i][match] === this.team) return i;
+			}
+			return null;
 		});
+	}
+
+	getAlliance() {
+		const match = this.matchesGetter.find(m => m.comp_level === this.compLevel && this.compLevel === 'sf' ? m.set_number === this.match : m.match_number === this.match);
+		if (!match) return null;
+		const teams = teamsFromMatch(match);
+		if (teams.slice(0, 4).includes(this.team)) return 'red';
+		if (teams.slice(4).includes(this.team)) return 'blue';
+		return null;
 	}
 
 	/**
@@ -128,59 +146,71 @@ export class MatchData implements Writable<MD> {
 
 	next() {
 		return attemptAsync(async () => {
-			const [eventRes, scoutGroupsRes] = await Promise.all([
+			const [eventRes, scoutGroupsRes, currentGroup] = await Promise.all([
 				this.getEvent(),
-				this.getScoutGroups()
+				this.getScoutGroups(),
+				this.getScoutGroup(),
 			]);
 
 			const event = eventRes.unwrap();
 			const groups = scoutGroupsRes.unwrap();
+			const group = currentGroup.unwrap();
+			if (typeof group !== 'number') throw new Error('Group not found');
 
-			const matchIndex = event.matches.findIndex(
-				(m) => m.match_number === this.match && m.comp_level === this.compLevel
-			);
-			const nextMatch = event.matches[matchIndex + 1];
-
-			if (!nextMatch) return null;
-
-			const group = groups.matchAssignments.findIndex((matches) => {
-				const team = matches[matchIndex];
-				return team === this.team;
+			const matchIndex = event.matches.findIndex(m => {
+				if (this.eventKey !== m.event_key) return false;
+				if (m.comp_level !== this.compLevel) return false;
+				if (m.comp_level === 'sf') return m.set_number === this.match;
+				return m.match_number === this.match;
 			});
 
-			if (group === -1) return null;
+			const next = event.matches[matchIndex + 1];
+			if (!next) throw new Error('No Next Match');
 
-			const teams = teamsFromMatch(nextMatch);
-			return teams[group];
+			const nextTeam = groups.matchAssignments[group][matchIndex + 1];
+			if (!nextTeam) throw new Error('No Next Team');
+
+			return {
+				team: nextTeam,
+				match: next.match_number,
+				compLevel: next.comp_level as CompLevel,
+				eventKey: this.eventKey,
+			}
 		});
 	}
 
 	prev() {
 		return attemptAsync(async () => {
-			const [eventRes, scoutGroupsRes] = await Promise.all([
+			const [eventRes, scoutGroupsRes, currentGroup] = await Promise.all([
 				this.getEvent(),
-				this.getScoutGroups()
+				this.getScoutGroups(),
+				this.getScoutGroup(),
 			]);
 
 			const event = eventRes.unwrap();
 			const groups = scoutGroupsRes.unwrap();
+			const group = currentGroup.unwrap();
+			if (typeof group !== 'number') throw new Error('Group not found');
 
-			const matchIndex = event.matches.findIndex(
-				(m) => m.match_number === this.match && m.comp_level === this.compLevel
-			);
-			const prevMatch = event.matches[matchIndex - 1];
-
-			if (!prevMatch) return null;
-
-			const group = groups.matchAssignments.findIndex((matches) => {
-				const team = matches[matchIndex];
-				return team === this.team;
+			const matchIndex = event.matches.findIndex(m => {
+				if (this.eventKey !== m.event_key) return false;
+				if (m.comp_level !== this.compLevel) return false;
+				if (m.comp_level === 'sf') return m.set_number === this.match;
+				return m.match_number === this.match;
 			});
 
-			if (group === -1) return null;
+			const prev = event.matches[matchIndex - 1];
+			if (!prev) throw new Error('No Prev Match');
 
-			const teams = teamsFromMatch(prevMatch);
-			return teams[group];
+			const prevTeam = groups.matchAssignments[group][matchIndex - 1];
+			if (!prevTeam) throw new Error('No Prev Team');
+
+			return {
+				team: prevTeam,
+				match: prev.match_number,
+				compLevel: prev.comp_level as CompLevel,
+				eventKey: this.eventKey,
+			}
 		});
 	}
 

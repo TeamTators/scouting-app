@@ -70,6 +70,7 @@ export class Checks implements Writable<Check[]> {
 	}
 
 	public init() {
+		this.data = [];
         // CHECKS:
 			this.addCheck('success', 'autoMobility')
 				.addCheck('success', 'parked')
@@ -147,7 +148,7 @@ export class Checks implements Writable<Check[]> {
 						'They died after being hit',
 						'Unknown reason',
 						'Robot was still enabled, but was not moving',
-                        'Possibly a connection issue',
+                        'It looked like a radio issue',
 					]
 				})
 				.addCheck('danger', {

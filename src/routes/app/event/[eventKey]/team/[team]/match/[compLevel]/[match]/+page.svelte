@@ -8,6 +8,11 @@
 	import { globalData } from '$lib/model/app/new/global-data.svelte.js';
 	import { AppData } from '$lib/model/app/new/data-pull.js';
 	import Comments from '$lib/components/app/Comments.svelte';
+	import AppView from '$lib/components/app/App.svelte';
+	import { goto } from '$app/navigation';
+	import createApp from '$lib/model/app/new/apps/2025.js';
+	import { loadFileContents } from '$lib/utils/downloads';
+	import PostApp from '$lib/components/app/PostApp.svelte';
 
 	const { data } = $props();
 	const eventKey = $derived(data.eventKey);
@@ -38,25 +43,34 @@
 	//     year
 	// });
 
-	const app = new App({
+	// const app = new App({
+	// 	eventKey,
+	// 	match,
+	// 	team,
+	// 	compLevel,
+	// 	year,
+	// 	flipX: false,
+	// 	flipY: false
+	// });
+	const app = createApp({
 		eventKey,
 		match,
 		team,
 		compLevel,
-		year,
 		flipX: false,
 		flipY: false
 	});
-	let deinit = () => {};
+	// console.log(app);
+	// let deinit = () => {};
 
 	$effect(() => {
 		// console.log('Regenerating...');
-		deinit();
-		if (!target || browser) return console.error('Cannot initialize');
+		// deinit();
+		if (!browser) return console.error('Cannot initialize');
 
-		deinit = app.init(target);
-		app.start();
-		app.clickPoints(3);
+		// deinit = app.init(target);
+		// app.start();
+		// app.clickPoints(3);
 
 		app.matchData.set({
 			eventKey,
@@ -66,16 +80,14 @@
 		});
 	});
 
-	$inspect(app);
-
 	let target: HTMLDivElement;
 
 	onMount(() => {
-		deinit();
+		// deinit();
 
-		deinit = app.init(target);
-		app.start();
-		app.clickPoints(3);
+		// deinit = app.init(target);
+		// app.start();
+		// app.clickPoints(3);
 
 		AppData.getAccounts().then((data) => {
 			if (data.isErr()) return console.error(data.error);
@@ -84,13 +96,14 @@
 
 		return () => {
 			app?.stop();
-			deinit();
+			// deinit();
 		};
 	});
 
 	let matches: Modal;
 	let settings: Modal;
 	let upload: Modal;
+	let postApp: PostApp;
 </script>
 
 <div class="position-relative" style="height: 100vh;">
@@ -104,28 +117,51 @@
 			</button>
 		</div>
 		<div class="btn-group" role="group" style="z-index: 300;">
-            <button type="button" class="btn btn-primary" onclick={() => upload.show()}>
+            <button type="button" class="btn btn-success" onclick={() => upload.show()}>
                 Upload
             </button>
 			{#if page === 'app'}
-				<button type="button" class="btn btn-primary px-2" onclick={() => (page = 'post')}>
+				<button type="button" class="btn btn-primary" onclick={() => {
+					page = 'post';
+					postApp.render(app);
+				}}>
 					Post
 				</button>
 			{:else if page === 'post'}
-				<button type="button" class="btn btn-primary px-2" onclick={() => (page = 'app')}>
+				<button type="button" class="btn btn-primary" onclick={() => (page = 'app')}>
 					App
 				</button>
 			{/if}
 		</div>
 	</div>
 
-	<div bind:this={target} style="height: 100vh; display: {page === 'app' ? 'block' : 'none'};">
+	<!-- <div bind:this={target} style="height: 100vh; display: {page === 'app' ? 'block' : 'none'};">
 		<h3>Loading...</h3>
-	</div>
+	</div> -->
+	<AppView {app} {page} />
 
 	<div style="display: {page === 'post' ? 'block' : 'none'};">
 		<Comments {app} />
-		<button type="button" class="btn btn-success w-100" onclick={() => app.submit()}>Submit</button>
+		<div class="btn-group w-100" role="group">
+			<button type="button" class="btn btn-success" onclick={async () => {
+				const data = await app.submit();
+				if (data.isErr()) return console.error(data.error);
+				goto(`/app/event/${data.value.eventKey}/team/${data.value.team}/match/${data.value.compLevel}/${data.value.match}`);
+			}}>
+				<i class="material-icons">
+					file_upload
+				</i>
+				Submit Match
+			</button>
+			<button class="btn btn-danger" onclick={() => {
+				app.reset();
+				page = 'app';
+			}}>
+				<i class="material-icons">delete</i>
+				Discard Match
+			</button>
+		</div>
+		<PostApp {app} bind:this={postApp}/>
 	</div>
 </div>
 
@@ -155,22 +191,22 @@
 				<option value={a}></option>
 			{/each}
 		</datalist>
-		<label for="prescouting">Prescouting</label>
 		<input
-			class="form-check"
+			class="btn-check"
 			type="checkbox"
 			name="prescouting"
 			id="prescouting"
 			bind:checked={globalData.prescouting}
 		/>
-		<label for="practice">Practice</label>
+		<label for="prescouting" class="btn btn-outline-primary">Prescouting</label>
 		<input
-			class="form-check"
+			class="btn-check"
 			type="checkbox"
 			name="practice"
 			id="practice"
 			bind:checked={globalData.practice}
 		/>
+		<label for="practice" class="btn btn-outline-primary">Practice</label>
 		<!-- TODO: Flip x and y -->
 	{/snippet}
 	{#snippet buttons()}{/snippet}
@@ -178,14 +214,11 @@
 
 <Modal 
 	bind:this={upload} 
-	title="Upload" 
+	title="Upload From File" 
 	size="md"
 >
 	{#snippet body()}
-		<!-- <form action="/api/upload" method="post" enctype="multipart/form-data">
-			<input type="file" name="file" />
-			<button type="submit">Upload</button>
-		</form> -->
+		<button type="button" class="btn btn-success" onclick={() => AppData.uploadMatch()}>Upload Matches</button>
 	{/snippet}
 	{#snippet buttons()}{/snippet}
 </Modal>

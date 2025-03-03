@@ -27,6 +27,16 @@ export class AppState {
 		return null;
 	}
 
+	get lastLocation() {
+		for (let i = this.currentIndex; i >= 0; i--) {
+			const tick = this.ticks[i];
+			if (tick.point) {
+				return tick.point;
+			}
+		}
+		return [-1, -1];
+	}
+
 	init() {
 		this.ticks = Array.from(
 			{
@@ -39,7 +49,8 @@ export class AppState {
 	}
 
 	serialize(): TraceArray {
-		return this.ticks
+		const ticks = this.ticks.slice(1);
+		return ticks
 			.filter((t) => !!t.point)
 			.map((t) => [t.index, t.point?.[0] || 0, t.point?.[1] || 0, t.action]);
 	}
