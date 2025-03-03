@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import type { App } from '$lib/model/app/new/app';
+	import type { App } from '$lib/model/app/app';
 	import { onMount } from 'svelte';
 	import type { CompLevel, TBAEvent, TBAMatch, TBATeam } from 'tatorscout/tba';
 	import { dateString } from 'ts-utils/clock';
@@ -75,27 +75,35 @@
 	<div class="container-fluid">
 		<div class="row mb-3">
 			<div class="btn-group" role="group">
-				<button type="button" class="btn btn-primary" onclick={async () => {
-					const data = await matchData.prev();
-					if (data.isErr()) return console.error(data.error);
+				<button
+					type="button"
+					class="btn btn-primary"
+					onclick={async () => {
+						const data = await matchData.prev();
+						if (data.isErr()) return console.error(data.error);
 
-					goto(`/app/event/${data.value.eventKey}/team/${data.value.team}/match/${data.value.compLevel}/${data.value.match}`);
-				}}>
-					<i class="material-icons">
-						arrow_left
-					</i>
+						goto(
+							`/app/event/${data.value.eventKey}/team/${data.value.team}/match/${data.value.compLevel}/${data.value.match}`
+						);
+					}}
+				>
+					<i class="material-icons"> arrow_left </i>
 					Prev
 				</button>
-				<button type="button" class="btn btn-success" onclick={async () => {
-					const data = await matchData.next();
-					if (data.isErr()) return console.error(data.error);
+				<button
+					type="button"
+					class="btn btn-success"
+					onclick={async () => {
+						const data = await matchData.next();
+						if (data.isErr()) return console.error(data.error);
 
-					goto(`/app/event/${data.value.eventKey}/team/${data.value.team}/match/${data.value.compLevel}/${data.value.match}`);
-				}}>
+						goto(
+							`/app/event/${data.value.eventKey}/team/${data.value.team}/match/${data.value.compLevel}/${data.value.match}`
+						);
+					}}
+				>
 					Next
-					<i class="material-icons">
-						arrow_right
-					</i>
+					<i class="material-icons"> arrow_right </i>
 				</button>
 			</div>
 		</div>
@@ -121,16 +129,13 @@
 									match.match_number === $matchData.match}
 							>
 								<td>
-									<p class="ws-nowrap mb-2"
-										style="color: var(--match) !important;"
-									>
+									<p class="ws-nowrap mb-2" style="color: var(--match) !important;">
 										{match.comp_level}
 										{match.match_number}
 									</p>
 								</td>
 								<td>
-									<p class="ws-nowrap mb-2"
-										style="color: var(--match) !important;">
+									<p class="ws-nowrap mb-2" style="color: var(--match) !important;">
 										{match.predicted_time ? dateTime(match.predicted_time * 1000) : 'unknown'}
 									</p>
 								</td>
@@ -147,7 +152,6 @@
 			</div>
 		</div>
 	</div>
-
 {:else}
 	<p>Loading...</p>
 {/if}
@@ -155,5 +159,5 @@
 <style>
 	.highlight {
 		--match: var(--bg-info);
-    }
+	}
 </style>

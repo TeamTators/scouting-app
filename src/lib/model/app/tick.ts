@@ -1,75 +1,26 @@
+import type { Action } from 'tatorscout/trace';
+import { App, SECTIONS, TICKS_PER_SECOND, type Section } from './app';
+import type { Point2D } from 'math/point';
 import { ActionState } from './app-object';
-import { type Point2D } from 'math/point';
-import { type Action } from 'tatorscout/trace';
-import { type CollectedData } from './app';
-import { App } from './app';
-import { type Section } from './app';
 
-/**
- * Tick of the match
- * @date 1/9/2024 - 3:08:20 AM
- *
- * @export
- * @class Tick
- * @typedef {Tick}
- */
-export class Tick<actions = Action> {
-	/**
-	 * Data collected at this tick
-	 * @date 1/9/2024 - 3:08:20 AM
-	 *
-	 * @private
-	 * @type {CollectedData}
-	 */
-	private data: CollectedData<actions> | null = null;
-
-	/**
-	 * Point of the robot at this tick
-	 * @date 1/9/2024 - 3:08:20 AM
-	 *
-	 * @public
-	 * @type {(Point2D | null)}
-	 */
+export class Tick {
+	public action: Action | 0 = 0;
 	public point: Point2D | null = null;
 
-	/**
-	 * Creates an instance of Tick.
-	 * @date 1/9/2024 - 3:08:20 AM
-	 *
-	 * @constructor
-	 * @param {number} time
-	 * @param {number} index
-	 * @param {App} app
-	 */
+	public data: ActionState | null = null;
+
 	constructor(
 		public readonly time: number,
 		public readonly index: number,
 		public readonly app: App
 	) {}
 
-	/**
-	 * Nearest second
-	 * @date 1/9/2024 - 3:08:20 AM
-	 *
-	 * @public
-	 * @readonly
-	 * @type {number}
-	 */
-	public get second(): number {
-		// console.log(this.index);
-		return Math.round(this.index / App.ticksPerSecond);
+	public get second() {
+		return Math.round(this.index / TICKS_PER_SECOND);
 	}
 
-	/**
-	 * Section of the match
-	 * @date 1/9/2024 - 3:08:20 AM
-	 *
-	 * @public
-	 * @readonly
-	 * @type {(Section | null)}
-	 */
-	public get section(): Section | null {
-		for (const [section, range] of Object.entries(App.sections)) {
+	public get section() {
+		for (const [section, range] of Object.entries(SECTIONS)) {
 			const [start, end] = range as number[];
 			if (this.second >= start && this.second <= end) {
 				return section as Section;
@@ -79,69 +30,25 @@ export class Tick<actions = Action> {
 		return null;
 	}
 
-	/**
-	 * Set the data collected at this tick
-	 * @date 1/9/2024 - 3:08:20 AM
-	 *
-	 * @public
-	 * @param {CollectedData} data
-	 */
-	public set(data: CollectedData) {
-		if (this.data instanceof ActionState) {
-			this.next()?.set(data); // set next tick's data
-			return;
-		}
-		this.data = data;
-
-		if (data instanceof ActionState) {
-			data.tick = this;
-		}
-	}
-
-	/**
-	 * Removes data collected at this tick
-	 * @date 1/25/2024 - 4:59:07 PM
-	 *
-	 * @public
-	 */
-	public clear() {
-		if (this.data instanceof ActionState) {
-			this.data.tick = null;
-		}
-
+	clear() {
+		this.action = 0;
+		this.point = null;
 		this.data = null;
 	}
 
-	/**
-	 * Get the data collected at this tick
-	 * @date 1/9/2024 - 3:08:20 AM
-	 *
-	 * @public
-	 * @returns {CollectedData}
-	 */
-	public get(): CollectedData {
-		return this.data;
+	set(state: ActionState) {
+		if (this.data instanceof ActionState) {
+			this.next()?.set(state);
+			return;
+		}
+
+		this.data = state;
+		state.tick = this;
+		console.log('set', state.config.object.config.abbr);
+		this.action = state.config.object.config.abbr as Action;
 	}
 
-	/**
-	 * returns the next tick
-	 * @date 1/9/2024 - 3:08:20 AM
-	 *
-	 * @public
-	 * @returns {(Tick | undefined)}
-	 */
-	public next(): Tick | undefined {
-		return this.app.ticks[this.index + 1];
-	}
-
-	/**
-	 * returns the previous tick
-	 * @date 1/9/2024 - 3:08:20 AM
-	 *
-	 * @public
-	 * @returns {(Tick | undefined)}
-	 */
-	public prev(): Tick | undefined {
-		return this.app.ticks[this.index - 1];
+	next(): Tick | undefined {
+		return this.app.state.ticks[this.app.state.currentIndex + 1];
 	}
 }

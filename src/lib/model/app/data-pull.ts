@@ -31,7 +31,7 @@ export namespace AppData {
 				const response = await fetch('/api' + url, {
 					method: 'GET'
 				});
-				
+
 				if (!response.ok) throw new Error('Failed to fetch data');
 				const data = await response.json();
 
@@ -56,10 +56,10 @@ export namespace AppData {
 			await fetch('/api' + url, {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/json',
+					'Content-Type': 'application/json'
 				},
-				body: JSON.stringify(body),
-			}).then(r => r.json());
+				body: JSON.stringify(body)
+			}).then((r) => r.json());
 		});
 	};
 
@@ -128,7 +128,7 @@ export namespace AppData {
 		flipX: z.boolean(),
 		flipY: z.boolean(),
 		checks: z.array(z.string()),
-		comments: z.record(z.string()),
+		comments: z.record(z.string())
 	});
 
 	const saveMatches = (data: Match[]) => {
@@ -145,21 +145,28 @@ export namespace AppData {
 			const saved = localStorage.getItem(CACHE_VERSION + 'saved-matches') || '[]';
 			return z.array(matchSchema).parse(JSON.parse(saved));
 		});
-	}
+	};
 
 	const downloadMatch = (data: Match) => {
-		return downloadText(JSON.stringify(data), `${data.eventKey}:${data.compLevel}:${data.match}:${data.team}.${CACHE_VERSION}.match`)
-	}
+		return downloadText(
+			JSON.stringify(data),
+			`${data.eventKey}:${data.compLevel}:${data.match}:${data.team}.${CACHE_VERSION}.match`
+		);
+	};
 
 	export const uploadMatch = () => {
 		return attemptAsync(async () => {
-			const matches = (await loadFileContents()).unwrap().filter(f => f.name.endsWith(`.${CACHE_VERSION}.match`));
-			return Promise.all(matches.map(async m => {
-				const parsed = matchSchema.safeParse(JSON.parse(m.text));
-				if (parsed.success) {
-					return (await submitMatch(parsed.data)).unwrap();
-				}
-			}));
+			const matches = (await loadFileContents())
+				.unwrap()
+				.filter((f) => f.name.endsWith(`.${CACHE_VERSION}.match`));
+			return Promise.all(
+				matches.map(async (m) => {
+					const parsed = matchSchema.safeParse(JSON.parse(m.text));
+					if (parsed.success) {
+						return (await submitMatch(parsed.data)).unwrap();
+					}
+				})
+			);
 		});
 	};
 

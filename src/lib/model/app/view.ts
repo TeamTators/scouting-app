@@ -80,16 +80,18 @@ export class AppView {
 		cover.style.opacity = '0.5';
 		const removeCover = (e: MouseEvent | TouchEvent) => {
 			if (e instanceof MouseEvent) {
-				canvas.ctx.canvas.dispatchEvent(new MouseEvent('mousedown', { ...e, }));
-			} 
+				canvas.ctx.canvas.dispatchEvent(new MouseEvent('mousedown', { ...e }));
+			}
 			if (e instanceof TouchEvent) {
-				canvas.ctx.canvas.dispatchEvent(new TouchEvent('touchstart', { 
-					touches: [
-						{
-							...e.touches[0]
-						}
-					]
-				}));
+				canvas.ctx.canvas.dispatchEvent(
+					new TouchEvent('touchstart', {
+						touches: [
+							{
+								...e.touches[0]
+							}
+						]
+					})
+				);
 			}
 
 			target.removeChild(cover);
@@ -302,7 +304,7 @@ export class AppView {
 
 		p.properties.doDraw = () => config.condition(p);
 		p.properties.fill = {
-			color: config.color.toString('rgba'),
+			color: config.color.toString('rgba')
 		};
 		p.properties.line = {
 			color: 'transparent'
@@ -329,15 +331,17 @@ export class AppView {
 		img.style.left = `${x * this.canvas.width + this.xOffset}px`;
 		img.style.top = `${y * this.canvas.height + this.yOffset}px`;
 		img.style.backgroundColor = (() => {
-            switch (alliance) {
-                case 'red':
-                    return Color.fromBootstrap('red');
-                case 'blue':
-                    return Color.fromBootstrap('blue');
-                default:
-                    return Color.fromBootstrap('dark');
-            }
-        })().setAlpha(0.75).toString('rgba');
+			switch (alliance) {
+				case 'red':
+					return Color.fromBootstrap('red');
+				case 'blue':
+					return Color.fromBootstrap('blue');
+				default:
+					return Color.fromBootstrap('dark');
+			}
+		})()
+			.setAlpha(0.75)
+			.toString('rgba');
 
 		img.classList.add('animate__animated', 'animate__bounceIn', 'circle');
 
@@ -352,7 +356,7 @@ export class AppView {
 			const remove = () => {
 				img.remove();
 				img.removeEventListener('animationend', remove);
-			}
+			};
 			img.addEventListener('animationend', remove);
 		};
 

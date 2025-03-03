@@ -2,15 +2,15 @@
 	import { browser } from '$app/environment';
 	import MatchTable from '$lib/components/app/MatchTable.svelte';
 	import Modal from '$lib/components/bootstrap/Modal.svelte';
-	import { App } from '$lib/model/app/new/app.js';
+	import { App } from '$lib/model/app/app.js';
 	import { onMount } from 'svelte';
 	import type { CompLevel } from 'tatorscout/tba';
-	import { globalData } from '$lib/model/app/new/global-data.svelte.js';
-	import { AppData } from '$lib/model/app/new/data-pull.js';
+	import { globalData } from '$lib/model/app/global-data.svelte.js';
+	import { AppData } from '$lib/model/app/data-pull.js';
 	import Comments from '$lib/components/app/Comments.svelte';
 	import AppView from '$lib/components/app/App.svelte';
 	import { goto } from '$app/navigation';
-	import createApp from '$lib/model/app/new/apps/2025.js';
+	import createApp from '$lib/model/app/apps/2025.js';
 	import { loadFileContents } from '$lib/utils/downloads';
 	import PostApp from '$lib/components/app/PostApp.svelte';
 
@@ -52,20 +52,15 @@
 	// 	flipX: false,
 	// 	flipY: false
 	// });
-	const app = createApp({
-		eventKey,
-		match,
-		team,
-		compLevel,
-		flipX: false,
-		flipY: false
-	});
+	let app: App | undefined = $state(undefined);
+
 	// console.log(app);
 	// let deinit = () => {};
 
 	$effect(() => {
 		// console.log('Regenerating...');
 		// deinit();
+		if (!app) return;
 		if (!browser) return console.error('Cannot initialize');
 
 		// deinit = app.init(target);
@@ -88,6 +83,14 @@
 		// deinit = app.init(target);
 		// app.start();
 		// app.clickPoints(3);
+		app = createApp({
+			eventKey,
+			match,
+			team,
+			compLevel,
+			flipX: false,
+			flipY: false
+		});
 
 		AppData.getAccounts().then((data) => {
 			if (data.isErr()) return console.error(data.error);
@@ -103,7 +106,7 @@
 	let matches: Modal;
 	let settings: Modal;
 	let upload: Modal;
-	let postApp: PostApp;
+	let postApp: PostApp | undefined = $state(undefined);
 </script>
 
 <div class="position-relative" style="height: 100vh;">
@@ -117,20 +120,20 @@
 			</button>
 		</div>
 		<div class="btn-group" role="group" style="z-index: 300;">
-            <button type="button" class="btn btn-success" onclick={() => upload.show()}>
-                Upload
-            </button>
+			<button type="button" class="btn btn-success" onclick={() => upload.show()}> Upload </button>
 			{#if page === 'app'}
-				<button type="button" class="btn btn-primary" onclick={() => {
-					page = 'post';
-					postApp.render(app);
-				}}>
+				<button
+					type="button"
+					class="btn btn-primary"
+					onclick={() => {
+						page = 'post';
+						if (app) postApp?.render(app);
+					}}
+				>
 					Post
 				</button>
 			{:else if page === 'post'}
-				<button type="button" class="btn btn-primary" onclick={() => (page = 'app')}>
-					App
-				</button>
+				<button type="button" class="btn btn-primary" onclick={() => (page = 'app')}> App </button>
 			{/if}
 		</div>
 	</div>
@@ -138,31 +141,41 @@
 	<!-- <div bind:this={target} style="height: 100vh; display: {page === 'app' ? 'block' : 'none'};">
 		<h3>Loading...</h3>
 	</div> -->
-	<AppView {app} {page} />
+	{#if app}
+		<AppView {app} {page} />
 
-	<div style="display: {page === 'post' ? 'block' : 'none'};">
-		<Comments {app} />
-		<div class="btn-group w-100" role="group">
-			<button type="button" class="btn btn-success" onclick={async () => {
-				const data = await app.submit();
-				if (data.isErr()) return console.error(data.error);
-				goto(`/app/event/${data.value.eventKey}/team/${data.value.team}/match/${data.value.compLevel}/${data.value.match}`);
-			}}>
-				<i class="material-icons">
-					file_upload
-				</i>
-				Submit Match
-			</button>
-			<button class="btn btn-danger" onclick={() => {
-				app.reset();
-				page = 'app';
-			}}>
-				<i class="material-icons">delete</i>
-				Discard Match
-			</button>
+		<div style="display: {page === 'post' ? 'block' : 'none'};">
+			<Comments {app} />
+			<div class="btn-group w-100" role="group">
+				<button
+					type="button"
+					class="btn btn-success"
+					onclick={async () => {
+						const data = await app?.submit();
+						if (!data) return;
+						if (data.isErr()) return console.error(data.error);
+						goto(
+							`/app/event/${data.value.eventKey}/team/${data.value.team}/match/${data.value.compLevel}/${data.value.match}`
+						);
+					}}
+				>
+					<i class="material-icons"> file_upload </i>
+					Submit Match
+				</button>
+				<button
+					class="btn btn-danger"
+					onclick={() => {
+						app?.reset();
+						page = 'app';
+					}}
+				>
+					<i class="material-icons">delete</i>
+					Discard Match
+				</button>
+			</div>
+			<PostApp {app} bind:this={postApp} />
 		</div>
-		<PostApp {app} bind:this={postApp}/>
-	</div>
+	{/if}
 </div>
 
 <Modal bind:this={matches} title="Select Match" size="xl">
@@ -212,13 +225,11 @@
 	{#snippet buttons()}{/snippet}
 </Modal>
 
-<Modal 
-	bind:this={upload} 
-	title="Upload From File" 
-	size="md"
->
+<Modal bind:this={upload} title="Upload From File" size="md">
 	{#snippet body()}
-		<button type="button" class="btn btn-success" onclick={() => AppData.uploadMatch()}>Upload Matches</button>
+		<button type="button" class="btn btn-success" onclick={() => AppData.uploadMatch()}
+			>Upload Matches</button
+		>
 	{/snippet}
 	{#snippet buttons()}{/snippet}
 </Modal>

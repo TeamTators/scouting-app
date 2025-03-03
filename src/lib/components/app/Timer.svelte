@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { TOTAL_TICKS } from '$lib/model/app/new/app';
-	import { globalData } from '$lib/model/app/new/global-data.svelte';
-	import { Timer } from '$lib/model/app/new/timer';
+	import { TOTAL_TICKS } from '$lib/model/app/app';
+	import { globalData } from '$lib/model/app/global-data.svelte';
+	import { Timer } from '$lib/model/app/timer';
 	import { confirm } from '$lib/utils/prompts';
 
 	const minuteSecond = (seconds: number) => {
@@ -82,22 +82,28 @@
 				>
 			</div>
 			<div role="group" class="button-group">
-				{#if $running} 
-					<button type="button" class="btn btn-warning btn-sm" onclick={() => timer.app.pause()}
-							style="width: 50%"
-						>
+				{#if $running}
+					<button
+						type="button"
+						class="btn btn-warning btn-sm"
+						onclick={() => timer.app.pause()}
+						style="width: 50%"
+					>
 						<i class="material-icons">pause</i>
 					</button>
 				{:else}
-					<button type="button" class="btn btn-success btn-sm" onclick={() => timer.app.resume()}
+					<button
+						type="button"
+						class="btn btn-success btn-sm"
+						onclick={() => timer.app.resume()}
 						style="width: 50%"
-						>
+					>
 						<i class="material-icons">play_arrow</i>
 					</button>
 				{/if}
-				<button 
-					type="button" 
-					class="btn btn-sm btn-danger" 
+				<button
+					type="button"
+					class="btn btn-sm btn-danger"
 					onclick={() => {
 						confirm('Are you sure you want to reset the app?').then((res) => {
 							if (!res) return;
@@ -106,11 +112,9 @@
 						});
 					}}
 					style="width: 50%"
-					>
-						<i class="material-icons">
-							restart_alt
-						</i>
-					</button>
+				>
+					<i class="material-icons"> restart_alt </i>
+				</button>
 			</div>
 		</div>
 	</div>

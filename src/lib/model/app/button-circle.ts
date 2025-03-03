@@ -1,248 +1,149 @@
-import { toRadians } from 'math/graphing';
-import { App, getAlliance } from './app';
-import { type Point2D } from 'math/point';
+import type { Action } from 'tatorscout/trace';
+import type { App } from './app';
 import { Color } from 'colors/color';
-import { Iterator } from './app-object';
-import { Circle } from 'canvas/circle';
-import { Drawable, DrawableEvent } from 'canvas/drawable';
-import { type Action } from 'tatorscout/trace';
+import { Img } from 'canvas/image';
 import { Icon } from 'canvas/material-icons';
 import { SVG } from 'canvas/svg';
-import { Img } from 'canvas/image';
-import { CanvasEvent } from 'canvas/canvas';
-import type { CompLevel, TBAMatch } from 'tatorscout/tba';
+import { ActionState, Iterator } from './app-object';
+import { Drawable } from 'canvas/drawable';
+import { Circle } from 'canvas/circle';
+import type { Point2D } from 'math/point';
+import { toRadians } from 'math/graphing';
+// import { getAlliance } from './app';
+import { browser } from '$app/environment';
+import { teamsFromMatch, type TBAMatch } from 'tatorscout/tba';
 
 const { cos, sin } = Math;
 
 // ▄▀▀ ▄▀▄ █▄ █ ▄▀▀ ▀█▀ ▄▀▄ █▄ █ ▀█▀ ▄▀▀
 // ▀▄▄ ▀▄▀ █ ▀█ ▄█▀  █  █▀█ █ ▀█  █  ▄█▀
-const BUTTON_CIRCLE_DIAMETER = 0.1;
+const BUTTON_CIRCLE_DIAMETER = 150;
 const BUTTON_CIRCLE_RADIUS = BUTTON_CIRCLE_DIAMETER / 2;
-const MOVING_SCALE = 0.5; // size of the button when the robot is in motion
+const MOVING_SCALE = 1; // size of the button when the robot is in motion
 const FADE_SCALE = 0.5; // opacity of the button when the robot is not in motion
 const BUTTON_OFFSET = 0; // deg from 0
-const BUTTON_DIAMETER = 0.09;
-const BUTTON_RADIUS = BUTTON_DIAMETER / 2;
-const ICON_SIZE = 0.035;
+// const BUTTON_DIAMETER = 0.09;
+// const BUTTON_RADIUS = BUTTON_DIAMETER / 2;
+// const ICON_SIZE = 0.035;
 
-/**
- * Button on the button circle
- * @date 1/9/2024 - 3:34:30 AM
- *
- * @class Button
- * @typedef {Button}
- */
-class Button<actions = Action> extends Drawable<Button> {
-	/**
-	 * State machine for the button
-	 * @date 1/9/2024 - 3:34:30 AM
-	 *
-	 * @public
-	 * @readonly
-	 * @type {Iterator}
-	 */
+type ButtonConfig = {
+	name: string;
+	description: string;
+	abbr: Action;
+	defaultState?: number;
+	condition: (app: App) => boolean;
+	color: Color;
+	alliance: 'red' | 'blue' | null;
+};
+
+class Button {
+	public readonly el?: HTMLButtonElement;
 	public readonly iterator: Iterator;
-	/**
-	 * Creates a circle for the button image
-	 * @date 1/9/2024 - 3:34:30 AM
-	 *
-	 * @public
-	 * @readonly
-	 * @type {Circle}
-	 */
-	public readonly circle: Circle;
-	// public readonly el: HTMLButtonElement;
-	public readonly color: Color;
 
-	/**
-	 * Creates an instance of Button.
-	 * @date 1/9/2024 - 3:34:30 AM
-	 *
-	 * @constructor
-	 * @param {string} name
-	 * @param {string} description
-	 * @param {number} [defaultState=0]
-	 */
 	constructor(
-		public readonly name: string,
-		public readonly description: string,
-		public readonly abbr: actions,
-		defaultState: number,
-		public readonly condition: (app: App) => boolean,
-		public readonly index: number,
-		color: Color,
-		public readonly icon: SVG | Icon | Img,
-		public readonly alliance: 'red' | 'blue' | null = null
+		public readonly app: App,
+		public readonly config: ButtonConfig
 	) {
-		super();
-		this.color = color.clone();
-		// TODO: add icons
-		this.iterator = new Iterator<actions>(name, description, abbr, defaultState);
-		this.circle = new Circle([0, 0], BUTTON_DIAMETER / 2);
-		this.circle.properties.fill = {
-			color: this.color.toString('rgba')
-		};
-		this.circle.properties.line!.color = 'transparent';
+		this.iterator = new Iterator({
+			name: config.name,
+			description: config.description,
+			abbr: config.abbr
+		});
 
-		if (this.icon instanceof Img) {
-			this.icon.width = 0.04;
-			this.icon.height = 0.05;
-		} else {
-			this.icon.color = Color.fromBootstrap('light').toString('rgba');
+		if (browser) {
+			this.el = document.createElement('button');
+			this.el.classList.add(
+				'btn',
+				config.alliance === 'red' ? 'btn-danger' : 'btn-primary',
+				'circle',
+				'p-0'
+			);
+			this.el.onclick = () => {};
+			this.el.style.position = 'absolute';
+			this.el.style.display = 'none';
+			this.el.style.transform = 'translate(-50%, -50%)';
+			const img = document.createElement('img');
+			img.style.width = '50px';
+			img.style.height = '50px';
+			img.src = `/icons/${config.abbr}.png`;
+			this.el.appendChild(img);
 		}
-	}
-
-	draw(ctx: CanvasRenderingContext2D) {
-		this.circle.draw(ctx);
-		this.icon.draw(ctx);
-	}
-
-	isIn(point: Point2D) {
-		return this.circle.isIn(point);
 	}
 }
 
-/**
- * Button circle
- * @date 1/9/2024 - 3:34:30 AM
- *
- * @export
- * @class ButtonCircle
- * @typedef {ButtonCircle}
- */
-export class ButtonCircle<actions = Action> extends Drawable<ButtonCircle> {
-	/**
-	 * All buttons on the circle
-	 * @date 1/9/2024 - 3:34:30 AM
-	 *
-	 * @public
-	 * @readonly
-	 * @type {Button[]}
-	 */
-	public readonly buttons: Button<actions>[] = [];
+export class ButtonCircle extends Drawable<ButtonCircle> {
+	public readonly buttons: Button[] = [];
 
-	/**
-	 * Creates an instance of ButtonCircle.
-	 * @date 1/9/2024 - 3:34:30 AM
-	 *
-	 * @constructor
-	 * @param {App} app
-	 */
-	constructor(
-		public readonly app: App,
-		public readonly matchData: {
-			matches: TBAMatch[];
-			match: number;
-			team: number;
-			compLevel: CompLevel;
-		}
-	) {
+	constructor(public readonly app: App) {
 		super();
-
-		this.on('click', (event) => {
-			const [[x, y]] = event.points;
-
-			const visible = this.buttons.filter((button) => button.condition(this.app));
-
-			for (let i = 0; i < visible.length; i++) {
-				const b = visible[i];
-				if (b.circle.isIn([x, y])) {
-					b.emit('click', event);
-					break;
-				}
-			}
-		});
 	}
 
-	/**
-	 * Add a button to the circle
-	 * @date 1/9/2024 - 3:34:30 AM
-	 *
-	 * @param {string} name
-	 * @param {string} description
-	 * @param {number} [defaultState=0]
-	 * @param {() => boolean} [condition=() => true]
-	 * @returns {boolean) => void}
-	 */
-	addButton(
-		name: string,
-		description: string,
-		abbr: actions,
-		defaultState = 0,
-		condition: (app: App) => boolean = () => true,
-		color: Color,
-		alliance: 'red' | 'blue' | null,
-		icon?: Icon | SVG | Img
-	) {
-		if (this.buttons.length > 8) {
-			throw new Error('Cannot add more than 8 buttons');
-		}
-
-		const index = this.buttons.length;
-		const button = new Button(
-			name,
-			description,
-			abbr,
-			defaultState,
-			condition,
-			index,
-			color,
-			icon?.clone() ?? new Icon('help'),
-			alliance
-		);
-
-		this.app.appObjects.push(button.iterator);
+	addButton(config: ButtonConfig) {
+		// const index = this.buttons.length;
+		const button = new Button(this.app, config);
 
 		this.buttons.push(button);
 
 		const click = () => {
-			console.log('Clicked');
-			button.iterator.change();
+			button.iterator.update();
 			this.app.emit('action', {
-				action: name,
-				point: this.app.currentLocation || [-1, -1],
-				alliance
+				action: config.abbr,
+				point: this.app.state.currentLocation || [-1, -1],
+				alliance: config.alliance
 			});
+			if (button.iterator.state !== undefined)
+				this.app.state.tick?.set(
+					new ActionState({
+						object: button.iterator,
+						state: button.iterator.state,
+						point: this.app.state.currentLocation || [-1, -1]
+					}) as ActionState<unknown>
+				);
 		};
 
-		button.on('click', click);
-		button.on('touchstart', click);
+		button.el?.addEventListener('click', click);
 
-		button.iterator.listen((state, event) => {
-			switch (event) {
-				case 'new':
-					this.app.currentTick?.set(state);
-					break;
-				case 'undo':
-					state.tick?.clear();
-					break;
-			}
-		});
+		// const start = () => {
+		// 	console.log('down');
+		// 	this.app.view.clicking = true;
+		// };
+		// const end = () => {
+		// 	console.log('up');
+		// 	this.app.view.clicking = false;
+		// };
+
+		// button.on('click', click);
+		// button.on('touchstart', start);
+		// button.on('touchend', end);
+		// button.on('touchcancel', end);
+		// button.on('mousedown', start);
+		// button.on('mouseup', end);
 
 		return this;
 	}
 
 	async draw(ctx: CanvasRenderingContext2D) {
-		const { currentLocation, isDrawing } = this.app;
+		const currentLocation = this.app.state.currentLocation;
+		const isDrawing = this.app.view.drawing;
 		if (!currentLocation) return;
 		const [x, y] = currentLocation;
 
 		const currentAlliance = getAlliance({
-			matches: this.matchData.matches,
-			matchNumber: this.matchData.match,
-			teamNumber: this.matchData.team,
-			compLevel: this.matchData.compLevel
+			matches: this.app.matchData.matchesGetter,
+			matchNumber: this.app.matchData.match,
+			teamNumber: this.app.matchData.team,
+			compLevel: this.app.matchData.compLevel
 		});
 
 		const buttonCircleRadius = isDrawing
 			? BUTTON_CIRCLE_RADIUS * MOVING_SCALE
 			: BUTTON_CIRCLE_RADIUS;
-		const buttonRadius = isDrawing ? BUTTON_RADIUS * MOVING_SCALE : BUTTON_RADIUS;
-		const fade = isDrawing ? FADE_SCALE : 1;
+		// const buttonRadius = isDrawing ? BUTTON_RADIUS * MOVING_SCALE : BUTTON_RADIUS;
+		// const fade = isDrawing ? FADE_SCALE : 1;
 
 		const visible = this.buttons.filter((button) => {
-			const filter = button.condition(this.app);
-			const { alliance } = button;
+			const filter = !!button.config.condition?.(this.app);
+			const { alliance } = button.config;
 			if (alliance === null) return filter;
 			if (alliance === currentAlliance) return filter;
 			if (currentAlliance === null) return filter;
@@ -253,44 +154,90 @@ export class ButtonCircle<actions = Action> extends Drawable<ButtonCircle> {
 			const angle = toRadians((i * 360) / visible.length + BUTTON_OFFSET);
 
 			const b = visible[i];
-			b.circle.x = x + cos(angle) * buttonCircleRadius;
-			b.circle.y = y + sin(angle) * buttonCircleRadius * 2;
+			const el = b.el;
+			const canvas = this.app.view.canvas;
+			if (!el) continue;
+			if (!canvas) continue;
+			el.style.display = 'block';
+			const center = [
+				x * canvas.width + this.app.view.xOffset,
+				y * canvas.height + this.app.view.yOffset
+			];
+			el.style.left = `${center[0] + cos(angle) * buttonCircleRadius}px`;
+			el.style.top = `${center[1] + sin(angle) * buttonCircleRadius}px`;
 
-			if (b.icon instanceof Img) {
-				b.icon.x = b.circle.x - b.icon.width / 2;
-				b.icon.y = b.circle.y - b.icon.height / 2;
+			// b.circle.x = x + cos(angle) * buttonCircleRadius;
+			// b.circle.y = y + sin(angle) * buttonCircleRadius * 2;
 
-				b.icon.width = isDrawing ? ICON_SIZE * MOVING_SCALE : ICON_SIZE;
-				b.icon.height = (isDrawing ? ICON_SIZE * MOVING_SCALE : ICON_SIZE) * 2;
-			} else {
-				b.icon.x = b.circle.x;
-				b.icon.y = b.circle.y;
-			}
+			// if (b.icon instanceof Img) {
+			// 	b.icon.x = b.circle.x - b.icon.width / 2;
+			// 	b.icon.y = b.circle.y - b.icon.height / 2;
 
-			b.circle.radius = buttonRadius;
+			// 	b.icon.width = isDrawing ? ICON_SIZE * MOVING_SCALE : ICON_SIZE;
+			// 	b.icon.height = (isDrawing ? ICON_SIZE * MOVING_SCALE : ICON_SIZE) * 2;
+			// } else {
+			// 	if (b.icon) {
+			// 		b.icon.x = b.circle.x;
+			// 		b.icon.y = b.circle.y;
+			// 	}
+			// }
 
-			const size = b.circle.radius * 2 * ICON_SIZE;
+			// b.circle.radius = buttonRadius;
 
-			if (b.icon instanceof SVG) {
-				if (!b.icon.properties.text) b.icon.properties.text = {};
-				b.icon.properties.text!.height = size;
-				b.icon.properties.text!.width = size;
-			}
-			if (b.icon instanceof Icon) {
-				b.icon.size = size;
-			}
+			// const size = b.circle.radius * 2 * ICON_SIZE;
 
-			b.circle.properties.fill = {
-				color: b.color.setAlpha(fade).toString('rgba')
-			};
-			ctx.save();
-			b.draw(ctx);
-			ctx.restore();
+			// if (b.icon instanceof SVG) {
+			// 	if (!b.icon.properties.text) b.icon.properties.text = {};
+			// 	b.icon.properties.text!.height = size;
+			// 	b.icon.properties.text!.width = size;
+			// }
+			// if (b.icon instanceof Icon) {
+			// 	b.icon.size = size;
+			// }
+
+			// b.circle.properties.fill = {
+			// 	color: b.config.color.setAlpha(fade).toString('rgba')
+			// };
+			// ctx.save();
+			// b.draw(ctx);
+			// ctx.restore();
 		}
 	}
 
 	isIn(point: Point2D) {
-		const visible = this.buttons.filter((button) => button.condition(this.app));
-		return visible.some((button) => button.circle.isIn(point));
+		return false;
+		// const visible = this.buttons.filter((button) => button.config.condition?.(this.app));
+		// return visible.some((button) => button.circle.isIn(point));
+	}
+
+	init(target: HTMLElement) {
+		this.buttons.forEach((button) => {
+			if (button.el) target.appendChild(button.el);
+		});
+
+		return () => {};
 	}
 }
+
+const getAlliance = (data: {
+	matches: TBAMatch[];
+	matchNumber: number;
+	compLevel: string;
+	teamNumber: number;
+}): 'red' | 'blue' | null => {
+	const match = data.matches.find(
+		(m) => m.match_number === data.matchNumber && m.comp_level === data.compLevel
+	);
+
+	if (!match) return null;
+
+	const teams = teamsFromMatch(match);
+
+	if (teams.slice(0, 4).includes(data.teamNumber)) {
+		return 'red';
+	}
+	if (teams.slice(4).includes(data.teamNumber)) {
+		return 'blue';
+	}
+	return null;
+};

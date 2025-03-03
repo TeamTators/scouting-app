@@ -1,6 +1,6 @@
-import { redirect } from "@sveltejs/kit";
-import { ServerCode } from "ts-utils/status";
+import { redirect } from '@sveltejs/kit';
+import { ServerCode } from 'ts-utils/status';
 
 export const load = () => {
-    throw redirect(ServerCode.permanentRedirect, '/app');
+	throw redirect(ServerCode.permanentRedirect, '/app');
 };
