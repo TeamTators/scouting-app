@@ -11,9 +11,8 @@ import { Loop } from 'ts-utils/loop';
 import { TraceSchema } from 'tatorscout/trace';
 import { MatchSchema as MS, type MatchSchemaType } from '../../types/match';
 import terminal from '../utils/terminal';
-import { REMOTE } from '$env/static/private';
 
-const { SECRET_SERVER_API_KEY, SECRET_SERVER_DOMAIN } = process.env;
+const { SECRET_SERVER_API_KEY, SECRET_SERVER_DOMAIN, REMOTE } = process.env;
 export namespace Requests {
 	const post = (url: string, data: unknown) => {
 		return attemptAsync(async () => {
@@ -97,7 +96,7 @@ export namespace Requests {
 			if (!ok) throw new Error('Invalid data: ' + JSON.stringify(match));
 			const body = {
 				...match,
-				remote: REMOTE === 'true',
+				remote: REMOTE === 'true'
 			};
 			(
 				await Scouting.Matches.new({

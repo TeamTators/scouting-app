@@ -4,7 +4,8 @@ import terminal from '$lib/server/utils/terminal.js';
 import { MatchSchema } from '$lib/types/match.js';
 
 export const POST = async (event) => {
-	const respond = (message: string, status: number) => new Response(JSON.stringify({ message }), { status });
+	const respond = (message: string, status: number) =>
+		new Response(JSON.stringify({ message }), { status });
 	if (!(await auth(event))) {
 		// return new Response('Unauthorized', { status: 401 });
 		return respond('Unauthorized', 401);

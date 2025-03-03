@@ -95,7 +95,20 @@ export class App {
 		const { eventKey, compLevel, match, team, flipX, flipY } = this.config;
 		const { scout, prescouting, practice } = globalData;
 
-		return { trace, checks, comments, eventKey, compLevel, match, team, flipX, flipY, scout, prescouting, practice };
+		return {
+			trace,
+			checks,
+			comments,
+			eventKey,
+			compLevel,
+			match,
+			team,
+			flipX,
+			flipY,
+			scout,
+			prescouting,
+			practice
+		};
 	}
 
 	private _offState = () => {};

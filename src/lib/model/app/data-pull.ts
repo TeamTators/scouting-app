@@ -134,7 +134,7 @@ export namespace AppData {
 		comments: z.record(z.string()),
 		scout: z.string(),
 		prescouting: z.boolean(),
-		practice: z.boolean(),
+		practice: z.boolean()
 	});
 
 	const saveMatches = (data: Match[]) => {
