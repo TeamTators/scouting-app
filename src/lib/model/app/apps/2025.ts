@@ -11,8 +11,6 @@ export default (config: {
 	match: number;
 	team: number;
 	compLevel: CompLevel;
-	flipX: boolean;
-	flipY: boolean;
 	alliance: 'red' | 'blue' | null;
 }) => {
 	type Zone = {
@@ -209,74 +207,98 @@ export default (config: {
 		point: [0.267, 0.602],
 		object: blueObjects.cl1,
 		button: blueButtons.cl1,
-		alliance: 'blue'
+		alliance: 'blue',
+		staticX: true,
+		staticY: false,
 	});
 	app.addAppObject({
 		point: [0.267, 0.54],
 		object: blueObjects.cl2,
 		button: blueButtons.cl2,
-		alliance: 'blue'
+		alliance: 'blue',
+		staticX: true,
+		staticY: false,
 	});
 	app.addAppObject({
 		point: [0.267, 0.477],
 		object: blueObjects.cl3,
 		button: blueButtons.cl3,
-		alliance: 'blue'
+		alliance: 'blue',
+		staticX: true,
+		staticY: false,
 	});
 	app.addAppObject({
 		point: [0.267, 0.398],
 		object: blueObjects.cl4,
 		button: blueButtons.cl4,
-		alliance: 'blue'
+		alliance: 'blue',
+		staticX: true,
+		staticY: false,
 	});
 	app.addAppObject({
-		point: [0.498, 0.46],
+		point: [0.5, 0.46],
 		object: blueObjects.brg,
 		button: blueButtons.brg,
-		alliance: 'blue'
+		alliance: 'blue',
+		staticX: false,
+		staticY: false,
 	});
 	app.addAppObject({
 		point: [0.358, 0.972],
 		object: blueObjects.pcr,
 		button: blueButtons.pcr,
-		alliance: 'blue'
+		alliance: 'blue',
+		staticX: false,
+		staticY: false,
 	});
 
 	app.addAppObject({
 		point: [0.733, 0.602],
 		object: redObjects.cl1,
 		button: redButtons.cl1,
-		alliance: 'red'
+		alliance: 'red',
+		staticX: true,
+		staticY: false,
 	});
 	app.addAppObject({
 		point: [0.733, 0.54],
 		object: redObjects.cl2,
 		button: redButtons.cl2,
-		alliance: 'red'
+		alliance: 'red',
+		staticX: true,
+		staticY: false,
 	});
 	app.addAppObject({
 		point: [0.733, 0.477],
 		object: redObjects.cl3,
 		button: redButtons.cl3,
-		alliance: 'red'
+		alliance: 'red',
+		staticX: true,
+		staticY: false,
 	});
 	app.addAppObject({
 		point: [0.733, 0.398],
 		object: redObjects.cl4,
 		button: redButtons.cl4,
-		alliance: 'red'
+		alliance: 'red',
+		staticX: true,
+		staticY: false,
 	});
 	app.addAppObject({
 		point: [0.5, 0.54],
 		object: redObjects.brg,
 		button: redButtons.brg,
-		alliance: 'red'
+		alliance: 'red',
+		staticX: false,
+		staticY: false,
 	});
 	app.addAppObject({
 		point: [0.643, 0.028],
 		object: redObjects.pcr,
 		button: redButtons.pcr,
-		alliance: 'red'
+		alliance: 'red',
+		staticX: false,
+		staticY: false,
 	});
 
 	app.view.addArea({

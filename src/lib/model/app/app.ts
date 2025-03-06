@@ -62,6 +62,8 @@ export class App {
 		element: HTMLElement;
 		alliance: 'red' | 'blue' | null;
 		viewCondition?: (tick: Tick) => boolean;
+		staticX: boolean;
+		staticY: boolean;
 	}[] = [];
 	public readonly running = writable(false);
 
@@ -72,8 +74,6 @@ export class App {
 			match: number;
 			compLevel: CompLevel;
 			team: number;
-			flipX: boolean;
-			flipY: boolean;
 			alliance: 'red' | 'blue' | null;
 		}>
 	) {
@@ -94,8 +94,8 @@ export class App {
 	serialize() {
 		const trace = this.state.serialize();
 		const { checks, comments } = this.checks.serialize();
-		const { eventKey, compLevel, match, team, flipX, flipY } = this.config;
-		const { scout, prescouting, practice } = globalData;
+		const { eventKey, compLevel, match, team } = this.config;
+		const { scout, prescouting, practice, flipX, flipY } = globalData;
 		const { alliance } = this.matchData;
 
 		return {
@@ -252,13 +252,17 @@ export class App {
 		convert?: (state: T) => string;
 		alliance: 'red' | 'blue' | null;
 		viewCondition?: (tick: Tick) => boolean;
+		staticX: boolean;
+		staticY: boolean;
 	}) {
 		this.gameObjects.push({
 			point: config.point,
 			object: config.object as AppObject<unknown>,
 			element: config.button,
 			alliance: config.alliance,
-			viewCondition: config.viewCondition
+			viewCondition: config.viewCondition,
+			staticX: config.staticX,
+			staticY: config.staticY
 		});
 
 		if (!config.button.innerHTML) config.button.innerText = config.object.config.name;
