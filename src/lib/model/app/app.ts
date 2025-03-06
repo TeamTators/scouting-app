@@ -72,8 +72,6 @@ export class App {
 			match: number;
 			compLevel: CompLevel;
 			team: number;
-			flipX: boolean;
-			flipY: boolean;
 			alliance: 'red' | 'blue' | null;
 		}>
 	) {
@@ -94,8 +92,8 @@ export class App {
 	serialize() {
 		const trace = this.state.serialize();
 		const { checks, comments } = this.checks.serialize();
-		const { eventKey, compLevel, match, team, flipX, flipY } = this.config;
-		const { scout, prescouting, practice } = globalData;
+		const { eventKey, compLevel, match, team } = this.config;
+		const { scout, prescouting, practice, flipX, flipY } = globalData;
 		const { alliance } = this.matchData;
 
 		return {

@@ -5,11 +5,15 @@ export const globalData = $state(
 		? {
 				scout: localStorage.getItem('scout') ?? '',
 				prescouting: localStorage.getItem('prescouting') === 'true',
-				practice: localStorage.getItem('practice') === 'true'
+				practice: localStorage.getItem('practice') === 'true',
+				flipX: localStorage.getItem('flipX') === 'true',
+				flipY: localStorage.getItem('flipY') === 'true'
 			}
 		: {
 				scout: '',
 				prescouting: false,
-				practice: false
+				practice: false,
+				flipX: false,
+				flipY: false
 			}
 );

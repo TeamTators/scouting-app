@@ -35,6 +35,8 @@
 		localStorage.setItem('scout', globalData.scout);
 		localStorage.setItem('prescouting', globalData.prescouting ? 'true' : 'false');
 		localStorage.setItem('practice', globalData.practice ? 'true' : 'false');
+		localStorage.setItem('flipX', globalData.flipX ? 'true' : 'false');
+		localStorage.setItem('flipY', globalData.flipY ? 'true' : 'false');
 	});
 
 	// const d = $derived({
@@ -107,8 +109,6 @@
 			match,
 			team,
 			compLevel,
-			flipX: false,
-			flipY: false,
 			alliance
 		});
 

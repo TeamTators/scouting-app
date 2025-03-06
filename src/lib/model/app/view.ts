@@ -11,6 +11,7 @@ import { Polygon } from 'canvas/polygon';
 import type { Point2D } from 'math/point';
 import { browser } from '$app/environment';
 import { ButtonCircle } from './button-circle';
+import { globalData } from './global-data.svelte';
 
 export class AppView {
 	public readonly ctx: CanvasRenderingContext2D | undefined;
@@ -259,8 +260,8 @@ export class AppView {
 		for (const o of this.app.gameObjects) {
 			const { element, viewCondition } = o;
 			let [x, y] = o.point;
-			x = this.app.config.flipY ? 1 - x : x;
-			y = this.app.config.flipX ? 1 - y : y;
+			x = globalData.flipY ? 1 - x : x;
+			y = globalData.flipX ? 1 - y : y;
 
 			element.style.left = `${x * this.canvas.width + this.xOffset}px`;
 			element.style.top = `${y * this.canvas.height + this.yOffset}px`;

@@ -11,8 +11,6 @@ export default (config: {
 	match: number;
 	team: number;
 	compLevel: CompLevel;
-	flipX: boolean;
-	flipY: boolean;
 	alliance: 'red' | 'blue' | null;
 }) => {
 	type Zone = {
