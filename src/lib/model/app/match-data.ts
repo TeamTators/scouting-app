@@ -89,7 +89,10 @@ export class MatchData implements Writable<MD> {
 
 	newScoutGroup(group: number) {
 		return attemptAsync(async () => {
-			const [eventRes, scoutGroupsRes] = await Promise.all([this.getEvent(), this.getScoutGroups()]);
+			const [eventRes, scoutGroupsRes] = await Promise.all([
+				this.getEvent(),
+				this.getScoutGroups()
+			]);
 
 			const event = eventRes.unwrap();
 			const groups = scoutGroupsRes.unwrap();
@@ -107,11 +110,14 @@ export class MatchData implements Writable<MD> {
 			if (!t) throw new Error('Team not found');
 			return t;
 		});
-	};
+	}
 
 	getScoutGroup() {
 		return attemptAsync(async () => {
-			const [eventRes, scoutGroupsRes] = await Promise.all([this.getEvent(), this.getScoutGroups()]);
+			const [eventRes, scoutGroupsRes] = await Promise.all([
+				this.getEvent(),
+				this.getScoutGroups()
+			]);
 
 			const event = eventRes.unwrap();
 			const groups = scoutGroupsRes.unwrap();
