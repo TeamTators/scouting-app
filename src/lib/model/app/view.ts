@@ -56,8 +56,8 @@ export class AppView {
 			};
 
 			this.path.properties.line = {
-				color: 'yellow',
-			}
+				color: 'yellow'
+			};
 		}
 
 		this.buttonCircle = new ButtonCircle(this.app);
