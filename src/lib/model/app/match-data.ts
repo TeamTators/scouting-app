@@ -71,27 +71,6 @@ export class MatchData implements Writable<MD> {
 		return AppData.getScoutGroups(this.eventKey);
 	}
 
-	getScoutGroup() {
-		return attemptAsync<number | null>(async () => {
-			const [eventRes, groupsRes] = await Promise.all([this.getEvent(), this.getScoutGroups()]);
-
-			const event = eventRes.unwrap();
-			const groups = groupsRes.unwrap();
-
-			const match = event.matches.findIndex((m) => {
-				if (this.eventKey !== m.event_key) return false;
-				if (m.comp_level !== this.compLevel) return false;
-				if (m.comp_level === 'sf') return m.set_number === this.match;
-				return m.match_number === this.match;
-			});
-			if (match === -1) return null;
-			for (let i = 0; i < groups.matchAssignments.length; i++) {
-				if (groups.matchAssignments[i][match] === this.team) return i;
-			}
-			return null;
-		});
-	}
-
 	/**
 	 * This will return the matches for the event, it will start with an empty array and then populate it with the matches from the event if it is not already populated.
 	 *
@@ -106,6 +85,51 @@ export class MatchData implements Writable<MD> {
 			});
 		}
 		return this._matches;
+	}
+
+	newScoutGroup(group: number) {
+		return attemptAsync(async () => {
+			const [eventRes, scoutGroupsRes] = await Promise.all([this.getEvent(), this.getScoutGroups()]);
+
+			const event = eventRes.unwrap();
+			const groups = scoutGroupsRes.unwrap();
+
+			const matchIndex = event.matches.findIndex((m) => {
+				if (this.eventKey !== m.event_key) return false;
+				if (m.comp_level !== this.compLevel) return false;
+				if (m.comp_level === 'sf') return m.set_number === this.match;
+				return m.match_number === this.match;
+			});
+
+			if (matchIndex === -1) throw new Error('Match not found');
+
+			const t = groups.matchAssignments[group][matchIndex];
+			if (!t) throw new Error('Team not found');
+			return t;
+		});
+	};
+
+	getScoutGroup() {
+		return attemptAsync(async () => {
+			const [eventRes, scoutGroupsRes] = await Promise.all([this.getEvent(), this.getScoutGroups()]);
+
+			const event = eventRes.unwrap();
+			const groups = scoutGroupsRes.unwrap();
+
+			const matchIndex = event.matches.findIndex((m) => {
+				if (this.eventKey !== m.event_key) return false;
+				if (m.comp_level !== this.compLevel) return false;
+				if (m.comp_level === 'sf') return m.set_number === this.match;
+				return m.match_number === this.match;
+			});
+
+			if (matchIndex === -1) throw new Error('Match not found');
+
+			for (let i = 0; i < groups.matchAssignments.length; i++) {
+				if (groups.matchAssignments[i][matchIndex] === this.team) return i;
+			}
+			return null;
+		});
 	}
 
 	next() {

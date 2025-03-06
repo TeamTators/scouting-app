@@ -11,7 +11,6 @@
 	import AppView from '$lib/components/app/App.svelte';
 	import { goto } from '$app/navigation';
 	import createApp from '$lib/model/app/apps/2025.js';
-	import { loadFileContents } from '$lib/utils/downloads';
 	import PostApp from '$lib/components/app/PostApp.svelte';
 	import { getAlliance } from '$lib/model/app/match-data.js';
 
@@ -21,14 +20,17 @@
 	const team = $derived(parseInt(data.team));
 	const compLevel = $derived(data.compLevel) as CompLevel;
 	const year = $derived(data.year);
+
 	let alliance: 'red' | 'blue' | null = $state(null);
-
 	let page: 'app' | 'post' = $state('app');
-
 	let accounts: string[] = $state([]);
+	let app: App | undefined = $state(undefined);
+	let matches: Modal;
+	let settings: Modal;
+	let upload: Modal;
+	let postApp: PostApp | undefined = $state(undefined);
+	let group = $state(-1);
 
-	// const alliance = $derived(data.alliance);
-	// const exists = $derived(data.exists);
 
 	$effect(() => {
 		if (!browser) return;
@@ -39,44 +41,16 @@
 		localStorage.setItem('flipY', globalData.flipY ? 'true' : 'false');
 	});
 
-	// const d = $derived({
-	//     eventKey,
-	//     match,
-	//     team,
-	//     compLevel,
-	//     year
-	// });
-
-	// const app = new App({
-	// 	eventKey,
-	// 	match,
-	// 	team,
-	// 	compLevel,
-	// 	year,
-	// 	flipX: false,
-	// 	flipY: false
-	// });
-	let app: App | undefined = $state(undefined);
-
 	// console.log(app);
 	// let deinit = () => {};
 
 	$effect(() => {
-		// console.log('Regenerating...');
-		// deinit();
-		if (!app) return;
-		if (!browser) return console.error('Cannot initialize');
+		if (group === -1) return;
+		// setAlliance();
+	});
 
-		// these are the $effect triggers
-		if (!eventKey) return;
-		if (!match) return;
-		if (!team) return;
-		if (!compLevel) return;
-
-		// deinit = app.init(target);
-		// app.start();
-		// app.clickPoints(3);
-
+	const setAlliance = () => {
+		if (!browser) return;
 		getAlliance({
 			eventKey,
 			match,
@@ -85,7 +59,6 @@
 		}).then((res) => {
 			if (!res.isOk()) return console.error(res.error);
 			alliance = res.value;
-			console.log(alliance);
 			app?.matchData.set({
 				eventKey,
 				match,
@@ -94,9 +67,7 @@
 				alliance
 			});
 		});
-	});
-
-	let target: HTMLDivElement;
+	};
 
 	onMount(() => {
 		// deinit();
@@ -112,39 +83,34 @@
 			alliance
 		});
 
-		getAlliance({
-			eventKey,
-			match,
-			team,
-			compLevel
-		}).then((res) => {
-			if (!res.isOk()) return console.error(res.error);
-			alliance = res.value;
-			console.log(alliance);
-			app?.matchData.set({
-				eventKey,
-				match,
-				team,
-				compLevel,
-				alliance
-			});
+		app.matchData.getScoutGroup().then(d => {
+			if (d.isErr()) return console.error(d.error);
+			if (d.value === null) return;
+			group = d.value;
 		});
+
+		setAlliance();
 
 		AppData.getAccounts().then((data) => {
 			if (data.isErr()) return console.error(data.error);
 			accounts = data.value.map((a) => a.username);
 		});
 
+		const unsub = app.matchData.subscribe( async d => {
+			const res = await app?.matchData.getScoutGroup();
+			if (!res) return;
+			if (res.isErr()) return console.error(res.error);
+			if (res.value === null) return;
+			group = res.value;
+		});
+
 		return () => {
 			app?.stop();
+			unsub();
 			// deinit();
 		};
 	});
 
-	let matches: Modal;
-	let settings: Modal;
-	let upload: Modal;
-	let postApp: PostApp | undefined = $state(undefined);
 </script>
 
 <div class="position-relative" style="height: 100vh;">
@@ -228,52 +194,100 @@
 </Modal>
 <Modal bind:this={settings} title="Settings">
 	{#snippet body()}
-		<label for="scout">Scout</label>
-		<input
-			class="form-control"
-			type="text"
-			name="scout"
-			id="scout"
-			bind:value={globalData.scout}
-			list="accounts"
-		/>
-		<datalist id="accounts">
-			{#each accounts as a}
-				<option value={a}></option>
-			{/each}
-		</datalist>
-		<input
-			class="btn-check"
-			type="checkbox"
-			name="prescouting"
-			id="prescouting"
-			bind:checked={globalData.prescouting}
-		/>
-		<label for="prescouting" class="btn btn-outline-primary">Prescouting</label>
-		<input
-			class="btn-check"
-			type="checkbox"
-			name="practice"
-			id="practice"
-			bind:checked={globalData.practice}
-		/>
-		<label for="practice" class="btn btn-outline-primary">Practice</label>
-		<input
-			class="btn-check"
-			type="checkbox"
-			name="flip-x"
-			id="flip-x"
-			bind:checked={globalData.flipX}
-		/>
-		<label for="flip-x" class="btn btn-outline-primary">Flip X</label>
-		<input
-			class="btn-check"
-			type="checkbox"
-			name="flip-y"
-			id="flip-y"
-			bind:checked={globalData.flipY}
-		/>
-		<label for="flip-y" class="btn btn-outline-primary">Flip Y</label>
+	<div class="container-fluid">
+		<div class="row mb-3">
+			<label for="scout">Scout</label>
+			<input
+				class="form-control"
+				type="text"
+				name="scout"
+				id="scout"
+				bind:value={globalData.scout}
+				list="accounts"
+			/>
+			<datalist id="accounts">
+				{#each accounts as a}
+					<option value={a}></option>
+				{/each}
+			</datalist>
+		</div>
+		<div class="row mb-3">
+			<div class="btn-group" role="group">
+				<input
+				class="btn-check"
+				type="checkbox"
+				name="prescouting"
+				id="prescouting"
+				bind:checked={globalData.prescouting}
+			/>
+			<label for="prescouting" class="btn btn-outline-primary me-2">Prescouting</label>
+			<input
+				class="btn-check"
+				type="checkbox"
+				name="practice"
+				id="practice"
+				bind:checked={globalData.practice}
+			/>
+			<label for="practice" class="btn btn-outline-primary me-2">Practice</label>
+			<input
+				class="btn-check"
+				type="checkbox"
+				name="flip-x"
+				id="flip-x"
+				bind:checked={globalData.flipX}
+			/>
+			<label for="flip-x" class="btn btn-outline-primary me-2">Flip X</label>
+			<input
+				class="btn-check"
+				type="checkbox"
+				name="flip-y"
+				id="flip-y"
+				bind:checked={globalData.flipY}
+			/>
+			<label for="flip-y" class="btn btn-outline-primary">Flip Y</label>
+			</div>
+		</div>
+		<div class="row mb-3">
+			Select Group:
+			<div class="btn-group" role="group">
+				{#key group}
+					{#each [0, 1, 2, 3, 4, 5] as g}
+						<input
+							class="btn-check"
+							type="checkbox"
+							name="group-{g}"
+							id="group-{g}"
+							checked={group === g}
+							onchange={() => {
+								app?.matchData.newScoutGroup(g).then(async d => {
+									if (d.isErr()) return console.error(d.error);
+									const alliance = await getAlliance({
+										team: d.value,
+										eventKey,
+										match,
+										compLevel,
+									});
+									if (alliance.isErr()) return console.error(alliance.error);
+									app?.matchData.set({
+										team: d.value,
+										eventKey,
+										match,
+										compLevel,
+										alliance: alliance.value,
+									});
+									goto(
+										`/app/event/${eventKey}/team/${d.value}/match/${compLevel}/${match}`,
+									);
+								});
+							}}
+						/>
+						<label for="group-{g}" class="btn btn-outline-primary">{g + 1}</label>
+					{/each}
+				{/key}
+			</div>
+		</div>
+	</div>
+
 		<!-- TODO: Flip x and y -->
 	{/snippet}
 	{#snippet buttons()}{/snippet}
