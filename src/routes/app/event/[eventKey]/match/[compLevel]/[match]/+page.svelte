@@ -32,7 +32,10 @@
 	};
 </script>
 
-<div class="container">
+<div class="container p-3">
+	<div class="row mb-3">
+		<h2>Match: {compLevel}{match}</h2>
+	</div>
 	<div class="row">
 		<div class="container-fluid">
 			<div class="row">
@@ -55,6 +58,7 @@
 			</div>
 		</div>
 	</div>
+	<hr>
 	<div class="row">
 		<div class="grid">
 			{#each teams as team}

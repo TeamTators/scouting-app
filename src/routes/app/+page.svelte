@@ -36,10 +36,11 @@
 			>Goto: /app/event/{eventKey || '[Enter Event Key]'}</button
 		>
 	</div>
+	<hr>
 	{#each events as event}
-		<div class="row">
-			<a href="/app/event/{event.key}">
-				<div class="card">
+		<div class="row mb-3">
+			<a href="/app/event/{event.key}" class="text-reset text-decoration-none">
+				<div class="card bg-secondary">
 					<div class="card-body">
 						{event.name}
 					</div>

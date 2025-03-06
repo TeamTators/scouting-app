@@ -42,7 +42,10 @@
 	};
 </script>
 
-<div class="container">
+<div class="container p-3">
+	<div class="row mb-3">
+		<h2>Event: {eventKey}</h2>
+	</div>
 	<div class="row">
 		<div class="col-md-6">
 			<div class="container-fluid">
@@ -69,6 +72,7 @@
 						</button>
 					</div>
 				</div>
+				<hr>
 				<div class="row">
 					<div class="grid">
 						{#each matches as match}
@@ -104,6 +108,7 @@
 						</button>
 					</div>
 				</div>
+				<hr>
 				<div class="row">
 					<div class="grid">
 						{#each teams as team}
