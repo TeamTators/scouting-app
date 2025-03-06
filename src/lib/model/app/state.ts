@@ -49,8 +49,7 @@ export class AppState {
 	}
 
 	serialize(): TraceArray {
-		const ticks = this.ticks.slice(1);
-		return ticks
+		return this.ticks
 			.filter((t) => !!t.point)
 			.map((t) => [t.index, t.point?.[0] || 0, t.point?.[1] || 0, t.action]);
 	}
