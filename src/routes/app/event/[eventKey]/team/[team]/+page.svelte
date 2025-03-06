@@ -31,7 +31,10 @@
 	};
 </script>
 
-<div class="container">
+<div class="container p-3">
+	<div class="row mb-3">
+		<h2>Team: {team}</h2>
+	</div>
 	<div class="row">
 		<div class="input-group mb-3">
 			<input
@@ -53,6 +56,7 @@
 			</button>
 		</div>
 	</div>
+	<hr />
 	<div class="row">
 		<div class="grid">
 			{#each matches as match}
