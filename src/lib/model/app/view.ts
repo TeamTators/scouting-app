@@ -284,12 +284,14 @@ export class AppView {
 				}
 			}
 
-			if (alliance) {
+			if (alliance && o.alliance) {
 				if (alliance === o.alliance) {
 					element.style.display = 'block';
 				} else {
 					element.style.display = 'none';
 				}
+			} else {
+				element.style.display = 'block';
 			}
 		}
 

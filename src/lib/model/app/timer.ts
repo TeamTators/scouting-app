@@ -44,6 +44,11 @@ export class Timer implements Writable<{ second: number; section: string | null 
 	}
 
 	init(target: HTMLElement) {
+		this.set({
+			second: -1,
+			section: null,
+			index: -1
+		});
 		this.component = mount(TimerComponent, {
 			target,
 			props: {

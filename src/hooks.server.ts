@@ -4,6 +4,7 @@ import '$lib/server/structs/permissions';
 import '$lib/server/structs/universe';
 import '$lib/server/structs/log';
 import '$lib/server/structs/requests';
+import '$lib/server/structs/scouting';
 import { type Handle } from '@sveltejs/kit';
 import { ServerCode } from 'ts-utils/status';
 import { env } from '$env/dynamic/private';

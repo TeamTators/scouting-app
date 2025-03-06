@@ -11,9 +11,13 @@ export const POST = async (event) => {
 		return respond('Unauthorized', 401);
 	}
 
-	const parsed = MatchSchema.safeParse(await event.request.json());
+	const body = await event.request.json();
+
+	const parsed = MatchSchema.safeParse(body);
 
 	if (!parsed.success) {
+		// terminal.log('parsed:', parsed);
+		terminal.log('Invalid data:', parsed.error.issues);
 		// return new Response('Invalid data', { status: 400 });
 		return respond('Invalid data', 400);
 	}
