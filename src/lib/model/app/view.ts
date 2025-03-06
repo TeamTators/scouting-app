@@ -262,6 +262,11 @@ export class AppView {
 		this.canvas.ctx.canvas.style.top = `${this.yOffset}px`;
 		this.canvas.ctx.canvas.style.left = `${this.xOffset}px`;
 
+		if (this.background) {
+			this.background.mirror.x = globalData.flipY;
+			this.background.mirror.y = globalData.flipX;
+		}
+
 		for (const o of this.app.gameObjects) {
 			const { element, viewCondition, staticX, staticY } = o;
 			let [x, y] = o.point;

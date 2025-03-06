@@ -236,7 +236,7 @@ export default (config: {
 		staticY: false,
 	});
 	app.addAppObject({
-		point: [0.498, 0.46],
+		point: [0.5, 0.46],
 		object: blueObjects.brg,
 		button: blueButtons.brg,
 		alliance: 'blue',
