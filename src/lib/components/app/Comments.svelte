@@ -32,7 +32,9 @@
         "
 		>
 			{#each checks as check}
-				<CheckRow {check} {color} />
+				{#if check.data.render}
+					<CheckRow {check} {color} />
+				{/if}
 			{/each}
 		</div>
 	</div>
