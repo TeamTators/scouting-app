@@ -263,10 +263,10 @@ export class AppView {
 		this.canvas.ctx.canvas.style.left = `${this.xOffset}px`;
 
 		for (const o of this.app.gameObjects) {
-			const { element, viewCondition } = o;
+			const { element, viewCondition, staticX, staticY } = o;
 			let [x, y] = o.point;
-			x = globalData.flipY ? 1 - x : x;
-			y = globalData.flipX ? 1 - y : y;
+			if (!staticY) x = globalData.flipY ? 1 - x : x;
+			if (!staticX) y = globalData.flipX ? 1 - y : y;
 
 			element.style.left = `${x * this.canvas.width + this.xOffset}px`;
 			element.style.top = `${y * this.canvas.height + this.yOffset}px`;

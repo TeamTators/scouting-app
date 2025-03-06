@@ -62,6 +62,8 @@ export class App {
 		element: HTMLElement;
 		alliance: 'red' | 'blue' | null;
 		viewCondition?: (tick: Tick) => boolean;
+		staticX: boolean;
+		staticY: boolean;
 	}[] = [];
 	public readonly running = writable(false);
 
@@ -250,13 +252,17 @@ export class App {
 		convert?: (state: T) => string;
 		alliance: 'red' | 'blue' | null;
 		viewCondition?: (tick: Tick) => boolean;
+		staticX: boolean;
+		staticY: boolean;
 	}) {
 		this.gameObjects.push({
 			point: config.point,
 			object: config.object as AppObject<unknown>,
 			element: config.button,
 			alliance: config.alliance,
-			viewCondition: config.viewCondition
+			viewCondition: config.viewCondition,
+			staticX: config.staticX,
+			staticY: config.staticY
 		});
 
 		if (!config.button.innerHTML) config.button.innerText = config.object.config.name;

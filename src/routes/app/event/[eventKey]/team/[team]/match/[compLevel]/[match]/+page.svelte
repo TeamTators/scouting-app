@@ -258,6 +258,22 @@
 			bind:checked={globalData.practice}
 		/>
 		<label for="practice" class="btn btn-outline-primary">Practice</label>
+		<input
+			class="btn-check"
+			type="checkbox"
+			name="flip-x"
+			id="flip-x"
+			bind:checked={globalData.flipX}
+		/>
+		<label for="flip-x" class="btn btn-outline-primary">Flip X</label>
+		<input
+			class="btn-check"
+			type="checkbox"
+			name="flip-y"
+			id="flip-y"
+			bind:checked={globalData.flipY}
+		/>
+		<label for="flip-y" class="btn btn-outline-primary">Flip Y</label>
 		<!-- TODO: Flip x and y -->
 	{/snippet}
 	{#snippet buttons()}{/snippet}
