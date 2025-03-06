@@ -9,7 +9,7 @@
 	const { children } = $props();
 
 	onMount(() => {
-		document.addEventListener('dragstart', e => e.preventDefault());
+		document.addEventListener('dragstart', (e) => e.preventDefault());
 	});
 </script>
 
