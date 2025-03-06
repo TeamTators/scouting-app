@@ -58,7 +58,7 @@
 			</div>
 		</div>
 	</div>
-	<hr>
+	<hr />
 	<div class="row">
 		<div class="grid">
 			{#each teams as team}

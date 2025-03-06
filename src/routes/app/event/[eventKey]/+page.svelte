@@ -72,7 +72,7 @@
 						</button>
 					</div>
 				</div>
-				<hr>
+				<hr />
 				<div class="row">
 					<div class="grid">
 						{#each matches as match}
@@ -108,7 +108,7 @@
 						</button>
 					</div>
 				</div>
-				<hr>
+				<hr />
 				<div class="row">
 					<div class="grid">
 						{#each teams as team}

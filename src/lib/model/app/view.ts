@@ -73,9 +73,9 @@ export class AppView {
 			</div>
 		`;
 
-		this.app.matchData.getEvent().then(e => {
+		this.app.matchData.getEvent().then((e) => {
 			if (e.isErr()) return console.error(e.error);
-			const team = e.value.teams.find(t => t.team_number === this.app.matchData.team);
+			const team = e.value.teams.find((t) => t.team_number === this.app.matchData.team);
 			if (!team) return;
 			const el = cover.querySelector('.team-name');
 			if (el) el.textContent = team.nickname;

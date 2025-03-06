@@ -36,7 +36,7 @@
 			>Goto: /app/event/{eventKey || '[Enter Event Key]'}</button
 		>
 	</div>
-	<hr>
+	<hr />
 	{#each events as event}
 		<div class="row mb-3">
 			<a href="/app/event/{event.key}" class="text-reset text-decoration-none">
