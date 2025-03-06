@@ -209,7 +209,7 @@ export default (config: {
 		button: blueButtons.cl1,
 		alliance: 'blue',
 		staticX: true,
-		staticY: false,
+		staticY: false
 	});
 	app.addAppObject({
 		point: [0.267, 0.54],
@@ -217,7 +217,7 @@ export default (config: {
 		button: blueButtons.cl2,
 		alliance: 'blue',
 		staticX: true,
-		staticY: false,
+		staticY: false
 	});
 	app.addAppObject({
 		point: [0.267, 0.477],
@@ -225,7 +225,7 @@ export default (config: {
 		button: blueButtons.cl3,
 		alliance: 'blue',
 		staticX: true,
-		staticY: false,
+		staticY: false
 	});
 	app.addAppObject({
 		point: [0.267, 0.398],
@@ -233,7 +233,7 @@ export default (config: {
 		button: blueButtons.cl4,
 		alliance: 'blue',
 		staticX: true,
-		staticY: false,
+		staticY: false
 	});
 	app.addAppObject({
 		point: [0.5, 0.46],
@@ -241,7 +241,7 @@ export default (config: {
 		button: blueButtons.brg,
 		alliance: 'blue',
 		staticX: false,
-		staticY: false,
+		staticY: false
 	});
 	app.addAppObject({
 		point: [0.358, 0.972],
@@ -249,7 +249,7 @@ export default (config: {
 		button: blueButtons.pcr,
 		alliance: 'blue',
 		staticX: false,
-		staticY: false,
+		staticY: false
 	});
 
 	app.addAppObject({
@@ -258,7 +258,7 @@ export default (config: {
 		button: redButtons.cl1,
 		alliance: 'red',
 		staticX: true,
-		staticY: false,
+		staticY: false
 	});
 	app.addAppObject({
 		point: [0.733, 0.54],
@@ -266,7 +266,7 @@ export default (config: {
 		button: redButtons.cl2,
 		alliance: 'red',
 		staticX: true,
-		staticY: false,
+		staticY: false
 	});
 	app.addAppObject({
 		point: [0.733, 0.477],
@@ -274,7 +274,7 @@ export default (config: {
 		button: redButtons.cl3,
 		alliance: 'red',
 		staticX: true,
-		staticY: false,
+		staticY: false
 	});
 	app.addAppObject({
 		point: [0.733, 0.398],
@@ -282,7 +282,7 @@ export default (config: {
 		button: redButtons.cl4,
 		alliance: 'red',
 		staticX: true,
-		staticY: false,
+		staticY: false
 	});
 	app.addAppObject({
 		point: [0.5, 0.54],
@@ -290,7 +290,7 @@ export default (config: {
 		button: redButtons.brg,
 		alliance: 'red',
 		staticX: false,
-		staticY: false,
+		staticY: false
 	});
 	app.addAppObject({
 		point: [0.643, 0.028],
@@ -298,7 +298,7 @@ export default (config: {
 		button: redButtons.pcr,
 		alliance: 'red',
 		staticX: false,
-		staticY: false,
+		staticY: false
 	});
 
 	app.view.addArea({
