@@ -14,14 +14,18 @@
 	<div class="row mb-3">
 		<div class="col">
 			<div class="card border-{color}">
-				<label for="comment-{$check.name}" class="form-label px-3 pt-3"
-					>Please elaborate on the check: {capitalize(fromCamelCase($check.name))}</label
-				>
+				<label for="comment-{$check.name}" class="form-label px-3 pt-3">
+					{#if $check.render}
+						Please elaborate on the check:
+					{/if}
+					{capitalize(fromCamelCase($check.name))}
+				</label>
 				<textarea
 					class="form-control"
 					id="comment-{$check.name}"
 					rows="3"
 					bind:value={$check.comment}
+					placeholder="Write {capitalize(fromCamelCase($check.name))} comment here..."
 					oninput={(e) => {
 						check.update((c) => ({ ...c, comment: e.currentTarget.value }));
 					}}

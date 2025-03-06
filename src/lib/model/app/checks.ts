@@ -8,6 +8,7 @@ type C = {
 	builder: string[];
 	doComment: boolean;
 	type: 'success' | 'primary' | 'warning' | 'danger';
+	render: boolean;
 };
 
 export class Check implements Writable<C> {
@@ -27,6 +28,7 @@ export class Check implements Writable<C> {
 		this.data.comment = value.comment;
 		this.data.builder = value.builder;
 		this.data.doComment = value.doComment;
+		this.data.render = value.render;
 		this.subscribers.forEach((run) => run(this.data));
 	}
 
@@ -162,7 +164,51 @@ export class Checks implements Writable<Check[]> {
 			.addCheck('danger', {
 				name: 'spectator',
 				builder: []
-			});
+			})
+			.addComment('primary', 'auto', [
+				'Did not move in autonomous',
+				'Mobility only in auto',
+				'crossed leave line',
+				'1 coral auto',
+				'2 coral auto',
+				'3 coral auto',
+				'4 coral auto',
+				'5 coral auto',
+				'1 processor auto',
+				'2 processor auto',
+				'1 reef algae removal auto',
+				'2 reef algae removal auto',
+				'1 barge auto',
+				'2 barge auto'
+			])
+			.addComment('primary', 'teleop', [
+				'clever driver, adapts quickly',
+				'Drove around aimlessly',
+				'fast and maneuverable',
+				'gets fouls hitting bots in protected zones',
+				"gets in partner's way",
+				'hits opponents very hard',
+				'Mostly played defense',
+				'Very slow',
+				'Processor only',
+				'Coral only',
+				'Barge only',
+				'Held more than 1 coral',
+				'Held more than 1 algae',
+				'Extremely accurate coral',
+				'misses a lot of barge shots',
+				'Game piece jammed in bot',
+				'Often misses floor pick',
+				'Only shoots from one spot',
+				'Takes a long time to set up barge shot',
+				'Very fast floor pick'
+			])
+			.addComment('primary', 'endgame', [
+				'Climbs quickly',
+				'Cannot climb',
+				'Slow climb',
+				'Unstable climb'
+			]);
 
 		return () => {
 			this.data = [];
@@ -188,7 +234,8 @@ export class Checks implements Writable<Check[]> {
 				doComment: false,
 				comment: '',
 				value: false,
-				type
+				type,
+				render: true
 			});
 		} else {
 			c = new Check({
@@ -197,9 +244,29 @@ export class Checks implements Writable<Check[]> {
 				type,
 				doComment: true,
 				comment: '',
-				value: false
+				value: false,
+				render: true
 			});
 		}
+
+		this.update((checks) => {
+			checks.push(c);
+			return checks;
+		});
+
+		return this;
+	}
+
+	addComment(type: 'success' | 'primary' | 'warning' | 'danger', name: string, builder: string[]) {
+		const c = new Check({
+			builder,
+			name,
+			type,
+			doComment: true,
+			comment: '',
+			value: true,
+			render: false
+		});
 
 		this.update((checks) => {
 			checks.push(c);
@@ -227,7 +294,7 @@ export class Checks implements Writable<Check[]> {
 		const comments: Record<string, string> = {};
 
 		for (const check of this.data) {
-			checks.push(check.data.name);
+			if (check.data.value && check.data.render) checks.push(check.data.name);
 			if (check.data.doComment && check.data.comment.length)
 				comments[check.data.name] = check.data.comment;
 		}
