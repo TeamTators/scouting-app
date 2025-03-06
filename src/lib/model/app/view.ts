@@ -54,6 +54,10 @@ export class AppView {
 			this.border.properties.fill = {
 				color: new Color('red').setAlpha(0.5).toString('rgba')
 			};
+
+			this.path.properties.line = {
+				color: 'yellow'
+			};
 		}
 
 		this.buttonCircle = new ButtonCircle(this.app);
@@ -128,6 +132,7 @@ export class AppView {
 		// Set up listeners:
 		const push = (x: number, y: number) => {
 			if (!this.drawing) return;
+			if (x < 0 || y < 0) return;
 			this.path.add([x, y]);
 			this.app.state.currentLocation = [x, y];
 			if (timeout) clearTimeout(timeout);
