@@ -101,7 +101,19 @@ export class Checks implements Writable<Check[]> {
 				]
 			})
 			.addCheck('primary', {
-				name: 'groundPicks',
+				name: 'groundPicksCoral',
+				builder: ['Very fast', 'Fast', 'Average', 'Slow', 'Very slow', 'Inefficient']
+			})
+			.addCheck('primary', {
+				name: 'groundPicksAlgae',
+				builder: ['Very fast', 'Fast', 'Average', 'Slow', 'Very slow', 'Inefficient']
+			})
+			.addCheck('primary', {
+				name: 'placesCoral',
+				builder: ['Very fast', 'Fast', 'Average', 'Slow', 'Very slow', 'Inefficient']
+			})
+			.addCheck('primary', {
+				name: 'placesAlgae',
 				builder: ['Very fast', 'Fast', 'Average', 'Slow', 'Very slow', 'Inefficient']
 			})
 			.addCheck('warning', {
