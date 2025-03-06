@@ -13,14 +13,17 @@
 <div
 	style="
     aspect-ratio: 1 / 1;
-    width: 86px !important;
+    width: 98px !important;
 "
 >
 	<input
 		type="checkbox"
 		name={$check.name}
-		class="btn-check"
+		class="
+			btn-check
+		"
 		id="check-{color}-{$check.name}"
+		bind:checked={$check.value}
 		onchange={(e) => {
 			check.set({
 				...check.data,

@@ -17,6 +17,7 @@ import { AppData } from './data-pull';
 import { writable } from 'svelte/store';
 import { attemptAsync } from 'ts-utils';
 import { globalData } from './global-data.svelte';
+import type { MatchSchemaType } from '$lib/types/match';
 
 export const TICKS_PER_SECOND = 4;
 export const SECTIONS = {
@@ -92,27 +93,33 @@ export class App {
 	}
 
 	serialize() {
-		const trace = this.state.serialize();
-		const { checks, comments } = this.checks.serialize();
-		const { eventKey, compLevel, match, team } = this.config;
-		const { scout, prescouting, practice, flipX, flipY } = globalData;
-		const { alliance } = this.matchData;
-
-		return {
-			trace,
-			checks,
-			comments,
-			eventKey,
-			compLevel,
-			match,
-			team,
-			flipX,
-			flipY,
-			scout,
-			prescouting,
-			practice,
-			alliance
-		};
+		return attemptAsync<MatchSchemaType>(async () => {
+			const trace = this.state.serialize();
+			const { checks, comments } = this.checks.serialize();
+			const { eventKey, compLevel, match, team } = this.config;
+			const { scout, prescouting, practice, flipX, flipY } = globalData;
+			const { alliance } = this.matchData;
+			let group = -1;
+			const g = await this.matchData.getScoutGroup();
+			if (g.isOk() && g.value !== null) group = g.value;
+	
+			return {
+				trace,
+				checks,
+				comments,
+				eventKey,
+				compLevel,
+				match,
+				team,
+				flipX,
+				flipY,
+				scout,
+				prescouting,
+				practice,
+				alliance,
+				group,
+			};
+		});
 	}
 
 	private _offState = () => {};
@@ -121,6 +128,8 @@ export class App {
 	private _offCollected = () => {};
 	private _target: HTMLElement | undefined;
 
+	private _deinit = () => {};
+
 	init(target: HTMLElement) {
 		this._target = target;
 		this._offState = this.state.init();
@@ -128,12 +137,14 @@ export class App {
 		this._offData = this.matchData.init();
 		this._offCollected = this.checks.init();
 
-		return () => {
+		this._deinit = () => {
 			this._offState();
 			this._offView();
 			this._offData();
 			this._offCollected();
 		};
+
+		return this._deinit;
 	}
 
 	// Main event loop
@@ -235,9 +246,9 @@ export class App {
 	}
 
 	reset() {
-		this._offState = this.state.init();
-		this._offCollected = this.checks.init();
-		if (this._target) this._offView = this.view.init(this._target);
+		this._offState();
+		this._offCollected();
+		if (this._target) this.init(this._target);
 	}
 
 	goto(section: Section) {
@@ -416,7 +427,8 @@ To disable: ctrl + d`);
 
 	submit() {
 		return attemptAsync(async () => {
-			(await AppData.submitMatch(this.serialize(), true)).unwrap();
+			const serialized = (await this.serialize()).unwrap();
+			(await AppData.submitMatch(serialized, true)).unwrap();
 			this.reset();
 			return (await this.matchData.next()).unwrap();
 		});

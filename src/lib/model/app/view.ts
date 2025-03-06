@@ -64,6 +64,7 @@ export class AppView {
 		this.buttonCircle = new ButtonCircle(this.app);
 	}
 
+
 	init(target: HTMLElement) {
 		if (!this.canvasEl) return () => {};
 		const canvas = this.canvas;
@@ -284,12 +285,14 @@ export class AppView {
 				}
 			}
 
-			if (alliance) {
+			if (alliance && o.alliance) {
 				if (alliance === o.alliance) {
 					element.style.display = 'block';
 				} else {
 					element.style.display = 'none';
 				}
+			} else {
+				element.style.display = 'block';
 			}
 		}
 

@@ -92,8 +92,13 @@ export namespace Requests {
 
 	export const submitMatch = (match: MatchSchemaType) => {
 		return attemptAsync(async () => {
-			const ok = MatchSchema.safeParse(match).success;
-			if (!ok) throw new Error('Invalid data: ' + JSON.stringify(match));
+			console.log('Received: ', match);
+			const parsed = MS.safeParse(match);
+			if (!parsed.success) {
+				terminal.log(parsed.error);
+				terminal.error('Invalid data');
+				throw new Error('Invalid data: ' + JSON.stringify(match));
+			}
 			const body = {
 				...match,
 				remote: REMOTE === 'true'
@@ -102,9 +107,9 @@ export namespace Requests {
 				await Scouting.Matches.new({
 					body: JSON.stringify(body),
 					eventKey: match.eventKey,
-					team: match.teamNumber,
+					team: match.team,
 					compLevel: match.compLevel,
-					match: match.matchNumber
+					match: match.match
 				})
 			).unwrap();
 

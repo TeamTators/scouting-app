@@ -4,12 +4,15 @@ import { Tick } from './tick';
 import type { TraceArray } from 'tatorscout/trace';
 
 export class AppState {
-	public currentLocation: Point2D | null = null;
+	public currentLocation: Point2D | null;
 
-	public currentIndex = -1;
+	public currentIndex: number;
 	public ticks: Tick[] = [];
 
-	constructor(public readonly app: App) {}
+	constructor(public readonly app: App) {
+		this.currentLocation = null;
+		this.currentIndex = -1;
+	}
 
 	get tick(): Tick | undefined {
 		return this.ticks[this.currentIndex];
@@ -38,6 +41,8 @@ export class AppState {
 	}
 
 	init() {
+		this.currentIndex = -1;
+		this.currentLocation = null;
 		this.ticks = Array.from(
 			{
 				length: TOTAL_TICKS

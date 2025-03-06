@@ -128,12 +128,7 @@ export class ButtonCircle extends Drawable<ButtonCircle> {
 		if (!currentLocation) return;
 		const [x, y] = currentLocation;
 
-		const currentAlliance = getAlliance({
-			matches: this.app.matchData.matchesGetter,
-			matchNumber: this.app.matchData.match,
-			teamNumber: this.app.matchData.team,
-			compLevel: this.app.matchData.compLevel
-		});
+		const currentAlliance = this.app.matchData.alliance;
 
 		const buttonCircleRadius = isDrawing
 			? BUTTON_CIRCLE_RADIUS * MOVING_SCALE

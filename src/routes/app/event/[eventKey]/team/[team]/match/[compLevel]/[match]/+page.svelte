@@ -40,6 +40,10 @@
 		localStorage.setItem('flipY', globalData.flipY ? 'true' : 'false');
 	});
 
+	$effect(() => {
+		if (page === 'post') app?.pause();
+	});
+
 	// console.log(app);
 	// let deinit = () => {};
 
@@ -154,11 +158,20 @@
 					class="btn btn-success"
 					onclick={async () => {
 						const data = await app?.submit();
-						if (!data) return;
+						if (!data) return console.error('Could not find next match');
 						if (data.isErr()) return console.error(data.error);
 						goto(
 							`/app/event/${data.value.eventKey}/team/${data.value.team}/match/${data.value.compLevel}/${data.value.match}`
 						);
+						getAlliance(data.value).then(res => {
+							if (res.isErr()) return console.error(res.error);
+							app?.matchData.set({
+								...data.value,
+								alliance: res.value
+							});
+						})
+						page = 'app';
+						app?.reset();
 					}}
 				>
 					<i class="material-icons"> file_upload </i>

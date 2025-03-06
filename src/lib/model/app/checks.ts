@@ -89,6 +89,12 @@ export class Checks implements Writable<Check[]> {
 					'Stole strategically'
 				]
 			})
+			.addCheck('success', {
+				name: 'coopertition',
+				builder: [
+					'Placed into opponent processor',
+				]
+			})
 			.addCheck('primary', {
 				name: 'playedDefense',
 				builder: [
@@ -223,6 +229,13 @@ export class Checks implements Writable<Check[]> {
 			]);
 
 		return () => {
+			for (const check of this.data) {
+				check.update(c => ({
+					...c,
+					comment: '',
+					value: c.render ? false : c.value
+				}));
+			}
 			this.data = [];
 			this.subscribers.clear();
 			this.unsubs.forEach((u) => u());

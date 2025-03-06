@@ -8,6 +8,7 @@
 	import type { Drawable } from 'canvas/drawable';
 	import { Img } from 'canvas/image';
 	import { Path } from 'canvas/path';
+	import { serial } from 'drizzle-orm/mysql-core';
 	import { onMount } from 'svelte';
 	interface Props {
 		app: App;
@@ -20,7 +21,7 @@
 	const actions = new Map<number, number>();
 	let container: Container;
 
-	export const render = (app: App) => {
+	export const render = async (app: App) => {
 		actions.clear();
 		canvas.emitter.destroyEvents();
 		if (!canvas) return;
@@ -31,8 +32,9 @@
 			x: 0,
 			y: 0
 		});
-		const trace = app.serialize().trace;
-		console.log(trace);
+		const serialized = await app.serialize();
+		if (serialized.isErr()) return console.error(serialized.error);
+		const trace = serialized.value.trace;
 		container = new Container(
 			...(trace
 				.map((p, i, a) => {

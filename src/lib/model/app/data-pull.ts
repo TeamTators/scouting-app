@@ -3,6 +3,7 @@ import { EventSchema, MatchSchema, TeamSchema, type CompLevel } from 'tatorscout
 import { attempt, attemptAsync } from 'ts-utils/check';
 import { z } from 'zod';
 import { downloadText, loadFileContents } from '$lib/utils/downloads';
+import { MatchSchema as MS, type MatchSchemaType } from '$lib/types/match';
 
 export namespace AppData {
 	const CACHE_VERSION = 'v1';
@@ -53,7 +54,7 @@ export namespace AppData {
 
 	const post = async (url: string, body: unknown) => {
 		return attemptAsync(async () => {
-			await fetch('/api' + url, {
+			return await fetch('/api' + url, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
@@ -108,54 +109,23 @@ export namespace AppData {
 			return AssignmentSchema.parse(res);
 		});
 	};
+	// const saveMatches = (data: MatchSchemaType[]) => {
+	// 	return attempt(() => {
+	// 		const saved = localStorage.getItem(CACHE_VERSION + 'saved-matches') || '[]';
+	// 		const parsed = z.array(MS).parse(JSON.parse(saved));
+	// 		parsed.push(...data);
+	// 		localStorage.setItem(CACHE_VERSION + 'saved-matches', JSON.stringify(parsed));
+	// 	});
+	// };
 
-	export type Match = {
-		eventKey: string;
-		match: number;
-		team: number;
-		compLevel: CompLevel;
-		flipX: boolean;
-		flipY: boolean;
-		checks: string[];
-		comments: Record<string, string>;
-		scout: string;
-		prescouting: boolean;
-		practice: boolean;
-		alliance: 'red' | 'blue' | null;
-	};
+	// const getMatches = () => {
+	// 	return attempt<MatchSchemaType[]>(() => {
+	// 		const saved = localStorage.getItem(CACHE_VERSION + 'saved-matches') || '[]';
+	// 		return z.array(MS).parse(JSON.parse(saved)) as MatchSchemaType[];
+	// 	});
+	// };
 
-	export const matchSchema = z.object({
-		eventKey: z.string(),
-		match: z.number().int(),
-		team: z.number().int(),
-		compLevel: z.enum(['pr', 'qm', 'qf', 'sf', 'f']),
-		flipX: z.boolean(),
-		flipY: z.boolean(),
-		checks: z.array(z.string()),
-		comments: z.record(z.string()),
-		scout: z.string(),
-		prescouting: z.boolean(),
-		practice: z.boolean(),
-		alliance: z.union([z.literal('red'), z.literal('blue'), z.literal(null)])
-	});
-
-	const saveMatches = (data: Match[]) => {
-		return attempt(() => {
-			const saved = localStorage.getItem(CACHE_VERSION + 'saved-matches') || '[]';
-			const parsed = z.array(matchSchema).parse(JSON.parse(saved));
-			parsed.push(...data);
-			localStorage.setItem(CACHE_VERSION + 'saved-matches', JSON.stringify(parsed));
-		});
-	};
-
-	const getMatches = () => {
-		return attempt<Match[]>(() => {
-			const saved = localStorage.getItem(CACHE_VERSION + 'saved-matches') || '[]';
-			return z.array(matchSchema).parse(JSON.parse(saved));
-		});
-	};
-
-	const downloadMatch = (data: Match) => {
+	const downloadMatch = (data: MatchSchemaType) => {
 		return downloadText(
 			JSON.stringify(data),
 			`${data.eventKey}:${data.compLevel}:${data.match}:${data.team}.${CACHE_VERSION}.match`
@@ -169,7 +139,7 @@ export namespace AppData {
 				.filter((f) => f.name.endsWith(`.${CACHE_VERSION}.match`));
 			return Promise.all(
 				matches.map(async (m) => {
-					const parsed = matchSchema.safeParse(JSON.parse(m.text));
+					const parsed = MS.safeParse(JSON.parse(m.text));
 					if (parsed.success) {
 						return (await submitMatch(parsed.data, false)).unwrap();
 					}
@@ -178,10 +148,10 @@ export namespace AppData {
 		});
 	};
 
-	export const submitMatch = (data: Match, download: boolean) => {
+	export const submitMatch = (data: MatchSchemaType, download: boolean) => {
 		return attemptAsync(async () => {
-			const matches = getMatches().unwrap();
-			saveMatches([...matches, data]).unwrap();
+			// const matches = getMatches().unwrap();
+			// saveMatches([...matches, data]).unwrap();
 			if (download) (await downloadMatch(data)).unwrap();
 			return (await post('/submit-match', data)).unwrap();
 		});

@@ -247,7 +247,7 @@ export default (config: {
 		point: [0.358, 0.972],
 		object: blueObjects.pcr,
 		button: blueButtons.pcr,
-		alliance: 'blue',
+		alliance: null,
 		staticX: false,
 		staticY: false
 	});
@@ -296,7 +296,7 @@ export default (config: {
 		point: [0.643, 0.028],
 		object: redObjects.pcr,
 		button: redButtons.pcr,
-		alliance: 'red',
+		alliance: null,
 		staticX: false,
 		staticY: false
 	});
