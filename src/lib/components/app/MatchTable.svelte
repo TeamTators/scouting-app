@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import type { App } from '$lib/model/app/app';
+	import { getAlliance } from '$lib/model/app/match-data';
 	import { onMount } from 'svelte';
 	import type { CompLevel, TBAEvent, TBAMatch, TBATeam } from 'tatorscout/tba';
 	import { dateString } from 'ts-utils/clock';
@@ -58,11 +59,20 @@
 			class:text-dark={assignments[index] !==
 				team(match.alliances[alliance].team_keys[position - 1])}
 			onclick={() => {
-				app.matchData.set({
+				getAlliance({
 					eventKey: match.event_key,
 					team: team(match.alliances[alliance].team_keys[position - 1]),
 					compLevel: match.comp_level as CompLevel,
 					match: match.match_number
+				}).then((a) => {
+					if (a.isErr()) return console.error(a.error);
+					app.matchData.set({
+						eventKey: match.event_key,
+						team: team(match.alliances[alliance].team_keys[position - 1]),
+						compLevel: match.comp_level as CompLevel,
+						match: match.match_number,
+						alliance: a.value
+					});
 				});
 			}}
 		>

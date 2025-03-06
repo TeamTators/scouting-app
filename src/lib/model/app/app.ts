@@ -74,6 +74,7 @@ export class App {
 			team: number;
 			flipX: boolean;
 			flipY: boolean;
+			alliance: 'red' | 'blue' | null;
 		}>
 	) {
 		this.matchData = new MatchData(
@@ -81,7 +82,8 @@ export class App {
 			config.eventKey,
 			config.compLevel,
 			config.match,
-			config.team
+			config.team,
+			config.alliance
 		);
 
 		this.state = new AppState(this);
@@ -94,6 +96,7 @@ export class App {
 		const { checks, comments } = this.checks.serialize();
 		const { eventKey, compLevel, match, team, flipX, flipY } = this.config;
 		const { scout, prescouting, practice } = globalData;
+		const { alliance } = this.matchData;
 
 		return {
 			trace,
@@ -107,7 +110,8 @@ export class App {
 			flipY,
 			scout,
 			prescouting,
-			practice
+			practice,
+			alliance
 		};
 	}
 

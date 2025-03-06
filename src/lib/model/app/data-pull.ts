@@ -121,6 +121,7 @@ export namespace AppData {
 		scout: string;
 		prescouting: boolean;
 		practice: boolean;
+		alliance: 'red' | 'blue' | null;
 	};
 
 	export const matchSchema = z.object({
@@ -134,7 +135,8 @@ export namespace AppData {
 		comments: z.record(z.string()),
 		scout: z.string(),
 		prescouting: z.boolean(),
-		practice: z.boolean()
+		practice: z.boolean(),
+		alliance: z.union([z.literal('red'), z.literal('blue'), z.literal(null)])
 	});
 
 	const saveMatches = (data: Match[]) => {

@@ -13,6 +13,7 @@
 	import createApp from '$lib/model/app/apps/2025.js';
 	import { loadFileContents } from '$lib/utils/downloads';
 	import PostApp from '$lib/components/app/PostApp.svelte';
+	import { getAlliance } from '$lib/model/app/match-data.js';
 
 	const { data } = $props();
 	const eventKey = $derived(data.eventKey);
@@ -20,6 +21,7 @@
 	const team = $derived(parseInt(data.team));
 	const compLevel = $derived(data.compLevel) as CompLevel;
 	const year = $derived(data.year);
+	let alliance: 'red' | 'blue' | null = $state(null);
 
 	let page: 'app' | 'post' = $state('app');
 
@@ -63,15 +65,32 @@
 		if (!app) return;
 		if (!browser) return console.error('Cannot initialize');
 
+		// these are the $effect triggers
+		if (!eventKey) return;
+		if (!match) return;
+		if (!team) return;
+		if (!compLevel) return;
+
 		// deinit = app.init(target);
 		// app.start();
 		// app.clickPoints(3);
 
-		app.matchData.set({
+		getAlliance({
 			eventKey,
 			match,
 			team,
 			compLevel
+		}).then((res) => {
+			if (!res.isOk()) return console.error(res.error);
+			alliance = res.value;
+			console.log(alliance);
+			app?.matchData.set({
+				eventKey,
+				match,
+				team,
+				compLevel,
+				alliance
+			});
 		});
 	});
 
@@ -89,7 +108,26 @@
 			team,
 			compLevel,
 			flipX: false,
-			flipY: false
+			flipY: false,
+			alliance
+		});
+
+		getAlliance({
+			eventKey,
+			match,
+			team,
+			compLevel
+		}).then((res) => {
+			if (!res.isOk()) return console.error(res.error);
+			alliance = res.value;
+			console.log(alliance);
+			app?.matchData.set({
+				eventKey,
+				match,
+				team,
+				compLevel,
+				alliance
+			});
 		});
 
 		AppData.getAccounts().then((data) => {

@@ -30,9 +30,14 @@
 	<div class="card-body p-3">
 		<div class="grid-container">
 			<p class="mb-1">
-				{$matchData.eventKey}
-				{$matchData.compLevel}{$matchData.match} | {$matchData.team}
-				{minuteSecond($timer.second)}
+				<span
+					class:text-danger={$matchData.alliance === 'red'}
+					class:text-primary={$matchData.alliance === 'blue'}
+				>
+					{$matchData.eventKey}
+					{$matchData.compLevel}{$matchData.match} | {$matchData.team}
+					{minuteSecond($timer.second)}
+				</span>
 			</p>
 			<div
 				class="progress"

@@ -5,34 +5,12 @@ import type { Assignment } from 'tatorscout/scout-groups';
 import { attemptAsync } from 'ts-utils/check';
 import type { Writable } from 'svelte/store';
 
-export const getAlliance = (data: {
-	matches: TBAMatch[];
-	matchNumber: number;
-	compLevel: CompLevel;
-	teamNumber: number;
-}): 'red' | 'blue' | null => {
-	const match = data.matches.find(
-		(m) => m.match_number === data.matchNumber && m.comp_level === data.compLevel
-	);
-
-	if (!match) return null;
-
-	const teams = teamsFromMatch(match);
-
-	if (teams.slice(0, 4).includes(data.teamNumber)) {
-		return 'red';
-	}
-	if (teams.slice(4).includes(data.teamNumber)) {
-		return 'blue';
-	}
-	return null;
-};
-
 type MD = {
 	team: number;
 	eventKey: string;
 	compLevel: CompLevel;
 	match: number;
+	alliance: 'red' | 'blue' | null;
 };
 
 export class MatchData implements Writable<MD> {
@@ -41,7 +19,8 @@ export class MatchData implements Writable<MD> {
 		public eventKey: string,
 		public compLevel: CompLevel,
 		public match: number,
-		public team: number
+		public team: number,
+		public alliance: 'red' | 'blue' | null
 	) {}
 
 	get data(): MD {
@@ -49,7 +28,8 @@ export class MatchData implements Writable<MD> {
 			eventKey: this.eventKey,
 			match: this.match,
 			team: this.team,
-			compLevel: this.compLevel
+			compLevel: this.compLevel,
+			alliance: this.alliance
 		};
 	}
 
@@ -73,6 +53,7 @@ export class MatchData implements Writable<MD> {
 		this.match = data.match;
 		this.team = data.team;
 		this.compLevel = data.compLevel;
+		this.alliance = data.alliance;
 		this.inform();
 	}
 
@@ -109,19 +90,6 @@ export class MatchData implements Writable<MD> {
 			}
 			return null;
 		});
-	}
-
-	getAlliance() {
-		const match = this.matchesGetter.find((m) =>
-			m.comp_level === this.compLevel && this.compLevel === 'sf'
-				? m.set_number === this.match
-				: m.match_number === this.match
-		);
-		if (!match) return null;
-		const teams = teamsFromMatch(match);
-		if (teams.slice(0, 4).includes(this.team)) return 'red';
-		if (teams.slice(4).includes(this.team)) return 'blue';
-		return null;
 	}
 
 	/**
@@ -217,3 +185,30 @@ export class MatchData implements Writable<MD> {
 		return () => {};
 	}
 }
+
+export const getAlliance = (data: {
+	team: number;
+	eventKey: string;
+	compLevel: CompLevel;
+	match: number;
+}) => {
+	return attemptAsync(async () => {
+		const res = (await AppData.getEvent(data.eventKey)).unwrap();
+		const m = res.matches.find((m) => {
+			if (m.comp_level !== data.compLevel) return false;
+			if (m.event_key !== data.eventKey) return false;
+			if (m.comp_level === 'sf') {
+				return m.set_number === data.match;
+			}
+			return m.match_number === data.match;
+		});
+
+		console.log(m);
+
+		if (m) {
+			return m.alliances.red.team_keys.includes(`frc${data.team}`) ? 'red' : 'blue';
+		} else {
+			return null;
+		}
+	});
+};

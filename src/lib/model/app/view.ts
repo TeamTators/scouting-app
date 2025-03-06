@@ -230,7 +230,7 @@ export class AppView {
 		if (!this.canvas) return;
 		const target = this.target;
 		if (!target) return console.warn('No target set');
-		const alliance = this.app.matchData.getAlliance();
+		const alliance = this.app.matchData.alliance;
 
 		this.xOffset = 0;
 		this.yOffset = 0;

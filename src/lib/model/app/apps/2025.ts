@@ -13,6 +13,7 @@ export default (config: {
 	compLevel: CompLevel;
 	flipX: boolean;
 	flipY: boolean;
+	alliance: 'red' | 'blue' | null;
 }) => {
 	type Zone = {
 		red: Point2D[];
