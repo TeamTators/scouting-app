@@ -48,5 +48,4 @@ export namespace Scouting {
 	};
 }
 
-
 export const _matches = Scouting.Matches.table;

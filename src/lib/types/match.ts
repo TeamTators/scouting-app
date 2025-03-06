@@ -14,6 +14,6 @@ export const MatchSchema = z.object({
 	prescouting: z.boolean(),
 	practice: z.boolean(),
 	alliance: z.union([z.literal('red'), z.literal('blue'), z.literal(null)]),
-	group: z.number().int(),
+	group: z.number().int()
 });
 export type MatchSchemaType = z.infer<typeof MatchSchema>;

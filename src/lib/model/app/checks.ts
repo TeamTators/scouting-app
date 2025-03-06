@@ -91,9 +91,7 @@ export class Checks implements Writable<Check[]> {
 			})
 			.addCheck('success', {
 				name: 'coopertition',
-				builder: [
-					'Placed into opponent processor',
-				]
+				builder: ['Placed into opponent processor']
 			})
 			.addCheck('primary', {
 				name: 'playedDefense',
@@ -230,7 +228,7 @@ export class Checks implements Writable<Check[]> {
 
 		return () => {
 			for (const check of this.data) {
-				check.update(c => ({
+				check.update((c) => ({
 					...c,
 					comment: '',
 					value: c.render ? false : c.value

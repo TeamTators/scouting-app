@@ -163,13 +163,13 @@
 						goto(
 							`/app/event/${data.value.eventKey}/team/${data.value.team}/match/${data.value.compLevel}/${data.value.match}`
 						);
-						getAlliance(data.value).then(res => {
+						getAlliance(data.value).then((res) => {
 							if (res.isErr()) return console.error(res.error);
 							app?.matchData.set({
 								...data.value,
 								alliance: res.value
 							});
-						})
+						});
 						page = 'app';
 						app?.reset();
 					}}

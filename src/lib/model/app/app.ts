@@ -102,7 +102,7 @@ export class App {
 			let group = -1;
 			const g = await this.matchData.getScoutGroup();
 			if (g.isOk() && g.value !== null) group = g.value;
-	
+
 			return {
 				trace,
 				checks,
@@ -117,7 +117,7 @@ export class App {
 				prescouting,
 				practice,
 				alliance,
-				group,
+				group
 			};
 		});
 	}
