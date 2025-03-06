@@ -69,9 +69,18 @@ export class AppView {
 		const cover = document.createElement('div');
 		cover.innerHTML = `
 			<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 2em;">
-				Start tracing to start match <span class="text-info">${this.app.matchData.compLevel}${this.app.matchData.match}</span> for team <span class="text-info">${this.app.matchData.team}</span>
+				Start tracing to start match <span class="text-info">${this.app.matchData.compLevel}${this.app.matchData.match}</span> for team <span class="text-info">${this.app.matchData.team}</span> <span class="text-info team-name"></span>
 			</div>
 		`;
+
+		this.app.matchData.getEvent().then((e) => {
+			if (e.isErr()) return console.error(e.error);
+			const team = e.value.teams.find((t) => t.team_number === this.app.matchData.team);
+			if (!team) return;
+			const el = cover.querySelector('.team-name');
+			if (el) el.textContent = team.nickname;
+		});
+
 		cover.style.position = 'absolute';
 		cover.style.width = '100vw';
 		cover.style.height = '100vh';
