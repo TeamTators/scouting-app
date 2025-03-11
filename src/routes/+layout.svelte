@@ -10,8 +10,7 @@
 
 	onMount(() => {
 		document.addEventListener('dragstart', (e) => e.preventDefault());
-
-});
+	});
 </script>
 
 <main>

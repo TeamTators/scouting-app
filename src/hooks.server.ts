@@ -37,13 +37,23 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	event.locals.session = session.value;
 
-	event.locals.isTrusted = !!(await Remote.TrustedSessions.fromProperty('ssid', session.value.data.id, {
-		type: 'single',
-	})).unwrap();
+	event.locals.isTrusted = !!(
+		await Remote.TrustedSessions.fromProperty('ssid', session.value.data.id, {
+			type: 'single'
+		})
+	).unwrap();
 
-	console.log(event.locals.isTrusted);
-
-	if (process.env.REMOTE === 'true' && !event.locals.isTrusted && event.url.pathname !== '/sign-in') {
+	if (
+		process.env.REMOTE === 'true' &&
+		!event.locals.isTrusted &&
+		event.url.pathname !== '/sign-in' &&
+		!['/account/sign-in', '/account/sign-up'].includes(event.url.pathname) &&
+		!event.url.pathname.startsWith('/account/password-reset') &&
+		!event.url.pathname.startsWith('/status') &&
+		!event.url.pathname.startsWith('/sse') &&
+		!event.url.pathname.startsWith('/struct') &&
+		!event.url.pathname.startsWith('/test')
+	) {
 		return new Response('Redirect', {
 			status: ServerCode.seeOther,
 			headers: {

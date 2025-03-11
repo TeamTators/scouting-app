@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { onMount } from "svelte";
+	import { onMount } from 'svelte';
 
-    const { children } = $props();
+	const { children } = $props();
 
-    onMount(() => {
-        		// attempted reload
-		window.addEventListener('beforeunload', e => {
+	onMount(() => {
+		// attempted reload
+		window.addEventListener('beforeunload', (e) => {
 			e.preventDefault();
 		});
-    });
+	});
 </script>
 
 {@render children()}
