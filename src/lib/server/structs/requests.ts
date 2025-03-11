@@ -92,7 +92,6 @@ export namespace Requests {
 
 	export const submitMatch = (match: MatchSchemaType) => {
 		return attemptAsync(async () => {
-			console.log('Received: ', match);
 			const parsed = MS.safeParse(match);
 			if (!parsed.success) {
 				terminal.log(parsed.error);
