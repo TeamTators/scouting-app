@@ -16,6 +16,7 @@ import { handleEvent, connectionEmitter } from '$lib/server/event-handler';
 import '$lib/server/utils/files';
 import path from 'path';
 import '$lib/server/index';
+import { Remote } from '$lib/server/structs/remote';
 config();
 
 Struct.each((struct) => {
@@ -36,36 +37,51 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	event.locals.session = session.value;
 
-	if (env.AUTO_SIGN_IN) {
-		const a = await Account.Account.fromId(env.AUTO_SIGN_IN);
-		if (a.isOk() && a.value && !session.value.data.accountId) {
-			const res = await Session.signIn(a.value, session.value);
-			if (res.isErr()) {
-				return new Response('Internal Server Error', { status: ServerCode.internalServerError });
+	event.locals.isTrusted = !!(await Remote.TrustedSessions.fromProperty('ssid', session.value.data.id, {
+		type: 'single',
+	})).unwrap();
+
+	console.log(event.locals.isTrusted);
+
+	if (process.env.REMOTE === 'true' && !event.locals.isTrusted && event.url.pathname !== '/sign-in') {
+		return new Response('Redirect', {
+			status: ServerCode.seeOther,
+			headers: {
+				location: '/sign-in'
 			}
-			event.locals.account = a.value;
-		}
-	} else {
-		const account = await Session.getAccount(session.unwrap());
-		if (account.isErr()) {
-			return new Response('Internal Server Error', { status: ServerCode.internalServerError });
-		}
-
-		event.locals.account = account.value;
-	}
-
-	if (
-		!['/account/sign-in', '/account/sign-up'].includes(event.url.pathname) &&
-		!event.url.href.startsWith('/account/password-reset') &&
-		!event.url.href.startsWith('/status') &&
-		!event.url.href.startsWith('/sse') &&
-		!event.url.href.startsWith('/struct') &&
-		!event.url.href.startsWith('/test')
-	) {
-		session.value.update({
-			prevUrl: event.url.pathname
 		});
 	}
+
+	// if (env.AUTO_SIGN_IN) {
+	// 	const a = await Account.Account.fromId(env.AUTO_SIGN_IN);
+	// 	if (a.isOk() && a.value && !session.value.data.accountId) {
+	// 		const res = await Session.signIn(a.value, session.value);
+	// 		if (res.isErr()) {
+	// 			return new Response('Internal Server Error', { status: ServerCode.internalServerError });
+	// 		}
+	// 		event.locals.account = a.value;
+	// 	}
+	// } else {
+	// 	const account = await Session.getAccount(session.unwrap());
+	// 	if (account.isErr()) {
+	// 		return new Response('Internal Server Error', { status: ServerCode.internalServerError });
+	// 	}
+
+	// 	event.locals.account = account.value;
+	// }
+
+	// if (
+	// 	!['/account/sign-in', '/account/sign-up'].includes(event.url.pathname) &&
+	// 	!event.url.href.startsWith('/account/password-reset') &&
+	// 	!event.url.href.startsWith('/status') &&
+	// 	!event.url.href.startsWith('/sse') &&
+	// 	!event.url.href.startsWith('/struct') &&
+	// 	!event.url.href.startsWith('/test')
+	// ) {
+	// 	session.value.update({
+	// 		prevUrl: event.url.pathname
+	// 	});
+	// }
 
 	try {
 		return resolve(event);

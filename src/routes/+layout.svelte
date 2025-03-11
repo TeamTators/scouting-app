@@ -10,10 +10,7 @@
 
 	onMount(() => {
 		document.addEventListener('dragstart', (e) => e.preventDefault());
-		// attempted reload
-		window.addEventListener('beforeunload', e => {
-			e.preventDefault();
-		});
+
 });
 </script>
 
