@@ -324,4 +324,22 @@ export class Checks implements Writable<Check[]> {
 
 		return { checks, comments };
 	}
+
+	setComment(name: string, comment: string) {
+		this.update((checks) => {
+			const check = checks.find((c) => c.data.name === name);
+			if (!check) return checks;
+			check.data.comment = comment;
+			return checks;
+		});
+	}
+
+	setCheck(name: string, value: boolean) {
+		this.update((checks) => {
+			const check = checks.find((c) => c.data.name === name);
+			if (!check) return checks;
+			check.data.value = value;
+			return checks;
+		});
+	}
 }
