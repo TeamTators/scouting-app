@@ -118,19 +118,19 @@
 <div class="position-relative" style="height: 100vh;">
 	<div class="d-flex w-100 justify-content-between position-absolute p-3">
 		<div class="btn-group" role="group" style="z-index: 300;">
-			<button type="button" class="btn px-2" onclick={() => matches.show()}>
+			<button type="button" class="btn px-2 btn-lg" onclick={() => matches.show()}>
 				<i class="material-icons"> format_list_numbered </i>
 			</button>
-			<button type="button" class="btn px-2" onclick={() => settings.show()}>
+			<button type="button" class="btn px-2 btn-lg" onclick={() => settings.show()}>
 				<i class="material-icons"> settings </i>
 			</button>
 		</div>
 		<div class="btn-group" role="group" style="z-index: 300;">
-			<button type="button" class="btn btn-success" onclick={() => upload.show()}> Upload </button>
+			<button type="button" class="btn btn-success btn-lg" onclick={() => upload.show()}> Upload </button>
 			{#if page === 'app'}
 				<button
 					type="button"
-					class="btn btn-primary"
+					class="btn btn-primary btn-lg"
 					onclick={() => {
 						page = 'post';
 						if (app) postApp?.render(app);
@@ -139,7 +139,7 @@
 					Post
 				</button>
 			{:else if page === 'post'}
-				<button type="button" class="btn btn-primary" onclick={() => (page = 'app')}> App </button>
+				<button type="button" class="btn btn-primary btn-lg" onclick={() => (page = 'app')}> App </button>
 			{/if}
 		</div>
 	</div>

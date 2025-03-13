@@ -16,10 +16,10 @@
 
 	const checks = app.checks;
 
-	const success = checks.getType('success');
-	const primary = checks.getType('primary');
-	const warning = checks.getType('warning');
-	const danger = checks.getType('danger');
+	const success = checks.writables.success;
+	const primary = checks.writables.primary;
+	const warning = checks.writables.warning;
+	const danger = checks.writables.danger;
 </script>
 
 {#snippet checksRow(checks: Check[], color: 'success' | 'primary' | 'warning' | 'danger')}

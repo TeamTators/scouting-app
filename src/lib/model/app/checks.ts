@@ -14,7 +14,7 @@ type C = {
 export class Check implements Writable<C> {
 	constructor(public readonly data: C) {}
 
-	private readonly subscribers = new Set<(value: C) => void>();
+	public readonly subscribers = new Set<(value: C) => void>();
 
 	public subscribe(run: (value: C) => void): () => void {
 		this.subscribers.add(run);
@@ -77,6 +77,10 @@ export class Checks implements Writable<Check[]> {
 
 	public init() {
 		this.data = [];
+		this.writables.success.set([]);
+		this.writables.primary.set([]);
+		this.writables.warning.set([]);
+		this.writables.danger.set([]);
 		// CHECKS:
 		this.addCheck('success', 'autoMobility')
 			.addCheck('success', 'parked')
@@ -237,8 +241,9 @@ export class Checks implements Writable<Check[]> {
 					comment: '',
 					value: c.render ? false : c.value
 				}));
+				check.subscribers.clear();
 			}
-			this.data = [];
+			this.set([]);
 			this.subscribers.clear();
 			this.unsubs.forEach((u) => u());
 		};
@@ -281,6 +286,11 @@ export class Checks implements Writable<Check[]> {
 			return checks;
 		});
 
+		this.writables[type].update(checks => {
+			checks.push(c);
+			return checks;
+		});
+
 		return this;
 	}
 
@@ -300,21 +310,21 @@ export class Checks implements Writable<Check[]> {
 			return checks;
 		});
 
+		this.writables[type].update(checks => {
+			checks.push(c);
+			return checks;
+		});
+
 		return this;
 	}
 
-	getType(type: 'success' | 'primary' | 'warning' | 'danger') {
-		const retrieve = () => [...this.data].filter((c) => c.data.type === type);
+	public readonly writables = {
+		success: writable<Check[]>([]),
+		primary: writable<Check[]>([]),
+		warning: writable<Check[]>([]),
+		danger: writable<Check[]>([])
+	};
 
-		const checks = writable<Check[]>(retrieve());
-		const unsub = this.subscribe((set) => {
-			checks.set(retrieve());
-		});
-
-		this.unsubs.add(unsub);
-
-		return checks;
-	}
 
 	serialize() {
 		const checks: string[] = [];
