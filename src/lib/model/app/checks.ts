@@ -14,7 +14,7 @@ type C = {
 export class Check implements Writable<C> {
 	constructor(public readonly data: C) {}
 
-	private readonly subscribers = new Set<(value: C) => void>();
+	public readonly subscribers = new Set<(value: C) => void>();
 
 	public subscribe(run: (value: C) => void): () => void {
 		this.subscribers.add(run);
@@ -29,7 +29,7 @@ export class Check implements Writable<C> {
 		this.data.builder = value.builder;
 		this.data.doComment = value.doComment;
 		this.data.render = value.render;
-		this.subscribers.forEach((run) => run(this.data));
+		this.inform();
 	}
 
 	public update(fn: (value: C) => C): void {
@@ -40,6 +40,10 @@ export class Check implements Writable<C> {
 		return () => {
 			this.subscribers.clear();
 		};
+	}
+
+	inform() {
+		this.subscribers.forEach((run) => run(this.data));
 	}
 }
 
@@ -73,6 +77,10 @@ export class Checks implements Writable<Check[]> {
 
 	public init() {
 		this.data = [];
+		this.writables.success.set([]);
+		this.writables.primary.set([]);
+		this.writables.warning.set([]);
+		this.writables.danger.set([]);
 		// CHECKS:
 		this.addCheck('success', 'autoMobility')
 			.addCheck('success', 'parked')
@@ -233,8 +241,9 @@ export class Checks implements Writable<Check[]> {
 					comment: '',
 					value: c.render ? false : c.value
 				}));
+				check.subscribers.clear();
 			}
-			this.data = [];
+			this.set([]);
 			this.subscribers.clear();
 			this.unsubs.forEach((u) => u());
 		};
@@ -277,6 +286,11 @@ export class Checks implements Writable<Check[]> {
 			return checks;
 		});
 
+		this.writables[type].update(checks => {
+			checks.push(c);
+			return checks;
+		});
+
 		return this;
 	}
 
@@ -296,21 +310,21 @@ export class Checks implements Writable<Check[]> {
 			return checks;
 		});
 
+		this.writables[type].update(checks => {
+			checks.push(c);
+			return checks;
+		});
+
 		return this;
 	}
 
-	getType(type: 'success' | 'primary' | 'warning' | 'danger') {
-		const retrieve = () => [...this.data].filter((c) => c.data.type === type);
+	public readonly writables = {
+		success: writable<Check[]>([]),
+		primary: writable<Check[]>([]),
+		warning: writable<Check[]>([]),
+		danger: writable<Check[]>([])
+	};
 
-		const checks = writable<Check[]>(retrieve());
-		const unsub = this.subscribe((set) => {
-			checks.set(retrieve());
-		});
-
-		this.unsubs.add(unsub);
-
-		return checks;
-	}
 
 	serialize() {
 		const checks: string[] = [];
@@ -323,5 +337,25 @@ export class Checks implements Writable<Check[]> {
 		}
 
 		return { checks, comments };
+	}
+
+	setComment(name: string, comment: string) {
+		this.update((checks) => {
+			const check = checks.find((c) => c.data.name === name);
+			if (!check) return checks;
+			check.data.comment = comment;
+			check.inform();
+			return checks;
+		});
+	}
+
+	setCheck(name: string, value: boolean) {
+		this.update((checks) => {
+			const check = checks.find((c) => c.data.name === name);
+			if (!check) return checks;
+			check.data.value = value;
+			check.inform();
+			return checks;
+		});
 	}
 }
