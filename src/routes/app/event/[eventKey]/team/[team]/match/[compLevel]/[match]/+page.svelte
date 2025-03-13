@@ -158,7 +158,7 @@
 					class="btn btn-success"
 					onclick={async () => {
 						await app?.submit();
-						const data = await app?.matchData.next()
+						const data = await app?.matchData.next();
 						if (!data) return console.error('Could not find next match');
 						if (data.isErr()) return console.error(data.error);
 						goto(

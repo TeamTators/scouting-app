@@ -171,7 +171,7 @@ export class MatchData implements Writable<MD> {
 				match: next.match_number,
 				compLevel: next.comp_level as CompLevel,
 				eventKey: this.eventKey,
-				alliance: alliance as 'red' | 'blue',
+				alliance: alliance as 'red' | 'blue'
 			};
 		});
 	}
@@ -209,7 +209,7 @@ export class MatchData implements Writable<MD> {
 				match: prev.match_number,
 				compLevel: prev.comp_level as CompLevel,
 				eventKey: this.eventKey,
-				alliance: alliance as 'red' | 'blue',
+				alliance: alliance as 'red' | 'blue'
 			};
 		});
 	}
