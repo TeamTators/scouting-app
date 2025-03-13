@@ -378,5 +378,44 @@ export default (config: {
 			condition: (app) => isInside(app.state.currentLocation || [-1, -1], endZone.red)
 		});
 
+	app.on('tick', () => {
+		if (app.state.section === 'auto' && app.state.currentLocation) {
+			if (app.matchData.alliance === 'red') {
+				if (!isInside(app.state.currentLocation, endZone.red)) {
+					app.checks.setCheck('autoMobility', true);
+				}
+			}
+			if (app.matchData.alliance === 'blue') {
+				if (!isInside(app.state.currentLocation, endZone.blue)) {
+					app.checks.setCheck('autoMobility', true);
+				}
+			}
+		}
+	});
+
+	app.on('end', () => {
+		if (!app.state.currentLocation) return;
+		if (app.matchData.alliance === 'red') {
+			if (isInside(app.state.currentLocation, endZone.red)) {
+				app.checks.setCheck('parked', true);
+			}
+		}
+
+		if (app.matchData.alliance === 'blue') {
+			if (isInside(app.state.currentLocation, endZone.blue)) {
+				app.checks.setCheck('parked', true);
+			}
+		}
+
+		// iterate backwards through checks, and if there's a climb, remove the parked check
+		for (let i = app.state.ticks.length - 1; i >= 0; i--) {
+			const tick = app.state.ticks[i];
+			if (tick.action === 'dpc' || tick.action === 'shc') {
+				app.checks.setCheck('parked', false);
+				break;
+			}
+		}
+	});
+
 	return app;
 };
