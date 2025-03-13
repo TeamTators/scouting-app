@@ -126,7 +126,6 @@
 			</button>
 		</div>
 		<div class="btn-group" role="group" style="z-index: 300;">
-			<button type="button" class="btn btn-success btn-lg" onclick={() => upload.show()}> Upload </button>
 			{#if page === 'app'}
 				<button
 					type="button"
@@ -136,7 +135,7 @@
 						if (app) postApp?.render(app);
 					}}
 				>
-					Post
+					Post Match
 				</button>
 			{:else if page === 'post'}
 				<button type="button" class="btn btn-primary btn-lg" onclick={() => (page = 'app')}> App </button>
@@ -290,18 +289,14 @@
 					{/key}
 				</div>
 			</div>
+			<div class="row mb-3">
+				<button type="button" class="btn btn-success" onclick={() => AppData.uploadMatch()}
+					>Upload Matches</button
+				>
+			</div>
 		</div>
 
 		<!-- TODO: Flip x and y -->
-	{/snippet}
-	{#snippet buttons()}{/snippet}
-</Modal>
-
-<Modal bind:this={upload} title="Upload From File" size="md">
-	{#snippet body()}
-		<button type="button" class="btn btn-success" onclick={() => AppData.uploadMatch()}
-			>Upload Matches</button
-		>
 	{/snippet}
 	{#snippet buttons()}{/snippet}
 </Modal>
