@@ -157,19 +157,14 @@
 					type="button"
 					class="btn btn-success"
 					onclick={async () => {
-						const data = await app?.submit();
+						await app?.submit();
+						const data = await app?.matchData.next()
 						if (!data) return console.error('Could not find next match');
 						if (data.isErr()) return console.error(data.error);
 						goto(
 							`/app/event/${data.value.eventKey}/team/${data.value.team}/match/${data.value.compLevel}/${data.value.match}`
 						);
-						getAlliance(data.value).then((res) => {
-							if (res.isErr()) return console.error(res.error);
-							app?.matchData.set({
-								...data.value,
-								alliance: res.value
-							});
-						});
+						app?.matchData.set(data.value);
 						page = 'app';
 						app?.reset();
 					}}

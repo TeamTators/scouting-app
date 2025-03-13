@@ -430,7 +430,6 @@ To disable: ctrl + d`);
 			const serialized = (await this.serialize()).unwrap();
 			(await AppData.submitMatch(serialized, true)).unwrap();
 			this.reset();
-			return (await this.matchData.next()).unwrap();
 		});
 	}
 }
