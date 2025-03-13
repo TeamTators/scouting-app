@@ -119,8 +119,8 @@ export default (config: {
 			name: 'Blue Shallow Climb',
 			description: 'Blue climbed onto the shallow cage'
 		}),
-		pcr: new AppObject({
-			abbr: 'pcr',
+		prc: new AppObject({
+			abbr: 'prc',
 			name: 'Blue Processor',
 			description: 'Blue placed algae into the processor'
 		})
@@ -162,8 +162,8 @@ export default (config: {
 			name: 'Blue Shallow Climb',
 			description: 'Blue climbed onto the shallow cage'
 		}),
-		pcr: new AppObject({
-			abbr: 'pcr',
+		prc: new AppObject({
+			abbr: 'prc',
 			name: 'Blue Processor',
 			description: 'Blue placed algae into the processor'
 		})
@@ -189,7 +189,7 @@ export default (config: {
 		brg: createButton(blueObjects.brg, 'blue'),
 		// dcl: createButton(blueObjects.dcl, 'blue'),
 		// scl: createButton(blueObjects.scl, 'blue'),
-		pcr: createButton(blueObjects.pcr, 'blue')
+		prc: createButton(blueObjects.prc, 'blue')
 	};
 
 	const redButtons = {
@@ -200,7 +200,7 @@ export default (config: {
 		brg: createButton(redObjects.brg, 'red'),
 		// dcl: createButton(redObjects.dcl, 'red'),
 		// scl: createButton(redObjects.scl, 'red'),
-		pcr: createButton(redObjects.pcr, 'red')
+		prc: createButton(redObjects.prc, 'red')
 	};
 
 	app.addAppObject({
@@ -245,8 +245,8 @@ export default (config: {
 	});
 	app.addAppObject({
 		point: [0.358, 0.972],
-		object: blueObjects.pcr,
-		button: blueButtons.pcr,
+		object: blueObjects.prc,
+		button: blueButtons.prc,
 		alliance: null,
 		staticX: false,
 		staticY: false
@@ -294,8 +294,8 @@ export default (config: {
 	});
 	app.addAppObject({
 		point: [0.643, 0.028],
-		object: redObjects.pcr,
-		button: redButtons.pcr,
+		object: redObjects.prc,
+		button: redButtons.prc,
 		alliance: null,
 		staticX: false,
 		staticY: false
