@@ -29,7 +29,7 @@ export class Check implements Writable<C> {
 		this.data.builder = value.builder;
 		this.data.doComment = value.doComment;
 		this.data.render = value.render;
-		this.subscribers.forEach((run) => run(this.data));
+		this.inform();
 	}
 
 	public update(fn: (value: C) => C): void {
@@ -40,6 +40,10 @@ export class Check implements Writable<C> {
 		return () => {
 			this.subscribers.clear();
 		};
+	}
+
+	inform() {
+		this.subscribers.forEach((run) => run(this.data));
 	}
 }
 
@@ -330,6 +334,7 @@ export class Checks implements Writable<Check[]> {
 			const check = checks.find((c) => c.data.name === name);
 			if (!check) return checks;
 			check.data.comment = comment;
+			check.inform();
 			return checks;
 		});
 	}
@@ -339,6 +344,7 @@ export class Checks implements Writable<Check[]> {
 			const check = checks.find((c) => c.data.name === name);
 			if (!check) return checks;
 			check.data.value = value;
+			check.inform();
 			return checks;
 		});
 	}

@@ -6,7 +6,6 @@ import { AppView } from './view';
 import { EventEmitter } from 'ts-utils/event-emitter';
 import type { Point2D } from 'math/point';
 import { Loop } from 'ts-utils/loop';
-import { CollectedData } from './collected-data';
 import { ActionState, type AppObject } from './app-object';
 import { browser } from '$app/environment';
 import { Circle } from 'canvas/circle';
