@@ -164,11 +164,14 @@ export class MatchData implements Writable<MD> {
 			const nextTeam = groups.matchAssignments[group][matchIndex + 1];
 			if (!nextTeam) throw new Error('No Next Team');
 
+			const alliance = next.alliances.red.team_keys.includes(`frc${nextTeam}`) ? 'red' : 'blue';
+
 			return {
 				team: nextTeam,
 				match: next.match_number,
 				compLevel: next.comp_level as CompLevel,
-				eventKey: this.eventKey
+				eventKey: this.eventKey,
+				alliance: alliance as 'red' | 'blue'
 			};
 		});
 	}
@@ -199,11 +202,14 @@ export class MatchData implements Writable<MD> {
 			const prevTeam = groups.matchAssignments[group][matchIndex - 1];
 			if (!prevTeam) throw new Error('No Prev Team');
 
+			const alliance = prev.alliances.red.team_keys.includes(`frc${prevTeam}`) ? 'red' : 'blue';
+
 			return {
 				team: prevTeam,
 				match: prev.match_number,
 				compLevel: prev.comp_level as CompLevel,
-				eventKey: this.eventKey
+				eventKey: this.eventKey,
+				alliance: alliance as 'red' | 'blue'
 			};
 		});
 	}
