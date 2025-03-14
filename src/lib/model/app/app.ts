@@ -95,7 +95,7 @@ export class App {
 		return attemptAsync<MatchSchemaType>(async () => {
 			const trace = this.state.serialize();
 			const { checks, comments } = this.checks.serialize();
-			const { eventKey, compLevel, match, team } = this.config;
+			const { eventKey, compLevel, match, team } = this.matchData.data;
 			const { scout, prescouting, practice, flipX, flipY } = globalData;
 			const { alliance } = this.matchData;
 			let group = -1;
