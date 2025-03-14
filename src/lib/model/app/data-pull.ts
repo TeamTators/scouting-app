@@ -55,13 +55,16 @@ export namespace AppData {
 
 	const post = async (url: string, body: unknown) => {
 		return attemptAsync(async () => {
-			return await fetch('/api' + url, {
+			const res = await fetch('/api' + url, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify(body)
-			}).then((r) => r.json());
+			});
+
+			if (!res.ok) throw new Error('Failed to post data');
+			return res.json();
 		});
 	};
 

@@ -2,6 +2,7 @@ import { Requests } from '$lib/server/structs/requests.js';
 import { auth } from '$lib/server/utils/auth.js';
 import terminal from '$lib/server/utils/terminal.js';
 import { MatchSchema } from '$lib/types/match.js';
+import { fail } from '@sveltejs/kit';
 
 export const POST = async (event) => {
 	const respond = (message: string, status: number) =>
@@ -23,10 +24,13 @@ export const POST = async (event) => {
 	}
 
 	const res = await Requests.submitMatch(parsed.data);
+	console.log(res);
 	if (res.isErr()) {
 		terminal.error(res.error);
 		// return new Response('Error', { status: 500 });
-		return respond('Error', 500);
+		throw fail(500, {
+			message: 'Error',
+		});
 	}
 
 	if (res.value) {
@@ -34,6 +38,8 @@ export const POST = async (event) => {
 		return respond('Success', 200);
 	} else {
 		// return new Response('Error', { status: 500 });
-		return respond('Error', 500);
+		throw fail(500, {
+			message: 'Error',
+		});
 	}
 };
