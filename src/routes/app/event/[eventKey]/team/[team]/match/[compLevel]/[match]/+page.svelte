@@ -127,9 +127,9 @@
 			<button type="button" class="btn px-2 btn-lg" onclick={() => settings.show()}>
 				<i class="material-icons"> settings </i>
 			</button>
-			<button type="button" class="btn px-2 btn-lg" onclick={() => fullscreen(dom)}>
+			<!-- <button type="button" class="btn px-2 btn-lg" onclick={() => fullscreen(dom)}>
 				<i class="material-icons">fullscreen</i>
-			</button>
+			</button> -->
 		</div>
 		<div class="btn-group" role="group" style="z-index: 300;">
 			{#if page === 'app'}
