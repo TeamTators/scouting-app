@@ -140,7 +140,10 @@ export namespace AppData {
 		return attemptAsync(async () => {
 			const matches = (await loadFileContents())
 				.unwrap()
-				.filter((f) => f.name.endsWith(`.${CACHE_VERSION}.match`));
+				// it would probably be a good idea to have this filter, 
+				// but because we are dealing with duplicates and files save as .txt,
+				// I'm getting rid of it.
+				// .filter((f) => f.name.endsWith(`.${CACHE_VERSION}.match`));
 			return Promise.all(
 				matches.map(async (m) => {
 					const parsed = MS.safeParse(JSON.parse(m.text));
