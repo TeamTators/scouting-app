@@ -161,6 +161,7 @@ export namespace AppData {
 					title: 'Match Submitted',
 					message: `Match ${data.eventKey}:${data.compLevel}${data.match} submitted successfully!`,
 					color: 'success',
+					autoHide: 3000,
 				});
 			} else {
 				notify({
@@ -168,6 +169,7 @@ export namespace AppData {
 					title: 'Match Submission Failed',
 					message: `Match ${data.eventKey}:${data.compLevel}${data.match} failed to submit!`,
 					color: 'danger',
+					autoHide: 3000,
 				});
 			}
 
