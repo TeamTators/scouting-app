@@ -428,7 +428,7 @@ To disable: ctrl + d`);
 		return attemptAsync(async () => {
 			const serialized = (await this.serialize()).unwrap();
 			(await AppData.submitMatch(serialized, true)).unwrap();
-			this.reset();
+			// this.reset();
 		});
 	}
 }
