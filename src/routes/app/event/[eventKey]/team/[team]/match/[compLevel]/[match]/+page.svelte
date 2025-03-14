@@ -144,7 +144,9 @@
 					Post Match
 				</button>
 			{:else if page === 'post'}
-				<button type="button" class="btn btn-primary btn-lg" onclick={() => (page = 'app')}> App </button>
+				<button type="button" class="btn btn-primary btn-lg" onclick={() => (page = 'app')}>
+					App
+				</button>
 			{/if}
 		</div>
 	</div>
@@ -172,7 +174,7 @@
 						app?.matchData.set(data.value);
 						page = 'app';
 						app?.reset();
-						window.location.reload();
+						// window.location.reload();
 					}}
 				>
 					<i class="material-icons"> file_upload </i>
