@@ -7,27 +7,27 @@ import { MatchSchema as MS, type MatchSchemaType } from '$lib/types/match';
 import { notify } from '$lib/utils/prompts';
 
 export namespace AppData {
-	const CACHE_VERSION = 'v1';
+	const CACHE_VERSION = 'v2';
 
 	const get = async (url: string, threshold: number) => {
 		return attemptAsync<unknown>(async () => {
-			// const exists = localStorage.getItem(`${CACHE_VERSION}:${url}`);
+			const exists = localStorage.getItem(`${CACHE_VERSION}:${url}`);
 			let d: unknown;
-			// if (exists) {
-			// 	try {
-			// 		const { data, timestamp } = z
-			// 			.object({
-			// 				timestamp: z.number().int(),
-			// 				data: z.unknown()
-			// 			})
-			// 			.parse(JSON.parse(exists));
-			// 		d = data;
-			// 		if (timestamp + threshold > Date.now()) return data;
-			// 	} catch (error) {
-			// 		console.error('Cached item is corrupted:', url, error);
-			// 		localStorage.removeItem(`${CACHE_VERSION}:${url}`);
-			// 	}
-			// }
+			if (exists) {
+				try {
+					const { data, timestamp } = z
+						.object({
+							timestamp: z.number().int(),
+							data: z.unknown()
+						})
+						.parse(JSON.parse(exists));
+					d = data;
+					if (timestamp + threshold > Date.now()) return data;
+				} catch (error) {
+					console.error('Cached item is corrupted:', url, error);
+					localStorage.removeItem(`${CACHE_VERSION}:${url}`);
+				}
+			}
 
 			try {
 				const response = await fetch('/api' + url, {

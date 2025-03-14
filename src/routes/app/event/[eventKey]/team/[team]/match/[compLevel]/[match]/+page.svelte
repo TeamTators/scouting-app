@@ -13,6 +13,7 @@
 	import createApp from '$lib/model/app/apps/2025.js';
 	import PostApp from '$lib/components/app/PostApp.svelte';
 	import { getAlliance } from '$lib/model/app/match-data.js';
+	import { fullscreen } from '$lib/utils/fullscreen.js';
 
 	const { data } = $props();
 	const eventKey = $derived(data.eventKey);
@@ -113,9 +114,11 @@
 			// deinit();
 		};
 	});
+
+	let dom: HTMLElement;
 </script>
 
-<div class="position-relative" style="height: 100vh;">
+<div class="position-relative" style="height: 100vh;" bind:this={dom}>
 	<div class="d-flex w-100 justify-content-between position-absolute p-3">
 		<div class="btn-group" role="group" style="z-index: 300;">
 			<button type="button" class="btn px-2 btn-lg" onclick={() => matches.show()}>
@@ -123,6 +126,9 @@
 			</button>
 			<button type="button" class="btn px-2 btn-lg" onclick={() => settings.show()}>
 				<i class="material-icons"> settings </i>
+			</button>
+			<button type="button" class="btn px-2 btn-lg" onclick={() => fullscreen(dom)}>
+				<i class="material-icons">fullscreen</i>
 			</button>
 		</div>
 		<div class="btn-group" role="group" style="z-index: 300;">
@@ -166,6 +172,7 @@
 						app?.matchData.set(data.value);
 						page = 'app';
 						app?.reset();
+						window.location.reload();
 					}}
 				>
 					<i class="material-icons"> file_upload </i>

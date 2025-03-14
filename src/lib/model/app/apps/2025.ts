@@ -301,43 +301,43 @@ export default (config: {
 		staticY: false
 	});
 
-	app.view.addArea({
+	const redZone = app.view.addArea({
 		color: Color.fromName('red').setAlpha(0.5),
 		condition: () => true,
 		points: alliances.red,
 		zone: 'RedZone'
 	});
-	app.view.addArea({
+	const blueZone = app.view.addArea({
 		color: Color.fromName('blue').setAlpha(0.5),
 		condition: () => true,
 		points: alliances.blue,
 		zone: 'BlueZone'
 	});
-	app.view.addArea({
+	const blueCoral = app.view.addArea({
 		color: Color.fromName('blue').setAlpha(0.5),
 		condition: () => true,
 		points: coralStation.blue,
 		zone: 'BlueCoral'
 	});
-	app.view.addArea({
+	const redCoral = app.view.addArea({
 		color: Color.fromName('red').setAlpha(0.5),
 		condition: () => true,
 		points: coralStation.red,
 		zone: 'RedCoral'
 	});
-	app.view.addArea({
+	const redEnd = app.view.addArea({
 		color: Color.fromName('red').setAlpha(0.5),
 		condition: () => true,
 		points: endZone.red,
 		zone: 'RedEnd'
 	});
-	app.view.addArea({
+	const blueEnd = app.view.addArea({
 		color: Color.fromName('blue').setAlpha(0.5),
 		condition: () => true,
 		points: endZone.blue,
 		zone: 'BlueEnd'
 	});
-	app.view.addArea({
+	const middleZone = app.view.addArea({
 		color: Color.fromName('black').setAlpha(0.5),
 		condition: () => true,
 		points: middle,
@@ -351,7 +351,8 @@ export default (config: {
 			color: Color.fromName('blue'),
 			description: 'Blue climbed deep cage',
 			alliance: 'blue',
-			condition: (app) => isInside(app.state.currentLocation || [-1, -1], endZone.blue)
+			condition: app => blueEnd.isIn(app.state.currentLocation || [-1, -1])
+			// condition: (app) => isInside(app.state.currentLocation || [-1, -1], blueEnd.points as Point2D[])
 		})
 		.addButton({
 			name: 'Blue Shallow Climb',
@@ -359,7 +360,8 @@ export default (config: {
 			color: Color.fromName('blue'),
 			description: 'Blue climbed shallow cage',
 			alliance: 'blue',
-			condition: (app) => isInside(app.state.currentLocation || [-1, -1], endZone.blue)
+			condition: app => blueEnd.isIn(app.state.currentLocation || [-1, -1])
+			// condition: (app) => isInside(app.state.currentLocation || [-1, -1], redEnd.points as Point2D[])
 		})
 		.addButton({
 			name: 'Red Deep Climb',
@@ -367,7 +369,8 @@ export default (config: {
 			color: Color.fromName('red'),
 			description: 'Red climbed deep cage',
 			alliance: 'red',
-			condition: (app) => isInside(app.state.currentLocation || [-1, -1], endZone.red)
+			condition: app => redEnd.isIn(app.state.currentLocation || [-1, -1])
+			// condition: (app) => isInside(app.state.currentLocation || [-1, -1], blueEnd.points as Point2D[])
 		})
 		.addButton({
 			name: 'Red Shallow Climb',
@@ -375,7 +378,8 @@ export default (config: {
 			color: Color.fromName('red'),
 			description: 'Red climbed shallow cage',
 			alliance: 'red',
-			condition: (app) => isInside(app.state.currentLocation || [-1, -1], endZone.red)
+			condition: app => redEnd.isIn(app.state.currentLocation || [-1, -1])
+			// condition: (app) => isInside(app.state.currentLocation || [-1, -1], redEnd.points as Point2D[])
 		});
 
 	app.on('tick', () => {

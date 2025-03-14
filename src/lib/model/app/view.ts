@@ -12,6 +12,7 @@ import type { Point2D } from 'math/point';
 import { browser } from '$app/environment';
 import { ButtonCircle } from './button-circle';
 import { globalData } from './global-data.svelte';
+import { Zone } from './zone';
 
 export class AppView {
 	public readonly ctx: CanvasRenderingContext2D | undefined;
@@ -21,7 +22,7 @@ export class AppView {
 	public readonly border = new Border([]);
 	public readonly timer: Timer;
 	public readonly background: Img | undefined;
-	public readonly areas: Polygon[] = [];
+	public readonly areas: Zone[] = [];
 	public readonly buttonCircle: ButtonCircle;
 
 	public drawing = false;
@@ -330,9 +331,9 @@ export class AppView {
 		zone: string;
 		points: Point2D[];
 		color: Color;
-		condition: (shape: Polygon) => boolean;
+		condition: (shape: Zone) => boolean;
 	}) {
-		const p = new Polygon(config.points);
+		const p = new Zone(this.app, config.points);
 		if (!this.canvas) return p;
 
 		p.properties.doDraw = () => config.condition(p);
