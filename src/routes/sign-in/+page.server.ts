@@ -4,7 +4,6 @@ import { ServerCode } from 'ts-utils/status';
 
 export const actions = {
 	'sign-in': async (event) => {
-		console.log('sign-in');
 		const form = await event.request.formData();
 		const pin = form.get('pin');
 		if (pin !== Remote.PIN) {

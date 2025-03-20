@@ -6,7 +6,6 @@ import { AppView } from './view';
 import { EventEmitter } from 'ts-utils/event-emitter';
 import type { Point2D } from 'math/point';
 import { Loop } from 'ts-utils/loop';
-import { CollectedData } from './collected-data';
 import { ActionState, type AppObject } from './app-object';
 import { browser } from '$app/environment';
 import { Circle } from 'canvas/circle';
@@ -96,7 +95,7 @@ export class App {
 		return attemptAsync<MatchSchemaType>(async () => {
 			const trace = this.state.serialize();
 			const { checks, comments } = this.checks.serialize();
-			const { eventKey, compLevel, match, team } = this.config;
+			const { eventKey, compLevel, match, team } = this.matchData.data;
 			const { scout, prescouting, practice, flipX, flipY } = globalData;
 			const { alliance } = this.matchData;
 			let group = -1;
@@ -430,7 +429,6 @@ To disable: ctrl + d`);
 			const serialized = (await this.serialize()).unwrap();
 			(await AppData.submitMatch(serialized, true)).unwrap();
 			this.reset();
-			return (await this.matchData.next()).unwrap();
 		});
 	}
 }

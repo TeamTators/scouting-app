@@ -12,6 +12,7 @@ import type { Point2D } from 'math/point';
 import { browser } from '$app/environment';
 import { ButtonCircle } from './button-circle';
 import { globalData } from './global-data.svelte';
+import { Zone } from './zone';
 
 export class AppView {
 	public readonly ctx: CanvasRenderingContext2D | undefined;
@@ -21,7 +22,7 @@ export class AppView {
 	public readonly border = new Border([]);
 	public readonly timer: Timer;
 	public readonly background: Img | undefined;
-	public readonly areas: Polygon[] = [];
+	public readonly areas: Zone[] = [];
 	public readonly buttonCircle: ButtonCircle;
 
 	public drawing = false;
@@ -74,16 +75,27 @@ export class AppView {
 		const cover = document.createElement('div');
 		cover.innerHTML = `
 			<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 2em;">
-				Start tracing to start match <span class="text-info">${this.app.matchData.compLevel}${this.app.matchData.match}</span> for team <span class="text-info">${this.app.matchData.team}</span> <span class="text-info team-name"></span>
+				Start tracing to start match <span class="text-info match">${this.app.matchData.compLevel}${this.app.matchData.match}</span> for team <span class="text-info team-number">${this.app.matchData.team}</span> <span class="text-info team-name"></span>
 			</div>
 		`;
 
-		this.app.matchData.getEvent().then((e) => {
-			if (e.isErr()) return console.error(e.error);
-			const team = e.value.teams.find((t) => t.team_number === this.app.matchData.team);
-			if (!team) return;
-			const el = cover.querySelector('.team-name');
-			if (el) el.textContent = team.nickname;
+		const getTeam = () =>
+			this.app.matchData.getEvent().then((e) => {
+				if (e.isErr()) return console.error(e.error);
+				const team = e.value.teams.find((t) => t.team_number === this.app.matchData.team);
+				if (!team) return;
+				const el = cover.querySelector('.team-name');
+				if (el) el.textContent = team.nickname;
+			});
+
+		getTeam();
+
+		this.app.matchData.subscribe((data) => {
+			const el = cover.querySelector('.team-number');
+			if (el) el.textContent = data.team.toString();
+			const el2 = cover.querySelector('.match');
+			if (el2) el2.textContent = data.compLevel + data.match;
+			getTeam();
 		});
 
 		cover.style.position = 'absolute';
@@ -319,9 +331,9 @@ export class AppView {
 		zone: string;
 		points: Point2D[];
 		color: Color;
-		condition: (shape: Polygon) => boolean;
+		condition: (shape: Zone) => boolean;
 	}) {
-		const p = new Polygon(config.points);
+		const p = new Zone(this.app, config.points);
 		if (!this.canvas) return p;
 
 		p.properties.doDraw = () => config.condition(p);

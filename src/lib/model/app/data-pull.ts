@@ -4,9 +4,10 @@ import { attempt, attemptAsync } from 'ts-utils/check';
 import { z } from 'zod';
 import { downloadText, loadFileContents } from '$lib/utils/downloads';
 import { MatchSchema as MS, type MatchSchemaType } from '$lib/types/match';
+import { notify } from '$lib/utils/prompts';
 
 export namespace AppData {
-	const CACHE_VERSION = 'v1';
+	const CACHE_VERSION = 'v2';
 
 	const get = async (url: string, threshold: number) => {
 		return attemptAsync<unknown>(async () => {
@@ -54,13 +55,16 @@ export namespace AppData {
 
 	const post = async (url: string, body: unknown) => {
 		return attemptAsync(async () => {
-			return await fetch('/api' + url, {
+			const res = await fetch('/api' + url, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify(body)
-			}).then((r) => r.json());
+			});
+
+			if (!res.ok) throw new Error('Failed to post data');
+			return res.json();
 		});
 	};
 
@@ -136,7 +140,10 @@ export namespace AppData {
 		return attemptAsync(async () => {
 			const matches = (await loadFileContents())
 				.unwrap()
-				.filter((f) => f.name.endsWith(`.${CACHE_VERSION}.match`));
+				// it would probably be a good idea to have this filter, 
+				// but because we are dealing with duplicates and files save as .txt,
+				// I'm getting rid of it.
+				// .filter((f) => f.name.endsWith(`.${CACHE_VERSION}.match`));
 			return Promise.all(
 				matches.map(async (m) => {
 					const parsed = MS.safeParse(JSON.parse(m.text));
@@ -153,7 +160,25 @@ export namespace AppData {
 			// const matches = getMatches().unwrap();
 			// saveMatches([...matches, data]).unwrap();
 			if (download) (await downloadMatch(data)).unwrap();
-			return (await post('/submit-match', data)).unwrap();
+			const res = await post('/submit-match', data);
+			if (res.isOk()) {
+				notify({
+					type: 'alert',
+					title: 'Match Submitted',
+					message: `Match ${data.eventKey}:${data.compLevel}${data.match} submitted successfully!`,
+					color: 'success',
+					autoHide: 3000,
+				});
+			} else {
+				notify({
+					type: 'alert',
+					title: 'Match Submission Failed',
+					message: `Match ${data.eventKey}:${data.compLevel}${data.match} failed to submit!`,
+					color: 'danger',
+					autoHide: 3000,
+				});
+			}
+
 		});
 	};
 }

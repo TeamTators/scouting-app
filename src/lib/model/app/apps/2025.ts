@@ -119,8 +119,8 @@ export default (config: {
 			name: 'Blue Shallow Climb',
 			description: 'Blue climbed onto the shallow cage'
 		}),
-		pcr: new AppObject({
-			abbr: 'pcr',
+		prc: new AppObject({
+			abbr: 'prc',
 			name: 'Blue Processor',
 			description: 'Blue placed algae into the processor'
 		})
@@ -162,8 +162,8 @@ export default (config: {
 			name: 'Blue Shallow Climb',
 			description: 'Blue climbed onto the shallow cage'
 		}),
-		pcr: new AppObject({
-			abbr: 'pcr',
+		prc: new AppObject({
+			abbr: 'prc',
 			name: 'Blue Processor',
 			description: 'Blue placed algae into the processor'
 		})
@@ -189,7 +189,7 @@ export default (config: {
 		brg: createButton(blueObjects.brg, 'blue'),
 		// dcl: createButton(blueObjects.dcl, 'blue'),
 		// scl: createButton(blueObjects.scl, 'blue'),
-		pcr: createButton(blueObjects.pcr, 'blue')
+		prc: createButton(blueObjects.prc, 'blue')
 	};
 
 	const redButtons = {
@@ -200,7 +200,7 @@ export default (config: {
 		brg: createButton(redObjects.brg, 'red'),
 		// dcl: createButton(redObjects.dcl, 'red'),
 		// scl: createButton(redObjects.scl, 'red'),
-		pcr: createButton(redObjects.pcr, 'red')
+		prc: createButton(redObjects.prc, 'red')
 	};
 
 	app.addAppObject({
@@ -245,8 +245,8 @@ export default (config: {
 	});
 	app.addAppObject({
 		point: [0.358, 0.972],
-		object: blueObjects.pcr,
-		button: blueButtons.pcr,
+		object: blueObjects.prc,
+		button: blueButtons.prc,
 		alliance: null,
 		staticX: false,
 		staticY: false
@@ -294,50 +294,50 @@ export default (config: {
 	});
 	app.addAppObject({
 		point: [0.643, 0.028],
-		object: redObjects.pcr,
-		button: redButtons.pcr,
+		object: redObjects.prc,
+		button: redButtons.prc,
 		alliance: null,
 		staticX: false,
 		staticY: false
 	});
 
-	app.view.addArea({
+	const redZone = app.view.addArea({
 		color: Color.fromName('red').setAlpha(0.5),
 		condition: () => true,
 		points: alliances.red,
 		zone: 'RedZone'
 	});
-	app.view.addArea({
+	const blueZone = app.view.addArea({
 		color: Color.fromName('blue').setAlpha(0.5),
 		condition: () => true,
 		points: alliances.blue,
 		zone: 'BlueZone'
 	});
-	app.view.addArea({
+	const blueCoral = app.view.addArea({
 		color: Color.fromName('blue').setAlpha(0.5),
 		condition: () => true,
 		points: coralStation.blue,
 		zone: 'BlueCoral'
 	});
-	app.view.addArea({
+	const redCoral = app.view.addArea({
 		color: Color.fromName('red').setAlpha(0.5),
 		condition: () => true,
 		points: coralStation.red,
 		zone: 'RedCoral'
 	});
-	app.view.addArea({
+	const redEnd = app.view.addArea({
 		color: Color.fromName('red').setAlpha(0.5),
 		condition: () => true,
 		points: endZone.red,
 		zone: 'RedEnd'
 	});
-	app.view.addArea({
+	const blueEnd = app.view.addArea({
 		color: Color.fromName('blue').setAlpha(0.5),
 		condition: () => true,
 		points: endZone.blue,
 		zone: 'BlueEnd'
 	});
-	app.view.addArea({
+	const middleZone = app.view.addArea({
 		color: Color.fromName('black').setAlpha(0.5),
 		condition: () => true,
 		points: middle,
@@ -351,7 +351,8 @@ export default (config: {
 			color: Color.fromName('blue'),
 			description: 'Blue climbed deep cage',
 			alliance: 'blue',
-			condition: (app) => isInside(app.state.currentLocation || [-1, -1], endZone.blue)
+			condition: app => blueEnd.isIn(app.state.currentLocation || [-1, -1])
+			// condition: (app) => isInside(app.state.currentLocation || [-1, -1], blueEnd.points as Point2D[])
 		})
 		.addButton({
 			name: 'Blue Shallow Climb',
@@ -359,7 +360,8 @@ export default (config: {
 			color: Color.fromName('blue'),
 			description: 'Blue climbed shallow cage',
 			alliance: 'blue',
-			condition: (app) => isInside(app.state.currentLocation || [-1, -1], endZone.blue)
+			condition: app => blueEnd.isIn(app.state.currentLocation || [-1, -1])
+			// condition: (app) => isInside(app.state.currentLocation || [-1, -1], redEnd.points as Point2D[])
 		})
 		.addButton({
 			name: 'Red Deep Climb',
@@ -367,7 +369,8 @@ export default (config: {
 			color: Color.fromName('red'),
 			description: 'Red climbed deep cage',
 			alliance: 'red',
-			condition: (app) => isInside(app.state.currentLocation || [-1, -1], endZone.red)
+			condition: app => redEnd.isIn(app.state.currentLocation || [-1, -1])
+			// condition: (app) => isInside(app.state.currentLocation || [-1, -1], blueEnd.points as Point2D[])
 		})
 		.addButton({
 			name: 'Red Shallow Climb',
@@ -375,8 +378,48 @@ export default (config: {
 			color: Color.fromName('red'),
 			description: 'Red climbed shallow cage',
 			alliance: 'red',
-			condition: (app) => isInside(app.state.currentLocation || [-1, -1], endZone.red)
+			condition: app => redEnd.isIn(app.state.currentLocation || [-1, -1])
+			// condition: (app) => isInside(app.state.currentLocation || [-1, -1], redEnd.points as Point2D[])
 		});
+
+	app.on('tick', () => {
+		if (app.state.section === 'auto' && app.state.currentLocation) {
+			if (app.matchData.alliance === 'red') {
+				if (!isInside(app.state.currentLocation, endZone.red)) {
+					app.checks.setCheck('autoMobility', true);
+				}
+			}
+			if (app.matchData.alliance === 'blue') {
+				if (!isInside(app.state.currentLocation, endZone.blue)) {
+					app.checks.setCheck('autoMobility', true);
+				}
+			}
+		}
+	});
+
+	app.on('end', () => {
+		if (!app.state.currentLocation) return;
+		if (app.matchData.alliance === 'red') {
+			if (isInside(app.state.currentLocation, endZone.red)) {
+				app.checks.setCheck('parked', true);
+			}
+		}
+
+		if (app.matchData.alliance === 'blue') {
+			if (isInside(app.state.currentLocation, endZone.blue)) {
+				app.checks.setCheck('parked', true);
+			}
+		}
+
+		// iterate backwards through checks, and if there's a climb, remove the parked check
+		for (let i = app.state.ticks.length - 1; i >= 0; i--) {
+			const tick = app.state.ticks[i];
+			if (tick.action === 'dpc' || tick.action === 'shc') {
+				app.checks.setCheck('parked', false);
+				break;
+			}
+		}
+	});
 
 	return app;
 };

@@ -394,7 +394,7 @@ const notificationContainer = (() => {
 			'justify-content-end',
 			'flex-column'
 		);
-		container.style.zIndex = '0';
+		container.style.zIndex = '1000';
 		document.body.appendChild(container);
 		return container;
 	}

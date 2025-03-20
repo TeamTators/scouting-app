@@ -13,6 +13,7 @@
 	import createApp from '$lib/model/app/apps/2025.js';
 	import PostApp from '$lib/components/app/PostApp.svelte';
 	import { getAlliance } from '$lib/model/app/match-data.js';
+	import { fullscreen } from '$lib/utils/fullscreen.js';
 
 	const { data } = $props();
 	const eventKey = $derived(data.eventKey);
@@ -113,33 +114,39 @@
 			// deinit();
 		};
 	});
+
+	let dom: HTMLElement;
 </script>
 
-<div class="position-relative" style="height: 100vh;">
+<div class="position-relative" style="height: 100vh;" bind:this={dom}>
 	<div class="d-flex w-100 justify-content-between position-absolute p-3">
 		<div class="btn-group" role="group" style="z-index: 300;">
-			<button type="button" class="btn px-2" onclick={() => matches.show()}>
+			<button type="button" class="btn px-2 btn-lg" onclick={() => matches.show()}>
 				<i class="material-icons"> format_list_numbered </i>
 			</button>
-			<button type="button" class="btn px-2" onclick={() => settings.show()}>
+			<button type="button" class="btn px-2 btn-lg" onclick={() => settings.show()}>
 				<i class="material-icons"> settings </i>
 			</button>
+			<!-- <button type="button" class="btn px-2 btn-lg" onclick={() => fullscreen(dom)}>
+				<i class="material-icons">fullscreen</i>
+			</button> -->
 		</div>
 		<div class="btn-group" role="group" style="z-index: 300;">
-			<button type="button" class="btn btn-success" onclick={() => upload.show()}> Upload </button>
 			{#if page === 'app'}
 				<button
 					type="button"
-					class="btn btn-primary"
+					class="btn btn-primary btn-lg"
 					onclick={() => {
 						page = 'post';
 						if (app) postApp?.render(app);
 					}}
 				>
-					Post
+					Post Match
 				</button>
 			{:else if page === 'post'}
-				<button type="button" class="btn btn-primary" onclick={() => (page = 'app')}> App </button>
+				<button type="button" class="btn btn-primary btn-lg" onclick={() => (page = 'app')}>
+					App
+				</button>
 			{/if}
 		</div>
 	</div>
@@ -157,21 +164,17 @@
 					type="button"
 					class="btn btn-success"
 					onclick={async () => {
-						const data = await app?.submit();
+						await app?.submit();
+						const data = await app?.matchData.next();
 						if (!data) return console.error('Could not find next match');
 						if (data.isErr()) return console.error(data.error);
 						goto(
 							`/app/event/${data.value.eventKey}/team/${data.value.team}/match/${data.value.compLevel}/${data.value.match}`
 						);
-						getAlliance(data.value).then((res) => {
-							if (res.isErr()) return console.error(res.error);
-							app?.matchData.set({
-								...data.value,
-								alliance: res.value
-							});
-						});
+						app?.matchData.set(data.value);
 						page = 'app';
 						app?.reset();
+						// window.location.reload();
 					}}
 				>
 					<i class="material-icons"> file_upload </i>
@@ -295,18 +298,14 @@
 					{/key}
 				</div>
 			</div>
+			<div class="row mb-3">
+				<button type="button" class="btn btn-success" onclick={() => AppData.uploadMatch()}
+					>Upload Matches</button
+				>
+			</div>
 		</div>
 
 		<!-- TODO: Flip x and y -->
-	{/snippet}
-	{#snippet buttons()}{/snippet}
-</Modal>
-
-<Modal bind:this={upload} title="Upload From File" size="md">
-	{#snippet body()}
-		<button type="button" class="btn btn-success" onclick={() => AppData.uploadMatch()}
-			>Upload Matches</button
-		>
 	{/snippet}
 	{#snippet buttons()}{/snippet}
 </Modal>

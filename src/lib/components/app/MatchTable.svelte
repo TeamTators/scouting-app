@@ -95,6 +95,7 @@
 						goto(
 							`/app/event/${data.value.eventKey}/team/${data.value.team}/match/${data.value.compLevel}/${data.value.match}`
 						);
+						matchData.set(data.value);
 					}}
 				>
 					<i class="material-icons"> arrow_left </i>
@@ -110,6 +111,7 @@
 						goto(
 							`/app/event/${data.value.eventKey}/team/${data.value.team}/match/${data.value.compLevel}/${data.value.match}`
 						);
+						matchData.set(data.value);
 					}}
 				>
 					Next
