@@ -156,7 +156,7 @@ export namespace Requests {
 			const res = (
 				await get(
 					`/event/${eventKey}/scout-groups`,
-					1000 * 60 * 60 * 24 // 1 day
+					1000 * 60 * 60
 				)
 			).unwrap();
 

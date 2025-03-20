@@ -104,7 +104,7 @@ export namespace AppData {
 
 	export const getScoutGroups = (eventKey: string) => {
 		return attemptAsync(async () => {
-			const res = (await get(`/event/${eventKey}/scout-groups`, 1000 * 60 * 60 * 24)).unwrap();
+			const res = (await get(`/event/${eventKey}/scout-groups`, 1000 * 60 * 60)).unwrap();
 
 			return AssignmentSchema.parse(res);
 		});
