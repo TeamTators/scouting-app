@@ -13,7 +13,7 @@
 	import createApp from '$lib/model/app/apps/2025.js';
 	import PostApp from '$lib/components/app/PostApp.svelte';
 	import { getAlliance } from '$lib/model/app/match-data.js';
-	import { fullscreen } from '$lib/utils/fullscreen.js';
+	import { fullscreen, isFullscreen } from '$lib/utils/fullscreen.js';
 
 	const { data } = $props();
 	const eventKey = $derived(data.eventKey);
@@ -115,10 +115,11 @@
 		};
 	});
 
-	let dom: HTMLElement;
+	let target: HTMLDivElement;
+	let exitFullscreen: () => void;
 </script>
 
-<div class="position-relative" style="height: 100vh;" bind:this={dom}>
+<div class="position-relative" style="height: 100vh;" bind:this={target}>
 	<div class="d-flex w-100 justify-content-between position-absolute p-3">
 		<div class="btn-group" role="group" style="z-index: 300;">
 			<button type="button" class="btn px-2 btn-lg" onclick={() => matches.show()}>
@@ -127,9 +128,15 @@
 			<button type="button" class="btn px-2 btn-lg" onclick={() => settings.show()}>
 				<i class="material-icons"> settings </i>
 			</button>
-			<!-- <button type="button" class="btn px-2 btn-lg" onclick={() => fullscreen(dom)}>
+			{#if $isFullscreen}
+			<button type="button" class="btn px-2 btn-lg" onclick={() => exitFullscreen()}>
+				<i class="material-icons">fullscreen_exit</i>
+			</button>
+			{:else}
+			<button type="button" class="btn px-2 btn-lg" onclick={() => exitFullscreen = fullscreen(target)}>
 				<i class="material-icons">fullscreen</i>
-			</button> -->
+			</button>
+			{/if}
 		</div>
 		<div class="btn-group" role="group" style="z-index: 300;">
 			{#if page === 'app'}
