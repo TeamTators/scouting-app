@@ -112,6 +112,14 @@ export class Checks implements Writable<Check[]> {
 					'Caused chaos'
 				]
 			})
+			.addCheck('primary',{
+				name: 'couldPlayDefense', 
+				builder:[ 'Yes', 'No', 'Maybe']
+			})
+			.addComment('primary', 'couldAvoidDefense', [
+				'Fast Robot',
+				'Good Driver/Manuvering'
+			])
 			.addCheck('primary', {
 				name: 'groundPicksCoral',
 				builder: ['Very fast', 'Fast', 'Average', 'Slow', 'Very slow', 'Inefficient']
