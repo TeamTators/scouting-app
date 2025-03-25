@@ -240,7 +240,8 @@ export class Checks implements Writable<Check[]> {
 				'Cannot climb',
 				'Slow climb',
 				'Unstable climb'
-			]);
+			])
+			.addComment('primary', 'miscComments', []);
 
 		return () => {
 			for (const check of this.data) {
