@@ -102,17 +102,24 @@ export namespace Requests {
 				...match,
 				remote: REMOTE === 'true'
 			};
-			(
+			const saved = (
 				await Scouting.Matches.new({
 					body: JSON.stringify(body),
 					eventKey: match.eventKey,
 					team: match.team,
 					compLevel: match.compLevel,
-					match: match.match
+					match: match.match,
+					submitted: false,
 				})
 			).unwrap();
 
-			return (await post('/submit-match', body)).unwrap();
+			const res = (await post('/submit-match', body)).unwrap();
+			if (res) {
+				await saved.update({
+					submitted: true
+				});
+			}
+			return res;
 		});
 	};
 
@@ -201,8 +208,24 @@ export namespace Requests {
 			},
 			1000 * 60 * 1
 		);
+
+		loop.on('connected', () => submitSavedMatches());
 		return loop;
 	};
+
+	export const submitSavedMatches = () => {
+		return Scouting.Matches.fromProperty('submitted', false, {
+			type: 'stream',
+		}).pipe(async match => {
+			const body = JSON.parse(match.data.body);
+			const res = await post('/submit-match', body);
+			if (res.isOk()) {
+				await match.update({
+					submitted: true
+				});
+			}
+		});
+	}
 
 	export const getEvents = (year: number) => {
 		return attemptAsync(async () => {

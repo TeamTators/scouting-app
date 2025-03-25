@@ -19,7 +19,8 @@ export namespace Scouting {
 			eventKey: text('eventKey').notNull(),
 			team: integer('team').notNull(),
 			compLevel: text('compLevel').notNull(),
-			match: integer('match').notNull()
+			match: integer('match').notNull(),
+			submitted: boolean('submitted').notNull().default(true),
 		}
 	});
 
