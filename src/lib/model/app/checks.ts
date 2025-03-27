@@ -82,8 +82,9 @@ export class Checks implements Writable<Check[]> {
 		this.writables.warning.set([]);
 		this.writables.danger.set([]);
 		// CHECKS:
-		this.addCheck('success', 'autoMobility')
-			.addCheck('success', 'parked')
+		this
+			// .addCheck('success', 'autoMobility')
+			// .addCheck('success', 'parked')
 			.addCheck('success', {
 				name: 'climbed',
 
@@ -114,12 +115,12 @@ export class Checks implements Writable<Check[]> {
 			})
 			.addCheck('primary',{
 				name: 'couldPlayDefense', 
-				builder:[ 'Yes', 'No', 'Maybe']
+				builder:[
+					'Won pushing matches against opponents',
+					'Agile and able to avoid defense',
+					'Could not be pushed around',
+				]
 			})
-			.addComment('primary', 'couldAvoidDefense', [
-				'Fast Robot',
-				'Good Driver/Manuvering'
-			])
 			.addCheck('primary', {
 				name: 'groundPicksCoral',
 				builder: ['Very fast', 'Fast', 'Average', 'Slow', 'Very slow', 'Inefficient']
@@ -241,7 +242,7 @@ export class Checks implements Writable<Check[]> {
 				'Slow climb',
 				'Unstable climb'
 			])
-			.addComment('primary', 'miscComments', []);
+			.addComment('primary', 'misc', []);
 
 		return () => {
 			for (const check of this.data) {
