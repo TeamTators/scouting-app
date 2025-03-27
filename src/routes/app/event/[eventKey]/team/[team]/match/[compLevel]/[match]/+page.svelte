@@ -12,7 +12,7 @@
 	import { goto } from '$app/navigation';
 	import createApp from '$lib/model/app/apps/2025.js';
 	import PostApp from '$lib/components/app/PostApp.svelte';
-	import { getAlliance } from '$lib/model/app/match-data.js';
+	import { getAlliance, MatchData } from '$lib/model/app/match-data.js';
 	import { fullscreen, isFullscreen } from '$lib/utils/fullscreen.js';
 
 	const { data } = $props();
@@ -31,6 +31,7 @@
 	let upload: Modal;
 	let postApp: PostApp | undefined = $state(undefined);
 	let group = $state(-1);
+	let matchData: MatchData | undefined = $state(undefined);
 
 	$effect(() => {
 		if (!browser) return;
@@ -86,6 +87,8 @@
 			compLevel,
 			alliance
 		});
+
+		matchData = app.matchData;
 
 		app.matchData.getScoutGroup().then((d) => {
 			if (d.isErr()) return console.error(d.error);
@@ -216,6 +219,53 @@
 <Modal bind:this={settings} title="Settings">
 	{#snippet body()}
 		<div class="container-fluid">
+			{#if !['qm', 'qf', 'sf', 'f'].includes(matchData?.compLevel || '')}
+				<div class="row mb-3">
+					<div class="col">
+						<p>
+							It looks like you're scouting a match that cannot be identified. Please select the alliance you are scouting for.
+						</p>
+						<div class="btn-group" role="group">
+							<input
+								class="btn-check"
+								type="checkbox"
+								name="red"
+								id="red"
+								checked={alliance === 'red'}
+								onchange={() => {
+									alliance = 'red';
+									app?.matchData.set({
+										eventKey,
+										match,
+										team,
+										compLevel,
+										alliance
+									});
+								}}
+							/>
+							<label for="red" class="btn btn-outline-primary">Red</label>
+							<input
+								class="btn-check"
+								type="checkbox"
+								name="blue"
+								id="blue"
+								checked={alliance === 'blue'}
+								onchange={() => {
+									alliance = 'blue';
+									app?.matchData.set({
+										eventKey,
+										match,
+										team,
+										compLevel,
+										alliance
+									});
+								}}
+							/>
+							<label for="blue" class="btn btn-outline-primary">Blue</label>
+						</div>
+					</div>
+				</div>
+			{/if}
 			<div class="row mb-3">
 				<label for="scout">Scout</label>
 				<input
