@@ -132,13 +132,17 @@
 				<i class="material-icons"> settings </i>
 			</button>
 			{#if $isFullscreen}
-			<button type="button" class="btn px-2 btn-lg" onclick={() => exitFullscreen()}>
-				<i class="material-icons">fullscreen_exit</i>
-			</button>
+				<button type="button" class="btn px-2 btn-lg" onclick={() => exitFullscreen()}>
+					<i class="material-icons">fullscreen_exit</i>
+				</button>
 			{:else}
-			<button type="button" class="btn px-2 btn-lg" onclick={() => exitFullscreen = fullscreen(target)}>
-				<i class="material-icons">fullscreen</i>
-			</button>
+				<button
+					type="button"
+					class="btn px-2 btn-lg"
+					onclick={() => (exitFullscreen = fullscreen(target))}
+				>
+					<i class="material-icons">fullscreen</i>
+				</button>
 			{/if}
 		</div>
 		<div class="btn-group" role="group" style="z-index: 300;">
@@ -148,6 +152,7 @@
 					class="btn btn-primary btn-lg"
 					onclick={() => {
 						page = 'post';
+						exitFullscreen();
 						if (app) postApp?.render(app);
 					}}
 				>
@@ -223,7 +228,8 @@
 				<div class="row mb-3">
 					<div class="col">
 						<p>
-							It looks like you're scouting a match that cannot be identified. Please select the alliance you are scouting for.
+							It looks like you're scouting a match that cannot be identified. Please select the
+							alliance you are scouting for.
 						</p>
 						<div class="btn-group" role="group">
 							<input
