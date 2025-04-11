@@ -142,10 +142,11 @@ export class MatchData implements Writable<MD> {
 
 	next() {
 		return attemptAsync(async () => {
-			if (this.compLevel === 'pr') return {
-				...this.data,
-				match: this.data.match + 1,
-			}
+			if (this.compLevel === 'pr')
+				return {
+					...this.data,
+					match: this.data.match + 1
+				};
 			const [eventRes, scoutGroupsRes, currentGroup] = await Promise.all([
 				this.getEvent(),
 				this.getScoutGroups(),
@@ -184,10 +185,11 @@ export class MatchData implements Writable<MD> {
 
 	prev() {
 		return attemptAsync(async () => {
-			if (this.compLevel === 'pr') return {
-				...this.data,
-				match: this.data.match - 1,
-			}
+			if (this.compLevel === 'pr')
+				return {
+					...this.data,
+					match: this.data.match - 1
+				};
 			const [eventRes, scoutGroupsRes, currentGroup] = await Promise.all([
 				this.getEvent(),
 				this.getScoutGroups(),

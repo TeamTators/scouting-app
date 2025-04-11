@@ -138,12 +138,11 @@ export namespace AppData {
 
 	export const uploadMatch = () => {
 		return attemptAsync(async () => {
-			const matches = (await loadFileContents())
-				.unwrap()
-				// it would probably be a good idea to have this filter, 
-				// but because we are dealing with duplicates and files save as .txt,
-				// I'm getting rid of it.
-				// .filter((f) => f.name.endsWith(`.${CACHE_VERSION}.match`));
+			const matches = (await loadFileContents()).unwrap();
+			// it would probably be a good idea to have this filter,
+			// but because we are dealing with duplicates and files save as .txt,
+			// I'm getting rid of it.
+			// .filter((f) => f.name.endsWith(`.${CACHE_VERSION}.match`));
 			return Promise.all(
 				matches.map(async (m) => {
 					const parsed = MS.safeParse(JSON.parse(m.text));
@@ -167,7 +166,7 @@ export namespace AppData {
 					title: 'Match Submitted',
 					message: `Match ${data.eventKey}:${data.compLevel}${data.match} submitted successfully!`,
 					color: 'success',
-					autoHide: 3000,
+					autoHide: 3000
 				});
 			} else {
 				notify({
@@ -175,10 +174,9 @@ export namespace AppData {
 					title: 'Match Submission Failed',
 					message: `Match ${data.eventKey}:${data.compLevel}${data.match} failed to submit!`,
 					color: 'danger',
-					autoHide: 3000,
+					autoHide: 3000
 				});
 			}
-
 		});
 	};
 }

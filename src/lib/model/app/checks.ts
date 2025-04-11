@@ -112,14 +112,11 @@ export class Checks implements Writable<Check[]> {
 					'Caused chaos'
 				]
 			})
-			.addCheck('primary',{
-				name: 'couldPlayDefense', 
-				builder:[ 'Yes', 'No', 'Maybe']
+			.addCheck('primary', {
+				name: 'couldPlayDefense',
+				builder: ['Yes', 'No', 'Maybe']
 			})
-			.addComment('primary', 'couldAvoidDefense', [
-				'Fast Robot',
-				'Good Driver/Manuvering'
-			])
+			.addComment('primary', 'couldAvoidDefense', ['Fast Robot', 'Good Driver/Manuvering'])
 			.addCheck('primary', {
 				name: 'groundPicksCoral',
 				builder: ['Very fast', 'Fast', 'Average', 'Slow', 'Very slow', 'Inefficient']
@@ -295,7 +292,7 @@ export class Checks implements Writable<Check[]> {
 			return checks;
 		});
 
-		this.writables[type].update(checks => {
+		this.writables[type].update((checks) => {
 			checks.push(c);
 			return checks;
 		});
@@ -319,7 +316,7 @@ export class Checks implements Writable<Check[]> {
 			return checks;
 		});
 
-		this.writables[type].update(checks => {
+		this.writables[type].update((checks) => {
 			checks.push(c);
 			return checks;
 		});
@@ -333,7 +330,6 @@ export class Checks implements Writable<Check[]> {
 		warning: writable<Check[]>([]),
 		danger: writable<Check[]>([])
 	};
-
 
 	serialize() {
 		const checks: string[] = [];

@@ -273,7 +273,7 @@ export class App {
 		this.view.timer.set({
 			section: this.state.section,
 			second: parseInt(String(index / TICKS_PER_SECOND)),
-			index,
+			index
 		});
 	}
 

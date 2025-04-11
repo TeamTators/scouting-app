@@ -38,18 +38,13 @@
 					{$matchData.compLevel}{$matchData.match} | {$matchData.team}
 					{minuteSecond($timer.second)}
 				</span>
-				<br>
-				<small class="text-muted">
-					Click on the progress bar to jump to a specific time.
-				</small>
+				<br />
+				<small class="text-muted"> Click on the progress bar to jump to a specific time. </small>
 			</p>
-			<div
-				class="progress"
-				role="progressbar"
+			<button
+				type="button"
 				aria-label="Progress Bar"
-				aria-valuenow={$timer.index}
-				aria-valuemin="0"
-				aria-valuemax={TOTAL_TICKS}
+				class="btn p-0 m-0"
 				onclick={(event) => {
 					// Calculate the new index based on the click position
 					const progressBar = event.currentTarget;
@@ -62,15 +57,24 @@
 				}}
 			>
 				<div
-					class="progress-bar"
-					style="width: {($timer.index / TOTAL_TICKS) * 100}%;"
-					class:bg-success={$timer.section === 'auto'}
-					class:bg-primary={$timer.section === 'teleop'}
-					class:bg-warning={$timer.section === 'endgame'}
-					class:bg-danger={$timer.section === 'end'}
+					class="progress"
+					role="progressbar"
+					aria-label="Progress Bar"
+					aria-valuenow={$timer.index}
+					aria-valuemin="0"
+					aria-valuemax={TOTAL_TICKS}
 				>
-			</div>	
-			</div>
+					<div
+						class="progress-bar"
+						style="width: {($timer.index / TOTAL_TICKS) * 100}%;"
+						class:bg-success={$timer.section === 'auto'}
+						class:bg-primary={$timer.section === 'teleop'}
+						class:bg-warning={$timer.section === 'endgame'}
+						class:bg-danger={$timer.section === 'end'}
+					></div>
+				</div>
+			</button>
+
 			<div role="group" class="btn-group">
 				<button
 					type="button"
