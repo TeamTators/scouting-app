@@ -29,7 +29,7 @@ export const POST = async (event) => {
 		terminal.error(res.error);
 		// return new Response('Error', { status: 500 });
 		throw fail(500, {
-			message: 'Error',
+			message: 'Error'
 		});
 	}
 
@@ -39,7 +39,7 @@ export const POST = async (event) => {
 	} else {
 		// return new Response('Error', { status: 500 });
 		throw fail(500, {
-			message: 'Error',
+			message: 'Error'
 		});
 	}
 };

@@ -20,60 +20,59 @@ export const fullscreen = (element: HTMLElement) => {
 				(document as any).msFullscreenElement;
 
 			if (fullscreenElement) {
-				if ("exitFullscreen" in document) {
+				if ('exitFullscreen' in document) {
 					document.exitFullscreen();
-				} else if ("webkitExitFullscreen" in document) {
+				} else if ('webkitExitFullscreen' in document) {
 					(document as any).webkitExitFullscreen();
-				} else if ("mozCancelFullScreen" in document) {
+				} else if ('mozCancelFullScreen' in document) {
 					(document as any).mozCancelFullScreen();
-				} else if ("msExitFullscreen" in document) {
+				} else if ('msExitFullscreen' in document) {
 					(document as any).msExitFullscreen();
 				} else {
-					console.warn("Fullscreen API is not supported");
+					console.warn('Fullscreen API is not supported');
 				}
 				isFullscreen.set(false);
 			} else {
-				console.warn("Not in fullscreen mode.");
+				console.warn('Not in fullscreen mode.');
 			}
 		} catch (error) {
-			console.warn("Failed to exit fullscreen:", error);
+			console.warn('Failed to exit fullscreen:', error);
 		}
 	};
 
 	try {
-		if ("requestFullscreen" in element) {
+		if ('requestFullscreen' in element) {
 			element.requestFullscreen();
-		} else if ("webkitRequestFullscreen" in element) {
+		} else if ('webkitRequestFullscreen' in element) {
 			(element as any).webkitRequestFullscreen();
-		} else if ("mozRequestFullScreen" in element) {
+		} else if ('mozRequestFullScreen' in element) {
 			(element as any).mozRequestFullScreen();
-		} else if ("msRequestFullscreen" in element) {
+		} else if ('msRequestFullscreen' in element) {
 			(element as any).msRequestFullscreen();
 		} else {
-			console.warn("Fullscreen API is not supported");
+			console.warn('Fullscreen API is not supported');
 		}
 		isFullscreen.set(true);
 	} catch (error) {
-		console.warn("Failed to enter fullscreen:", error);
+		console.warn('Failed to enter fullscreen:', error);
 	}
 
 	return exit;
 };
 
-
 export const isFullscreen = writable(false);
 
 if (browser) {
-	document.addEventListener("fullscreenchange", () => {
+	document.addEventListener('fullscreenchange', () => {
 		isFullscreen.set(document.fullscreenElement !== null);
 	});
-	document.addEventListener("mozfullscreenchange", () => {
+	document.addEventListener('mozfullscreenchange', () => {
 		isFullscreen.set((document as any).mozFullScreen !== null);
 	});
-	document.addEventListener("webkitfullscreenchange", () => {
+	document.addEventListener('webkitfullscreenchange', () => {
 		isFullscreen.set((document as any).webkitIsFullScreen !== null);
 	});
-	document.addEventListener("msfullscreenchange", () => {
+	document.addEventListener('msfullscreenchange', () => {
 		isFullscreen.set((document as any).msFullscreenElement !== null);
 	});
 }
