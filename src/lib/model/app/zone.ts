@@ -25,12 +25,17 @@ export class Zone extends Drawable {
 
 	init() {
 		this.polygon.points = this._points.map((point) => {
-			return [this.flipY ? 1 - point[0] : point[0], this.flipX ? 1 - point[1] : point[1]];
+			return [
+				this.flipY ? 1 - point[0] : point[0], 
+				this.flipX ? 1 - point[1] : point[1]
+			];
 		});
 	}
 
 	draw(ctx: CanvasRenderingContext2D) {
 		if (globalData.flipX !== this.flipX || globalData.flipY !== this.flipY) {
+			this.flipX = globalData.flipX;
+			this.flipY = globalData.flipY;
 			this.init();
 		}
 		this.polygon.draw(ctx);
