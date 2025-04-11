@@ -4,7 +4,7 @@ export const globalData = $state(
 	browser
 		? {
 				scout: localStorage.getItem('scout') ?? '',
-				prescouting: localStorage.getItem('prescouting') === 'true',
+				prescouting: false, // this should always be false now, but I will leave it here to prevent type errors,
 				practice: localStorage.getItem('practice') === 'true',
 				flipX: localStorage.getItem('flipX') === 'true',
 				flipY: localStorage.getItem('flipY') === 'true'

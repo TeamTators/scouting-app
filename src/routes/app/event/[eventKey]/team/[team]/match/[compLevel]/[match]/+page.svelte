@@ -290,14 +290,14 @@
 			</div>
 			<div class="row mb-3">
 				<div class="btn-group" role="group">
-					<input
+					<!-- <input
 						class="btn-check"
 						type="checkbox"
 						name="prescouting"
 						id="prescouting"
 						bind:checked={globalData.prescouting}
 					/>
-					<label for="prescouting" class="btn btn-outline-primary me-2">Prescouting</label>
+					<label for="prescouting" class="btn btn-outline-primary me-2">Prescouting</label> -->
 					<input
 						class="btn-check"
 						type="checkbox"
