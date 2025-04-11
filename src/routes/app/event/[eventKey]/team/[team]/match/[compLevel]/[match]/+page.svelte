@@ -139,7 +139,7 @@
 				<button
 					type="button"
 					class="btn px-2 btn-lg"
-					onclick={() => (exitFullscreen = fullscreen(target))}
+					onclick={() => (exitFullscreen = fullscreen(document.body))}
 				>
 					<i class="material-icons">fullscreen</i>
 				</button>
