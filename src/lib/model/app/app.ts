@@ -253,6 +253,28 @@ export class App {
 	goto(section: Section) {
 		const [start] = SECTIONS[section];
 		this.state.currentIndex = start * TICKS_PER_SECOND;
+		const tick = this.state.tick;
+		if (!tick) return;
+		this.emit('tick', tick);
+		this.view.timer.set({
+			section,
+			second: start,
+			index: start * TICKS_PER_SECOND
+		});
+	}
+
+	gotoTickIndex(index: number) {
+		if (index < 0) index = 0;
+		if (index > TOTAL_TICKS) index = TOTAL_TICKS;
+		this.state.currentIndex = index;
+		const tick = this.state.tick;
+		if (!tick) return;
+		this.emit('tick', tick);
+		this.view.timer.set({
+			section: this.state.section,
+			second: parseInt(String(index / TICKS_PER_SECOND)),
+			index,
+		});
 	}
 
 	addAppObject<T = unknown>(config: {
