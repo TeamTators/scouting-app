@@ -1,15 +1,27 @@
 import { writable, type Writable } from 'svelte/store';
 import type { App } from './app';
+import { Gradient } from 'colors/gradient';
+import { Color } from 'colors/color';
 
 type C = {
 	value: boolean;
 	name: string;
 	comment: string;
-	builder: string[];
-	doComment: boolean;
+	doSlider: true;
 	type: 'success' | 'primary' | 'warning' | 'danger';
 	render: boolean;
-};
+	slider: number;
+	values: [string, string, string, string, string];
+	color: [string, string, string, string, string];
+} | {
+	value: boolean;
+	name: string;
+	comment: string;
+	doSlider: false;
+	type: 'success' | 'primary' | 'warning' | 'danger';
+	render: boolean;
+	slider: 0;
+}
 
 export class Check implements Writable<C> {
 	constructor(public readonly data: C) {}
@@ -26,9 +38,10 @@ export class Check implements Writable<C> {
 		this.data.value = value.value;
 		this.data.name = value.name;
 		this.data.comment = value.comment;
-		this.data.builder = value.builder;
-		this.data.doComment = value.doComment;
+		this.data.doSlider = value.doSlider;
 		this.data.render = value.render;
+		this.data.type = value.type;
+		this.data.slider = value.slider;
 		this.inform();
 	}
 
@@ -84,69 +97,49 @@ export class Checks implements Writable<Check[]> {
 		// CHECKS:
 		this.addCheck('success', 'autoMobility')
 			.addCheck('success', 'parked')
-			.addCheck('success', 'climbed')
+			.addCheck('success', {
+				name: 'climbed',
+				slider: ['Very Slow', 'Slow', 'Medium', 'Fast', 'Very Fast'],
+				color: ['red', 'orange', 'yellow', 'green', 'blue']
+			})
 			.addCheck('success', 'stoleGamePieces')
 			.addCheck('success', 'coopertition')
-			.addCheck('primary', 'playedDefense')
+			.addCheck('primary', {
+				name: 'playedDefense',
+				slider: ['Not effective at all', 'Not very effective', 'A little effective', 'Effective', 'Very effective'],
+				color: ['red', 'orange', 'yellow', 'green', 'blue']
+			})
 			.addCheck('primary', 'couldPlayDefense')
-			.addComment('primary', 'couldAvoidDefense', ['Fast Robot', 'Good Driver/Manuvering'])
-			.addCheck('primary', 'groundPicksCoral')
-			.addCheck('primary','groundPicksAlgae')
+			.addCheck('primary', {
+				name: 'groundPicksCoral',
+				slider: ['Very Slow', 'Slow', 'Medium', 'Fast', 'Very Fast'],
+				color: ['red', 'orange', 'yellow', 'green', 'blue']
+			})
+			.addCheck('primary', {
+				name: 'groundPicksAlgae',
+				slider: ['Very Slow', 'Slow', 'Medium', 'Fast', 'Very Fast'],
+				color: ['red', 'orange', 'yellow', 'green', 'blue']
+			})
 			// .addCheck('primary', 'placesCoral')
 			// .addCheck('primary', 'placesAlgae')
 			.addCheck('warning', 'tippy')
 			.addCheck('warning', 'easilyDefended')
 			.addCheck('warning', 'slow')
 			.addCheck('warning', 'droppedGamePieces')
-			.addCheck('warning', 'disabledInAuto')
+			.addCheck('warning', {
+				name: 'disabledInAuto',
+				slider: [
+					'Caused significant issues',
+					'Caused issues',
+					'Got in partners way',
+					'Unknown reason',
+					'Purposeful for auto mobility'
+				],
+				color: Color.fromHex('#FF0000').linearFade(Color.fromHex('#FF7F00'), 5).colors.map(c => c.toString('rgb')) as [string, string, string, string, string]
+			})
 			.addCheck('danger', 'robotDied')
 			.addCheck('danger', 'problemsDriving')
-			.addCheck('danger', 'spectator')
-			.addComment('primary', 'auto', [
-				'Did not move in autonomous',
-				'Mobility only in auto',
-				'crossed leave line',
-				'1 coral auto',
-				'2 coral auto',
-				'3 coral auto',
-				'4 coral auto',
-				'5 coral auto',
-				'1 processor auto',
-				'2 processor auto',
-				'1 reef algae removal auto',
-				'2 reef algae removal auto',
-				'1 barge auto',
-				'2 barge auto'
-			])
-			.addComment('primary', 'teleop', [
-				'clever driver, adapts quickly',
-				'Drove around aimlessly',
-				'fast and maneuverable',
-				'gets fouls hitting bots in protected zones',
-				"gets in partner's way",
-				'hits opponents very hard',
-				'Mostly played defense',
-				'Very slow',
-				'Processor only',
-				'Coral only',
-				'Barge only',
-				'Held more than 1 coral',
-				'Held more than 1 algae',
-				'Extremely accurate coral',
-				'misses a lot of barge shots',
-				'Game piece jammed in bot',
-				'Often misses floor pick',
-				'Only shoots from one spot',
-				'Takes a long time to set up barge shot',
-				'Very fast floor pick'
-			])
-			.addComment('primary', 'endgame', [
-				'Climbs quickly',
-				'Cannot climb',
-				'Slow climb',
-				'Unstable climb'
-			])
-			.addComment('primary', 'miscComments', []);
+			.addCheck('danger', 'spectator');
 
 		return () => {
 			for (const check of this.data) {
@@ -168,7 +161,8 @@ export class Checks implements Writable<Check[]> {
 		check:
 			| {
 					name: string;
-					builder: string[];
+					slider: [string, string, string, string, string];
+					color: [string, string, string, string, string];
 			  }
 			| string
 	) {
@@ -176,48 +170,26 @@ export class Checks implements Writable<Check[]> {
 		if (typeof check === 'string') {
 			c = new Check({
 				name: check,
-				builder: [],
-				doComment: false,
+				doSlider: false,
 				comment: '',
 				value: false,
 				type,
-				render: true
+				render: true,
+				slider: 0,
 			});
 		} else {
 			c = new Check({
-				builder: check.builder,
 				name: check.name,
 				type,
-				doComment: true,
+				doSlider: true,
 				comment: '',
 				value: false,
-				render: true
+				render: true,
+				slider: 0,
+				values: check.slider,
+				color: check.color,
 			});
 		}
-
-		this.update((checks) => {
-			checks.push(c);
-			return checks;
-		});
-
-		this.writables[type].update((checks) => {
-			checks.push(c);
-			return checks;
-		});
-
-		return this;
-	}
-
-	addComment(type: 'success' | 'primary' | 'warning' | 'danger', name: string, builder: string[]) {
-		const c = new Check({
-			builder,
-			name,
-			type,
-			doComment: true,
-			comment: '',
-			value: true,
-			render: false
-		});
 
 		this.update((checks) => {
 			checks.push(c);
@@ -241,15 +213,22 @@ export class Checks implements Writable<Check[]> {
 
 	serialize() {
 		const checks: string[] = [];
-		const comments: Record<string, string> = {};
+		const sliders: Record<string, {
+			value: number;
+			text: string;
+			color: string;
+		}> = {};
 
 		for (const check of this.data) {
 			if (check.data.value && check.data.render) checks.push(check.data.name);
-			if (check.data.doComment && check.data.comment.length)
-				comments[check.data.name] = check.data.comment;
+			if (check.data.doSlider && check.data.value && check.data.render) sliders[check.data.name] = {
+				value: check.data.slider,
+				text: check.data.values[check.data.slider],
+				color: check.data.color[check.data.slider]
+			}
 		}
 
-		return { checks, comments };
+		return { checks, sliders };
 	}
 
 	setComment(name: string, comment: string) {

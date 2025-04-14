@@ -1,36 +1,20 @@
 <script lang="ts">
-	import { Check } from '$lib/model/app/checks';
-	import { Form } from '$lib/utils/form';
-	import { capitalize, fromCamelCase } from 'ts-utils/text';
-	interface Props {
-		check: Check;
-		color: 'success' | 'primary' | 'warning' | 'danger';
-	}
+	import type { Comment } from "$lib/model/app/comments";
 
-	const { check, color }: Props = $props();
+    interface Props {
+        comment: Comment;
+    }
+
+    const { comment }: Props = $props();
 </script>
 
-{#if $check.value && $check.doComment}
-	<div class="row mb-3">
-		<div class="col">
-			<div class="card border-{color}">
-				<label for="comment-{$check.name}" class="form-label px-3 pt-3">
-					{#if $check.render}
-						Please elaborate on the check:
-					{/if}
-					{capitalize(fromCamelCase($check.name))}
-				</label>
-				<textarea
-					class="form-control"
-					id="comment-{$check.name}"
-					rows="3"
-					bind:value={$check.comment}
-					placeholder="Write {capitalize(fromCamelCase($check.name))} comment here..."
-					oninput={(e) => {
-						check.update((c) => ({ ...c, comment: e.currentTarget.value }));
-					}}
-				></textarea>
-			</div>
-		</div>
-	</div>
-{/if}
+<div class="row mb-3">
+    <div class="col">
+        <div class="card" style="border-color: var(--bs-{comment.color})">
+            <div class="card-body">
+                <label for="comment-{comment.key}" class="form-label">{comment.key}:</label>
+                <textarea id="comment-{comment.key}" class="form-control" bind:value={comment.value}></textarea>
+            </div>
+        </div>
+    </div>
+</div>

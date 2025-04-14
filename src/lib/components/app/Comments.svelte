@@ -1,12 +1,9 @@
 <script lang="ts">
 	import { App } from '$lib/model/app/app';
-	import { Form } from '$lib/utils/form';
-	import { onMount } from 'svelte';
-	import { capitalize, fromCamelCase } from 'ts-utils/text';
-	import { writable, type Writable } from 'svelte/store';
 	import { Check } from '$lib/model/app/checks';
 	import CheckRow from '$lib/components/app/Check.svelte';
-	import Comment from '$lib/components/app/Comment.svelte';
+	import Slider from '$lib/components/app/Slider.svelte';
+	import Comment from './Comment.svelte';
 
 	interface Props {
 		app: App;
@@ -15,6 +12,7 @@
 	const { app }: Props = $props();
 
 	const checks = app.checks;
+	const comments = app.comments;
 
 	const success = checks.writables.success;
 	const primary = checks.writables.primary;
@@ -46,16 +44,19 @@
 	{@render checksRow($warning, 'warning')}
 	{@render checksRow($danger, 'danger')}
 	{#each $success as check}
-		<Comment {check} color="success" />
+		<Slider {check} color="success" />
 	{/each}
 	{#each $primary as check}
-		<Comment {check} color="primary" />
+		<Slider {check} color="primary" />
 	{/each}
 	{#each $warning as check}
-		<Comment {check} color="warning" />
+		<Slider {check} color="warning" />
 	{/each}
 	{#each $danger as check}
-		<Comment {check} color="danger" />
+		<Slider {check} color="danger" />
+	{/each}
+	{#each $comments as comment}
+		<Comment {comment} />
 	{/each}
 </div>
 
