@@ -84,116 +84,24 @@ export class Checks implements Writable<Check[]> {
 		// CHECKS:
 		this.addCheck('success', 'autoMobility')
 			.addCheck('success', 'parked')
-			.addCheck('success', {
-				name: 'climbed',
-
-				builder: ['Very fast', 'Fast', 'Average', 'Slow', 'Very slow']
-			})
-			.addCheck('success', {
-				name: 'stoleGamePieces',
-				builder: [
-					'Attempted, but did not slow down opponents',
-					'Successfully slowed down opponents',
-					'Stole strategically'
-				]
-			})
-			.addCheck('success', {
-				name: 'coopertition',
-				builder: ['Placed into opponent processor']
-			})
-			.addCheck('primary', {
-				name: 'playedDefense',
-				builder: [
-					'Attempted, but did not slow down opponents',
-					'Got in opponents way',
-					'Recieved 1 or more penalties',
-					'Drew penalties from opponent',
-					'Successfully slowed down opponents',
-					'Caused chaos'
-				]
-			})
-			.addCheck('primary', {
-				name: 'couldPlayDefense',
-				builder: ['Yes', 'No', 'Maybe']
-			})
+			.addCheck('success', 'climbed')
+			.addCheck('success', 'stoleGamePieces')
+			.addCheck('success', 'coopertition')
+			.addCheck('primary', 'playedDefense')
+			.addCheck('primary', 'couldPlayDefense')
 			.addComment('primary', 'couldAvoidDefense', ['Fast Robot', 'Good Driver/Manuvering'])
-			.addCheck('primary', {
-				name: 'groundPicksCoral',
-				builder: ['Very fast', 'Fast', 'Average', 'Slow', 'Very slow', 'Inefficient']
-			})
-			.addCheck('primary', {
-				name: 'groundPicksAlgae',
-				builder: ['Very fast', 'Fast', 'Average', 'Slow', 'Very slow', 'Inefficient']
-			})
-			.addCheck('primary', {
-				name: 'placesCoral',
-				builder: ['Very fast', 'Fast', 'Average', 'Slow', 'Very slow', 'Inefficient']
-			})
-			.addCheck('primary', {
-				name: 'placesAlgae',
-				builder: ['Very fast', 'Fast', 'Average', 'Slow', 'Very slow', 'Inefficient']
-			})
-			.addCheck('warning', {
-				name: 'tippy',
-				builder: ['Tipped over', 'Almost tipped over', 'Could easily tip over']
-			})
-			.addCheck('warning', {
-				name: 'easilyDefended',
-				builder: [
-					'Slow',
-					'Driver is not able to get out of the way of defense',
-					'Driver took a consistent path and was (or would be) easy for opponents to catch onto and defend',
-					'Takes too long to grab pieces from the source',
-					'Takes too long to get into position'
-				]
-			})
-			.addCheck('warning', {
-				name: 'slow',
-				builder: [
-					'Robot is not capable of going fast',
-					'Robot is clearly able to go faster, but driver went slowly',
-					'Driver needs more practice'
-				]
-			})
-			.addCheck('warning', {
-				name: 'droppedGamePieces',
-				builder: [
-					'Dropped 3 or more pieces',
-					'Luckily, not all the pieces that were dropped were in the way of anything',
-					'Pieces were in the way of themselves or others',
-					'Opponent stole from their dropped pieces'
-				]
-			})
-			.addCheck('warning', {
-				name: 'disabledInAuto',
-				builder: [
-					'Uknown reason',
-					'Hit partners',
-					'Hit opponents',
-					'Robot was about to or did damage itself or other robots'
-				]
-			})
-			.addCheck('danger', {
-				name: 'robotDied',
-				builder: [
-					'They died after being hit',
-					'Unknown reason',
-					'Robot was still enabled, but was not moving',
-					'It looked like a radio issue'
-				]
-			})
-			.addCheck('danger', {
-				name: 'problemsDriving',
-				builder: [
-					'Driver clearly needs more practice time',
-					'Unable to respond to defense',
-					'Was not flexibile enough to change strategies mid-match due'
-				]
-			})
-			.addCheck('danger', {
-				name: 'spectator',
-				builder: []
-			})
+			.addCheck('primary', 'groundPicksCoral')
+			.addCheck('primary','groundPicksAlgae')
+			// .addCheck('primary', 'placesCoral')
+			// .addCheck('primary', 'placesAlgae')
+			.addCheck('warning', 'tippy')
+			.addCheck('warning', 'easilyDefended')
+			.addCheck('warning', 'slow')
+			.addCheck('warning', 'droppedGamePieces')
+			.addCheck('warning', 'disabledInAuto')
+			.addCheck('danger', 'robotDied')
+			.addCheck('danger', 'problemsDriving')
+			.addCheck('danger', 'spectator')
 			.addComment('primary', 'auto', [
 				'Did not move in autonomous',
 				'Mobility only in auto',
