@@ -17,6 +17,7 @@ import { writable } from 'svelte/store';
 import { attemptAsync } from 'ts-utils';
 import { globalData } from './global-data.svelte';
 import type { MatchSchemaType } from '$lib/types/match';
+import { Comments } from './comments';
 
 export const TICKS_PER_SECOND = 4;
 export const SECTIONS = {
@@ -56,6 +57,7 @@ export class App {
 	public readonly state: AppState;
 	public readonly view: AppView;
 	public readonly checks: Checks;
+	public readonly comments: Comments;
 	public readonly gameObjects: {
 		point: Point2D;
 		object: AppObject;
@@ -89,12 +91,14 @@ export class App {
 		this.state = new AppState(this);
 		this.view = new AppView(this);
 		this.checks = new Checks(this);
+		this.comments = new Comments(this);
 	}
 
 	serialize() {
 		return attemptAsync<MatchSchemaType>(async () => {
 			const trace = this.state.serialize();
-			const { checks, comments } = this.checks.serialize();
+			const { checks, sliders, } = this.checks.serialize();
+			const comments = this.comments.serialize();
 			const { eventKey, compLevel, match, team } = this.matchData.data;
 			const { scout, prescouting, practice, flipX, flipY } = globalData;
 			const { alliance } = this.matchData;
@@ -116,7 +120,8 @@ export class App {
 				prescouting,
 				practice,
 				alliance,
-				group
+				group,
+				sliders,
 			};
 		});
 	}
@@ -125,6 +130,7 @@ export class App {
 	private _offView = () => {};
 	private _offData = () => {};
 	private _offCollected = () => {};
+	private _offComments = () => {};
 	private _target: HTMLElement | undefined;
 
 	private _deinit = () => {};
@@ -135,12 +141,14 @@ export class App {
 		this._offView = this.view.init(target);
 		this._offData = this.matchData.init();
 		this._offCollected = this.checks.init();
+		this._offComments = this.comments.init();
 
 		this._deinit = () => {
 			this._offState();
 			this._offView();
 			this._offData();
 			this._offCollected();
+			this._offComments();
 		};
 
 		return this._deinit;
