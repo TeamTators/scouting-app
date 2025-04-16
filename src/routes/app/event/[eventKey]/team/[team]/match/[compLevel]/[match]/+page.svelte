@@ -14,6 +14,8 @@
 	import PostApp from '$lib/components/app/PostApp.svelte';
 	import { getAlliance, MatchData } from '$lib/model/app/match-data.js';
 	import { fullscreen, isFullscreen } from '$lib/utils/fullscreen.js';
+	import { Form } from '$lib/utils/form.js';
+	import { confirm, prompt } from '$lib/utils/prompts.js';
 
 	const { data } = $props();
 	const eventKey = $derived(data.eventKey);
@@ -72,6 +74,24 @@
 				alliance
 			});
 		});
+	};
+
+	const algaeHarvestForm = async () => {
+		if (await confirm('Can this robot harvest algae?')) {
+			const howWell = await prompt(
+				'How well did the robot harvest algae? Be descriptive and critical.'
+			);
+
+			console.log(howWell);
+			if (howWell) {
+				app?.comments.get('Algae')?.set(['Algae', howWell]);
+				console.log('Algae', howWell);
+			}
+			app?.checks.get('harvestsAlgae')?.update((a) => ({
+				...a,
+				value: true
+			}));
+		}
 	};
 
 	onMount(() => {
@@ -150,7 +170,8 @@
 				<button
 					type="button"
 					class="btn btn-primary btn-lg"
-					onclick={() => {
+					onclick={async () => {
+						await algaeHarvestForm();
 						page = 'post';
 						exitFullscreen();
 						if (app) postApp?.render(app);
