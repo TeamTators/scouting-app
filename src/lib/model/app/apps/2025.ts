@@ -344,43 +344,43 @@ export default (config: {
 		zone: 'Middle'
 	});
 
-	app.view.buttonCircle
-		.addButton({
-			name: 'Blue Deep Climb',
-			abbr: 'dpc',
-			color: Color.fromName('blue'),
-			description: 'Blue climbed deep cage',
-			alliance: 'blue',
-			condition: (app) => blueEnd.isIn(app.state.currentLocation || [-1, -1])
-			// condition: (app) => isInside(app.state.currentLocation || [-1, -1], blueEnd.points as Point2D[])
-		})
-		.addButton({
-			name: 'Blue Shallow Climb',
-			abbr: 'shc',
-			color: Color.fromName('blue'),
-			description: 'Blue climbed shallow cage',
-			alliance: 'blue',
-			condition: (app) => blueEnd.isIn(app.state.currentLocation || [-1, -1])
-			// condition: (app) => isInside(app.state.currentLocation || [-1, -1], redEnd.points as Point2D[])
-		})
-		.addButton({
-			name: 'Red Deep Climb',
-			abbr: 'dpc',
-			color: Color.fromName('red'),
-			description: 'Red climbed deep cage',
-			alliance: 'red',
-			condition: (app) => redEnd.isIn(app.state.currentLocation || [-1, -1])
-			// condition: (app) => isInside(app.state.currentLocation || [-1, -1], blueEnd.points as Point2D[])
-		})
-		.addButton({
-			name: 'Red Shallow Climb',
-			abbr: 'shc',
-			color: Color.fromName('red'),
-			description: 'Red climbed shallow cage',
-			alliance: 'red',
-			condition: (app) => redEnd.isIn(app.state.currentLocation || [-1, -1])
-			// condition: (app) => isInside(app.state.currentLocation || [-1, -1], redEnd.points as Point2D[])
-		});
+	// app.view.buttonCircle
+	// 	.addButton({
+	// 		name: 'Blue Deep Climb',
+	// 		abbr: 'dpc',
+	// 		color: Color.fromName('blue'),
+	// 		description: 'Blue climbed deep cage',
+	// 		alliance: 'blue',
+	// 		condition: (app) => blueEnd.isIn(app.state.currentLocation || [-1, -1])
+	// 		// condition: (app) => isInside(app.state.currentLocation || [-1, -1], blueEnd.points as Point2D[])
+	// 	})
+	// 	.addButton({
+	// 		name: 'Blue Shallow Climb',
+	// 		abbr: 'shc',
+	// 		color: Color.fromName('blue'),
+	// 		description: 'Blue climbed shallow cage',
+	// 		alliance: 'blue',
+	// 		condition: (app) => blueEnd.isIn(app.state.currentLocation || [-1, -1])
+	// 		// condition: (app) => isInside(app.state.currentLocation || [-1, -1], redEnd.points as Point2D[])
+	// 	})
+	// 	.addButton({
+	// 		name: 'Red Deep Climb',
+	// 		abbr: 'dpc',
+	// 		color: Color.fromName('red'),
+	// 		description: 'Red climbed deep cage',
+	// 		alliance: 'red',
+	// 		condition: (app) => redEnd.isIn(app.state.currentLocation || [-1, -1])
+	// 		// condition: (app) => isInside(app.state.currentLocation || [-1, -1], blueEnd.points as Point2D[])
+	// 	})
+	// 	.addButton({
+	// 		name: 'Red Shallow Climb',
+	// 		abbr: 'shc',
+	// 		color: Color.fromName('red'),
+	// 		description: 'Red climbed shallow cage',
+	// 		alliance: 'red',
+	// 		condition: (app) => redEnd.isIn(app.state.currentLocation || [-1, -1])
+	// 		// condition: (app) => isInside(app.state.currentLocation || [-1, -1], redEnd.points as Point2D[])
+	// 	});
 
 	app.on('tick', () => {
 		if (app.state.section === 'auto' && app.state.currentLocation) {

@@ -3,25 +3,27 @@ import type { App } from './app';
 import { Gradient } from 'colors/gradient';
 import { Color } from 'colors/color';
 
-type C = {
-	value: boolean;
-	name: string;
-	comment: string;
-	doSlider: true;
-	type: 'success' | 'primary' | 'warning' | 'danger';
-	render: boolean;
-	slider: number;
-	values: [string, string, string, string, string];
-	color: [string, string, string, string, string];
-} | {
-	value: boolean;
-	name: string;
-	comment: string;
-	doSlider: false;
-	type: 'success' | 'primary' | 'warning' | 'danger';
-	render: boolean;
-	slider: 0;
-}
+type C =
+	| {
+			value: boolean;
+			name: string;
+			comment: string;
+			doSlider: true;
+			type: 'success' | 'primary' | 'warning' | 'danger';
+			render: boolean;
+			slider: number;
+			values: [string, string, string, string, string];
+			color: [string, string, string, string, string];
+	  }
+	| {
+			value: boolean;
+			name: string;
+			comment: string;
+			doSlider: false;
+			type: 'success' | 'primary' | 'warning' | 'danger';
+			render: boolean;
+			slider: 0;
+	  };
 
 export class Check implements Writable<C> {
 	constructor(public readonly data: C) {}
@@ -106,7 +108,13 @@ export class Checks implements Writable<Check[]> {
 			.addCheck('success', 'coopertition')
 			.addCheck('primary', {
 				name: 'playedDefense',
-				slider: ['Not effective at all', 'Not very effective', 'A little effective', 'Effective', 'Very effective'],
+				slider: [
+					'Not effective at all',
+					'Not very effective',
+					'A little effective',
+					'Effective',
+					'Very effective'
+				],
 				color: ['red', 'orange', 'yellow', 'green', 'blue']
 			})
 			.addCheck('primary', 'couldPlayDefense')
@@ -135,7 +143,9 @@ export class Checks implements Writable<Check[]> {
 					'Unknown reason',
 					'Purposeful for auto mobility'
 				],
-				color: Color.fromHex('#FF0000').linearFade(Color.fromHex('#FF7F00'), 5).colors.map(c => c.toString('rgb')) as [string, string, string, string, string]
+				color: Color.fromHex('#FF0000')
+					.linearFade(Color.fromHex('#FF7F00'), 5)
+					.colors.map((c) => c.toString('rgb')) as [string, string, string, string, string]
 			})
 			.addCheck('danger', 'robotDied')
 			.addCheck('danger', 'problemsDriving')
@@ -176,7 +186,7 @@ export class Checks implements Writable<Check[]> {
 				value: false,
 				type,
 				render: true,
-				slider: 0,
+				slider: 0
 			});
 		} else {
 			c = new Check({
@@ -188,7 +198,7 @@ export class Checks implements Writable<Check[]> {
 				render: true,
 				slider: 0,
 				values: check.slider,
-				color: check.color,
+				color: check.color
 			});
 		}
 
@@ -218,19 +228,23 @@ export class Checks implements Writable<Check[]> {
 
 	serialize() {
 		const checks: string[] = [];
-		const sliders: Record<string, {
-			value: number;
-			text: string;
-			color: string;
-		}> = {};
+		const sliders: Record<
+			string,
+			{
+				value: number;
+				text: string;
+				color: string;
+			}
+		> = {};
 
 		for (const check of this.data) {
 			if (check.data.value && check.data.render) checks.push(check.data.name);
-			if (check.data.doSlider && check.data.value && check.data.render) sliders[check.data.name] = {
-				value: check.data.slider,
-				text: check.data.values[check.data.slider],
-				color: check.data.color[check.data.slider]
-			}
+			if (check.data.doSlider && check.data.value && check.data.render)
+				sliders[check.data.name] = {
+					value: check.data.slider,
+					text: check.data.values[check.data.slider],
+					color: check.data.color[check.data.slider]
+				};
 		}
 
 		return { checks, sliders };
