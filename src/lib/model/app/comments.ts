@@ -79,7 +79,11 @@ export class Comments implements Writable<C> {
 		this.addComment('Teleop', 'primary');
 		this.addComment('Overall', 'info');
 		return () => {
-			this.comments = [];
+
+			// the thermonuclear approach. this just doesn't want to work correctly.
+			this.comments.forEach(comment => comment.subscribers.clear());
+			this.set([]);
+			this.subscribers.clear();
 		};
 	}
 
