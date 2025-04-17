@@ -145,7 +145,7 @@ export class App {
 
 		// for some reason, this code will never run. I have no idea why. not totally sure what it does either.
 		this._deinit = () => {
-			console.log('Deinitializing app');
+			// console.log('Deinitializing app');
 			this._offState();
 			this._offComments();
 			this._offView();
@@ -259,9 +259,9 @@ export class App {
 		this._offCollected();
 		this._offComments();
 
-		// wtf is this._deinit for?
+		// this._deinit();
 		// i do not understand
-		console.log('App reset.');
+		// console.log('App reset.');
 		if (this._target) {
 			this.init(this._target);
 		}

@@ -210,6 +210,7 @@
 						app?.matchData.set(data.value);
 						page = 'app';
 						app?.reset();
+						console.log(app?.comments.comments);
 						// window.location.reload();
 					}}
 				>

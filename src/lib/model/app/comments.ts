@@ -84,7 +84,6 @@ export class Comments implements Writable<C> {
 		return () => {
 
 			// the thermonuclear approach. this just doesn't want to work correctly.
-			this.comments.forEach(comment => comment.subscribers.clear());
 			this.set([]);
 			this.subscribers.clear();
 		};
