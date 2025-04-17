@@ -97,7 +97,7 @@ export class App {
 	serialize() {
 		return attemptAsync<MatchSchemaType>(async () => {
 			const trace = this.state.serialize();
-			const { checks, sliders, } = this.checks.serialize();
+			const { checks, sliders } = this.checks.serialize();
 			const comments = this.comments.serialize();
 			const { eventKey, compLevel, match, team } = this.matchData.data;
 			const { scout, prescouting, practice, flipX, flipY } = globalData;
@@ -121,7 +121,7 @@ export class App {
 				practice,
 				alliance,
 				group,
-				sliders,
+				sliders
 			};
 		});
 	}

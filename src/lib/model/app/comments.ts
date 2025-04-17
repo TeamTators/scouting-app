@@ -6,7 +6,10 @@ type C = Comment[];
 export class Comment implements Writable<[string, string]> {
 	public readonly subscribers = new Set<(value: [string, string]) => void>();
 
-	constructor(public readonly data: [string, string], public readonly color: string) {}
+	constructor(
+		public readonly data: [string, string],
+		public readonly color: string
+	) {}
 
 	get key() {
 		return this.data[0];
@@ -84,10 +87,10 @@ export class Comments implements Writable<C> {
 	}
 
 	serialize() {
-		return Object.fromEntries(this.comments.map(c => c.data));
+		return Object.fromEntries(this.comments.map((c) => c.data));
 	}
 
 	get(key: string) {
-		return this.comments.find(c => c.key === key);
+		return this.comments.find((c) => c.key === key);
 	}
 }
