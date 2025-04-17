@@ -134,7 +134,7 @@ export const prompt = async (message: string, config?: PromptConfig) => {
 		modal.show();
 
 		modal.once('hide', () => {
-			res(null);
+			res(config?.parser ? config.parser(value.trim()) : value.trim());
 			clearModals();
 		});
 	});

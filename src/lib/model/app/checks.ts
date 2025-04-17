@@ -139,7 +139,8 @@ export class Checks implements Writable<Check[]> {
 			})
 			.addCheck('danger', 'robotDied')
 			.addCheck('danger', 'problemsDriving')
-			.addCheck('danger', 'spectator');
+			.addCheck('danger', 'spectator')
+			.addCheck('success', 'harvestsAlgae');
 
 		return () => {
 			for (const check of this.data) {
@@ -202,6 +203,10 @@ export class Checks implements Writable<Check[]> {
 		});
 
 		return this;
+	}
+
+	get(check: string) {
+		return this.data.find((c) => c.data.name === check);
 	}
 
 	public readonly writables = {

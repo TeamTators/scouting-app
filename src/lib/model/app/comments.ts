@@ -74,6 +74,7 @@ export class Comments implements Writable<C> {
 	}
 
 	init() {
+		this.addComment('Algae', 'warning');
 		this.addComment('Auto', 'success');
 		this.addComment('Teleop', 'primary');
 		this.addComment('Overall', 'info');
@@ -84,5 +85,9 @@ export class Comments implements Writable<C> {
 
 	serialize() {
 		return Object.fromEntries(this.comments.map(c => c.data));
+	}
+
+	get(key: string) {
+		return this.comments.find(c => c.key === key);
 	}
 }
