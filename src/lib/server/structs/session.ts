@@ -2,8 +2,6 @@ import { attemptAsync } from 'ts-utils/check';
 import { Struct } from 'drizzle-struct/back-end';
 import { integer, text } from 'drizzle-orm/pg-core';
 import { Account } from './account';
-import { Permissions } from './permissions';
-import { Universes } from './universe';
 
 const { PUBLIC_DOMAIN, SESSION_DURATION } = process.env;
 
@@ -22,6 +20,7 @@ interface RequestEvent {
 			}
 		) => void;
 	};
+	request: Request;
 }
 
 export namespace Session {
@@ -32,29 +31,31 @@ export namespace Session {
 			ip: text('ip').notNull(),
 			userAgent: text('user_agent').notNull(),
 			requests: integer('requests').notNull(),
-			prevUrl: text('prev_url').notNull()
+			prevUrl: text('prev_url').notNull(),
+			fingerprint: text('fingerprint').notNull().default('')
 		},
-		frontend: false
+		frontend: false,
+		safes: ['fingerprint']
 	});
 
 	export type SessionData = typeof Session.sample;
 
 	export const getSession = (event: RequestEvent) => {
 		return attemptAsync(async () => {
-			const id = event.cookies.get('ssid:' + PUBLIC_DOMAIN);
+			// TODO: will eventually split domain later once we use the same cookie id as session id upon creation
+			const id = event.cookies.get('ssid_' + PUBLIC_DOMAIN);
 
 			const create = async () => {
-				const session = (
-					await Session.new({
-						accountId: '',
-						ip: '',
-						userAgent: '',
-						requests: 0,
-						prevUrl: ''
-					})
-				).unwrap();
+				const session = await Session.new({
+					accountId: '',
+					ip: '',
+					userAgent: '',
+					requests: 0,
+					prevUrl: '',
+					fingerprint: ''
+				}).unwrap();
 
-				event.cookies.set('ssid:' + PUBLIC_DOMAIN, session.id, {
+				event.cookies.set('ssid_' + PUBLIC_DOMAIN, session.id, {
 					httpOnly: false,
 					domain: PUBLIC_DOMAIN ?? '',
 					path: '/',
@@ -87,11 +88,14 @@ export namespace Session {
 
 	export const signIn = async (account: Account.AccountData, session: SessionData) => {
 		return attemptAsync(async () => {
-			(
-				await session.update({
+			await session
+				.update({
 					accountId: account.id
 				})
-			).unwrap();
+				.unwrap();
+			await account.update({
+				lastLogin: new Date().toISOString()
+			});
 
 			// const universes = (await Universes.getUniverses(account)).unwrap();
 

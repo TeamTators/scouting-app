@@ -3,6 +3,7 @@ import { writable, type Subscriber, type Unsubscriber, type Writable } from 'sve
 import { EventEmitter } from 'ts-utils/event-emitter';
 import { attempt } from 'ts-utils/check';
 import { z } from 'zod';
+import type { Icon } from '$lib/types/icons';
 
 export namespace Dashboard {
 	export const getGridSize = () => {
@@ -23,14 +24,14 @@ export namespace Dashboard {
 	};
 
 	export const sizes = {
-		xs: 1,
-		sm: 2,
-		md: 3,
-		lg: 4,
-		xl: 5
+		xs: 12,
+		sm: 12,
+		md: 12,
+		lg: 12,
+		xl: 12
 	};
 
-	const order: (keyof typeof sizes)[] = ['xs', 'sm', 'md', 'lg', 'xl'];
+	// const order: (keyof typeof sizes)[] = ['xs', 'sm', 'md', 'lg', 'xl'];
 
 	type CardData = {
 		show: boolean;
@@ -130,8 +131,7 @@ export namespace Dashboard {
 		constructor(
 			public readonly config: {
 				name: string;
-				icon: string;
-				iconType: 'bi' | 'fa' | 'material-icons' | 'material-symbols' | 'custom';
+				icon: Icon;
 				id: string;
 				size: {
 					xs?: { width: number; height: number };
