@@ -17,6 +17,7 @@ Thumbs.db
 
 # Env
 .env
+*.env
 .env.*
 !.env.example
 !.env.test
@@ -31,7 +32,13 @@ vite.config.ts.timestamp-*
 private/emails/**.html
 
 backups/
+dist/
 
-**/entitlements/*.yaml
+# **/entitlements/*.yaml
 
 *.log
+*.search
+
+route-tree.pages
+ip-limited.pages
+blocked.pages
