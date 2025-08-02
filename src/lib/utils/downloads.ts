@@ -50,7 +50,6 @@ export const loadFiles = (): Promise<Result<FileList>> => {
 		return new Promise<FileList>((res, rej) => {
 			const element = document.createElement('input');
 			element.setAttribute('type', 'file');
-			element.setAttribute('multiple', '');
 			element.style.display = 'none';
 			document.body.appendChild(element);
 			element.click();
