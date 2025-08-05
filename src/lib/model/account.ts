@@ -1,15 +1,12 @@
 import { attemptAsync } from 'ts-utils/check';
-import { sse } from '$lib/utils/sse';
+import { sse } from '$lib/services/sse';
 import {
 	Struct,
-	type PartialStructable,
-	type Structable,
-	type GlobalCols,
 	StructData,
 	SingleWritable,
-	DataArr
+	DataArr,
+	type GlobalCols
 } from 'drizzle-struct/front-end';
-import { Requests } from '$lib/utils/requests';
 import { browser } from '$app/environment';
 import { z } from 'zod';
 
@@ -23,8 +20,9 @@ export namespace Account {
 			firstName: 'string',
 			lastName: 'string',
 			email: 'string',
-			picture: 'string',
-			verified: 'boolean'
+			// picture: 'string',
+			verified: 'boolean',
+			lastLogin: 'string'
 			// verification: 'string'
 		},
 		socket: sse,
@@ -34,6 +32,23 @@ export namespace Account {
 	export type AccountData = StructData<typeof Account.data.structure>;
 	export type AccountArr = DataArr<typeof Account.data.structure>;
 
+	export const AccountInfo = new Struct({
+		name: 'account_info',
+		structure: {
+			accountId: 'string',
+			viewOnline: 'string',
+			picture: 'string',
+			bio: 'string',
+			website: 'string',
+			socials: 'string',
+			theme: 'string'
+		},
+		socket: sse,
+		browser
+	});
+
+	export type AccountInfoData = StructData<typeof AccountInfo.data.structure & GlobalCols>;
+
 	export const AccountNotification = new Struct({
 		name: 'account_notification',
 		structure: {
@@ -41,12 +56,14 @@ export namespace Account {
 			title: 'string',
 			severity: 'string',
 			message: 'string',
+			iconType: 'string',
 			icon: 'string',
 			link: 'string',
 			read: 'boolean'
 		},
 		socket: sse,
-		browser
+		browser,
+		log: true
 	});
 
 	export type AccountNotificationData = StructData<typeof AccountNotification.data.structure>;
@@ -60,14 +77,12 @@ export namespace Account {
 			firstName: 'Guest',
 			lastName: '',
 			email: '',
-			picture: '',
 			verified: false,
 			// verification: '',
 			id: 'guest',
 			updated: '0',
 			created: '0',
 			archived: false,
-			universe: '',
 			attributes: '[]',
 			lifetime: 0,
 			canUpdate: false
@@ -77,15 +92,16 @@ export namespace Account {
 	export const getSelf = (): SingleWritable<typeof Account.data.structure> => {
 		attemptAsync(async () => {
 			const data = await Account.send('self', {}, Account.getZodSchema());
+			const account = data.unwrap();
 			self.update((d) => {
-				d.set(data.unwrap()); // The program may not like this
+				d.set(account);
 				return d;
 			});
 		});
 		return self;
 	};
 
-	export const getNotifs = (limit: number, offset: number) => {
+	export const getNotifs = (/*limit: number, offset: number*/) => {
 		return AccountNotification.query(
 			'get-own-notifs',
 			{},
@@ -107,5 +123,9 @@ export namespace Account {
 				satisfies: () => false
 			}
 		);
+	};
+
+	export const usernameExists = (username: string) => {
+		return Account.send('username-exists', { username }, z.boolean());
 	};
 }

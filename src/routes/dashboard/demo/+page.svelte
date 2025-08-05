@@ -4,15 +4,18 @@
 	import DB from '$lib/components/dashboard/Dashboard.svelte';
 	import { onMount } from 'svelte';
 	import { Navbar } from '$lib/model/navbar';
+	import { contextmenu } from '$lib/utils/contextmenu';
 
 	Navbar.addSection({
 		name: 'Demo Section',
 		links: [
 			{
-				icon: 'home',
+				icon: {
+					type: 'material-icons',
+					name: 'home'
+				},
 				href: '/home',
-				name: 'Home',
-				type: 'material-icons'
+				name: 'Home'
 			}
 		],
 		priority: 1
@@ -20,14 +23,16 @@
 
 	const card1 = new Dashboard.Card({
 		name: 'Card 1',
-		iconType: 'material-icons',
-		icon: 'home',
+		icon: {
+			type: 'material-icons',
+			name: 'home'
+		},
 		id: 'card1',
 		size: {
-			width: 1,
+			width: 3,
 			height: 1,
 			xl: {
-				width: 1,
+				width: 2,
 				height: 2
 			}
 		}
@@ -35,14 +40,16 @@
 
 	const card2 = new Dashboard.Card({
 		name: 'Card 2',
-		iconType: 'material-icons',
-		icon: 'edit',
+		icon: {
+			type: 'material-icons',
+			name: 'edit'
+		},
 		id: 'card2',
 		size: {
-			width: 1,
+			width: 3,
 			height: 1,
 			sm: {
-				width: 1,
+				width: 6,
 				height: 2
 			}
 		}
@@ -50,22 +57,26 @@
 
 	const card3 = new Dashboard.Card({
 		name: 'Card 3',
-		iconType: 'material-icons',
-		icon: 'delete',
+		icon: {
+			type: 'material-icons',
+			name: 'settings'
+		},
 		id: 'card3',
 		size: {
-			width: 1,
+			width: 3,
 			height: 1
 		}
 	});
 
 	const card4 = new Dashboard.Card({
 		name: 'Card 4',
-		iconType: 'material-icons',
-		icon: 'person',
+		icon: {
+			type: 'material-icons',
+			name: 'image'
+		},
 		id: 'card4',
 		size: {
-			width: 1,
+			width: 3,
 			height: 1
 		}
 	});
@@ -87,6 +98,10 @@
 	});
 </script>
 
+<svelte:head>
+	<title>Dashboard Demo</title>
+</svelte:head>
+
 <DB {dashboard}>
 	{#snippet body()}
 		<Card card={card1}>
@@ -97,7 +112,26 @@
 		</Card>
 		<Card card={card2}>
 			{#snippet body()}
-				<h1>Card 2</h1>
+				<h1
+					oncontextmenu={(e) => {
+						contextmenu(e, {
+							options: [
+								'Test',
+								{
+									icon: {
+										type: 'material-icons',
+										name: 'edit'
+									},
+									name: 'Edit',
+									action: () => console.log('edit')
+								}
+							],
+							width: '200px'
+						});
+					}}
+				>
+					Card 2
+				</h1>
 				<p>This is the body of card21</p>
 			{/snippet}
 		</Card>
