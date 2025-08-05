@@ -1,6 +1,14 @@
 import { browser } from '$app/environment';
-import { sse } from '$lib/utils/sse';
-import { Struct, StructData } from 'drizzle-struct/front-end';
+import { sse } from '$lib/services/sse';
+import {
+	Struct,
+	StructData,
+	startBatchTest,
+	endBatchTest,
+	startBatchUpdateLoop
+} from 'drizzle-struct/front-end';
+import type { Loop } from 'ts-utils/loop';
+import { sleep } from 'ts-utils/sleep';
 
 export namespace Test {
 	export const Test = new Struct({
@@ -60,6 +68,8 @@ export namespace Test {
 
 			pullData: Status;
 
+			batch: Status;
+
 			promise: Promise<void>;
 		} = $state({
 			connect: init(),
@@ -84,11 +94,14 @@ export namespace Test {
 			receivedRestore: init(),
 			receivedDelete: init(),
 
+			batch: init(),
+
 			pullData: init(),
 
 			promise: (async () => {
 				if (!browser) return;
-				(await Test.build()).unwrap();
+				await Test.build().unwrap();
+				await sse.waitForConnection(10_000);
 
 				const uniqueName = Math.random().toString(36).substring(7);
 				console.log('uniqueName', uniqueName);
@@ -143,6 +156,7 @@ export namespace Test {
 							name: uniqueName,
 							age: 20
 						}).then((r) => {
+							console.log(r);
 							if (r.isErr()) {
 								return tests.new.update('failure', r.error.message);
 							}
@@ -511,7 +525,55 @@ export namespace Test {
 					});
 				};
 
-				// TODO: Attributes and universes
+				const testBatch = async (testData: TestData) => {
+					return new Promise<void>((res) => {
+						tests.batch.update('in progress');
+						let resolved = false;
+						let loop: Loop | undefined;
+						startBatchTest(); // stops sending data through fetch requests
+						const finish = (error?: string) => {
+							if (!resolved) res();
+							resolved = true;
+							if (error) {
+								tests.batch.update('failure', error);
+							} else {
+								tests.batch.update('success');
+							}
+							endBatchTest(); // resumes sending data through fetch requests
+							loop?.stop();
+						};
+
+						testData
+							.update((d) => ({
+								...d,
+								age: 100
+							}))
+							.then(async (r) => {
+								if (r.isOk()) {
+									return finish('Update should fail in batch testing mode');
+								}
+								await sleep(100);
+								loop = startBatchUpdateLoop(browser, 500, 0);
+
+								loop.on('error', (error) => {
+									if (error instanceof Error) finish(error.message);
+									else finish('Unknown error');
+								});
+							});
+
+						Test.on('update', (data: TestData) => {
+							if (data.data.age === 100 && data.data.name === uniqueName) {
+								finish();
+							}
+						});
+
+						setTimeout(() => {
+							if (!resolved) {
+								finish('Timeout');
+							}
+						}, 3000);
+					});
+				};
 
 				await connect();
 				await testNew();
@@ -525,6 +587,7 @@ export namespace Test {
 					await testRestore(testData);
 					await testPull(testData);
 					await testVersions(testData);
+					await testBatch(testData);
 					await testDelete(testData);
 				}
 			})()
