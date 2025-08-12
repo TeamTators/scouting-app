@@ -10,7 +10,7 @@
 	interface Props {
 		title: string;
 		body: Snippet;
-		buttons: Snippet;
+		buttons?: Snippet;
 		show?: boolean;
 		size?: 'sm' | 'md' | 'lg' | 'xl';
 	}
@@ -61,7 +61,7 @@
 
 <div bind:this={self} {id} class="modal fade" aria-modal="true" role="dialog" tabindex="-1">
 	<div class="modal-dialog modal-{size}">
-		<div class="modal-content">
+		<div class="modal-content layer-1">
 			<div class="modal-header">
 				<h5 class="modal-title">{title}</h5>
 				<button
@@ -74,9 +74,11 @@
 			<div class="modal-body">
 				{@render body()}
 			</div>
-			<div class="modal-footer">
-				{@render buttons()}
-			</div>
+			{#if buttons}
+				<div class="modal-footer">
+					{@render buttons()}
+				</div>
+			{/if}
 		</div>
 	</div>
 </div>

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { Test } from '$lib/model/testing.svelte.ts';
-	import { onMount } from 'svelte';
 	import { toSnakeCase } from 'ts-utils/text';
 
 	const tests = Test.unitTest();
@@ -54,6 +53,10 @@
 	</li>
 {/snippet}
 
+<svelte:head>
+	<title>Testing</title>
+</svelte:head>
+
 <div class="container">
 	<div class="row">
 		<h1>Testing</h1>
@@ -78,6 +81,7 @@
 			{@render test('Received Restore', tests.receivedRestore)}
 			{@render test('Received Delete', tests.receivedDelete)}
 			{@render test('Pull', tests.pullData)}
+			{@render test('Batch', tests.batch)}
 		</ul>
 	</div>
 	<div class="row">
