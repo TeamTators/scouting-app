@@ -4,7 +4,7 @@ import { Session } from '$lib/server/structs/session.js';
 import { ServerCode } from 'ts-utils/status';
 import { z } from 'zod';
 import { OAuth2Client } from 'google-auth-library';
-import { SECRET_OAUTH2_CLIENT_ID, SECRET_OAUTH2_CLIENT_SECRET } from '$env/static/private';
+// import { SECRET_OAUTH2_CLIENT_ID, SECRET_OAUTH2_CLIENT_SECRET } from '$env/static/private';
 import terminal from '$lib/server/utils/terminal';
 
 // const log = (...args: unknown[]) => console.log('[oauth/sign-in]', ...args);
@@ -31,7 +31,7 @@ export const actions = {
 		let account: Account.AccountData | undefined;
 
 		ACCOUNT: {
-			const user = await Account.Account.fromProperty('username', res.data.username, {
+			const user = await Account.Account.fromProperty('username', res.data.username.toLowerCase(), {
 				type: 'single'
 			});
 			if (user.isErr()) {
@@ -43,7 +43,7 @@ export const actions = {
 			account = user.value;
 			if (account) break ACCOUNT;
 
-			const email = await Account.Account.fromProperty('email', res.data.username, {
+			const email = await Account.Account.fromProperty('email', res.data.username.toLowerCase(), {
 				type: 'single'
 			});
 			if (email.isErr()) {
@@ -79,8 +79,8 @@ export const actions = {
 	},
 	OAuth2: async () => {
 		const client = new OAuth2Client({
-			clientSecret: SECRET_OAUTH2_CLIENT_SECRET,
-			clientId: SECRET_OAUTH2_CLIENT_ID,
+			clientSecret: String(process.env.SECRET_OAUTH2_CLIENT_SECRET),
+			clientId: String(process.env.SECRET_OAUTH2_CLIENT_ID),
 			redirectUri: 'http://localhost:5173/oauth/sign-in'
 		});
 		// log(client);
