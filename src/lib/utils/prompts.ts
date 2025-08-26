@@ -1,8 +1,7 @@
 import { browser } from '$app/environment';
 import { type BootstrapColor } from 'colors/color';
 import Modal from '../components/bootstrap/Modal.svelte';
-import { createRawSnippet, mount, type Snippet } from 'svelte';
-import Toast from '$lib/components/bootstrap/Toast.svelte';
+import { createRawSnippet, mount } from 'svelte';
 import Alert from '$lib/components/bootstrap/Alert.svelte';
 
 export const modalTarget = (() => {
@@ -123,8 +122,8 @@ export const prompt = async (message: string, config?: PromptConfig) => {
 						color: 'primary',
 						onClick: () => {
 							if (!valid) return;
-							modal.hide();
 							res(config?.parser ? config.parser(value.trim()) : value.trim());
+							modal.hide();
 						}
 					}
 				])
@@ -134,7 +133,7 @@ export const prompt = async (message: string, config?: PromptConfig) => {
 		modal.show();
 
 		modal.once('hide', () => {
-			res(config?.parser ? config.parser(value.trim()) : value.trim());
+			res(null);
 			clearModals();
 		});
 	});
@@ -185,8 +184,8 @@ export const select = async <T>(message: string, options: T[], config?: SelectCo
 						text: 'Select',
 						color: 'primary',
 						onClick: () => {
-							modal.hide();
 							res(selected);
+							modal.hide();
 						}
 					}
 				])
@@ -368,8 +367,8 @@ export const colorPicker = async (message: string, config?: ColorPickerConfig) =
 						text: 'Select',
 						color: 'primary',
 						onClick: () => {
-							modal.hide();
 							res(selected as string);
+							modal.hide();
 						}
 					}
 				])
@@ -394,18 +393,17 @@ const notificationContainer = (() => {
 			'justify-content-end',
 			'flex-column'
 		);
-		container.style.zIndex = '1000';
+		container.style.zIndex = '0';
 		document.body.appendChild(container);
 		return container;
 	}
 	return null;
 })();
 
-type NotificationConfig<Type extends 'toast' | 'alert'> = {
+type NotificationConfig = {
 	title: string;
 	message: string;
 	color: BootstrapColor;
-	type: Type;
 	autoHide?: number;
 	textColor?: BootstrapColor;
 };
@@ -420,10 +418,10 @@ const createNotif = () => {
 	return notif;
 };
 
-export const notify = <Type extends 'toast' | 'alert'>(config: NotificationConfig<Type>) => {
+export const notify = (config: NotificationConfig) => {
 	const notif = createNotif();
 	if (!notif) return;
-	return mount(config.type === 'toast' ? Toast : Alert, {
+	return mount(Alert, {
 		target: notif,
 		props: {
 			title: config.title,
@@ -439,14 +437,36 @@ export const notify = <Type extends 'toast' | 'alert'>(config: NotificationConfi
 	});
 };
 
-export const modal = (title: string, body: Snippet, buttons: ButtonConfig[]) => {
+export const rawModal = (
+	title: string,
+	buttons: ButtonConfig[],
+	onMount: (body: HTMLDivElement) => ReturnType<typeof mount>
+) => {
 	if (!modalTarget) throw new Error('Cannot show modal in non-browser environment');
-	return mount(Modal, {
+	const modal = mount(Modal, {
 		target: modalTarget,
 		props: {
 			title,
-			body,
+			body: createRawSnippet(() => ({
+				render: () => `<div class="body-content"></div>`
+			})),
 			buttons: createButtons(buttons)
 		}
 	});
+
+	const body = modalTarget.querySelector('.body-content');
+	if (!body) throw new Error('Modal body not found');
+
+	onMount(body as HTMLDivElement);
+
+	modal.on('hide', () => {
+		clearModals();
+	});
+
+	return {
+		modal,
+		hide: () => modal.hide(),
+		show: () => modal.show(),
+		on: modal.on.bind(modal)
+	};
 };
