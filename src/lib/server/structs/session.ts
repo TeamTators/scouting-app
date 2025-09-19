@@ -49,8 +49,12 @@ export namespace Session {
 
 	export const getSession = (event: RequestEvent) => {
 		return attemptAsync(async () => {
+<<<<<<< HEAD
 			// TODO: will eventually split domain later once we use the same cookie id as session id upon creation
 			const id = event.cookies.get('ssid_' + PUBLIC_DOMAIN);
+=======
+			const id = event.cookies.get('ssid:' + PUBLIC_DOMAIN);
+>>>>>>> 984257cc6ef87ae0528e26405837ec650c7e5ddc
 
 			const create = async () => {
 				const ip =
@@ -59,6 +63,7 @@ export namespace Session {
 					event.request.headers.get('X-Real-IP') ??
 					'';
 
+<<<<<<< HEAD
 				const userAgent = event.request.headers.get('User-Agent') ?? '';
 
 				const session = await Session.new({
@@ -72,6 +77,9 @@ export namespace Session {
 				}).unwrap();
 
 				event.cookies.set('ssid_' + PUBLIC_DOMAIN, session.id, {
+=======
+				event.cookies.set('ssid:' + PUBLIC_DOMAIN, session.id, {
+>>>>>>> 984257cc6ef87ae0528e26405837ec650c7e5ddc
 					httpOnly: false,
 					domain: PUBLIC_DOMAIN ?? '',
 					path: '/',

@@ -164,7 +164,7 @@ export const prompt = async (message: string, config?: PromptConfig) => {
 
 		modal.show();
 		modal.once('hide', () => {
-			res(null);
+			res(config?.parser ? config.parser(value.trim()) : value.trim());
 			clearModals();
 			modal.off('show', onshow);
 		});
@@ -564,7 +564,31 @@ export const colorPicker = async (message: string, config?: ColorPickerConfig) =
 		});
 	});
 };
+<<<<<<< HEAD
 type NotificationConfig = {
+=======
+
+const notificationContainer = (() => {
+	if (browser) {
+		const container = document.createElement('div');
+		container.classList.add(
+			'notification-container',
+			'position-fixed',
+			'top-0',
+			'end-0',
+			'd-flex',
+			'justify-content-end',
+			'flex-column'
+		);
+		container.style.zIndex = '1000';
+		document.body.appendChild(container);
+		return container;
+	}
+	return null;
+})();
+
+type NotificationConfig<Type extends 'toast' | 'alert'> = {
+>>>>>>> 984257cc6ef87ae0528e26405837ec650c7e5ddc
 	title: string;
 	message: string;
 	color: BootstrapColor;

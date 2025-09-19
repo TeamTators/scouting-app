@@ -76,4 +76,10 @@
 </nav>
 <SideNav id="pages" />
 
+<<<<<<< HEAD
 <Notifications bind:notifs />
+=======
+<SideNav id="pages" />
+
+<!-- <Notifications bind:notifs /> -->
+>>>>>>> 984257cc6ef87ae0528e26405837ec650c7e5ddc

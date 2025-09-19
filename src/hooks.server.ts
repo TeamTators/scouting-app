@@ -4,7 +4,12 @@ import '$lib/server/structs/analytics';
 import { Limiting } from '$lib/server/structs/limiting';
 import '$lib/server/structs/permissions';
 import '$lib/server/structs/log';
+<<<<<<< HEAD
 import '$lib/server/structs/testing';
+=======
+import '$lib/server/structs/requests';
+import '$lib/server/structs/scouting';
+>>>>>>> 984257cc6ef87ae0528e26405837ec650c7e5ddc
 import { type Handle } from '@sveltejs/kit';
 import { ServerCode } from 'ts-utils/status';
 import terminal from '$lib/server/utils/terminal';
@@ -12,6 +17,7 @@ import { Struct } from 'drizzle-struct/back-end';
 import { DB } from '$lib/server/db/';
 import '$lib/server/utils/files';
 import '$lib/server/index';
+<<<<<<< HEAD
 import { createStructEventService } from '$lib/server/services/struct-event';
 import ignore from 'ignore';
 import { sse } from '$lib/server/services/sse';
@@ -19,6 +25,10 @@ import { sleep } from 'ts-utils/sleep';
 // import { signFingerprint } from '$lib/server/utils/fingerprint';
 import redis from '$lib/server/services/redis';
 import { env, str } from '$lib/server/utils/env';
+=======
+import { Remote } from '$lib/server/structs/remote';
+config();
+>>>>>>> 984257cc6ef87ae0528e26405837ec650c7e5ddc
 
 (async () => {
 	await redis.init();
@@ -98,6 +108,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	event.locals.session = session.value;
 
+<<<<<<< HEAD
 	const autoSignIn = str('AUTO_SIGN_IN', false);
 
 	if (autoSignIn && env !== 'prod') {
@@ -180,6 +191,30 @@ export const handle: Handle = async ({ event, resolve }) => {
 	if (notIgnored()) {
 		session.value.update({
 			prevUrl: event.url.pathname
+=======
+	event.locals.isTrusted = !!(
+		await Remote.TrustedSessions.fromProperty('ssid', session.value.data.id, {
+			type: 'single'
+		})
+	).unwrap();
+
+	if (
+		process.env.REMOTE === 'true' &&
+		!event.locals.isTrusted &&
+		event.url.pathname !== '/sign-in' &&
+		!['/account/sign-in', '/account/sign-up'].includes(event.url.pathname) &&
+		!event.url.pathname.startsWith('/account/password-reset') &&
+		!event.url.pathname.startsWith('/status') &&
+		!event.url.pathname.startsWith('/sse') &&
+		!event.url.pathname.startsWith('/struct') &&
+		!event.url.pathname.startsWith('/test')
+	) {
+		return new Response('Redirect', {
+			status: ServerCode.seeOther,
+			headers: {
+				location: '/sign-in'
+			}
+>>>>>>> 984257cc6ef87ae0528e26405837ec650c7e5ddc
 		});
 
 		const violation = await Limiting.violationSeverity(event.locals.session, event.locals.account);
@@ -239,6 +274,37 @@ export const handle: Handle = async ({ event, resolve }) => {
 			}
 		}
 	}
+
+	// if (env.AUTO_SIGN_IN) {
+	// 	const a = await Account.Account.fromId(env.AUTO_SIGN_IN);
+	// 	if (a.isOk() && a.value && !session.value.data.accountId) {
+	// 		const res = await Session.signIn(a.value, session.value);
+	// 		if (res.isErr()) {
+	// 			return new Response('Internal Server Error', { status: ServerCode.internalServerError });
+	// 		}
+	// 		event.locals.account = a.value;
+	// 	}
+	// } else {
+	// 	const account = await Session.getAccount(session.unwrap());
+	// 	if (account.isErr()) {
+	// 		return new Response('Internal Server Error', { status: ServerCode.internalServerError });
+	// 	}
+
+	// 	event.locals.account = account.value;
+	// }
+
+	// if (
+	// 	!['/account/sign-in', '/account/sign-up'].includes(event.url.pathname) &&
+	// 	!event.url.href.startsWith('/account/password-reset') &&
+	// 	!event.url.href.startsWith('/status') &&
+	// 	!event.url.href.startsWith('/sse') &&
+	// 	!event.url.href.startsWith('/struct') &&
+	// 	!event.url.href.startsWith('/test')
+	// ) {
+	// 	session.value.update({
+	// 		prevUrl: event.url.pathname
+	// 	});
+	// }
 
 	try {
 		const res = await resolve(event);

@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 import type { Icon } from '$lib/types/icons';
 import { type Writable } from 'svelte/store';
+=======
+import { writable, type Writable } from 'svelte/store';
+>>>>>>> 984257cc6ef87ae0528e26405837ec650c7e5ddc
 
 export namespace Navbar {
 	type Section = {
@@ -13,6 +17,7 @@ export namespace Navbar {
 		}[];
 	};
 
+<<<<<<< HEAD
 	class Sections implements Writable<Section[]> {
 		public readonly data: Section[] = [];
 
@@ -64,4 +69,23 @@ export namespace Navbar {
 			return s;
 		});
 	};
+=======
+	const sections: Writable<Section[]> = writable([]);
+
+	export const addSection = (section: Section) => {
+		sections.update((s) => {
+			const has = s.some((s) => s.name === section.name);
+			if (!has) s.push(section);
+			else {
+				console.warn(`Navbar: Section ${section.name} already exists, overriding...`);
+				const index = s.findIndex((s) => s.name === section.name);
+				s[index] = section;
+			}
+			s.sort((a, b) => a.priority - b.priority);
+			return s;
+		});
+	};
+
+	export const getSections = () => sections;
+>>>>>>> 984257cc6ef87ae0528e26405837ec650c7e5ddc
 }

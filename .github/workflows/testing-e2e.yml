@@ -79,6 +79,7 @@ jobs:
           echo "PUBLIC_DOMAIN=localhost" >> .env
           echo "HTTPS=false" >> .env
           echo "SESSION_DURATION=10000000" >> .env
+          echo "REMOTE=false" >> .env
           export $(cat .env | xargs)
 
       - name: Run migrations
