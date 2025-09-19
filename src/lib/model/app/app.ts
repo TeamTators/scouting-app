@@ -14,7 +14,7 @@ import { Color } from 'colors/color';
 import { Checks } from './checks';
 import { AppData } from './data-pull';
 import { writable } from 'svelte/store';
-import { attemptAsync } from 'ts-utils';
+import { attemptAsync } from 'ts-utils/check';
 import { globalData } from './global-data.svelte';
 import type { MatchSchemaType } from '$lib/types/match';
 import { Comments } from './comments';
@@ -215,7 +215,8 @@ export class App {
 			this.on('resume', resume);
 			this.off('pause', pause);
 			loop.stop();
-			loop.destroyEvents();
+			// loop.destroyEvents();
+			loop['em'].destroy();
 		};
 		this.on('pause', pause);
 

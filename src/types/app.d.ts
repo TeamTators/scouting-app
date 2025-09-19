@@ -10,11 +10,8 @@ declare global {
 		interface Locals {
 			account?: Account.AccountData | undefined;
 			session: Session.SessionData;
-<<<<<<< HEAD
 			start: number;
-=======
 			isTrusted: boolean;
->>>>>>> 984257cc6ef87ae0528e26405837ec650c7e5ddc
 		}
 		// interface PageData {}
 		// interface PageState {}

@@ -1,9 +1,5 @@
-<<<<<<< HEAD
 @import url('./scss/bs-overwrite.scss');
 @import url('./scss/inputs.scss');
-=======
-/* @import url('./scss/bs-overwrite.scss'); */
->>>>>>> 984257cc6ef87ae0528e26405837ec650c7e5ddc
 
 :root {
 	--border-radius: 8px;

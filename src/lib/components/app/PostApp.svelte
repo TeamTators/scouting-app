@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { App, SECTIONS } from '$lib/model/app/app';
-	import { contextmenu } from '$lib/utils/contextmenu';
 	import { confirm } from '$lib/utils/prompts';
 	import { Canvas } from 'canvas/canvas';
 	import { Circle } from 'canvas/circle';
@@ -8,7 +7,6 @@
 	import type { Drawable } from 'canvas/drawable';
 	import { Img } from 'canvas/image';
 	import { Path } from 'canvas/path';
-	import { serial } from 'drizzle-orm/mysql-core';
 	import { onMount } from 'svelte';
 	interface Props {
 		app: App;

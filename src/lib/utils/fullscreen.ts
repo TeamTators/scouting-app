@@ -1,10 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { browser } from '$app/environment';
-<<<<<<< HEAD
-import { attempt } from 'ts-utils/check';
-=======
 import { writable } from 'svelte/store';
->>>>>>> 984257cc6ef87ae0528e26405837ec650c7e5ddc
 
 /**
  * Creates a fullscreen request

@@ -15,12 +15,7 @@
 					name: 'home'
 				},
 				href: '/home',
-<<<<<<< HEAD
 				name: 'Home'
-=======
-				name: 'Home',
-				type: 'material-icons'
->>>>>>> 984257cc6ef87ae0528e26405837ec650c7e5ddc
 			}
 		],
 		priority: 1

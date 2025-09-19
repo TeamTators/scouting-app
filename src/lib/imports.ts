@@ -1,16 +1,13 @@
 import './styles/animate.css';
-<<<<<<< HEAD
 import './styles/theme.css';
 // import 'bootstrap/dist/css/bootstrap.min.css';
 // import './styles/scss/colors.scss';
 
 import 'halfmoon/css/halfmoon.min.css';
 
-=======
 // import './styles/theme.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 // import './styles/scss/colors.scss';
->>>>>>> 984257cc6ef87ae0528e26405837ec650c7e5ddc
 import './styles/bs-overwrite.css';
 import './styles/global.css';
 import './styles/style.css';

@@ -1,7 +1,7 @@
 import { attempt, attemptAsync } from 'ts-utils/check';
 import { Requests } from '../utils/requests';
 import { EventEmitter } from 'ts-utils/event-emitter';
-import { sse } from '../utils/sse';
+import { sse } from '../services/sse';
 import { Loop } from 'ts-utils/loop';
 import { z } from 'zod';
 
