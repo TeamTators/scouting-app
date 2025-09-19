@@ -4,6 +4,8 @@ export type Email = {
 		supportEmail: string;
 	};
 	test: {
-		something: string;
+		service: string;
+		link: string;
+		linkText: string;
 	};
 };

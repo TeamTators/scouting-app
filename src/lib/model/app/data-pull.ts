@@ -1,6 +1,6 @@
 import { AssignmentSchema } from 'tatorscout/scout-groups';
-import { EventSchema, MatchSchema, TeamSchema, type CompLevel } from 'tatorscout/tba';
-import { attempt, attemptAsync } from 'ts-utils/check';
+import { EventSchema, MatchSchema, TeamSchema } from 'tatorscout/tba';
+import { attemptAsync } from 'ts-utils/check';
 import { z } from 'zod';
 import { downloadText, loadFileContents } from '$lib/utils/downloads';
 import { MatchSchema as MS, type MatchSchemaType } from '$lib/types/match';
@@ -162,7 +162,6 @@ export namespace AppData {
 			const res = await post('/submit-match', data);
 			if (res.isOk()) {
 				notify({
-					type: 'alert',
 					title: 'Match Submitted',
 					message: `Match ${data.eventKey}:${data.compLevel}${data.match} submitted successfully!`,
 					color: 'success',
@@ -170,7 +169,6 @@ export namespace AppData {
 				});
 			} else {
 				notify({
-					type: 'alert',
 					title: 'Match Submission Failed',
 					message: `Match ${data.eventKey}:${data.compLevel}${data.match} failed to submit!`,
 					color: 'danger',

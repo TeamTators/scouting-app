@@ -1,8 +1,6 @@
-import { boolean } from 'drizzle-orm/pg-core';
 import { integer } from 'drizzle-orm/pg-core';
 import { text } from 'drizzle-orm/pg-core';
 import { Struct } from 'drizzle-struct/back-end';
-import { createEntitlement } from '../utils/entitlements';
 import { attemptAsync } from 'ts-utils/check';
 import { DB } from '../db';
 import { and, eq } from 'drizzle-orm';
@@ -16,9 +14,9 @@ export namespace Scouting {
 
 			// These are the keys that are used to identify the match,
 			// If there is an issue identifying, it doesn't matter.
-			eventKey: text('eventKey').notNull(),
+			eventKey: text('event_key').notNull(),
 			team: integer('team').notNull(),
-			compLevel: text('compLevel').notNull(),
+			compLevel: text('comp_level').notNull(),
 			match: integer('match').notNull()
 		}
 	});
