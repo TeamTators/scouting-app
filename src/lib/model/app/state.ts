@@ -58,4 +58,15 @@ export class AppState {
 			.filter((t) => !!t.point)
 			.map((t) => [t.index, t.point?.[0] || 0, t.point?.[1] || 0, t.action]);
 	}
+
+	deserialize(data: TraceArray) {
+		for (const [index, x, y, action] of data) {
+			const tick = this.ticks[index];
+			if (tick) {
+				console.log('Setting point', tick, index, x, y, action);
+				tick.point = [x, y];
+				tick.action = action;
+			}
+		}
+	}
 }

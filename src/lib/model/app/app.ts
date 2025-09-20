@@ -1,4 +1,4 @@
-import type { CompLevel } from 'tatorscout/tba';
+import { type CompLevel } from 'tatorscout/tba';
 import { MatchData } from './match-data';
 import { Tick } from './tick';
 import { AppState } from './state';
@@ -14,10 +14,12 @@ import { Color } from 'colors/color';
 import { Checks } from './checks';
 import { AppData } from './data-pull';
 import { writable } from 'svelte/store';
-import { attemptAsync } from 'ts-utils/check';
+import { attempt, attemptAsync } from 'ts-utils/check';
 import { globalData } from './global-data.svelte';
-import type { MatchSchemaType } from '$lib/types/match';
+import { type MatchSchemaType, MatchSchema } from '$lib/types/match';
 import { Comments } from './comments';
+import z from 'zod';
+import type { TraceArray } from 'tatorscout/trace';
 
 export const TICKS_PER_SECOND = 4;
 export const SECTIONS = {
@@ -31,6 +33,49 @@ export const TICK_DURATION = 1000 / TICKS_PER_SECOND;
 export const TOTAL_TICKS = TICKS_PER_SECOND * 160;
 
 export class App {
+	static pullState() {
+		return attempt(() => {
+			const data = localStorage.getItem(`scouting-app-state`);
+			if (!data) return undefined;
+			const res = z.object({
+				timestamp: z.number(),
+				data: MatchSchema,
+			}).safeParse(JSON.parse(data));
+			if (!res.success) {
+				localStorage.removeItem(`scouting-app-state`);
+				console.warn('Invalid saved state, removing.', res.error, JSON.parse(data));
+				return undefined;
+			}
+			return res.data;
+		});
+	}
+
+	static deserialize(data: MatchSchemaType, app: App, target: HTMLElement) {
+		return attempt(() => {
+			app.init(target);
+			app.matchData.set({
+				eventKey: data.eventKey,
+				compLevel: data.compLevel,
+				match: data.match,
+				team: data.team,
+				alliance: data.alliance,
+			});
+
+			app.state.deserialize(data.trace as TraceArray);
+			app.checks.deserialize(data.checks, data.comments, data.sliders);
+			app.comments.deserialize(data.comments);
+
+			console.log(app.state);
+
+			globalData.flipX = data.flipX;
+			globalData.flipY = data.flipY;
+			globalData.scout = data.scout;
+			globalData.prescouting = data.prescouting;
+			globalData.practice = data.practice;
+			return true;
+		});
+	}
+
 	private readonly emitter = new EventEmitter<{
 		tick: Tick;
 		section: Section;
@@ -126,6 +171,20 @@ export class App {
 		});
 	}
 
+	saveState() {
+		return attemptAsync(async () => {
+			const serialized = await this.serialize().unwrap();
+			localStorage.setItem(
+				`scouting-app-state`,
+				JSON.stringify({
+					timestamp: Date.now(),
+					data: serialized,
+				}),
+			);
+		});
+	}
+
+
 	private _offState = () => {};
 	private _offView = () => {};
 	private _offData = () => {};
@@ -133,7 +192,7 @@ export class App {
 	private _offComments = () => {};
 	private _target: HTMLElement | undefined;
 
-	private _deinit = () => {};
+	deinit = () => {};
 
 	init(target: HTMLElement) {
 		this._target = target;
@@ -144,7 +203,7 @@ export class App {
 		this._offCollected = this.checks.init();
 
 		// for some reason, this code will never run. I have no idea why. not totally sure what it does either.
-		this._deinit = () => {
+		this.deinit = () => {
 			// console.log('Deinitializing app');
 			this._offState();
 			this._offComments();
@@ -153,7 +212,7 @@ export class App {
 			this._offCollected();
 		};
 
-		return this._deinit;
+		return this.deinit;
 	}
 
 	// Main event loop
@@ -162,6 +221,7 @@ export class App {
 		this.state.currentIndex = 0;
 		this.running.set(true);
 
+		const TICK_SAVE = 10; // save every 10 ticks
 		const loop = new Loop(() => {
 			const currentIndex = this.state.currentIndex;
 			// console.log('index', currentIndex);
@@ -200,6 +260,10 @@ export class App {
 			}
 
 			this.state.currentIndex++;
+
+			if (currentIndex % TICK_SAVE === 0) {
+				this.saveState();
+			}
 		}, TICK_DURATION);
 
 		loop.start();

@@ -1,6 +1,5 @@
 import { writable, type Writable } from 'svelte/store';
 import type { App } from './app';
-import { Gradient } from 'colors/gradient';
 import { Color } from 'colors/color';
 
 type C =
@@ -248,6 +247,24 @@ export class Checks implements Writable<Check[]> {
 		}
 
 		return { checks, sliders };
+	}
+
+	deserialize(data: string[], comments: Record<string, string>, sliders: Record<string, {
+		value: number;
+		text: string;
+		color: string;
+	}>) {
+		this.update((checks) => {
+			for (const check of checks) {
+				check.data.value = data.includes(check.data.name);
+				check.data.comment = comments[check.data.name] || '';
+				if (check.data.doSlider && check.data.value && sliders[check.data.name] !== undefined)
+					check.data.slider = sliders[check.data.name].value;
+				else check.data.slider = 0;
+				check.inform();
+			}
+			return checks;
+		});
 	}
 
 	setComment(name: string, comment: string) {

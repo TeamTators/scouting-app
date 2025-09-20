@@ -173,7 +173,11 @@
 					onclick={async () => {
 						await algaeHarvestForm();
 						page = 'post';
-						exitFullscreen();
+						try {
+							exitFullscreen();
+						} catch (error) {
+							console.error('Unable to fullscreen');
+						}
 						if (app) postApp?.render(app);
 					}}
 				>
@@ -191,7 +195,7 @@
 		<h3>Loading...</h3>
 	</div> -->
 	{#if app}
-		<AppView {app} {page} />
+		<AppView bind:app={app} {page} />
 
 		<div style="display: {page === 'post' ? 'block' : 'none'};">
 			<Comments {app} />

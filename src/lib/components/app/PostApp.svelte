@@ -33,6 +33,7 @@
 		const serialized = await app.serialize();
 		if (serialized.isErr()) return console.error(serialized.error);
 		const trace = serialized.value.trace;
+		console.log(trace);
 		container = new Container(
 			...(trace
 				.map((p, i, a) => {
