@@ -37,10 +37,12 @@ export class App {
 		return attempt(() => {
 			const data = localStorage.getItem(`scouting-app-state`);
 			if (!data) return undefined;
-			const res = z.object({
-				timestamp: z.number(),
-				data: MatchSchema,
-			}).safeParse(JSON.parse(data));
+			const res = z
+				.object({
+					timestamp: z.number(),
+					data: MatchSchema
+				})
+				.safeParse(JSON.parse(data));
 			if (!res.success) {
 				localStorage.removeItem(`scouting-app-state`);
 				console.warn('Invalid saved state, removing.', res.error, JSON.parse(data));
@@ -58,7 +60,7 @@ export class App {
 				compLevel: data.compLevel,
 				match: data.match,
 				team: data.team,
-				alliance: data.alliance,
+				alliance: data.alliance
 			});
 
 			app.state.deserialize(data.trace as TraceArray);
@@ -178,12 +180,11 @@ export class App {
 				`scouting-app-state`,
 				JSON.stringify({
 					timestamp: Date.now(),
-					data: serialized,
-				}),
+					data: serialized
+				})
 			);
 		});
 	}
-
 
 	private _offState = () => {};
 	private _offView = () => {};

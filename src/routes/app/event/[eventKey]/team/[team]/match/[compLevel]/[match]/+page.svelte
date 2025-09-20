@@ -195,7 +195,7 @@
 		<h3>Loading...</h3>
 	</div> -->
 	{#if app}
-		<AppView bind:app={app} {page} />
+		<AppView bind:app {page} />
 
 		<div style="display: {page === 'post' ? 'block' : 'none'};">
 			<Comments {app} />

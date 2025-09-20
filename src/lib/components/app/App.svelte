@@ -26,11 +26,7 @@
 				const data = currentState.value.data;
 				confirm('You have a previous match in progress, would you like to restore it?')
 					.then((res) => {
-						if (res) App.deserialize(
-							data,
-							app,
-							target,
-						);
+						if (res) App.deserialize(data, app, target);
 						else app.init(target);
 					})
 					.catch(() => {

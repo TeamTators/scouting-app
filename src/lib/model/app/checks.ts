@@ -249,11 +249,18 @@ export class Checks implements Writable<Check[]> {
 		return { checks, sliders };
 	}
 
-	deserialize(data: string[], comments: Record<string, string>, sliders: Record<string, {
-		value: number;
-		text: string;
-		color: string;
-	}>) {
+	deserialize(
+		data: string[],
+		comments: Record<string, string>,
+		sliders: Record<
+			string,
+			{
+				value: number;
+				text: string;
+				color: string;
+			}
+		>
+	) {
 		this.update((checks) => {
 			for (const check of checks) {
 				check.data.value = data.includes(check.data.name);
