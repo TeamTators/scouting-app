@@ -74,6 +74,8 @@ jobs:
           echo "REDIS_NAME=some_name" >> .env
           echo "REDIS_URL=redis://localhost:6379" >> .env
           echo "REMOTE=false" >> .env
+          echo "SECRET_SERVER_API_KEY=some_secret" >> .env
+          echo "SECRET_SERVER_URL=http://localhost:4173" >> .env
           export $(cat .env | xargs)
 
       - name: Run migrations

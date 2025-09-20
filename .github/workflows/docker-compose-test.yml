@@ -66,6 +66,8 @@ jobs:
           PORT=3000
           DB_HOST=localhost
           REMOTE=false
+          SECRET_SERVER_API_KEY=some_secret
+          SECRET_SERVER_URL=http://localhost:4173
           EOF
 
       - name: Setup Node.js
