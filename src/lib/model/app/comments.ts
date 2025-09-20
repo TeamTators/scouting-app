@@ -91,6 +91,15 @@ export class Comments implements Writable<C> {
 		return Object.fromEntries(this.comments.map((c) => c.data));
 	}
 
+	deserialize(data: Record<string, string>) {
+		this.comments = [];
+		for (const [key, value] of Object.entries(data)) {
+			this.addComment(key, 'info');
+			this.comments[this.comments.length - 1].value = value;
+		}
+		this.inform();
+	}
+
 	get(key: string) {
 		return this.comments.find((c) => c.key === key);
 	}

@@ -1,13 +1,11 @@
 import { Canvas } from 'canvas/canvas';
 import type { App } from './app';
-import { Path } from 'canvas/path';
 import { Border } from 'canvas/border';
 import { Timer } from './timer';
 import { Img } from 'canvas/image';
 import { Color } from 'colors/color';
 import { ShortPath } from './short-path';
 import { sleep } from 'ts-utils/sleep';
-import { Polygon } from 'canvas/polygon';
 import type { Point2D } from 'math/point';
 import { browser } from '$app/environment';
 import { ButtonCircle } from './button-circle';

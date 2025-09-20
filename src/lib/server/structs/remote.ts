@@ -11,7 +11,6 @@ export namespace Remote {
 	});
 
 	export const REMOTE = bool('REMOTE', true);
-	// export const PIN = process.env.REMOTE === 'true' ? String(process.env.REMOTE_PIN) : undefined;
 	export const PIN = (() => {
 		const pin = str('REMOTE_PIN', false);
 		return REMOTE ? pin : undefined;
