@@ -52,5 +52,15 @@ export default z.object({
 		enabled: z.boolean(),
 		requests: z.number().min(1),
 		window: z.number().min(1)
-	})
+	}),
+	remote: z.object({
+		enabled: z.boolean(),
+		pin: z.string().min(1)
+	}),
+	target: z.array(
+		z.object({
+			url: z.string().url(),
+			key: z.string().min(1)
+		})
+	)
 });

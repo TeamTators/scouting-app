@@ -47,5 +47,15 @@
 		"enabled": true,
 		"requests": 100,
 		"window": 600
-	}
+	},
+	"remote": {
+		"enabled": false,
+		"pin": "your_remote_pin"
+	},
+	"target": [
+		{
+			"url": "http://localhost:2122",
+			"key": "your_target_key"
+		}
+	]
 }

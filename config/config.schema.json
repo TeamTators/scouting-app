@@ -217,6 +217,46 @@
 			},
 			"required": ["enabled", "requests", "window"],
 			"additionalProperties": false
+		},
+		"remote": {
+			"description": "Remote access configuration",
+			"type": "object",
+			"properties": {
+				"enabled": {
+					"type": "boolean",
+					"description": "Whether remote access is enabled"
+				},
+				"pin": {
+					"type": "string",
+					"minLength": 1,
+					"description": "PIN for remote access"
+				}
+			},
+			"required": ["enabled", "pin"],
+			"additionalProperties": false
+		},
+		"target": {
+			"description": "Target server configuration",
+			"type": "array",
+			"items": {
+				"type": "object",
+				"properties": {
+					"url": {
+						"type": "string",
+						"format": "uri",
+						"description": "Target server URL"
+					},
+					"key": {
+						"type": "string",
+						"minLength": 1,
+						"description": "Target server key"
+					}
+				},
+				"required": ["url", "key"],
+				"additionalProperties": false
+			},
+			"minItems": 1,
+			"uniqueItems": true
 		}
 	},
 	"required": [
@@ -230,7 +270,9 @@
 		"admin",
 		"email",
 		"ntp",
-		"limiting"
+		"limiting",
+		"remote",
+		"target"
 	],
 	"additionalProperties": false
 }
