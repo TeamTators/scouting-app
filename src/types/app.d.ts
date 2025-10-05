@@ -11,6 +11,7 @@ declare global {
 			account?: Account.AccountData | undefined;
 			session: Session.SessionData;
 			start: number;
+			isTrusted: boolean;
 		}
 		// interface PageData {}
 		// interface PageState {}
