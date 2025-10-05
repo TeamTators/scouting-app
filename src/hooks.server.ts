@@ -18,7 +18,7 @@ import { createStructEventService } from '$lib/server/services/struct-event';
 import ignore from 'ignore';
 // import { signFingerprint } from '$lib/server/utils/fingerprint';
 import redis from '$lib/server/services/redis';
-import { env, str } from '$lib/server/utils/env';
+import { config } from '$lib/server/utils/env';
 import { Remote } from '$lib/server/structs/remote';
 
 (async () => {
@@ -99,9 +99,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	event.locals.session = session.value;
 
-	const autoSignIn = str('AUTO_SIGN_IN', false);
+	const autoSignIn = config.sessions.auto_sign_in;
 
-	if (autoSignIn && env !== 'prod') {
+	if (autoSignIn && config.environment !== 'prod') {
 		const a = await Account.Account.fromProperty('username', autoSignIn, { type: 'single' });
 		if (a.isOk() && a.value) {
 			event.locals.account = a.value;

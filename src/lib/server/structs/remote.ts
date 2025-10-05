@@ -1,6 +1,6 @@
 import { text } from 'drizzle-orm/pg-core';
 import { Struct } from 'drizzle-struct/back-end';
-import { bool, str } from '../utils/env';
+import { bool, config, str } from '../utils/env';
 
 export namespace Remote {
 	export const TrustedSessions = new Struct({
@@ -10,10 +10,10 @@ export namespace Remote {
 		}
 	});
 
-	export const REMOTE = bool('REMOTE', true);
+	export const REMOTE = config.remote.enabled;
 	// export const PIN = process.env.REMOTE === 'true' ? String(process.env.REMOTE_PIN) : undefined;
 	export const PIN = (() => {
-		const pin = str('REMOTE_PIN', false);
+		const pin = config.remote.pin;
 		return REMOTE ? pin : undefined;
 	})();
 }
