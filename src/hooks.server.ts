@@ -51,6 +51,8 @@ sessionIgnore.add(`
 `);
 
 export const handle: Handle = async ({ event, resolve }) => {
+	try {
+
 	console.log('Request:', event.request.method, event.url.pathname);
 	event.locals.start = performance.now();
 	// if (Limiting.isBlockedPage(event.url.pathname).unwrap()) {
@@ -211,9 +213,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 		});
 	}
 
-	console.log('Made it here!');
-
-	try {
 		const res = await resolve(event);
 		return res;
 	} catch (error) {
