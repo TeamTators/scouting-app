@@ -211,6 +211,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 		});
 	}
 
+	console.log('Made it here!');
+
 	try {
 		const res = await resolve(event);
 		return res;
