@@ -51,46 +51,46 @@ sessionIgnore.add(`
 `);
 
 export const handle: Handle = async ({ event, resolve }) => {
-	// console.log('Request:', event.request.method, event.url.pathname);
+	console.log('Request:', event.request.method, event.url.pathname);
 	event.locals.start = performance.now();
-	if (Limiting.isBlockedPage(event.url.pathname).unwrap()) {
-		// Redirect to /status/404
-		return new Response('Redirect', {
-			status: ServerCode.seeOther,
-			headers: {
-				location: `/status/${ServerCode.notFound}`
-			}
-		});
-	}
+	// if (Limiting.isBlockedPage(event.url.pathname).unwrap()) {
+	// 	// Redirect to /status/404
+	// 	return new Response('Redirect', {
+	// 		status: ServerCode.seeOther,
+	// 		headers: {
+	// 			location: `/status/${ServerCode.notFound}`
+	// 		}
+	// 	});
+	// }
 
-	if (Limiting.isIpLimitedPage(event.url.pathname).unwrap()) {
-		const ip =
-			event.request.headers.get('x-forwarded-for') ||
-			event.request.headers.get('x-real-ip') ||
-			event.request.headers.get('cf-connecting-ip') ||
-			event.request.headers.get('remote-addr') ||
-			event.request.headers.get('x-client-ip') ||
-			event.request.headers.get('x-cluster-client-ip') ||
-			event.request.headers.get('x-forwarded-for');
-		if (!ip) {
-			terminal.warn(`No IP address found for request to ${event.url.pathname}`);
-			return new Response('Redirect', {
-				status: ServerCode.seeOther,
-				headers: {
-					location: `/status/${ServerCode.forbidden}`
-				}
-			});
-		}
-		const isAllowed = await Limiting.isIpAllowed(ip, event.url.pathname).unwrap();
-		if (!isAllowed) {
-			return new Response('Redirect', {
-				status: ServerCode.seeOther,
-				headers: {
-					location: `/status/${ServerCode.forbidden}`
-				}
-			});
-		}
-	}
+	// if (Limiting.isIpLimitedPage(event.url.pathname).unwrap()) {
+	// 	const ip =
+	// 		event.request.headers.get('x-forwarded-for') ||
+	// 		event.request.headers.get('x-real-ip') ||
+	// 		event.request.headers.get('cf-connecting-ip') ||
+	// 		event.request.headers.get('remote-addr') ||
+	// 		event.request.headers.get('x-client-ip') ||
+	// 		event.request.headers.get('x-cluster-client-ip') ||
+	// 		event.request.headers.get('x-forwarded-for');
+	// 	if (!ip) {
+	// 		terminal.warn(`No IP address found for request to ${event.url.pathname}`);
+	// 		return new Response('Redirect', {
+	// 			status: ServerCode.seeOther,
+	// 			headers: {
+	// 				location: `/status/${ServerCode.forbidden}`
+	// 			}
+	// 		});
+	// 	}
+	// 	const isAllowed = await Limiting.isIpAllowed(ip, event.url.pathname).unwrap();
+	// 	if (!isAllowed) {
+	// 		return new Response('Redirect', {
+	// 			status: ServerCode.seeOther,
+	// 			headers: {
+	// 				location: `/status/${ServerCode.forbidden}`
+	// 			}
+	// 		});
+	// 	}
+	// }
 
 	const session = await Session.getSession(event);
 	if (session.isErr()) {
@@ -99,17 +99,17 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	event.locals.session = session.value;
 
-	const autoSignIn = str('AUTO_SIGN_IN', false);
+	// const autoSignIn = str('AUTO_SIGN_IN', false);
 
-	if (autoSignIn && env !== 'prod') {
-		const a = await Account.Account.fromProperty('username', autoSignIn, { type: 'single' });
-		if (a.isOk() && a.value) {
-			event.locals.account = a.value;
-			Object.assign(event.locals.session.data, {
-				accountId: a.value.id
-			});
-		}
-	}
+	// if (autoSignIn && env !== 'prod') {
+	// 	const a = await Account.Account.fromProperty('username', autoSignIn, { type: 'single' });
+	// 	if (a.isOk() && a.value) {
+	// 		event.locals.account = a.value;
+	// 		Object.assign(event.locals.session.data, {
+	// 			accountId: a.value.id
+	// 		});
+	// 	}
+	// }
 
 	if (!event.locals.account) {
 		const account = await Session.getAccount(session.value);
