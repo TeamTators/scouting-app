@@ -190,46 +190,48 @@
 	<!-- <div bind:this={target} style="height: 100vh; display: {page === 'app' ? 'block' : 'none'};">
 		<h3>Loading...</h3>
 	</div> -->
-	{#if app}
-		<AppView {app} {page} />
+	{#key app}
+		{#if app}
+			<AppView {app} {page} />
 
-		<div style="display: {page === 'post' ? 'block' : 'none'};">
-			<Comments {app} />
-			<div class="btn-group w-100" role="group">
-				<button
-					type="button"
-					class="btn btn-success"
-					onclick={async () => {
-						await app?.submit();
-						const data = await app?.matchData.next();
-						if (!data) return console.error('Could not find next match');
-						if (data.isErr()) return console.error(data.error);
-						goto(
-							`/app/event/${data.value.eventKey}/team/${data.value.team}/match/${data.value.compLevel}/${data.value.match}`
-						);
-						app?.matchData.set(data.value);
-						page = 'app';
-						app?.reset();
-						// window.location.reload();
-					}}
-				>
-					<i class="material-icons"> file_upload </i>
-					Submit Match
-				</button>
-				<button
-					class="btn btn-danger"
-					onclick={() => {
-						app?.reset();
-						page = 'app';
-					}}
-				>
-					<i class="material-icons">delete</i>
-					Discard Match
-				</button>
+			<div style="display: {page === 'post' ? 'block' : 'none'};">
+				<Comments {app} />
+				<div class="btn-group w-100" role="group">
+					<button
+						type="button"
+						class="btn btn-success"
+						onclick={async () => {
+							await app?.submit();
+							const data = await app?.matchData.next();
+							if (!data) return console.error('Could not find next match');
+							if (data.isErr()) return console.error(data.error);
+							goto(
+								`/app/event/${data.value.eventKey}/team/${data.value.team}/match/${data.value.compLevel}/${data.value.match}`
+							);
+							app?.matchData.set(data.value);
+							page = 'app';
+							app?.reset();
+							// window.location.reload();
+						}}
+					>
+						<i class="material-icons"> file_upload </i>
+						Submit Match
+					</button>
+					<button
+						class="btn btn-danger"
+						onclick={() => {
+							app?.reset();
+							page = 'app';
+						}}
+					>
+						<i class="material-icons">delete</i>
+						Discard Match
+					</button>
+				</div>
+				<PostApp {app} bind:this={postApp} />
 			</div>
-			<PostApp {app} bind:this={postApp} />
-		</div>
-	{/if}
+		{/if}
+	{/key}
 </div>
 
 <Modal bind:this={matches} title="Select Match" size="xl">

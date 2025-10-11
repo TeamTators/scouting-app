@@ -46,6 +46,7 @@ export class App {
 		pause: undefined;
 		resume: undefined;
 		error: Error;
+		reset: undefined;
 	}>();
 
 	public readonly on = this.emitter.on.bind(this.emitter);
@@ -256,6 +257,7 @@ export class App {
 		this._offState();
 		this._offCollected();
 		if (this._target) this.init(this._target);
+		this.emit('reset', undefined);
 	}
 
 	goto(section: Section) {
@@ -339,7 +341,7 @@ export class App {
 		};
 
 		// if the button is held down, change the state
-		let timeout: NodeJS.Timeout | undefined = undefined;
+		let timeout: ReturnType<typeof setTimeout> | undefined = undefined;
 		const start = () => {
 			if (timeout) end();
 			timeout = setTimeout(() => {
