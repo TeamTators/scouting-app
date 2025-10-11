@@ -4,7 +4,6 @@
 	import CheckRow from '$lib/components/app/Check.svelte';
 	import Slider from '$lib/components/app/Slider.svelte';
 	import Comment from './Comment.svelte';
-	import { onMount } from 'svelte';
 
 	interface Props {
 		app: App;
@@ -15,19 +14,10 @@
 	const checks = app.checks;
 	const comments = app.comments;
 
-	let success = $state(checks.writables.success);
-	let primary = $state(checks.writables.primary);
-	let warning = $state(checks.writables.warning);
-	let danger = $state(checks.writables.danger);
-
-	onMount(() => {
-		app.on('reset', () => {
-			success = checks.writables.success;
-			primary = checks.writables.primary;
-			warning = checks.writables.warning;
-			danger = checks.writables.danger;
-		});
-	});
+	const success = checks.writables.success;
+	const primary = checks.writables.primary;
+	const warning = checks.writables.warning;
+	const danger = checks.writables.danger;
 </script>
 
 {#snippet checksRow(checks: Check[], color: 'success' | 'primary' | 'warning' | 'danger')}

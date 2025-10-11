@@ -256,6 +256,7 @@ export class App {
 	reset() {
 		this._offState();
 		this._offCollected();
+		this._offComments();
 		if (this._target) this.init(this._target);
 		this.emit('reset', undefined);
 	}
