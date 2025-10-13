@@ -45,7 +45,7 @@
 	<div class="container pt-5">
 		<div class="row">
 			<h1>
-				Scouting App: Sign In
+				{__APP_ENV__.name}: Sign In
 			</h1>
 		</div>
 		<div class="row mb-3">
