@@ -155,6 +155,7 @@
 		"math": "git+https://github.com/tsaxking/calculations#v1.0.0",
 		"mime-types": "^3.0.1",
 		"mjml": "^4.15.3",
+		"msgpackr": "^1.11.5",
 		"multiparty": "^4.2.3",
 		"nodemailer": "^6.10.1",
 		"pg": "^8.16.3",
@@ -165,13 +166,13 @@
 		"redis-utils": "github:tsaxking/redis#v2.0.7",
 		"svelte-filepond": "^0.2.2",
 		"svelte-portal": "^2.2.1",
+		"tatorscout": "github:TeamTators/tatorscout-utils#v0.0.1",
 		"ts-utils": "github:tsaxking/global-ts-utilities#v1.0.0",
+		"typescript": "^5.7.3",
 		"uuid": "^11.1.0",
 		"vite-node": "^3.2.4",
 		"yaml": "^2.8.0",
-		"zod": "^3.25.76",
-		"tatorscout": "github:TeamTators/tatorscout-utils",
-		"typescript": "^5.7.3"
+		"zod": "^3.25.76"
 	},
 	"pnpm": {
 		"onlyBuiltDependencies": [
@@ -183,13 +184,11 @@
 			"esbuild",
 			"html-constructor",
 			"math",
+			"msgpackr-extract",
 			"redis-service",
 			"svelte-preprocess",
-			"ts-utils",
-			"html-constructor",
-			"redis-service",
-			"canvas",
 			"tatorscout",
+			"ts-utils",
 			"utils"
 		],
 		"overrides": {

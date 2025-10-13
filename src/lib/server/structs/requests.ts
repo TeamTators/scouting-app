@@ -8,8 +8,7 @@ import { Account } from './account';
 import { MatchSchema, TeamSchema, EventSchema } from 'tatorscout/tba';
 import { AssignmentSchema } from 'tatorscout/scout-groups';
 import { Loop } from 'ts-utils/loop';
-import { TraceSchema } from 'tatorscout/trace';
-import { MatchSchema as MS, type MatchSchemaType } from '../../types/match';
+import { MatchSchema as MS, type CompressedMatchSchemaType } from '../../types/match';
 import terminal from '../utils/terminal';
 
 const { SECRET_SERVER_API_KEY, SECRET_SERVER_DOMAIN, REMOTE } = process.env;
@@ -90,7 +89,7 @@ export namespace Requests {
 		});
 	};
 
-	export const submitMatch = (match: MatchSchemaType) => {
+	export const submitMatch = (match: CompressedMatchSchemaType) => {
 		return attemptAsync(async () => {
 			const parsed = MS.safeParse(match);
 			if (!parsed.success) {

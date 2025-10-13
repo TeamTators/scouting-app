@@ -1,7 +1,7 @@
 import type { Point2D } from 'math/point';
 import { App, TOTAL_TICKS, TICKS_PER_SECOND, SECTIONS, type Section } from './app';
 import { Tick } from './tick';
-import type { TraceArray } from 'tatorscout/trace';
+import { type TraceArray } from 'tatorscout/trace';
 
 export class AppState {
 	public currentLocation: Point2D | null;
@@ -54,8 +54,14 @@ export class AppState {
 	}
 
 	serialize(): TraceArray {
+		const compress = (num: number) => Math.round(num * 1000);
 		return this.ticks
 			.filter((t) => !!t.point)
-			.map((t) => [t.index, t.point?.[0] || 0, t.point?.[1] || 0, t.action]);
+			.map((t) => [
+				t.index, 
+				compress(t.point?.[0] || 0), 
+				compress(t.point?.[1] || 0), 
+				t.action
+			]);
 	}
 }
