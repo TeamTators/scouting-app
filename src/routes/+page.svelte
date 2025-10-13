@@ -4,7 +4,7 @@
 </script>
 
 <svelte:head>
-	<title>Scouting App</title>
+	<title>{__APP_ENV__.name}</title>
 </svelte:head>
 
 <div class="container mt-5">

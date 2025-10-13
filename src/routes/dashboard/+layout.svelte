@@ -5,7 +5,7 @@
 </script>
 
 <main class="dashboard">
-	<Navbar title="Scouting App" />
+	<Navbar title={__APP_ENV__.name} />
 
 	{@render children()}
 </main>

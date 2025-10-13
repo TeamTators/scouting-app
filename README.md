@@ -113,4 +113,4 @@ pnpm db:studio
 
 ## Docs
 
-Go to documentation: [Docs](https://tsaxking.github.io/sveltekit-template/#)
+Go to documentation: [Docs](https://tsaxking.github.io/tators-app-kit/#)

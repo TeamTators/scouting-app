@@ -101,17 +101,17 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	event.locals.session = session.value;
 
-	// const autoSignIn = str('AUTO_SIGN_IN', false);
+	const autoSignIn = str('AUTO_SIGN_IN', false);
 
-	// if (autoSignIn && env !== 'prod') {
-	// 	const a = await Account.Account.fromProperty('username', autoSignIn, { type: 'single' });
-	// 	if (a.isOk() && a.value) {
-	// 		event.locals.account = a.value;
-	// 		Object.assign(event.locals.session.data, {
-	// 			accountId: a.value.id
-	// 		});
-	// 	}
-	// }
+	if (autoSignIn && env !== 'prod') {
+		const a = await Account.Account.fromProperty('username', autoSignIn, { type: 'single' });
+		if (a.isOk() && a.value) {
+			event.locals.account = a.value;
+			Object.assign(event.locals.session.data, {
+				accountId: a.value.id
+			});
+		}
+	}
 
 	if (!event.locals.account) {
 		const account = await Session.getAccount(session.value);

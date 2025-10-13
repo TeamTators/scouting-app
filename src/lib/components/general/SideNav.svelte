@@ -92,7 +92,7 @@
 	aria-labelledby="{id}Label"
 >
 	<div class="offcanvas-header layer-2">
-		<h5 class="offcanvas-title" id="{id}Label">Scouting App</h5>
+		<h5 class="offcanvas-title" id="{id}Label">{__APP_ENV__.name}</h5>
 		<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
 	</div>
 	<div class="offcanvas-body layer-2">
