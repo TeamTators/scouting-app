@@ -1,17 +1,17 @@
 import { attemptAsync } from 'ts-utils/check';
-import { sse } from '$lib/utils/sse';
+import { sse } from '$lib/services/sse';
 import {
 	Struct,
-	type PartialStructable,
-	type Structable,
-	type GlobalCols,
 	StructData,
 	SingleWritable,
-	DataArr
-} from 'drizzle-struct/front-end';
-import { Requests } from '$lib/utils/requests';
+	DataArr,
+	type GlobalCols
+} from '$lib/services/struct/index';
 import { browser } from '$app/environment';
 import { z } from 'zod';
+import { modalTarget, rawModal } from '$lib/utils/prompts';
+import { mount } from 'svelte';
+import AccountSearch from '$lib/components/account/AccountSearch.svelte';
 
 export namespace Account {
 	export const Account = new Struct({
@@ -23,8 +23,9 @@ export namespace Account {
 			firstName: 'string',
 			lastName: 'string',
 			email: 'string',
-			picture: 'string',
-			verified: 'boolean'
+			// picture: 'string',
+			verified: 'boolean',
+			lastLogin: 'string'
 			// verification: 'string'
 		},
 		socket: sse,
@@ -34,6 +35,23 @@ export namespace Account {
 	export type AccountData = StructData<typeof Account.data.structure>;
 	export type AccountArr = DataArr<typeof Account.data.structure>;
 
+	export const AccountInfo = new Struct({
+		name: 'account_info',
+		structure: {
+			accountId: 'string',
+			viewOnline: 'string',
+			picture: 'string',
+			bio: 'string',
+			website: 'string',
+			socials: 'string',
+			theme: 'string'
+		},
+		socket: sse,
+		browser
+	});
+
+	export type AccountInfoData = StructData<typeof AccountInfo.data.structure & GlobalCols>;
+
 	export const AccountNotification = new Struct({
 		name: 'account_notification',
 		structure: {
@@ -41,12 +59,14 @@ export namespace Account {
 			title: 'string',
 			severity: 'string',
 			message: 'string',
+			iconType: 'string',
 			icon: 'string',
 			link: 'string',
 			read: 'boolean'
 		},
 		socket: sse,
-		browser
+		browser,
+		log: true
 	});
 
 	export type AccountNotificationData = StructData<typeof AccountNotification.data.structure>;
@@ -60,32 +80,32 @@ export namespace Account {
 			firstName: 'Guest',
 			lastName: '',
 			email: '',
-			picture: '',
 			verified: false,
 			// verification: '',
 			id: 'guest',
-			updated: '0',
-			created: '0',
+			updated: new Date().toISOString(),
+			created: new Date().toISOString(),
 			archived: false,
-			universe: '',
 			attributes: '[]',
 			lifetime: 0,
-			canUpdate: false
+			canUpdate: false,
+			lastLogin: new Date().toISOString()
 		})
 	);
 
 	export const getSelf = (): SingleWritable<typeof Account.data.structure> => {
 		attemptAsync(async () => {
 			const data = await Account.send('self', {}, Account.getZodSchema());
+			const account = data.unwrap();
 			self.update((d) => {
-				d.set(data.unwrap()); // The program may not like this
+				d.set(account);
 				return d;
 			});
 		});
 		return self;
 	};
 
-	export const getNotifs = (limit: number, offset: number) => {
+	export const getNotifs = (/*limit: number, offset: number*/) => {
 		return AccountNotification.query(
 			'get-own-notifs',
 			{},
@@ -107,5 +127,76 @@ export namespace Account {
 				satisfies: () => false
 			}
 		);
+	};
+
+	export const usernameExists = (username: string) => {
+		return Account.send('username-exists', { username }, z.boolean());
+	};
+
+	export const search = (
+		query: string,
+		config: {
+			limit: number;
+			offset: number;
+		} = {
+			limit: 25,
+			offset: 0
+		}
+	) => {
+		return Account.query(
+			'search',
+			{
+				query,
+				...config
+			},
+			{
+				asStream: false,
+				satisfies: () => false
+			}
+		);
+	};
+
+	export const searchAccountsModal = (config?: { filter: (account: AccountData) => boolean }) => {
+		return new Promise<AccountData | null>((resolve, reject) => {
+			if (!modalTarget) return reject('Cannot show prompt in non-browser environment');
+
+			const modal = rawModal('Select Account', [], (target) =>
+				mount(AccountSearch, {
+					target,
+					props: {
+						onselect: (account) => {
+							resolve(account);
+							modal.hide();
+						},
+						filter: config?.filter
+					}
+				})
+			);
+			modal.show();
+		});
+	};
+
+	export const signOut = () => {
+		return attemptAsync(async () => {
+			return fetch('/account/sign-out', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: '{}'
+			});
+		});
+	};
+
+	export const signOutOfSession = (sessionId: string) => {
+		return attemptAsync(async () => {
+			return fetch('/account/sign-out', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ sessionId })
+			});
+		});
 	};
 }

@@ -2,10 +2,7 @@ import { attemptAsync } from 'ts-utils/check';
 import { Struct } from 'drizzle-struct/back-end';
 import { integer, text } from 'drizzle-orm/pg-core';
 import { Account } from './account';
-import { Permissions } from './permissions';
-import { Universes } from './universe';
-
-const { PUBLIC_DOMAIN, SESSION_DURATION } = process.env;
+import { domain, num } from '../utils/env';
 
 interface RequestEvent {
 	cookies: {
@@ -22,9 +19,16 @@ interface RequestEvent {
 			}
 		) => void;
 	};
+	request: Request;
 }
 
 export namespace Session {
+	const PUBLIC_DOMAIN = domain({
+		port: false,
+		protocol: false
+	});
+	const SESSION_DURATION = num('SESSION_DURATION', true);
+
 	export const Session = new Struct({
 		name: 'session',
 		structure: {
@@ -32,33 +36,46 @@ export namespace Session {
 			ip: text('ip').notNull(),
 			userAgent: text('user_agent').notNull(),
 			requests: integer('requests').notNull(),
-			prevUrl: text('prev_url').notNull()
+			prevUrl: text('prev_url').notNull(),
+			fingerprint: text('fingerprint').notNull().default(''),
+			tabs: integer('tabs').notNull().default(0)
 		},
-		frontend: false
+		frontend: false,
+		safes: ['fingerprint'],
+		lifetime: SESSION_DURATION
 	});
 
 	export type SessionData = typeof Session.sample;
 
 	export const getSession = (event: RequestEvent) => {
 		return attemptAsync(async () => {
-			const id = event.cookies.get('ssid:' + PUBLIC_DOMAIN);
+			// TODO: will eventually split domain later once we use the same cookie id as session id upon creation
+			const id = event.cookies.get('ssid_' + PUBLIC_DOMAIN);
 
 			const create = async () => {
-				const session = (
-					await Session.new({
-						accountId: '',
-						ip: '',
-						userAgent: '',
-						requests: 0,
-						prevUrl: ''
-					})
-				).unwrap();
+				const ip =
+					event.request.headers.get('Client-IP') ??
+					event.request.headers.get('X-Forwarded-For') ??
+					event.request.headers.get('X-Real-IP') ??
+					'';
 
-				event.cookies.set('ssid:' + PUBLIC_DOMAIN, session.id, {
+				const userAgent = event.request.headers.get('User-Agent') ?? '';
+
+				const session = await Session.new({
+					accountId: '',
+					ip,
+					userAgent,
+					requests: 0,
+					prevUrl: '',
+					fingerprint: '',
+					tabs: 0
+				}).unwrap();
+
+				event.cookies.set('ssid_' + PUBLIC_DOMAIN, session.id, {
 					httpOnly: false,
 					domain: PUBLIC_DOMAIN ?? '',
 					path: '/',
-					expires: new Date(Date.now() + parseInt(SESSION_DURATION ?? '0'))
+					expires: new Date(Date.now() + SESSION_DURATION)
 				});
 
 				return session;
@@ -87,11 +104,14 @@ export namespace Session {
 
 	export const signIn = async (account: Account.AccountData, session: SessionData) => {
 		return attemptAsync(async () => {
-			(
-				await session.update({
+			await session
+				.update({
 					accountId: account.id
 				})
-			).unwrap();
+				.unwrap();
+			await account.update({
+				lastLogin: new Date().toISOString()
+			});
 
 			// const universes = (await Universes.getUniverses(account)).unwrap();
 

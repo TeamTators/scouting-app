@@ -4,7 +4,7 @@ import { ServerCode } from 'ts-utils/status';
 import { z } from 'zod';
 import { passwordStrength } from 'check-password-strength';
 import { OAuth2Client } from 'google-auth-library';
-import { SECRET_OAUTH2_CLIENT_ID, SECRET_OAUTH2_CLIENT_SECRET } from '$env/static/private';
+import { domain, str } from '$lib/server/utils/env';
 
 // const log = (...args: unknown[]) => console.log('[oauth/sign-up]', ...args);
 
@@ -14,8 +14,8 @@ export const actions = {
 
 		const username = z.string().min(3).max(20).safeParse(data.get('username'));
 		const email = z.string().email().safeParse(data.get('email'));
-		const firstName = z.string().min(3).max(20).safeParse(data.get('firstName'));
-		const lastName = z.string().min(3).max(20).safeParse(data.get('lastName'));
+		const firstName = z.string().min(1).max(20).safeParse(data.get('firstName'));
+		const lastName = z.string().min(1).max(20).safeParse(data.get('lastName'));
 		const password = z.string().min(8).max(20).safeParse(data.get('password'));
 		const confirmPassword = z.string().min(8).max(20).safeParse(data.get('confirmPassword'));
 
@@ -138,10 +138,19 @@ export const actions = {
 		};
 	},
 	OAuth2: async () => {
+		// const domain = String(process.env.PUBLIC_DOMAIN).includes('localhost')
+		// 	? `${process.env.PUBLIC_DOMAIN}:${process.env.PORT}`
+		// 	: process.env.PUBLIC_DOMAIN;
+		// const protocol = process.env.HTTPS === 'true' ? 'https://' : 'http://';
+		const url = domain({
+			port: false,
+			protocol: true
+		});
+		const redirectUri = `${url}/oauth/sign-up`;
 		const client = new OAuth2Client({
-			clientSecret: SECRET_OAUTH2_CLIENT_SECRET,
-			clientId: SECRET_OAUTH2_CLIENT_ID,
-			redirectUri: 'http://localhost:5173/oauth/sign-up'
+			clientSecret: str('OAUTH2_CLIENT_SECRET', true),
+			clientId: str('OAUTH2_CLIENT_ID', true),
+			redirectUri
 		});
 		// log(client);
 		const authorizeUrl = client.generateAuthUrl({

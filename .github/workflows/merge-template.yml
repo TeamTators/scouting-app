@@ -1,36 +1,66 @@
 name: 'Merge Template'
 
 on:
-  push:
-    tags:
-      - '*'
+  release:
+    types: [published]
 
 jobs:
+  pre-check:
+    runs-on: ubuntu-latest
+    outputs:
+      run_pipeline: ${{ steps.check.outputs.run_pipeline }}
+    steps:
+      - id: check
+        run: |
+          if [[ "${{ github.event.release.name }}" == *deploy* ]]; then
+            echo "run_pipeline=false" >> $GITHUB_OUTPUT
+          else
+            echo "run_pipeline=true" >> $GITHUB_OUTPUT
+          fi
   format:
+    needs: pre-check
+    if: needs.pre-check.outputs.run_pipeline == 'true'
     uses: ./.github/workflows/code-formatter.yml
   unit-tests:
+    needs: pre-check
+    if: needs.pre-check.outputs.run_pipeline == 'true'
     uses: ./.github/workflows/testing-unit.yml
   E2E:
+    needs: pre-check
+    if: needs.pre-check.outputs.run_pipeline == 'true'
     uses: ./.github/workflows/testing-e2e.yml
   check:
+    needs: pre-check
+    if: needs.pre-check.outputs.run_pipeline == 'true'
     uses: ./.github/workflows/testing-svelte-check.yml
+  docker-compose:
+    needs: pre-check
+    if: needs.pre-check.outputs.run_pipeline == 'true'
+    uses: ./.github/workflows/docker-compose-test.yml
 
   merge-template:
     runs-on: ubuntu-latest
-    needs: [format, unit-tests, E2E, check]
+    needs: [format, unit-tests, E2E, check, docker-compose]
 
     strategy:
       fail-fast: false
       matrix:
-        templates: [tsaxking/tators-dashboard-kit, tsaxking/tators-app-kit, 'tsaxking/elevate.tv']
+        templates:
+          [
+            git@github.com:tsaxking/tators-dashboard-kit.git,
+            git@github.com:tsaxking/tators-app-kit.git,
+            git@github.com:4sight-live/4sight-web-server.git,
+            git@github.com:tsaxking/inventory-kit.git,
+            git@github.com:tsaxking/sfz-budgeting.git,
+            git@github.com:4sight-live/streaming-service.git
+          ]
 
     steps:
       - name: Retrieve git dependencies
         uses: actions/checkout@v2
         with:
           fetch-depth: 0 # Checkout everything to get access to the tags
-          ref: ${{github.event.pull_request.head.ref}}
-          repository: ${{github.event.pull_request.head.repo.full_name}}
+          ref: ${{ github.ref }}
           token: ${{ secrets.GH_TOKEN }}
 
       - name: 'Setup ssh-agent'
@@ -41,21 +71,37 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10.16.0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: v22.12.0
 
-      - name: 'Installing dependencies'
-        run: |
-          pnpm i
+      - name: Install dependencies
+        run: pnpm i
 
-      - name: 'Converting Readme'
+      - name: Load .env variables
         run: |
-          pnpm fix-readme ${{ matrix.templates }}
-          rm -rf ./scripts/fix-readme.ts
+          touch .env
+          echo "ENVIRONMENT=test" >> .env
+          echo "FINGERPRINT_SECRET=some_secret" >> .env
+          echo "DB_HOST=localhost" >> .env
+          echo "DB_PORT=5432" >> .env
+          echo "DB_USER=postgres" >> .env
+          echo "DB_PASS=postgres" >> .env
+          echo "DB_NAME=postgres" >> .env
+          echo "OAUTH2_CLIENT_ID=1234567890" >> .env
+          echo "PUBLIC_APP_NAME=test" >> .env
+          echo "OAUTH2_CLIENT_SECRET=1234567890" >> .env
+          echo "PUBLIC_APP_NAME=test" >> .env
+          echo "REDIS_NAME=some_name" >> .env
+          echo "REDIS_URL=redis://localhost:6379" >> .env
+          echo "PORT=4173" >> .env
+          echo "PUBLIC_DOMAIN=localhost" >> .env
+          echo "HTTPS=false" >> .env
+          echo "SESSION_DURATION=10000000" >> .env
+          export $(cat .env | xargs)
 
       - name: Send pull-request
         run: |
@@ -64,35 +110,19 @@ jobs:
           LAST_COMMIT_MESSAGE=$(git log -1 --pretty=%B)
           REPOSITORY="${{ matrix.templates }}"
           BRANCH_NAME="chore-update-scripts-to-$LATEST_TAG"
-          echo " latest tag: $LATEST_TAG"
-          echo " repository: $REPSOITORY"
-          echo "     folder: $FOLDER"
-          echo "branch name: $BRANCH_NAME"
+          CLONE_DIR="target-repo"
 
-          echo "deleting workflow files we don't need in the other repositories"
-          rm -rf .github/workflows/merge-template.yaml
+          echo "Running premerge scripts"
+          pnpm script premerge-render ${{ matrix.templates }} --force
 
-          # Clone the remote repository and change working directory to the
-          # folder it was cloned to.
-          # echo "Cloning repository"
-          # cd ../
-          # git clone \
-          #   --depth=1 \
-          #   --branch=main \
-          #   git@github.com:${{ matrix.templates }}.git
-          # ls -la
-
-          # cd template-${{ matrix.templates }}
-
-          echo "Setting up identity"
-          # Setup the committers identity.
-          git config --global user.email "taylorking206@u.boisestate.edu"
-          git config --global user.name "Sveltekit Bot"
-
+          echo "Configuring Git"
+          git config user.email "taylorking206@u.boisestate.edu"
+          git config user.name "Sveltekit Bot"
           echo "Changing remote"
+
           # Change the remote to the repository we want to push to.
           git remote rm origin
-          git remote add origin git@github.com:${{ matrix.templates }}.git
+          git remote add origin ${{ matrix.templates }}
 
           echo "Checking out Branch: $BRANCH_NAME"
           # Create a new feature branch for the changes.
@@ -101,5 +131,5 @@ jobs:
           echo "Committing"
           # Commit the changes and push the feature branch to origin
           git add .
-          git commit -m "chore: update scripts to $LATEST_TAG"
+          git commit --allow-empty -m "chore: update scripts to $LATEST_TAG"
           git push origin --set-upstream $BRANCH_NAME

@@ -1,13 +1,11 @@
 import path from 'path';
 import fs from 'fs';
-import { openStructs } from '../src/lib/server/cli/struct';
+import { openStructs } from '../cli/struct';
 import { DB } from '../src/lib/server/db';
 import { Struct } from 'drizzle-struct/back-end';
 import AdmZip from 'adm-zip';
-import { prompt } from '../src/lib/server/cli/utils';
+import { prompt } from '../cli/utils';
 import { toSnakeCase } from 'ts-utils/text';
-import { resolveAll } from 'ts-utils/check';
-import { Test } from '../src/lib/server/structs/testing';
 
 export const BACKUP_DIR = path.join(process.cwd(), 'backups');
 
@@ -16,18 +14,8 @@ export default async () => {
 		await fs.promises.mkdir(BACKUP_DIR, { recursive: true });
 	}
 
-	(await openStructs()).unwrap();
+	await openStructs().unwrap();
 	(await Struct.buildAll(DB)).unwrap();
-	resolveAll(
-		await Promise.all(
-			Array.from({ length: 100 }, (_) =>
-				Test.Test.new({
-					name: 'test',
-					age: parseInt((Math.random() * 100).toString())
-				})
-			)
-		)
-	).unwrap();
 
 	const name =
 		(
@@ -38,7 +26,7 @@ export default async () => {
 
 	const promises: Promise<unknown>[] = [];
 
-	const filename = new Date().toISOString() + '-' + toSnakeCase(name);
+	const filename = Date.now() + '-' + toSnakeCase(name);
 
 	Struct.each((s) => promises.push(s.backup(path.join(BACKUP_DIR, filename))));
 

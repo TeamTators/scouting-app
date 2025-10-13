@@ -1,6 +1,11 @@
 <script lang="ts">
 	import Card from '$lib/components/bootstrap/Card.svelte';
+	import '$lib/index';
 </script>
+
+<svelte:head>
+	<title>Scouting App</title>
+</svelte:head>
 
 <div class="container mt-5">
 	<div class="row">

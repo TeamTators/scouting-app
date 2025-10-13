@@ -14,7 +14,7 @@ import { Color } from 'colors/color';
 import { Checks } from './checks';
 import { AppData } from './data-pull';
 import { writable } from 'svelte/store';
-import { attemptAsync } from 'ts-utils';
+import { attemptAsync } from 'ts-utils/check';
 import { globalData } from './global-data.svelte';
 import type { MatchSchemaType } from '$lib/types/match';
 import { Comments } from './comments';
@@ -98,7 +98,7 @@ export class App {
 	serialize() {
 		return attemptAsync<MatchSchemaType>(async () => {
 			const trace = this.state.serialize();
-			const { checks, sliders, } = this.checks.serialize();
+			const { checks, sliders } = this.checks.serialize();
 			const comments = this.comments.serialize();
 			const { eventKey, compLevel, match, team } = this.matchData.data;
 			const { scout, prescouting, practice, flipX, flipY } = globalData;
@@ -122,7 +122,7 @@ export class App {
 				practice,
 				alliance,
 				group,
-				sliders,
+				sliders
 			};
 		});
 	}
@@ -139,17 +139,19 @@ export class App {
 	init(target: HTMLElement) {
 		this._target = target;
 		this._offState = this.state.init();
+		this._offComments = this.comments.init();
 		this._offView = this.view.init(target);
 		this._offData = this.matchData.init();
 		this._offCollected = this.checks.init();
-		this._offComments = this.comments.init();
 
+		// for some reason, this code will never run. I have no idea why. not totally sure what it does either.
 		this._deinit = () => {
+			// console.log('Deinitializing app');
 			this._offState();
+			this._offComments();
 			this._offView();
 			this._offData();
 			this._offCollected();
-			this._offComments();
 		};
 
 		return this._deinit;
@@ -214,7 +216,8 @@ export class App {
 			this.on('resume', resume);
 			this.off('pause', pause);
 			loop.stop();
-			loop.destroyEvents();
+			// loop.destroyEvents();
+			loop['em'].destroy();
 		};
 		this.on('pause', pause);
 
@@ -257,8 +260,13 @@ export class App {
 		this._offState();
 		this._offCollected();
 		this._offComments();
-		if (this._target) this.init(this._target);
-		this.emit('reset', undefined);
+
+		// this._deinit();
+		// i do not understand
+		// console.log('App reset.');
+		if (this._target) {
+			this.init(this._target);
+		}
 	}
 
 	goto(section: Section) {
@@ -461,7 +469,8 @@ To disable: ctrl + d`);
 		return attemptAsync(async () => {
 			const serialized = (await this.serialize()).unwrap();
 			(await AppData.submitMatch(serialized, true)).unwrap();
-			this.reset();
+			// I have a feeling this is not needed. the reset function is called from the svelte file, this just makes it get called twice.
+			// this.reset();
 		});
 	}
 }

@@ -15,10 +15,13 @@ export const MatchSchema = z.object({
 	practice: z.boolean(),
 	alliance: z.union([z.literal('red'), z.literal('blue'), z.literal(null)]),
 	group: z.number().int(),
-	sliders: z.record(z.string(), z.object({
-		value: z.number().int().min(0).max(5),
-		text: z.string(),
-		color: z.string(),
-	})),
+	sliders: z.record(
+		z.string(),
+		z.object({
+			value: z.number().int().min(0).max(5),
+			text: z.string(),
+			color: z.string()
+		})
+	)
 });
 export type MatchSchemaType = z.infer<typeof MatchSchema>;
