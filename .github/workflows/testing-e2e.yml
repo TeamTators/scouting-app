@@ -65,6 +65,14 @@ jobs:
           touch .env
           echo "OAUTH2_CLIENT_ID=1234567890" >> .env
           echo "OAUTH2_CLIENT_SECRET=1234567890" >> .env
+          echo "PUBLIC_APP_NAME=test" >> .env
+          echo "REDIS_NAME=some_name" >> .env
+          echo "REDIS_URL=redis://localhost:6379" >> .env
+          echo "PORT=4173" >> .env
+          echo "PUBLIC_DOMAIN=localhost" >> .env
+          echo "HTTPS=false" >> .env
+          echo "SESSION_DURATION=10000000" >> .env
+          echo "REMOTE=false" >> .env
           export $(cat .env | xargs)
 
       - name: Run migrations
