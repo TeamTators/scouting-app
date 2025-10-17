@@ -10,6 +10,7 @@ import { AssignmentSchema } from 'tatorscout/scout-groups';
 import { Loop } from 'ts-utils/loop';
 import { MatchSchema as MS, type CompressedMatchSchemaType } from '../../types/match';
 import terminal from '../utils/terminal';
+import { compress } from '../utils/compression';
 
 const { SECRET_SERVER_API_KEY, SECRET_SERVER_DOMAIN, REMOTE } = process.env;
 export namespace Requests {
@@ -111,7 +112,18 @@ export namespace Requests {
 				})
 			).unwrap();
 
-			return (await post('/submit-match', body)).unwrap();
+			const payload = compress(body);
+			const arrayBuffer = new Uint8Array(payload).buffer;
+
+			// return post('/submit-match/compressed', payload).unwrap();
+			return fetch(SECRET_SERVER_DOMAIN + '/event-server/submit-match/compressed', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/octet-stream',
+					'X-API-KEY': SECRET_SERVER_API_KEY || ''
+				},
+				body: arrayBuffer,
+			});
 		});
 	};
 
