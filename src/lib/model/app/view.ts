@@ -73,10 +73,15 @@ export class AppView {
 		canvas.width = 1000;
 
 		const cover = document.createElement('div');
+
+		//if (this.app.matchData.alliance === null) throw new Error('alliance value is null');
+		const alliance = this.app.matchData.alliance === "blue" ? "text-info" : "text-danger";
+		console.log(alliance);
+
 		cover.innerHTML = `
 			<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 2em;">
-				Start tracing to start match <span class="text-info match">${this.app.matchData.compLevel}${this.app.matchData.match}</span> for team <span class="text-info team-number">${this.app.matchData.team}</span> <span class="text-info team-name"></span>
-			</div>
+				Start tracing to start match <span class="${alliance} match">${this.app.matchData.compLevel}${this.app.matchData.match}</span> for team <span class="${alliance} team-number">${this.app.matchData.team}</span> <span class="${alliance} team-name"></span>
+			</div>	
 		`;
 
 		const getTeam = () =>
@@ -124,9 +129,10 @@ export class AppView {
 			cover.remove();
 			this.app.start();
 		};
-		cover.onmousedown = removeCover;
-		cover.onclick = removeCover;
-		cover.ontouchstart = removeCover;
+		//cover.onmousedown = removeCover;
+		//cover.onclick = removeCover;
+		//cover.ontouchstart = removeCover;
+		//TODO REMOVE THE COMMENTS WHEN DONE
 
 		this.target = target;
 		target.innerHTML = '';
