@@ -210,6 +210,7 @@
 						app?.matchData.set(data.value);
 						page = 'app';
 						app?.reset();
+						console.log(app?.comments.comments);
 						// window.location.reload();
 					}}
 				>
@@ -383,8 +384,9 @@
 				</div>
 			</div>
 			<div class="row mb-3">
-				<button type="button" class="btn btn-success" onclick={() => AppData.uploadMatch()}
-					>Upload Matches</button
+				<button type="button" class="btn btn-secondary" onclick={() => AppData.uploadMatch()}>
+					<i class="material-icons">upload</i>
+					Upload Matches</button
 				>
 			</div>
 		</div>

@@ -15,9 +15,17 @@
 		<div class="col">
 			<div class="card border-{color}">
 				<label for="slider-{$check.name}" class="form-label px-3 pt-3">
-					{capitalize(fromCamelCase($check.name))}: {$check.values[$check.slider] || 'Please make an input'}
+					{capitalize(fromCamelCase($check.name))}: {$check.values[$check.slider] ||
+						'Please make an input'}
 				</label>
-				<input type="range" class="form-range" id="slider-{$check.name}" min="0" max="4" bind:value={$check.slider} />
+				<input
+					type="range"
+					class="form-range"
+					id="slider-{$check.name}"
+					min="0"
+					max="4"
+					bind:value={$check.slider}
+				/>
 			</div>
 		</div>
 	</div>

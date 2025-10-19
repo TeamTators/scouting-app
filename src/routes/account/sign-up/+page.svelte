@@ -1,6 +1,5 @@
 <script lang="ts">
 	import '$lib/styles/gsi.css';
-	import { env } from '$env/dynamic/public';
 	import { passwordStrength } from 'check-password-strength';
 	import type { ActionData } from './$types';
 	import Password from '$lib/components/forms/Password.svelte';
@@ -36,7 +35,7 @@
 	<div class="container pt-5">
 		<div class="row">
 			<h1>
-				{env.PUBLIC_APP_NAME}: Sign Up
+				{__APP_ENV__.name}: Sign Up
 			</h1>
 		</div>
 		<div class="row mb-3">
@@ -44,13 +43,15 @@
 		</div>
 		<div class="row mb-3">
 			<form action="?/register" method="post">
-				{#if form?.message}
-					{#if form.message === 'Account created'}
-						<p class="text-success">Account created successfully</p>
-					{:else}
-						<p class="text-danger">{form.message}</p>
+				<div id="formMessage" class:d-none={!form?.message}>
+					{#if form?.message}
+						{#if form.message === 'Account created'}
+							<p class="text-success">Account created successfully</p>
+						{:else}
+							<p class="text-danger">{form.message}</p>
+						{/if}
 					{/if}
-				{/if}
+				</div>
 				<div class="container">
 					<div class="row">
 						<div class="col-md-6">
@@ -113,6 +114,7 @@
 								floatingLabel={true}
 								label="Password"
 								buttonColor="primary"
+								id="password"
 							/>
 						</div>
 						<div class="col-md-6">
@@ -123,6 +125,7 @@
 								floatingLabel={true}
 								label="Confirm Password"
 								buttonColor="primary"
+								id="confirmPassword"
 							/>
 						</div>
 					</div>
@@ -169,8 +172,7 @@
 						</div>
 					</div>
 				</div>
-
-				<button type="submit" class="btn btn-primary"> Sign Up </button>
+				<button type="submit" class="btn btn-primary" id="signUpButton"> Sign Up </button>
 			</form>
 		</div>
 		<div class="row mb-3">

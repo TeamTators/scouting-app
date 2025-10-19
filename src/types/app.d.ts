@@ -10,12 +10,17 @@ declare global {
 		interface Locals {
 			account?: Account.AccountData | undefined;
 			session: Session.SessionData;
+			start: number;
 			isTrusted: boolean;
 		}
 		// interface PageData {}
 		// interface PageState {}
 		// interface Platform {}
 	}
+
+	const __APP_ENV__: {
+		name: string;
+	};
 }
 
 export {};

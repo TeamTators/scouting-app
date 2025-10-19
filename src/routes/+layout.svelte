@@ -1,6 +1,7 @@
 <script>
-	import { Struct } from 'drizzle-struct/front-end';
+	import { Struct } from '$lib/services/struct';
 	import { browser } from '$app/environment';
+	import '$lib/index';
 	import { onMount } from 'svelte';
 
 	setTimeout(() => {
@@ -19,7 +20,7 @@
 
 <style>
 	* {
-		user-drag: none;
+		/* user-drag: none; */
 		-webkit-user-drag: none;
 		user-select: none;
 		-webkit-user-select: none;

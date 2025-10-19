@@ -1,7 +1,6 @@
 import { defineConfig } from 'vitest/config';
 import { sveltekit } from '@sveltejs/kit/vite';
-import { config } from 'dotenv';
-config();
+import { config } from './src/lib/server/utils/env';
 export default defineConfig({
 	optimizeDeps: {
 		include: ['ts-utils/**', 'drizzle-struct/**']
@@ -16,6 +15,13 @@ export default defineConfig({
 		noExternal: ['node-html-parser']
 	},
 	server: {
-		port: Number(process.env.PORT) || 5173
+		port: config.network.port,
+		host: '0.0.0.0',
+		allowedHosts: ['dev.tsaxking.com']
+	},
+	define: {
+		__APP_ENV__: JSON.stringify({
+			name: config.app_name
+		})
 	}
 });
