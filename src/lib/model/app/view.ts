@@ -13,6 +13,8 @@ import { browser } from '$app/environment';
 import { ButtonCircle } from './button-circle';
 import { globalData } from './global-data.svelte';
 import { Zone } from './zone';
+import { mount } from 'svelte';
+import Cover from '$lib/components/app/Cover.svelte';
 
 export class AppView {
 	public readonly ctx: CanvasRenderingContext2D | undefined;
@@ -74,34 +76,14 @@ export class AppView {
 
 		const cover = document.createElement('div');
 
-		if (this.app.matchData.alliance === null) console.error('alliance value is null');
-		const alliance = this.app.matchData.alliance === "blue" ? "text-info" : "text-danger";
-		console.log(alliance);
-
-		cover.innerHTML = `
-			<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 2em;">
-				Start tracing to start match <span class="${alliance} match">${this.app.matchData.compLevel}${this.app.matchData.match}</span> for team <span class="${alliance} team-number">${this.app.matchData.team}</span> <span class="${alliance} team-name"></span>
-			</div>	
-		`;
-
-		const getTeam = () =>
-			this.app.matchData.getEvent().then((e) => {
-				if (e.isErr()) return console.error(e.error);
-				const team = e.value.teams.find((t) => t.team_number === this.app.matchData.team);
-				if (!team) return;
-				const el = cover.querySelector('.team-name');
-				if (el) el.textContent = team.nickname;
-			});
-
-		getTeam();
-
-		this.app.matchData.subscribe((data) => {
-			const el = cover.querySelector('.team-number');
-			if (el) el.textContent = data.team.toString();
-			const el2 = cover.querySelector('.match');
-			if (el2) el2.textContent = data.compLevel + data.match;
-			getTeam();
+		mount(Cover, {
+			target: cover,
+			props: {
+				app: this.app,
+			}
 		});
+
+		if (this.app.matchData.alliance === null) console.error('alliance value is null');
 
 		cover.style.position = 'absolute';
 		cover.style.width = '100vw';
@@ -109,35 +91,10 @@ export class AppView {
 		cover.style.zIndex = '200';
 		cover.style.backgroundColor = 'black';
 		cover.style.opacity = '0.5';
-		const removeCover = (e: MouseEvent | TouchEvent) => {
-			if (e instanceof MouseEvent) {
-				canvas.ctx.canvas.dispatchEvent(new MouseEvent('mousedown', { ...e }));
-			}
-			if (e instanceof TouchEvent) {
-				canvas.ctx.canvas.dispatchEvent(
-					new TouchEvent('touchstart', {
-						touches: [
-							{
-								...e.touches[0]
-							}
-						]
-					})
-				);
-			}
-
-			target.removeChild(cover);
-			cover.remove();
-			this.app.start();
-		};
-		//cover.onmousedown = removeCover;
-		//cover.onclick = removeCover;
-		//cover.ontouchstart = removeCover;
-		//TODO REMOVE THE COMMENTS WHEN DONE
 
 		this.target = target;
 		target.innerHTML = '';
 		target.style.position = 'relative';
-		// this.canvasEl.style.objectFit = 'contain';
 		this.canvasEl.style.position = 'absolute';
 		target.appendChild(this.canvasEl);
 		target.appendChild(cover);
