@@ -1,19 +1,17 @@
 import { Canvas } from 'canvas/canvas';
 import type { App } from './app';
-import { Path } from 'canvas/path';
 import { Border } from 'canvas/border';
 import { Timer } from './timer';
 import { Img } from 'canvas/image';
 import { Color } from 'colors/color';
 import { ShortPath } from './short-path';
 import { sleep } from 'ts-utils/sleep';
-import { Polygon } from 'canvas/polygon';
 import type { Point2D } from 'math/point';
 import { browser } from '$app/environment';
 import { ButtonCircle } from './button-circle';
 import { globalData } from './global-data.svelte';
 import { Zone } from './zone';
-import { mount } from 'svelte';
+import { mount, unmount } from 'svelte';
 import Cover from '$lib/components/app/Cover.svelte';
 
 export class AppView {
@@ -74,10 +72,10 @@ export class AppView {
 		canvas.height = 500;
 		canvas.width = 1000;
 
-		const cover = document.createElement('div');
+		const coverContainer = document.createElement('div');
 
-		mount(Cover, {
-			target: cover,
+		const cover = mount(Cover, {
+			target: coverContainer,
 			props: {
 				app: this.app,
 			}
@@ -85,19 +83,19 @@ export class AppView {
 
 		if (this.app.matchData.alliance === null) console.error('alliance value is null');
 
-		cover.style.position = 'absolute';
-		cover.style.width = '100vw';
-		cover.style.height = '100vh';
-		cover.style.zIndex = '200';
-		cover.style.backgroundColor = 'black';
-		cover.style.opacity = '0.5';
+		coverContainer.style.position = 'absolute';
+		coverContainer.style.width = '100vw';
+		coverContainer.style.height = '100vh';
+		coverContainer.style.zIndex = '200';
+		coverContainer.style.backgroundColor = 'black';
+		coverContainer.style.opacity = '0.5';
 
 		this.target = target;
 		target.innerHTML = '';
 		target.style.position = 'relative';
 		this.canvasEl.style.position = 'absolute';
 		target.appendChild(this.canvasEl);
-		target.appendChild(cover);
+		target.appendChild(coverContainer);
 		for (const object of this.app.gameObjects) {
 			target.appendChild(object.element);
 		}
@@ -210,6 +208,7 @@ export class AppView {
 			this.canvas.destroy();
 			offAnimate();
 			offButtonCircle();
+			unmount(cover);
 		};
 	}
 
