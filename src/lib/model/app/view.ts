@@ -72,6 +72,31 @@ export class AppView {
 		canvas.height = 500;
 		canvas.width = 1000;
 
+		const infocard = document.createElement('div');
+		infocard.innerHTML = `
+			<div style="position: absolute; top: 150%; left: 25%; class="card">
+				<div class="card-body p-3">
+				<div class="dropdown-menu p-2" style="width: 250px;">
+				<label for="scout">Scout</label>
+				<input
+					class="form-control"
+					type="text"
+					name="scout"
+					id="scout"
+					bind:value={globalData.scout}
+					list="accounts"
+					placeholder="Type or filter..."
+				/>
+				<datalist id="accounts">
+					{#each accounts as a}
+						<option value={a}></option>
+					{/each}
+				</datalist>
+				</div>
+			</div>
+			</div>
+		`;
+
 		const cover = document.createElement('div');
 		cover.innerHTML = `
 			<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 2em;">
@@ -104,6 +129,10 @@ export class AppView {
 		cover.style.zIndex = '200';
 		cover.style.backgroundColor = 'black';
 		cover.style.opacity = '0.5';
+		infocard.style.position = 'absolute';
+		infocard.style.width = '50vw';
+		infocard.style.height = '50vh';
+		infocard.style.zIndex = '300';
 		const removeCover = (e: MouseEvent | TouchEvent) => {
 			if (e instanceof MouseEvent) {
 				canvas.ctx.canvas.dispatchEvent(new MouseEvent('mousedown', { ...e }));
@@ -121,7 +150,9 @@ export class AppView {
 			}
 
 			target.removeChild(cover);
+			target.removeChild(infocard);
 			cover.remove();
+			infocard.remove();
 			this.app.start();
 		};
 		cover.onmousedown = removeCover;
@@ -134,6 +165,7 @@ export class AppView {
 		// this.canvasEl.style.objectFit = 'contain';
 		this.canvasEl.style.position = 'absolute';
 		target.appendChild(this.canvasEl);
+		target.appendChild(infocard);
 		target.appendChild(cover);
 		for (const object of this.app.gameObjects) {
 			target.appendChild(object.element);
