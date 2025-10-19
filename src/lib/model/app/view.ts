@@ -74,7 +74,7 @@ export class AppView {
 
 		const cover = document.createElement('div');
 
-		//if (this.app.matchData.alliance === null) throw new Error('alliance value is null');
+		if (this.app.matchData.alliance === null) console.error('alliance value is null');
 		const alliance = this.app.matchData.alliance === "blue" ? "text-info" : "text-danger";
 		console.log(alliance);
 

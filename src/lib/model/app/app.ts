@@ -14,7 +14,7 @@ import { Color } from 'colors/color';
 import { Checks } from './checks';
 import { AppData } from './data-pull';
 import { writable } from 'svelte/store';
-import { attemptAsync } from 'ts-utils';
+import { attemptAsync } from 'ts-utils/check';
 import { globalData } from './global-data.svelte';
 import type { MatchSchemaType } from '$lib/types/match';
 import { Comments } from './comments';
@@ -138,10 +138,10 @@ export class App {
 	init(target: HTMLElement) {
 		this._target = target;
 		this._offState = this.state.init();
-		this._offView = this.view.init(target);
 		this._offData = this.matchData.init();
 		this._offCollected = this.checks.init();
 		this._offComments = this.comments.init();
+		this._offView = this.view.init(target);
 
 		this._deinit = () => {
 			this._offState();
@@ -213,7 +213,7 @@ export class App {
 			this.on('resume', resume);
 			this.off('pause', pause);
 			loop.stop();
-			loop.destroyEvents();
+			loop['em'].destroyEvents();
 		};
 		this.on('pause', pause);
 
