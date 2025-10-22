@@ -3,6 +3,9 @@
 	import { globalData } from '$lib/model/app/global-data.svelte';
 	import { Timer } from '$lib/model/app/timer';
 	import { confirm } from '$lib/utils/prompts';
+	import { onMount } from 'svelte';
+
+	let doHide = $state(false);
 
 	const minuteSecond = (seconds: number) => {
 		if (seconds === -1) return '0:00';
@@ -19,27 +22,86 @@
 	const running = timer.app.running;
 
 	const matchData = $derived(timer.app.matchData);
+
+	const hide = () => {
+		doHide = true;
+	}
+
+	const show = () => {
+		doHide = false;
+	}
+
+	onMount(() => {
+		timer.app.on('tick', () => {
+			if (timer.app.view.drawing) hide();
+			else show();
+		});
+	});
 </script>
 
+
+
 <div
-	class="card"
+	class="card border-0 shadow p-0"
+	class:do-hide={!doHide}
+	style="
+		pointer-events: none;
+		width: 100%;
+		position: fixed;
+		opacity: 0.7;
+		margin: auto;
+		z-index: 1050;
+	"
+>
+	<div class="card-body p-0">
+		<div class="progress-container">
+			<div
+				class="progress"
+				role="progressbar"
+				aria-label="Progress Bar"
+				aria-valuenow={$timer.index}
+				aria-valuemin="0"
+				aria-valuemax={TOTAL_TICKS}
+			>
+				<div
+					class="progress-bar"
+					style="
+						width: {($timer.index / TOTAL_TICKS) * 100}%;
+						height: 30px;
+					"
+					class:bg-success={$timer.section === 'auto'}
+					class:bg-primary={$timer.section === 'teleop'}
+					class:bg-warning={$timer.section === 'endgame'}
+					class:bg-danger={$timer.section === 'end'}
+				>
+			</div>
+			</div>
+				<p class="text-center w-100 position-absolute top-50 start-50 translate-middle mb-0">
+					
+				{minuteSecond($timer.second)}
+				</p>
+		</div>
+	</div>
+</div>
+
+<div
+	class="card border-0 shadow"
 	class:a={globalData.prescouting && !globalData.practice}
 	class:b={globalData.practice && !globalData.prescouting}
 	class:c={globalData.prescouting && globalData.practice}
+	class:do-hide={doHide}
 >
-	<div class="card-body p-3">
+	<div class="card-body">
 		<div class="grid-container">
 			<p class="mb-0">
-				<span
+				<small
 					class:text-danger={$matchData.alliance === 'red'}
 					class:text-primary={$matchData.alliance === 'blue'}
 				>
 					{$matchData.eventKey}
 					{$matchData.compLevel}{$matchData.match} | {$matchData.team}
 					{minuteSecond($timer.second)}
-				</span>
-				<br />
-				<small class="text-muted"> Click on the progress bar to jump to a specific time. </small>
+				</small>
 			</p>
 			<button
 				type="button"
@@ -63,6 +125,7 @@
 					aria-valuenow={$timer.index}
 					aria-valuemin="0"
 					aria-valuemax={TOTAL_TICKS}
+					style="height: 10px;"
 				>
 					<div
 						class="progress-bar"
@@ -75,7 +138,10 @@
 				</div>
 			</button>
 
-			<div role="group" class="btn-group">
+			<div 
+				role="group" 
+				class="btn-group"
+			>
 				<button
 					type="button"
 					class="btn btn-sm"
@@ -105,7 +171,10 @@
 					onclick={() => timer.app.goto('end')}>End</button
 				>
 			</div>
-			<div role="group" class="button-group">
+			<div 
+				role="group"
+				class="button-group"
+			>
 				{#if $running}
 					<button
 						type="button"
@@ -114,6 +183,7 @@
 						style="width: 50%"
 					>
 						<i class="material-icons">pause</i>
+						<small>Pause</small>
 					</button>
 				{:else}
 					<button
@@ -123,6 +193,7 @@
 						style="width: 50%"
 					>
 						<i class="material-icons">play_arrow</i>
+						<small>Resume</small>
 					</button>
 				{/if}
 				<button
@@ -138,6 +209,7 @@
 					style="width: 50%"
 				>
 					<i class="material-icons"> restart_alt </i>
+					<small>Reset</small>
 				</button>
 			</div>
 		</div>
@@ -145,6 +217,15 @@
 </div>
 
 <style>
+	* {
+		transition: all 0.3s ease-in-out;
+	}
+
+	.do-hide {
+		opacity: 0 !important;
+		pointer-events: none;
+	}
+
 	.card {
 		position: absolute;
 		top: 0px;
