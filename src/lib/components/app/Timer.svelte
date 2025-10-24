@@ -32,10 +32,14 @@
 	}
 
 	onMount(() => {
-		timer.app.on('tick', () => {
+		const tickListener = () => {
 			if (timer.app.view.drawing) hide();
 			else show();
-		});
+		};
+		timer.app.on('tick', tickListener);
+		return () => {
+			timer.app.off('tick', tickListener);
+		};
 	});
 </script>
 
