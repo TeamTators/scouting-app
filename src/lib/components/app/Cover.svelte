@@ -4,13 +4,19 @@
 
     interface Props {
         app: App;
+        scout: string;
     }
 
-    const { app }: Props = $props();
+    const { app, scout }: Props = $props();
     const matchData = $derived(app.matchData);
 
     let alliance = $state('text-warning');
     let teamName = $state('unknown');
+    let scoutGroup = $state<number | null>(null);
+
+    const getGroup = async () => {
+        scoutGroup = await matchData.getScoutGroup().unwrapOr(null);
+    };
 
     const getTeam = (
     ) => {
@@ -33,6 +39,7 @@
                 alliance = 'text-warning';
             }
             getTeam();
+            getGroup();
         });
     });
 </script>
@@ -46,5 +53,14 @@
     color: white; 
     font-size: 2em;
 ">
-    Start tracing to start match <span class="{alliance}">{$matchData.compLevel}{$matchData.match}</span> for team <span class="{alliance}">{$matchData.team}</span> <span class="{alliance}">{teamName}</span>
+    <p>
+        Start tracing to start match 
+        <span class="{alliance}">{$matchData.compLevel}{$matchData.match}</span> 
+        for team 
+        <span class="{alliance}">{$matchData.team}</span> 
+        <span class="{alliance}">{teamName}</span>
+    </p>
+    <p style="font-size: 0.7em;">
+        Scout: {scout}, Group: {scoutGroup ?? "?"}
+    </p>
 </div>	

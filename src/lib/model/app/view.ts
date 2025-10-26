@@ -78,6 +78,7 @@ export class AppView {
 			target: coverContainer,
 			props: {
 				app: this.app,
+				scout: globalData.scout,
 			}
 		});
 
