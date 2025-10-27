@@ -34,6 +34,7 @@
 	let postApp: PostApp | undefined = $state(undefined);
 	let group = $state(-1);
 	let matchData: MatchData | undefined = $state(undefined);
+	let DisableSubmit = $state(false);
 
 	$effect(() => {
 		if (!browser) return;
@@ -198,8 +199,9 @@
 			<div class="btn-group w-100" role="group">
 				<button
 					type="button"
-					class="btn btn-success"
+					class="btn btn-success {DisableSubmit ? "disabled": ""}"
 					onclick={async () => {
+						DisableSubmit = true;
 						await app?.submit();
 						const data = await app?.matchData.next();
 						if (!data) return console.error('Could not find next match');
@@ -210,6 +212,7 @@
 						app?.matchData.set(data.value);
 						page = 'app';
 						app?.reset();
+						DisableSubmit = false;
 						console.log(app?.comments.comments);
 						// window.location.reload();
 					}}
