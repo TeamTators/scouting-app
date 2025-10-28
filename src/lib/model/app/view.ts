@@ -66,9 +66,9 @@ export class AppView {
 	}
 
 	init(target: HTMLElement) {
-		if (!this.canvasEl) return () => {};
+		if (!this.canvasEl) return () => { };
 		const canvas = this.canvas;
-		if (!canvas) return () => {};
+		if (!canvas) return () => { };
 		canvas.height = 500;
 		canvas.width = 1000;
 
@@ -88,8 +88,59 @@ export class AppView {
 		coverContainer.style.width = '100vw';
 		coverContainer.style.height = '100vh';
 		coverContainer.style.zIndex = '200';
-		coverContainer.style.backgroundColor = 'black';
-		coverContainer.style.opacity = '0.5';
+		coverContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+
+		const transferStart = (e: MouseEvent | TouchEvent) => {
+			coverContainer.removeEventListener('mousedown', transferStart);
+			coverContainer.removeEventListener('touchstart', transferStart);
+			unmount(cover);
+			coverContainer.remove();
+
+			this.app.start();
+
+			if (e instanceof MouseEvent) {
+				this.canvasEl?.dispatchEvent(new MouseEvent('mousedown', e));
+			}
+
+			if (e instanceof TouchEvent) {
+				this.canvasEl?.dispatchEvent(new TouchEvent('touchstart', {
+					touches: Array.from(e.touches),
+					targetTouches: Array.from(e.targetTouches),
+					changedTouches: Array.from(e.changedTouches),
+					composed: e.composed,
+				}));
+			}
+		};
+
+		const transferMove = (e: TouchEvent) => {
+			this.canvasEl?.dispatchEvent(new TouchEvent('touchmove', {
+				touches: Array.from(e.touches),
+				targetTouches: Array.from(e.targetTouches),
+				changedTouches: Array.from(e.changedTouches),
+				composed: e.composed,
+			}));
+		};
+
+		const transferEnd = (e: TouchEvent) => {
+			this.canvasEl?.dispatchEvent(new TouchEvent('touchend', {
+				touches: Array.from(e.touches),
+				targetTouches: Array.from(e.targetTouches),
+				changedTouches: Array.from(e.changedTouches),
+				composed: e.composed,
+			}));
+
+			coverContainer.removeEventListener('touchmove', transferMove);
+			coverContainer.removeEventListener('touchend', transferEnd);
+		};
+
+
+		// TODO: integrate touch move and end
+		// On the first start event, we need to forward all pointer events to the canvas
+
+		coverContainer.addEventListener('mousedown', transferStart);
+		coverContainer.addEventListener('touchstart', transferStart);
+		coverContainer.addEventListener('touchmove', transferMove);
+		coverContainer.addEventListener('touchend', transferEnd);
 
 		this.target = target;
 		target.innerHTML = '';
@@ -209,7 +260,11 @@ export class AppView {
 			this.canvas.destroy();
 			offAnimate();
 			offButtonCircle();
-			unmount(cover);
+			try {
+				unmount(cover);
+			} catch {
+				// do nothing
+			}
 		};
 	}
 
@@ -276,7 +331,7 @@ export class AppView {
 	}
 
 	start() {
-		if (!this.canvas) return () => {};
+		if (!this.canvas) return () => { };
 		const view = () => {
 			this.setView();
 			requestAnimationFrame(view);

@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { onMount } from "svelte";
     import { App } from "../../model/app/app";
+	import { globalData } from "$lib/model/app/global-data.svelte";
 
     interface Props {
         app: App;
-        scout: string;
     }
 
-    const { app, scout }: Props = $props();
+    const { app }: Props = $props();
     const matchData = $derived(app.matchData);
 
     let alliance = $state('text-warning');
@@ -51,25 +51,31 @@
     left: 50%; 
     transform: translate(-50%, -50%); 
     color: white; 
-    font-size: 2em;
-">
-    <p>
-        Start tracing to start match 
-        <span class="{alliance}">{$matchData.compLevel}{$matchData.match}</span> 
-        for team 
-        <span class="{alliance}">{$matchData.team}</span> 
-        <span class="{alliance}">{teamName}</span>
-    </p>
-    <p style="font-size: 0.7em;">
-        Scout: {scout}, Group: {scoutGroup !== null ? scoutGroup + 1 : "?"}
-    </p>
-    <p style="font-size: 0.7em;" class="text-warning">
-        Please make sure your name, group, and match number is correct.
-    </p>
-    <p style="font-size: 0.7em;">
-        Name or Group number is wrong: Click the settings icon in the top left. Select or type your username from tatorscout in order to gain potato points. If you do not have an account, use your name.
-    </p>
-    <p style="font-size: 0.7em;">
-        Match Number is wrong: Click the list icon in the top left, scroll to the desired match, then click the highlighted team number.
-    </p>
+"
+    class="no-select"
+>
+    <h3>
+        Start tracing to start match
+            <span class="{alliance}">{$matchData.compLevel}{$matchData.match}</span> 
+            for team 
+            <span class="{alliance}">{$matchData.team}</span> 
+            <span class="{alliance}">{teamName}</span>
+    </h3>
+    <h5>
+        <small class="text-muted">
+            Scout: {globalData.scout ? globalData.scout : '<unknown>'}, Group: {scoutGroup !== null ? scoutGroup + 1 : "?"}
+        </small>
+        <br>
+        <small class="text-warning">
+            Please make sure your name, group, and match number is correct.
+        </small>
+        <br>
+        <small>
+            Change name or group: Click <i class="material-icons">settings</i> in the top left
+        </small>
+        <br>
+        <small>
+            Change match: Click <i class="material-icons">list</i> in the top left
+        </small>
+    </h5>
 </div>	

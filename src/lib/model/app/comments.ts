@@ -81,7 +81,6 @@ export class Comments implements Writable<C> {
 		this.addComment('Auto', 'success');
 		this.addComment('Teleop', 'primary');
 		this.addComment('Overall', 'info');
-		this.addComment('Scout', 'info');
 		return () => {
 			this.comments = [];
 			this.inform();
