@@ -173,6 +173,7 @@
 					class="btn btn-primary btn-lg"
 					onclick={async () => {
 						await algaeHarvestForm();
+						app?.comments.get('Scout')?.set(['Scout', globalData.scout]);
 						page = 'post';
 						exitFullscreen();
 						if (app) postApp?.render(app);
@@ -202,6 +203,10 @@
 					class="btn btn-success {DisableSubmit ? "disabled": ""}"
 					onclick={async () => {
 						DisableSubmit = true;
+						const scout = app?.comments.get('Scout')?.data[1];
+						if (scout !== "" && scout !== undefined && globalData.scout !== undefined && globalData.scout !== scout) {
+								globalData.scout = scout;
+						};
 						await app?.submit();
 						const data = await app?.matchData.next();
 						if (!data) return console.error('Could not find next match');
