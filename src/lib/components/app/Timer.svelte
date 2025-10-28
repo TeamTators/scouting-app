@@ -32,10 +32,19 @@
 	}
 
 	onMount(() => {
-		timer.app.on('tick', () => {
+		const offTick = timer.app.on('tick', () => {
 			if (timer.app.view.drawing) hide();
 			else show();
 		});
+
+		const offEnd = timer.app.on('end', () => {
+			show();
+		});
+
+		return () => {
+			offTick();
+			offEnd();
+		};
 	});
 </script>
 
