@@ -66,9 +66,9 @@ export class AppView {
 	}
 
 	init(target: HTMLElement) {
-		if (!this.canvasEl) return () => { };
+		if (!this.canvasEl) return () => {};
 		const canvas = this.canvas;
-		if (!canvas) return () => { };
+		if (!canvas) return () => {};
 		canvas.height = 500;
 		canvas.width = 1000;
 
@@ -78,7 +78,7 @@ export class AppView {
 			target: coverContainer,
 			props: {
 				app: this.app,
-				scout: globalData.scout,
+				scout: globalData.scout
 			}
 		});
 
@@ -103,36 +103,41 @@ export class AppView {
 			}
 
 			if (e instanceof TouchEvent) {
-				this.canvasEl?.dispatchEvent(new TouchEvent('touchstart', {
-					touches: Array.from(e.touches),
-					targetTouches: Array.from(e.targetTouches),
-					changedTouches: Array.from(e.changedTouches),
-					composed: e.composed,
-				}));
+				this.canvasEl?.dispatchEvent(
+					new TouchEvent('touchstart', {
+						touches: Array.from(e.touches),
+						targetTouches: Array.from(e.targetTouches),
+						changedTouches: Array.from(e.changedTouches),
+						composed: e.composed
+					})
+				);
 			}
 		};
 
 		const transferMove = (e: TouchEvent) => {
-			this.canvasEl?.dispatchEvent(new TouchEvent('touchmove', {
-				touches: Array.from(e.touches),
-				targetTouches: Array.from(e.targetTouches),
-				changedTouches: Array.from(e.changedTouches),
-				composed: e.composed,
-			}));
+			this.canvasEl?.dispatchEvent(
+				new TouchEvent('touchmove', {
+					touches: Array.from(e.touches),
+					targetTouches: Array.from(e.targetTouches),
+					changedTouches: Array.from(e.changedTouches),
+					composed: e.composed
+				})
+			);
 		};
 
 		const transferEnd = (e: TouchEvent) => {
-			this.canvasEl?.dispatchEvent(new TouchEvent('touchend', {
-				touches: Array.from(e.touches),
-				targetTouches: Array.from(e.targetTouches),
-				changedTouches: Array.from(e.changedTouches),
-				composed: e.composed,
-			}));
+			this.canvasEl?.dispatchEvent(
+				new TouchEvent('touchend', {
+					touches: Array.from(e.touches),
+					targetTouches: Array.from(e.targetTouches),
+					changedTouches: Array.from(e.changedTouches),
+					composed: e.composed
+				})
+			);
 
 			coverContainer.removeEventListener('touchmove', transferMove);
 			coverContainer.removeEventListener('touchend', transferEnd);
 		};
-
 
 		// TODO: integrate touch move and end
 		// On the first start event, we need to forward all pointer events to the canvas
@@ -331,7 +336,7 @@ export class AppView {
 	}
 
 	start() {
-		if (!this.canvas) return () => { };
+		if (!this.canvas) return () => {};
 		const view = () => {
 			this.setView();
 			requestAnimationFrame(view);
