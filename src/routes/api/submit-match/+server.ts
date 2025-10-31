@@ -1,7 +1,7 @@
 import { Requests } from '$lib/server/structs/requests.js';
 import { auth } from '$lib/server/utils/auth.js';
 import terminal from '$lib/server/utils/terminal.js';
-import { MatchSchema } from '$lib/types/match.js';
+import { CompressedMatchSchema } from '$lib/types/match.js';
 import { fail } from '@sveltejs/kit';
 
 export const POST = async (event) => {
@@ -14,7 +14,7 @@ export const POST = async (event) => {
 
 	const body = await event.request.json();
 
-	const parsed = MatchSchema.safeParse(body);
+	const parsed = CompressedMatchSchema.safeParse(body);
 
 	if (!parsed.success) {
 		// terminal.log('parsed:', parsed);

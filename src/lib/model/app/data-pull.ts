@@ -3,8 +3,9 @@ import { EventSchema, MatchSchema, TeamSchema } from 'tatorscout/tba';
 import { attemptAsync } from 'ts-utils/check';
 import { z } from 'zod';
 import { downloadText, loadFileContents } from '$lib/utils/downloads';
-import { MatchSchema as MS, type MatchSchemaType } from '$lib/types/match';
+import { CompressedMatchSchema as CMS, type CompressedMatchSchemaType, MatchSchema as MS } from '$lib/types/match';
 import { notify } from '$lib/utils/prompts';
+import { compress, type TraceArray } from 'tatorscout/trace';
 
 export namespace AppData {
 	const CACHE_VERSION = 'v2';
@@ -129,7 +130,7 @@ export namespace AppData {
 	// 	});
 	// };
 
-	const downloadMatch = (data: MatchSchemaType) => {
+	const downloadMatch = (data: CompressedMatchSchemaType) => {
 		return downloadText(
 			JSON.stringify(data),
 			`${data.eventKey}:${data.compLevel}:${data.match}:${data.team}.${CACHE_VERSION}.match`
@@ -145,16 +146,26 @@ export namespace AppData {
 			// .filter((f) => f.name.endsWith(`.${CACHE_VERSION}.match`));
 			return Promise.all(
 				matches.map(async (m) => {
-					const parsed = MS.safeParse(JSON.parse(m.text));
+					const parsed = CMS.safeParse(JSON.parse(m.text));
 					if (parsed.success) {
 						return (await submitMatch(parsed.data, false)).unwrap();
+					} else {
+						const parsed = MS.safeParse(JSON.parse(m.text));
+						if (parsed.success) {
+							const data = {
+								...parsed.data,
+								trace: compress(parsed.data.trace as TraceArray),
+							};
+
+							return (await downloadMatch(data)).unwrap();
+						}
 					}
 				})
 			);
 		});
 	};
 
-	export const submitMatch = (data: MatchSchemaType, download: boolean) => {
+	export const submitMatch = (data: CompressedMatchSchemaType, download: boolean) => {
 		return attemptAsync(async () => {
 			// const matches = getMatches().unwrap();
 			// saveMatches([...matches, data]).unwrap();
