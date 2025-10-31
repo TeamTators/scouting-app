@@ -17,7 +17,12 @@ export default defineConfig({
 	server: {
 		port: config.network.port,
 		host: '0.0.0.0',
-		allowedHosts: ['dev.tsaxking.com']
+		allowedHosts: [
+			'dev.tsaxking.com',
+			'dev.tatorscout.org',
+			'sophie.tatorscout.org',
+			'sylvie.tatorscout.org',
+		]
 	},
 	define: {
 		__APP_ENV__: JSON.stringify({
