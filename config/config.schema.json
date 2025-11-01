@@ -217,6 +217,34 @@
 			},
 			"required": ["enabled", "requests", "window"],
 			"additionalProperties": false
+		},
+		"match_queue": {
+			"type": "object",
+			"description": "Configuration on how the match submission.",
+			"properties": {
+				"concurrency": {
+					"type": "integer",
+					"description": "How many async submissions can happen at once"
+				},
+				"interval": {
+					"type": "integer",
+					"description": "Time, in ms, between submissions"
+				},
+				"max_size": {
+					"type": "integer",
+					"description": "How many total matches can exist in the cache"
+				},
+				"timeout": {
+					"type": "integer",
+					"description": "How long to wait for the"
+				}
+			},
+			"required": [
+				"concurrency",
+				"interval",
+				"max_size",
+				"timeout"
+			]
 		}
 	},
 	"required": [
@@ -230,7 +258,8 @@
 		"admin",
 		"email",
 		"ntp",
-		"limiting"
+		"limiting",
+		"match_queue"
 	],
 	"additionalProperties": false
 }
