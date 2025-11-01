@@ -20,8 +20,11 @@ export default defineConfig({
 		allowedHosts: [
 			'dev.tsaxking.com',
 			'dev.tatorscout.org',
-			'sophie.tatorscout.org',
 			'sylvie.tatorscout.org',
+			'sophie.tatorscout.org',
+			'landon.tatorscout.org',
+			'anvita.tatorscout.org',
+			'daniel.tatorscout.org'
 		]
 	},
 	define: {
