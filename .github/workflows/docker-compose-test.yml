@@ -37,6 +37,8 @@ jobs:
           SESSION_DURATION=10000000
           DB_HOST=db
           REMOTE=false
+          SECRET_SERVER_API_KEY=some_secret
+          SECRET_SERVER_DOMAIN=http://localhost:4173
           EOF
 
           cp config.example.json config.json
@@ -47,6 +49,8 @@ jobs:
           OAUTH2_CLIENT_SECRET=1234567890
           DB_HOST=localhost
           REMOTE=false
+          SECRET_SERVER_API_KEY=some_secret
+          SECRET_SERVER_DOMAIN=http://localhost:4173
           EOF
 
       - name: Setup Node.js

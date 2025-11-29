@@ -8,11 +8,14 @@ import { Account } from './account';
 import { MatchSchema, TeamSchema, EventSchema } from 'tatorscout/tba';
 import { AssignmentSchema } from 'tatorscout/scout-groups';
 import { Loop } from 'ts-utils/loop';
-import { TraceSchema } from 'tatorscout/trace';
 import { MatchSchema as MS, type MatchSchemaType } from '../../types/match';
 import terminal from '../utils/terminal';
+import { str } from '../utils/env';
+import { Remote } from './remote';
 
-const { SECRET_SERVER_API_KEY, SECRET_SERVER_DOMAIN, REMOTE } = process.env;
+const SECRET_SERVER_API_KEY = str('SECRET_SERVER_API_KEY', true);
+const SECRET_SERVER_DOMAIN = str('SECRET_SERVER_DOMAIN', true);
+
 export namespace Requests {
 	const post = (url: string, data: unknown) => {
 		return attemptAsync(async () => {
@@ -100,7 +103,7 @@ export namespace Requests {
 			}
 			const body = {
 				...match,
-				remote: REMOTE === 'true'
+				remote: Remote.REMOTE
 			};
 			(
 				await Scouting.Matches.new({

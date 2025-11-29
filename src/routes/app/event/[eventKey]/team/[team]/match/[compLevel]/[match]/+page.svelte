@@ -176,7 +176,11 @@
 						await algaeHarvestForm();
 						app?.comments.get('Scout')?.set(['Scout', globalData.scout]);
 						page = 'post';
-						exitFullscreen();
+						try {
+							exitFullscreen();
+						} catch (error) {
+							console.error('Unable to fullscreen');
+						}
 						if (app) postApp?.render(app);
 					}}
 				>
@@ -194,7 +198,7 @@
 		<h3>Loading...</h3>
 	</div> -->
 	{#if app}
-		<AppView {app} {page} />
+		<AppView bind:app {page} />
 
 		<div style="display: {page === 'post' ? 'block' : 'none'};">
 			<div class="container layer-2">
