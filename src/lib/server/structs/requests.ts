@@ -91,8 +91,7 @@ export namespace Requests {
 		});
 	};
 
-	export const queue = new Queue({
-		process: async (data: {
+	export const queue = new Queue( async (data: {
 				body: MatchSchemaType & {
 				remote: boolean;
 			},
@@ -103,10 +102,10 @@ export namespace Requests {
 			if (res.isOk()) {
 				await data.matchData.delete();
 			}
-		},
+		}, {
 		concurrency: config.match_queue.concurrency,
 		interval: config.match_queue.interval,
-		maxSize: config.match_queue.max_size,
+		limit: config.match_queue.limit,
 		timeout: config.match_queue.timeout,
 		type: 'fifo',
 	});

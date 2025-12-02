@@ -230,7 +230,7 @@
 					"type": "integer",
 					"description": "Time, in ms, between submissions"
 				},
-				"max_size": {
+				"limit": {
 					"type": "integer",
 					"description": "How many total matches can exist in the cache"
 				},
@@ -242,7 +242,7 @@
 			"required": [
 				"concurrency",
 				"interval",
-				"max_size",
+				"limit",
 				"timeout"
 			]
 		}

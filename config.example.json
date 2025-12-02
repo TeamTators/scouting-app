@@ -51,7 +51,7 @@
 	"match_queue": {
 		"concurrency": 1,
 		"interval": 1000,
-		"max_size": 12,
+		"limit": 12,
 		"timeout": 5000
 	}
 }

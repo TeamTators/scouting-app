@@ -56,7 +56,7 @@ export default z.object({
 	match_queue: z.object({
 		concurrency: z.number().min(1),
 		interval: z.number().min(1),
-		max_size: z.number().min(1),
+		limit: z.number().min(1),
 		timeout: z.number().min(1),
 	}),
 });
