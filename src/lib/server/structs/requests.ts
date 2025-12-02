@@ -91,11 +91,18 @@ export namespace Requests {
 		});
 	};
 
-	const queue = new Queue({
-		process: async (body: MatchSchemaType & {
-			remote: boolean;
+	export const queue = new Queue({
+		process: async (data: {
+				body: MatchSchemaType & {
+				remote: boolean;
+			},
+			matchData: Scouting.MatchData;
 		}) => {
-			return post('/submit-match', body).unwrap();
+			const res = await post('/submit-match', data.body);
+
+			if (res.isOk()) {
+				await data.matchData.delete();
+			}
 		},
 		concurrency: config.match_queue.concurrency,
 		interval: config.match_queue.interval,
@@ -118,7 +125,7 @@ export namespace Requests {
 				...match,
 				remote: REMOTE === 'true'
 			};
-			(
+			const matchData = (
 				await Scouting.Matches.new({
 					body: JSON.stringify(body),
 					eventKey: match.eventKey,
@@ -128,7 +135,10 @@ export namespace Requests {
 				})
 			).unwrap();
 
-			return queue.enqueue(body).unwrap();
+			return queue.enqueue({
+				body,
+				matchData
+			}).unwrap();
 		});
 	};
 
