@@ -22,6 +22,7 @@ export default defineConfig({
 			'dev.tatorscout.org',
 			'sophie.tatorscout.org',
 			'sylvie.tatorscout.org',
+			'app.sophie.tatorscout.org'
 		]
 	},
 	define: {
