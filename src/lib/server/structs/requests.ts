@@ -8,9 +8,10 @@ import { Account } from './account';
 import { MatchSchema, TeamSchema, EventSchema } from 'tatorscout/tba';
 import { AssignmentSchema } from 'tatorscout/scout-groups';
 import { Loop } from 'ts-utils/loop';
-import { TraceSchema } from 'tatorscout/trace';
 import { MatchSchema as MS, type MatchSchemaType } from '../../types/match';
 import terminal from '../utils/terminal';
+import { Queue } from 'ts-utils/queue';
+import { config } from '../utils/env';
 
 const { SECRET_SERVER_API_KEY, SECRET_SERVER_DOMAIN, REMOTE } = process.env;
 export namespace Requests {
@@ -90,6 +91,28 @@ export namespace Requests {
 		});
 	};
 
+	export const queue = new Queue({
+		process: async (data: {
+				body: MatchSchemaType & {
+				remote: boolean;
+			},
+			matchData: Scouting.MatchData;
+		}) => {
+			const res = await post('/submit-match', data.body);
+
+			if (res.isOk()) {
+				await data.matchData.delete();
+			}
+		},
+		concurrency: config.match_queue.concurrency,
+		interval: config.match_queue.interval,
+		maxSize: config.match_queue.max_size,
+		timeout: config.match_queue.timeout,
+		type: 'fifo',
+	});
+
+	queue.init();
+
 	export const submitMatch = (match: MatchSchemaType) => {
 		return attemptAsync(async () => {
 			const parsed = MS.safeParse(match);
@@ -102,7 +125,7 @@ export namespace Requests {
 				...match,
 				remote: REMOTE === 'true'
 			};
-			(
+			const matchData = (
 				await Scouting.Matches.new({
 					body: JSON.stringify(body),
 					eventKey: match.eventKey,
@@ -112,7 +135,10 @@ export namespace Requests {
 				})
 			).unwrap();
 
-			return (await post('/submit-match', body)).unwrap();
+			return queue.enqueue({
+				body,
+				matchData
+			}).unwrap();
 		});
 	};
 

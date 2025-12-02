@@ -52,5 +52,11 @@ export default z.object({
 		enabled: z.boolean(),
 		requests: z.number().min(1),
 		window: z.number().min(1)
-	})
+	}),
+	match_queue: z.object({
+		concurrency: z.number().min(1),
+		interval: z.number().min(1),
+		max_size: z.number().min(1),
+		timeout: z.number().min(1),
+	}),
 });
