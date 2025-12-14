@@ -38,7 +38,7 @@
 	</div>
 {/snippet}
 
-<div class="container" style="padding-top: {38 + 16}px;">
+<div class="container">
 	{@render checksRow($success, 'success')}
 	{@render checksRow($primary, 'primary')}
 	{@render checksRow($warning, 'warning')}

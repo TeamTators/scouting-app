@@ -1,18 +1,18 @@
 import { Canvas } from 'canvas/canvas';
 import type { App } from './app';
-import { Path } from 'canvas/path';
 import { Border } from 'canvas/border';
 import { Timer } from './timer';
 import { Img } from 'canvas/image';
 import { Color } from 'colors/color';
 import { ShortPath } from './short-path';
 import { sleep } from 'ts-utils/sleep';
-import { Polygon } from 'canvas/polygon';
 import type { Point2D } from 'math/point';
 import { browser } from '$app/environment';
 import { ButtonCircle } from './button-circle';
 import { globalData } from './global-data.svelte';
 import { Zone } from './zone';
+import { mount, unmount } from 'svelte';
+import Cover from '$lib/components/app/Cover.svelte';
 
 export class AppView {
 	public readonly ctx: CanvasRenderingContext2D | undefined;
@@ -72,69 +72,87 @@ export class AppView {
 		canvas.height = 500;
 		canvas.width = 1000;
 
-		const cover = document.createElement('div');
-		cover.innerHTML = `
-			<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 2em;">
-				Start tracing to start match <span class="text-info match">${this.app.matchData.compLevel}${this.app.matchData.match}</span> for team <span class="text-info team-number">${this.app.matchData.team}</span> <span class="text-info team-name"></span>
-			</div>
-		`;
+		const coverContainer = document.createElement('div');
 
-		const getTeam = () =>
-			this.app.matchData.getEvent().then((e) => {
-				if (e.isErr()) return console.error(e.error);
-				const team = e.value.teams.find((t) => t.team_number === this.app.matchData.team);
-				if (!team) return;
-				const el = cover.querySelector('.team-name');
-				if (el) el.textContent = team.nickname;
-			});
-
-		getTeam();
-
-		this.app.matchData.subscribe((data) => {
-			const el = cover.querySelector('.team-number');
-			if (el) el.textContent = data.team.toString();
-			const el2 = cover.querySelector('.match');
-			if (el2) el2.textContent = data.compLevel + data.match;
-			getTeam();
+		const cover = mount(Cover, {
+			target: coverContainer,
+			props: {
+				app: this.app,
+				scout: globalData.scout
+			}
 		});
 
-		cover.style.position = 'absolute';
-		cover.style.width = '100vw';
-		cover.style.height = '100vh';
-		cover.style.zIndex = '200';
-		cover.style.backgroundColor = 'black';
-		cover.style.opacity = '0.5';
-		const removeCover = (e: MouseEvent | TouchEvent) => {
+		if (this.app.matchData.alliance === null) console.error('alliance value is null');
+
+		coverContainer.style.position = 'absolute';
+		coverContainer.style.width = '100vw';
+		coverContainer.style.height = '100vh';
+		coverContainer.style.zIndex = '200';
+		coverContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+
+		const transferStart = (e: MouseEvent | TouchEvent) => {
+			coverContainer.removeEventListener('mousedown', transferStart);
+			coverContainer.removeEventListener('touchstart', transferStart);
+			unmount(cover);
+			coverContainer.remove();
+
+			this.app.start();
+
 			if (e instanceof MouseEvent) {
-				canvas.ctx.canvas.dispatchEvent(new MouseEvent('mousedown', { ...e }));
+				this.canvasEl?.dispatchEvent(new MouseEvent('mousedown', e));
 			}
+
 			if (e instanceof TouchEvent) {
-				canvas.ctx.canvas.dispatchEvent(
+				this.canvasEl?.dispatchEvent(
 					new TouchEvent('touchstart', {
-						touches: [
-							{
-								...e.touches[0]
-							}
-						]
+						touches: Array.from(e.touches),
+						targetTouches: Array.from(e.targetTouches),
+						changedTouches: Array.from(e.changedTouches),
+						composed: e.composed
 					})
 				);
 			}
-
-			target.removeChild(cover);
-			cover.remove();
-			this.app.start();
 		};
-		cover.onmousedown = removeCover;
-		cover.onclick = removeCover;
-		cover.ontouchstart = removeCover;
+
+		const transferMove = (e: TouchEvent) => {
+			this.canvasEl?.dispatchEvent(
+				new TouchEvent('touchmove', {
+					touches: Array.from(e.touches),
+					targetTouches: Array.from(e.targetTouches),
+					changedTouches: Array.from(e.changedTouches),
+					composed: e.composed
+				})
+			);
+		};
+
+		const transferEnd = (e: TouchEvent) => {
+			this.canvasEl?.dispatchEvent(
+				new TouchEvent('touchend', {
+					touches: Array.from(e.touches),
+					targetTouches: Array.from(e.targetTouches),
+					changedTouches: Array.from(e.changedTouches),
+					composed: e.composed
+				})
+			);
+
+			coverContainer.removeEventListener('touchmove', transferMove);
+			coverContainer.removeEventListener('touchend', transferEnd);
+		};
+
+		// TODO: integrate touch move and end
+		// On the first start event, we need to forward all pointer events to the canvas
+
+		coverContainer.addEventListener('mousedown', transferStart);
+		coverContainer.addEventListener('touchstart', transferStart);
+		coverContainer.addEventListener('touchmove', transferMove);
+		coverContainer.addEventListener('touchend', transferEnd);
 
 		this.target = target;
 		target.innerHTML = '';
 		target.style.position = 'relative';
-		// this.canvasEl.style.objectFit = 'contain';
 		this.canvasEl.style.position = 'absolute';
 		target.appendChild(this.canvasEl);
-		target.appendChild(cover);
+		target.appendChild(coverContainer);
 		for (const object of this.app.gameObjects) {
 			target.appendChild(object.element);
 		}
@@ -247,6 +265,11 @@ export class AppView {
 			this.canvas.destroy();
 			offAnimate();
 			offButtonCircle();
+			try {
+				unmount(cover);
+			} catch {
+				// do nothing
+			}
 		};
 	}
 

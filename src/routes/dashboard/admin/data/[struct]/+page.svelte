@@ -78,7 +78,10 @@
 	};
 
 	const saveEdit = () => {
-		editStage.save('force');
+		editStage.save({
+			strategy: 'force',
+			createIfDeleted: false
+		});
 	};
 
 	const resetEdit = () => {
@@ -298,7 +301,7 @@
 							buttons: [
 								{
 									html: `<i class="material-icons">delete</i>`,
-									onClick: (data: ICellRendererParams<StructData<Blank>>) => {
+									onClick: (data: ICellRendererParams) => {
 										if (data.data) deleteItem(data.data);
 									},
 									className: 'btn btn-danger',
@@ -313,20 +316,19 @@
 							field: ('data.' + key) as any,
 							headerName: capitalize(fromCamelCase(key)),
 							valueGetter: ['created', 'updated'].includes(key)
-								? (params: ValueGetterParams<StructData<Blank>>) =>
-										dateTime(new Date(String(params.data?.data[key])))
+								? (params: ValueGetterParams) => dateTime(new Date(String(params.data?.data[key])))
 								: key === 'attributes'
-									? (params: ValueGetterParams<StructData<Blank>>) =>
+									? (params: ValueGetterParams) =>
 											(JSON.parse(params.data?.data.attributes || '[]') as string[]).join(', ')
 									: undefined,
-							editable: (params: EditableCallbackParams<StructData<Blank>>) => {
+							editable: (params: EditableCallbackParams) => {
 								const isStatic = ['id', 'created', 'updated', 'canUpdate'].includes(key);
 								if (isStatic) return false;
 								if (key === 'canUpdate') return true;
 								if (!params.data?.data.canUpdate) return false;
 								return true;
 							},
-							valueSetter: (params: ValueSetterParams<StructData<Blank>>) => {
+							valueSetter: (params: ValueSetterParams) => {
 								const isStatic = ['id', 'created', 'updated'].includes(key);
 								if (isStatic) return false;
 
@@ -346,7 +348,7 @@
 											);
 											return;
 										}
-										params.data.update((d) => ({
+										params.data.update((d: any) => ({
 											...d,
 											[key]: params.newValue
 										}));
@@ -360,7 +362,7 @@
 											);
 											return;
 										}
-										params.data.update((d) => ({
+										params.data.update((d: any) => ({
 											...d,
 											[key]: params.oldValue
 										}));

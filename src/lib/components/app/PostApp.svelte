@@ -30,9 +30,7 @@
 			x: 0,
 			y: 0
 		});
-		const serialized = await app.serialize();
-		if (serialized.isErr()) return console.error(serialized.error);
-		const trace = serialized.value.trace;
+		const trace = app.state.trace();
 		container = new Container(
 			...(trace
 				.map((p, i, a) => {

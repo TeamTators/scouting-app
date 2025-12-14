@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { attempt, attemptAsync } from 'ts-utils/check';
 import { type Blank, type PartialStructable, type GlobalCols } from './index';
-import { type Writable, writable, get } from 'svelte/store';
+import { writable, get } from 'svelte/store';
 import { StructData } from './struct-data';
+import { WritableBase } from '$lib/writables';
 
 /**
  * Used in data proxies - a conflict is when both the local and remote data differ from the base data and from each other.
@@ -28,7 +29,7 @@ type FullConflictResolver<T extends Blank> = (args: {
 	base: PartialStructable<T & GlobalCols>;
 	local: PartialStructable<T & GlobalCols>;
 	remote: PartialStructable<T & GlobalCols>;
-	conflicts: {}[];
+	conflicts: Conflict<T, keyof T>[];
 }) => PartialStructable<T> | Promise<PartialStructable<T>>;
 
 /**
@@ -37,14 +38,17 @@ type FullConflictResolver<T extends Blank> = (args: {
  * @typedef {SaveStrategy}
  * @template {Blank} T
  */
-type SaveStrategy<T extends Blank> =
-	| 'ifClean'
-	| 'force'
-	| 'preferLocal'
-	| 'preferRemote'
-	| 'mergeClean'
-	| 'manual'
-	| FullConflictResolver<T>;
+type SaveStrategy<T extends Blank> = {
+	strategy:
+		| 'ifClean'
+		| 'force'
+		| 'preferLocal'
+		| 'preferRemote'
+		| 'mergeClean'
+		| 'manual'
+		| FullConflictResolver<T>;
+	createIfDeleted: boolean;
+};
 
 /**
  * Status of a merge operation, this is used to determine the state of the local and remote data in relation to the base data.
@@ -103,15 +107,9 @@ type StructDataStageConfig<T extends Blank> = {
  *
  * @template T The shape of the base struct (excluding global columns).
  */
-export class StructDataStage<T extends Blank>
-	implements Writable<PartialStructable<T & GlobalCols>>
-{
-	/**
-	 * The proxied, locally-editable version of the data.
-	 * Modifying this triggers change tracking but does not affect the backend until `.save()`.
-	 */
-	public data: PartialStructable<T & GlobalCols>;
-
+export class StructDataStage<T extends Blank> extends WritableBase<
+	PartialStructable<T & GlobalCols>
+> {
 	/**
 	 * The base data structure, which is a snapshot of the remote data
 	 *
@@ -126,36 +124,29 @@ export class StructDataStage<T extends Blank>
 	/** Tracks whether the local data has been modified since the last save or pull. */
 	public readonly localUpdated = writable(false);
 
-	/**
-	 * Unsubscribe from the StructData's data updates.
-	 *
-	 * @private
-	 * @type {() => void}
-	 */
-	private dataUnsub: () => void;
-	/**
-	 * Set of subscribers that will be notified when the local data changes.
-	 *
-	 * @private
-	 * @readonly
-	 * @type {*}
-	 */
-	private readonly subscribers = new Set<(data: PartialStructable<T & GlobalCols>) => void>();
-	/** Runs once all subscribers are done */
-	private _onAllUnsubscribe = () => {};
+	public readonly deleted = writable(false);
 
 	/**
 	 * @param structData The live backend-backed StructData instance to Staging.
 	 */
 	constructor(
-		public readonly structData: StructData<T & GlobalCols>,
+		public readonly structData: StructData<(T & GlobalCols) | T>,
 		public readonly config: StructDataStageConfig<T> = {}
 	) {
+		super(structData.data);
 		this.data = this.makeStaging(structData.data);
-		this.dataUnsub = this.structData.subscribe(() => {
+		const dataUnsub = this.structData.subscribe(() => {
 			this.remoteUpdated.set(true);
 		});
+		this.onAllUnsubscribe(() => {
+			dataUnsub();
+		});
 		this.base = JSON.parse(JSON.stringify(this.data)) as PartialStructable<T & GlobalCols>;
+		this.structData.struct.on('delete', (d) => {
+			if (d.data.id === structData.data.id) {
+				this.deleted.set(true);
+			}
+		});
 	}
 
 	/**
@@ -192,39 +183,6 @@ export class StructDataStage<T extends Blank>
 		} else {
 			this.localUpdated.set(true);
 		}
-	}
-
-	/**
-	 * Subscribes to changes in the local data Staging.
-	 * This is separate from backend changes — only local modifications trigger these.
-	 *
-	 * @param fn The function to call when local data is modified.
-	 * @returns A cleanup function to unsubscribe.
-	 */
-	public subscribe(fn: (data: PartialStructable<T & GlobalCols>) => void) {
-		fn(this.data);
-		this.subscribers.add(fn);
-		return () => {
-			this.subscribers.delete(fn);
-			if (this.subscribers.size === 0) {
-				this._onAllUnsubscribe();
-				this.dataUnsub();
-			}
-		};
-	}
-
-	/**
-	 * Sets a callback that runs when all subscribers have unsubscribed.
-	 *
-	 * @param fn A cleanup function.
-	 */
-	public onAllUnsubscribe(fn: () => void) {
-		this._onAllUnsubscribe = fn;
-	}
-
-	/** Notifies all subscribers of the current local data state. */
-	public inform() {
-		this.subscribers.forEach((fn) => fn(this.data));
 	}
 
 	/**
@@ -346,7 +304,9 @@ export class StructDataStage<T extends Blank>
 	 *   - both the local and remote values differ from the base, and
 	 *   - the local and remote values are not equal.
 	 *
-	 * @param strategy - Determines how to handle differences and conflicts:
+	 * @param config
+	 * @param config.strategy - Determines how to handle differences and conflicts:
+	 * @param config.createIfDeleted -
 	 *
 	 *  - `"ifClean"`:
 	 *      - Only saves if remote is identical to base.
@@ -374,8 +334,16 @@ export class StructDataStage<T extends Blank>
 	 *
 	 * After a successful save, the base snapshot is updated and all dirty flags are cleared.
 	 */
-	public async save(strategy: SaveStrategy<T>) {
+	public async save(config: SaveStrategy<T>) {
 		return attemptAsync(async () => {
+			if (get(this.deleted)) {
+				if (config.createIfDeleted) {
+					// as any because the server will give us an error if any property is missing
+					await this.structData.struct.new(this.data as any).unwrap();
+				} else {
+					throw new Error('Data is deleted, unable to update');
+				}
+			}
 			const local = this.data;
 			const remote = this.structData.data;
 			const base = this.base;
@@ -413,8 +381,8 @@ export class StructDataStage<T extends Blank>
 					});
 				}
 
-				if (typeof strategy === 'string') {
-					switch (strategy) {
+				if (typeof config.strategy === 'string') {
+					switch (config.strategy) {
 						case 'ifClean':
 							if (remoteChanged) throw new Error('Remote has diverged from base');
 							if (localChanged) merged[key] = localValue;
@@ -452,13 +420,13 @@ export class StructDataStage<T extends Blank>
 							break;
 
 						default:
-							throw new Error(`Unknown strategy: ${strategy satisfies never}`);
+							throw new Error(`Unknown strategy: ${config.strategy satisfies never}`);
 					}
 				}
 			}
 
-			if (typeof strategy === 'function') {
-				const resolved = await strategy({
+			if (typeof config.strategy === 'function') {
+				const resolved = await config.strategy({
 					base,
 					local,
 					remote,

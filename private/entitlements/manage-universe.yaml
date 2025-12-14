@@ -2,6 +2,6 @@ name: manage-universe
 structs:
   - universe
 permissions:
-  - "*"
+  - '*'
 pages: []
 group: Universe

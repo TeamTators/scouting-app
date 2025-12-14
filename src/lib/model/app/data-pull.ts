@@ -3,7 +3,11 @@ import { EventSchema, MatchSchema, TeamSchema } from 'tatorscout/tba';
 import { attemptAsync } from 'ts-utils/check';
 import { z } from 'zod';
 import { downloadText, loadFileContents } from '$lib/utils/downloads';
-import { CompressedMatchSchema as CMS, type CompressedMatchSchemaType, MatchSchema as MS } from '$lib/types/match';
+import {
+	CompressedMatchSchema as CMS,
+	type CompressedMatchSchemaType,
+	MatchSchema as MS
+} from '$lib/types/match';
 import { notify } from '$lib/utils/prompts';
 import { compress, type TraceArray } from 'tatorscout/trace';
 
@@ -154,7 +158,7 @@ export namespace AppData {
 						if (parsed.success) {
 							const data = {
 								...parsed.data,
-								trace: compress(parsed.data.trace as TraceArray),
+								trace: compress(parsed.data.trace as TraceArray)
 							};
 
 							return (await downloadMatch(data)).unwrap();

@@ -1,7 +1,12 @@
 import crypto from 'crypto';
 import { attemptAsync } from 'ts-utils/check';
-import { config } from './env';
+import { str } from '../utils/env';
 
+/**
+ *
+ * @param fpConfig
+ * @returns
+ */
 export const signFingerprint = (fpConfig: {
 	fingerprint: string;
 	userAgent: string;
@@ -9,7 +14,7 @@ export const signFingerprint = (fpConfig: {
 }) => {
 	return attemptAsync(async () => {
 		const data = `${fpConfig.fingerprint}${fpConfig.userAgent}${fpConfig.language}`;
-		const hmac = crypto.createHmac('sha256', config.sessions.fingerprint_secret);
+		const hmac = crypto.createHmac('sha256', str('FINGERPRINT_SECRET', true));
 		hmac.update(data);
 		return hmac.digest('hex');
 	});

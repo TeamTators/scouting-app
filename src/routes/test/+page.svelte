@@ -75,13 +75,15 @@
 			{@render test('Read All', tests.readAll)}
 			{@render test('Read Archived', tests.readArchived)}
 			{@render test('Read From Property', tests.readFromProperty)}
+			{@render test('Read From Ids', tests.readFromIds)}
+			{@render test('Read From Id', tests.readFromId)}
+			{@render test('Read Multi Property', tests.readMultiProperty)}
 			{@render test('Received New', tests.receivedNew)}
 			{@render test('Received Update', tests.receivedUpdate)}
 			{@render test('Received Archive', tests.receivedArchive)}
 			{@render test('Received Restore', tests.receivedRestore)}
 			{@render test('Received Delete', tests.receivedDelete)}
 			{@render test('Pull', tests.pullData)}
-			{@render test('Batch', tests.batch)}
 		</ul>
 	</div>
 	<div class="row">

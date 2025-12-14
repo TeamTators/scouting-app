@@ -16,6 +16,7 @@
 	import { fullscreen, isFullscreen } from '$lib/utils/fullscreen.js';
 	import { Form } from '$lib/utils/form.js';
 	import { confirm, prompt } from '$lib/utils/prompts.js';
+	import ScoutInput from '$lib/components/app/ScoutInput.svelte';
 
 	const { data } = $props();
 	const eventKey = $derived(data.eventKey);
@@ -34,6 +35,7 @@
 	let postApp: PostApp | undefined = $state(undefined);
 	let group = $state(-1);
 	let matchData: MatchData | undefined = $state(undefined);
+	let disableSubmit = $state(false);
 
 	$effect(() => {
 		if (!browser) return;
@@ -172,6 +174,7 @@
 					class="btn btn-primary btn-lg"
 					onclick={async () => {
 						await algaeHarvestForm();
+						app?.comments.get('Scout')?.set(['Scout', globalData.scout]);
 						page = 'post';
 						exitFullscreen();
 						if (app) postApp?.render(app);
@@ -195,40 +198,63 @@
 			<AppView {app} {page} />
 
 			<div style="display: {page === 'post' ? 'block' : 'none'};">
-				<Comments {app} />
-				<div class="btn-group w-100" role="group">
-					<button
-						type="button"
-						class="btn btn-success"
-						onclick={async () => {
-							await app?.submit();
-							const data = await app?.matchData.next();
-							if (!data) return console.error('Could not find next match');
-							if (data.isErr()) return console.error(data.error);
-							goto(
-								`/app/event/${data.value.eventKey}/team/${data.value.team}/match/${data.value.compLevel}/${data.value.match}`
-							);
-							app?.matchData.set(data.value);
-							page = 'app';
-							app?.reset();
-							// window.location.reload();
-						}}
-					>
-						<i class="material-icons"> file_upload </i>
-						Submit Match
-					</button>
-					<button
-						class="btn btn-danger"
-						onclick={() => {
-							app?.reset();
-							page = 'app';
-						}}
-					>
-						<i class="material-icons">delete</i>
-						Discard Match
-					</button>
+				<div class="container layer-2">
+					<div class="row mb-3">
+						<h3>Post Match Summary</h3>
+					</div>
+					<div class="row mb-3">
+						<Comments {app} />
+					</div>
+					<div class="row mb-3">
+						<div class="w-100 d-flex justify-content-center">
+							<div class="mb-3">
+								<ScoutInput {accounts} />
+							</div>
+						</div>
+					</div>
+					<div class="row mb-3">
+						<div class="btn-group w-100" role="group">
+							<button
+								type="button"
+								class="btn btn-success"
+								class:disabled={disableSubmit}
+								disabled={disableSubmit}
+								onclick={async () => {
+									disableSubmit = true;
+									await app?.submit();
+									const data = await app?.matchData.next();
+									if (!data) return console.error('Could not find next match');
+									if (data.isErr()) return console.error(data.error);
+									goto(
+										`/app/event/${data.value.eventKey}/team/${data.value.team}/match/${data.value.compLevel}/${data.value.match}`
+									);
+									app?.matchData.set(data.value);
+									page = 'app';
+									app?.reset();
+									disableSubmit = false;
+									console.log(app?.comments.comments);
+									// window.location.reload();
+								}}
+							>
+								<i class="material-icons"> file_upload </i>
+								Submit Match
+							</button>
+							<button
+								class="btn btn-danger"
+								onclick={() => {
+									app?.reset();
+									page = 'app';
+								}}
+							>
+								<i class="material-icons">delete</i>
+								Discard Match
+							</button>
+						</div>
+					</div>
+					<div class="row mb-3">
+						<PostApp {app} bind:this={postApp} />
+					</div>
 				</div>
-				<PostApp {app} bind:this={postApp} />
 			</div>
 		{/if}
 	{/key}
@@ -296,20 +322,7 @@
 				</div>
 			{/if}
 			<div class="row mb-3">
-				<label for="scout">Scout</label>
-				<input
-					class="form-control"
-					type="text"
-					name="scout"
-					id="scout"
-					bind:value={globalData.scout}
-					list="accounts"
-				/>
-				<datalist id="accounts">
-					{#each accounts as a}
-						<option value={a}></option>
-					{/each}
-				</datalist>
+				<ScoutInput {accounts} />
 			</div>
 			<div class="row mb-3">
 				<div class="btn-group" role="group">

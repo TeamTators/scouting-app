@@ -25,11 +25,11 @@
 
 	const hide = () => {
 		doHide = true;
-	}
+	};
 
 	const show = () => {
 		doHide = false;
-	}
+	};
 
 	onMount(() => {
 		const offTick = timer.app.on('tick', () => {
@@ -47,8 +47,6 @@
 		};
 	});
 </script>
-
-
 
 <div
 	class="card border-0 shadow p-0"
@@ -82,13 +80,11 @@
 					class:bg-primary={$timer.section === 'teleop'}
 					class:bg-warning={$timer.section === 'endgame'}
 					class:bg-danger={$timer.section === 'end'}
-				>
+				></div>
 			</div>
-			</div>
-				<p class="text-center w-100 position-absolute top-50 start-50 translate-middle mb-0">
-					
+			<p class="text-center w-100 position-absolute top-50 start-50 translate-middle mb-0">
 				{minuteSecond($timer.second)}
-				</p>
+			</p>
 		</div>
 	</div>
 </div>
@@ -147,10 +143,7 @@
 				</div>
 			</button>
 
-			<div 
-				role="group" 
-				class="btn-group"
-			>
+			<div role="group" class="btn-group">
 				<button
 					type="button"
 					class="btn btn-sm"
@@ -180,10 +173,7 @@
 					onclick={() => timer.app.goto('end')}>End</button
 				>
 			</div>
-			<div 
-				role="group"
-				class="button-group"
-			>
+			<div role="group" class="button-group">
 				{#if $running}
 					<button
 						type="button"
