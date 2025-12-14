@@ -88,7 +88,7 @@ export class MatchData implements Writable<MD> {
 	}
 
 	newScoutGroup(group: number) {
-		return attemptAsync(async () => {
+		return attemptAsync<number>(async () => {
 			const [eventRes, scoutGroupsRes] = await Promise.all([
 				this.getEvent(),
 				this.getScoutGroups()

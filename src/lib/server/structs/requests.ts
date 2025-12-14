@@ -8,27 +8,27 @@ import { Account } from './account';
 import { MatchSchema, TeamSchema, EventSchema } from 'tatorscout/tba';
 import { AssignmentSchema } from 'tatorscout/scout-groups';
 import { Loop } from 'ts-utils/loop';
-import { TraceSchema } from 'tatorscout/trace';
-import { MatchSchema as MS, type MatchSchemaType } from '../../types/match';
+import { CompressedMatchSchema as MS, type CompressedMatchSchemaType } from '../../types/match';
 import terminal from '../utils/terminal';
+import { compress } from '../utils/compression';
 
 const { SECRET_SERVER_API_KEY, SECRET_SERVER_DOMAIN, REMOTE } = process.env;
 export namespace Requests {
-	const post = (url: string, data: unknown) => {
-		return attemptAsync(async () => {
-			const res = await fetch(SECRET_SERVER_DOMAIN + '/event-server' + url, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'X-API-KEY': SECRET_SERVER_API_KEY || ''
-				},
-				body: JSON.stringify(data)
-			});
+	// const post = (url: string, data: unknown) => {
+	// 	return attemptAsync(async () => {
+	// 		const res = await fetch(SECRET_SERVER_DOMAIN + '/event-server' + url, {
+	// 			method: 'POST',
+	// 			headers: {
+	// 				'Content-Type': 'application/json',
+	// 				'X-API-KEY': SECRET_SERVER_API_KEY || ''
+	// 			},
+	// 			body: JSON.stringify(data)
+	// 		});
 
-			if (res.ok) return true;
-			else throw new Error('Failed to send data');
-		});
-	};
+	// 		if (res.ok) return true;
+	// 		else throw new Error('Failed to send data');
+	// 	});
+	// };
 
 	export const CachedRequests = new Struct({
 		name: 'cached_requests',
@@ -90,7 +90,7 @@ export namespace Requests {
 		});
 	};
 
-	export const submitMatch = (match: MatchSchemaType) => {
+	export const submitMatch = (match: CompressedMatchSchemaType) => {
 		return attemptAsync(async () => {
 			const parsed = MS.safeParse(match);
 			if (!parsed.success) {
@@ -112,7 +112,18 @@ export namespace Requests {
 				})
 			).unwrap();
 
-			return (await post('/submit-match', body)).unwrap();
+			const payload = compress(body);
+			const arrayBuffer = new Uint8Array(payload).buffer;
+
+			// return post('/submit-match/compressed', payload).unwrap();
+			return fetch(SECRET_SERVER_DOMAIN + '/event-server/submit-match/compressed', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/octet-stream',
+					'X-API-KEY': SECRET_SERVER_API_KEY || ''
+				},
+				body: arrayBuffer
+			});
 		});
 	};
 
