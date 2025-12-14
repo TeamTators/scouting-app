@@ -24,7 +24,6 @@ export const POST = async (event) => {
 	}
 
 	const res = await Requests.submitMatch(parsed.data);
-	console.log(res);
 	if (res.isErr()) {
 		terminal.error(res.error);
 		// return new Response('Error', { status: 500 });
