@@ -16,8 +16,7 @@
 	"sessions": {
 		"auto_sign_in": "username",
 		"duration": 604800000,
-		"password_request_lifetime": 3600000,
-		"fingerprint_secret": "your_fingerprint_secret"
+		"password_request_lifetime": 3600000
 	},
 	"redis": {
 		"url": "redis://localhost:6379",
@@ -47,5 +46,24 @@
 		"enabled": true,
 		"requests": 100,
 		"window": 600
+	},
+	"struct_batching": {
+		"enabled": true,
+		"interval": 100,
+		"timeout": 10000,
+		"limit": 100,
+		"batch_size": 10,
+		"debug": true
+	},
+	"struct_cache": {
+		"enabled": true,
+		"debug": false
+	},
+	"indexed_db": {
+		"enabled": true,
+		"db_name": "app_indexed_db",
+		"version": 1,
+		"debug": true,
+		"debounce_interval_ms": 16
 	}
 }

@@ -4,7 +4,7 @@ import z from 'zod';
 // Be sure to alter config.schema.json and config.example.json accordingly
 
 export default z.object({
-	environment: z.enum(['dev', 'test', 'prod']),
+	environment: z.enum(['dev', 'test', 'prod', 'staging']),
 	app_name: z.string().min(1),
 	network: z.object({
 		host: z.string().min(1),
@@ -21,8 +21,7 @@ export default z.object({
 	sessions: z.object({
 		auto_sign_in: z.string().optional(),
 		duration: z.number().min(1),
-		password_request_lifetime: z.number().min(1),
-		fingerprint_secret: z.string().min(1)
+		password_request_lifetime: z.number().min(1)
 	}),
 	redis: z.object({
 		url: z.string().url(),
@@ -52,5 +51,24 @@ export default z.object({
 		enabled: z.boolean(),
 		requests: z.number().min(1),
 		window: z.number().min(1)
+	}),
+	struct_batching: z.object({
+		enabled: z.boolean(),
+		interval: z.number().min(1),
+		timeout: z.number().min(1),
+		limit: z.number().min(1),
+		batch_size: z.number().min(1),
+		debug: z.boolean()
+	}),
+	struct_cache: z.object({
+		enabled: z.boolean(),
+		debug: z.boolean()
+	}),
+	indexed_db: z.object({
+		enabled: z.boolean(),
+		db_name: z.string().min(1),
+		version: z.number().min(1),
+		debug: z.boolean(),
+		debounce_interval_ms: z.number().min(0)
 	})
 });

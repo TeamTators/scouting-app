@@ -1,14 +1,6 @@
 import { browser } from '$app/environment';
 import { sse } from '$lib/services/sse';
-import {
-	Struct,
-	StructData,
-	startBatchTest,
-	endBatchTest,
-	startBatchUpdateLoop
-} from '$lib/services/struct/index';
-import type { Loop } from 'ts-utils/loop';
-import { sleep } from 'ts-utils/sleep';
+import { Struct, StructData } from '$lib/services/struct/index';
 
 export namespace Test {
 	export const Test = new Struct({
@@ -43,35 +35,7 @@ export namespace Test {
 			}
 		});
 
-		const tests: {
-			connect: Status;
-			new: Status;
-			update: Status;
-
-			archive: Status;
-			restore: Status;
-			delete: Status;
-
-			readVersion: Status;
-			deleteVersion: Status;
-			restoreVersion: Status;
-
-			readAll: Status;
-			readArchived: Status;
-			readFromProperty: Status;
-
-			receivedNew: Status;
-			receivedUpdate: Status;
-			receivedArchive: Status;
-			receivedRestore: Status;
-			receivedDelete: Status;
-
-			pullData: Status;
-
-			batch: Status;
-
-			promise: Promise<void>;
-		} = $state({
+		const tests = $state({
 			connect: init(),
 			new: init(),
 			update: init(),
@@ -87,14 +51,15 @@ export namespace Test {
 			readAll: init(),
 			readArchived: init(),
 			readFromProperty: init(),
+			readFromIds: init(),
+			readFromId: init(),
+			readMultiProperty: init(),
 
 			receivedNew: init(),
 			receivedUpdate: init(),
 			receivedArchive: init(),
 			receivedRestore: init(),
 			receivedDelete: init(),
-
-			batch: init(),
 
 			pullData: init(),
 
@@ -104,6 +69,7 @@ export namespace Test {
 				await sse.waitForConnection(10_000);
 
 				const uniqueName = Math.random().toString(36).substring(7);
+				console.log('Unique name: ', uniqueName);
 				const connect = async () => {
 					tests.connect.update('in progress');
 					const res = await Test.connect();
@@ -247,7 +213,9 @@ export namespace Test {
 							finish(error.message);
 						};
 
-						const stream = Test.all(true);
+						const stream = Test.all({
+							type: 'stream'
+						});
 						stream.on('data', onData);
 						stream.on('error', onError);
 					});
@@ -413,7 +381,7 @@ export namespace Test {
 						return;
 					}
 
-					const version = versions.value[0];
+					const version = versions.value.data[0];
 					if (version.data.name !== uniqueName) {
 						tests.readVersion.update('failure', 'Name does not match');
 						return;
@@ -480,7 +448,9 @@ export namespace Test {
 							finish(error.message);
 						};
 
-						const stream = Test.archived(true);
+						const stream = Test.archived({
+							type: 'stream'
+						});
 						stream.on('data', onData);
 						stream.on('error', onError);
 					});
@@ -516,59 +486,128 @@ export namespace Test {
 							finish(error.message);
 						};
 
-						const stream = Test.fromProperty('name', uniqueName, true);
+						const stream = Test.fromProperty('name', uniqueName, {
+							type: 'stream'
+						});
+						stream.on('data', onData);
+						stream.on('error', onError);
+					});
+				};
+				const testReadFromIds = async () => {
+					return new Promise<void>((res) => {
+						tests.readFromIds.update('in progress');
+						let resolved = false;
+						const finish = (error?: string) => {
+							if (!resolved) res();
+							resolved = true;
+							if (error) {
+								tests.readFromIds.update('failure', error);
+							} else {
+								tests.readFromIds.update('success');
+							}
+
+							stream.off('data', onData);
+							stream.off('error', onError);
+						};
+
+						setTimeout(() => {
+							finish('Timeout');
+						}, 1000);
+
+						const onData = (data: TestData) => {
+							if (data.data.name === uniqueName) {
+								finish();
+							}
+						};
+
+						const onError = (error: Error) => {
+							finish(error.message);
+						};
+
+						const stream = Test.fromIds([String(testData?.data.id)], {
+							type: 'stream'
+						});
 						stream.on('data', onData);
 						stream.on('error', onError);
 					});
 				};
 
-				const testBatch = async (testData: TestData) => {
+				const testReadFromId = async () => {
 					return new Promise<void>((res) => {
-						tests.batch.update('in progress');
+						tests.readFromId.update('in progress');
 						let resolved = false;
-						let loop: Loop | undefined;
-						startBatchTest(); // stops sending data through fetch requests
 						const finish = (error?: string) => {
 							if (!resolved) res();
 							resolved = true;
 							if (error) {
-								tests.batch.update('failure', error);
+								tests.readFromId.update('failure', error);
 							} else {
-								tests.batch.update('success');
+								tests.readFromId.update('success');
 							}
-							endBatchTest(); // resumes sending data through fetch requests
-							loop?.stop();
 						};
 
-						testData
-							.update((d) => ({
-								...d,
-								age: 100
-							}))
-							.then(async (r) => {
-								if (r.isOk()) {
-									return finish('Update should fail in batch testing mode');
-								}
-								await sleep(100);
-								loop = startBatchUpdateLoop(browser, 500, 0);
+						setTimeout(() => {
+							finish('Timeout');
+						}, 1000);
 
-								loop.on('error', (error) => {
-									if (error instanceof Error) finish(error.message);
-									else finish('Unknown error');
-								});
-							});
-
-						Test.on('update', (data: TestData) => {
-							if (data.data.age === 100 && data.data.name === uniqueName) {
-								finish();
+						Test.fromId(String(testData?.data.id), {
+							force: true
+						}).then((r) => {
+							if (r.isErr()) {
+								return finish(r.error.message);
 							}
+
+							if (r.value.data.name !== uniqueName) {
+								return finish('Name does not match');
+							}
+
+							finish();
 						});
+					});
+				};
+
+				const readMultiProperty = async () => {
+					return new Promise<void>((res) => {
+						tests.readMultiProperty.update('in progress');
+						let resolved = false;
+						const finish = (error?: string) => {
+							if (!resolved) res();
+							resolved = true;
+							if (error) {
+								tests.readMultiProperty.update('failure', error);
+							} else {
+								tests.readMultiProperty.update('success');
+							}
+
+							stream.off('data', onData);
+							stream.off('error', onError);
+						};
 
 						setTimeout(() => {
-							if (!resolved) {
-								finish('Timeout');
+							finish('Timeout');
+						}, 1000);
+
+						const onData = (data: TestData) => {
+							if (data.data.name === uniqueName) {
+								finish();
 							}
-						}, 3000);
+						};
+
+						const onError = (error: Error) => {
+							finish(error.message);
+						};
+
+						const stream = Test.get(
+							{
+								name: uniqueName,
+								age: 20
+							},
+							{
+								type: 'stream'
+							}
+						);
+						stream.on('data', onData);
+						stream.on('error', onError);
 					});
 				};
 
@@ -576,6 +615,9 @@ export namespace Test {
 				await testNew();
 				await testReadAll();
 				await testReadProperty();
+				await testReadFromIds();
+				await testReadFromId();
+				await readMultiProperty();
 
 				if (testData) {
 					await testUpdate(testData);
@@ -584,7 +626,6 @@ export namespace Test {
 					await testRestore(testData);
 					await testPull(testData);
 					await testVersions(testData);
-					await testBatch(testData);
 					await testDelete(testData);
 				}
 			})()
