@@ -294,6 +294,47 @@
 			},
 			"required": ["enabled", "interval", "timeout", "limit", "batch_size", "debug"],
 			"additionalProperties": false
+		},
+		"app_config": {
+			"description": "Dashboard servers to submit the match to",
+			"type": "object",
+			"properties": {
+				"servers": {
+					"description": "Servers to submit to",
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"domain": {
+								"description": "Domain to submit to",
+								"type": "string",
+								"format": "uri"
+							},
+							"api_key": {
+								"description": "API key for the dashboard server",
+								"type": "string"
+							},
+							"primary": {
+								"description": "Whether this is the primary server",
+								"type": "boolean"
+							}
+						},
+						"required": [
+							"domain",
+							"api_key",
+							"primary"
+						]
+					}
+				},
+				"remote": {
+					"description": "Whether this app is a remote app",
+					"type": "boolean"
+				}
+			},
+			"required": [
+				"servers",
+				"remote"
+			]
 		}
 	},
 	"required": [
@@ -310,7 +351,8 @@
 		"limiting",
 		"struct_cache",
 		"struct_batching",
-		"indexed_db"
+		"indexed_db",
+		"app_config"
 	],
 	"additionalProperties": false
 }

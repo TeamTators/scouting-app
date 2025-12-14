@@ -65,5 +65,15 @@
 		"version": 1,
 		"debug": true,
 		"debounce_interval_ms": 16
+	},
+	"app_config": {
+		"servers": [
+			{
+				"domain": "http://localhost:2122",
+				"api_key": "some_api_key",
+				"primary": true
+			}
+		],
+		"remote": true
 	}
 }

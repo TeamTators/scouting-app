@@ -70,5 +70,13 @@ export default z.object({
 		version: z.number().min(1),
 		debug: z.boolean(),
 		debounce_interval_ms: z.number().min(0)
-	})
+	}),
+	app_config: z.object({
+		servers: z.array(z.object({
+			domain: z.string().url(),
+			api_key: z.string(),
+			primary: z.boolean(),
+		})),
+		remote: z.boolean(),
+	}),
 });
