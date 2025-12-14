@@ -30,7 +30,7 @@
 			x: 0,
 			y: 0
 		});
-		const trace = app.state.trace();
+		const trace = app.state.traceArray();
 		container = new Container(
 			...(trace
 				.map((p, i, a) => {

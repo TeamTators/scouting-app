@@ -53,14 +53,14 @@ export class AppState {
 		return () => {};
 	}
 
-	serialize(): TraceArray {
-		const compress = (num: number) => Math.round(num * 1000);
+	serialize() {
+		const toFixed = (num: number) => Math.round(num * 1000);
 		return this.ticks
 			.filter((t) => !!t.point)
-			.map((t) => [t.index, compress(t.point?.[0] || 0), compress(t.point?.[1] || 0), t.action]);
+			.map((t) => [t.index, toFixed(t.point?.[0] || 0), toFixed(t.point?.[1] || 0), t.action]);
 	}
 
-	trace(): TraceArray {
-		return this.ticks.map((t) => [t.index, t.point?.[0] || 0, t.point?.[1] || 0, t.action]);
+	traceArray(): TraceArray {
+		return this.ticks.filter(t => !!t.point).map((t) => [t.index, t.point?.[0] || 0, t.point?.[1] || 0, t.action]);
 	}
 }
