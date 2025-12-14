@@ -148,8 +148,8 @@ export class Form<T extends { [key: string]: Input<keyof Inputs> }> {
 
 	/**
 	 * Create a new form builder
-	 * @param action - Form action URL for submission
-	 * @param method - HTTP method for form submission
+	 * @param action - Form action URL for app_config
+	 * @param method - HTTP method for form app_config
 	 * @param inputs - Initial input definitions (typically empty for new forms)
 	 */
 	constructor(

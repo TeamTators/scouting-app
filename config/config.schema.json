@@ -319,11 +319,7 @@
 								"type": "boolean"
 							}
 						},
-						"required": [
-							"domain",
-							"api_key",
-							"primary"
-						]
+						"required": ["domain", "api_key", "primary"]
 					}
 				},
 				"remote": {
@@ -331,10 +327,7 @@
 					"type": "boolean"
 				}
 			},
-			"required": [
-				"servers",
-				"remote"
-			]
+			"required": ["servers", "remote"]
 		}
 	},
 	"required": [

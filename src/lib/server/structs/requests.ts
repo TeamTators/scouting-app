@@ -15,18 +15,21 @@ import { config } from '../utils/env';
 export namespace Requests {
 	const post = (url: string, data: unknown) => {
 		return attemptAsync(async () => {
-			await Promise.resolve(config.app_config.servers.map(async (server) => {
-							const res = await fetch(server.domain + '/event-server' + url, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'X-API-KEY': server.api_key
-				},
-				body: JSON.stringify(data)
-			});
-			return res.ok;
-			}));
+			const res = await Promise.all(
+				config.app_config.servers.map(async (server) => {
+					const res = await fetch(server.domain + '/event-server' + url, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							'X-API-KEY': server.api_key
+						},
+						body: JSON.stringify(data)
+					});
+					return res.ok;
+				})
+			);
 
+			return res.every((r) => r);
 		});
 	};
 
@@ -53,44 +56,44 @@ export namespace Requests {
 			}
 
 			// sort servers so primary is first
-			config.app_config.servers.sort((a, b) => a.primary === b.primary ? 0 : a.primary ? -1 : 1);
+			config.app_config.servers.sort((a, b) => (a.primary === b.primary ? 0 : a.primary ? -1 : 1));
 
 			for (const server of config.app_config.servers) {
-			const data = await fetch(server.domain + '/event-server' + url, {
-				method: 'GET',
-				headers: {
-					'X-API-KEY': server.api_key || ''
+				const data = await fetch(server.domain + '/event-server' + url, {
+					method: 'GET',
+					headers: {
+						'X-API-KEY': server.api_key || ''
+					}
+				})
+					.then((res) => res.json())
+					.catch((e) => {
+						console.log(e);
+					});
+
+				if (!data && exists) {
+					terminal.log('Failed to fetch data, using cached data:', url);
+					return JSON.parse(exists.data.response);
 				}
-			})
-				.then((res) => res.json())
-				.catch((e) => {
-					console.log(e);
-				});
 
-			if (!data && exists) {
-				terminal.log('Failed to fetch data, using cached data:', url);
-				return JSON.parse(exists.data.response);
-			}
-
-			// terminal.log('Recieved:', data);
-			if (exists) {
-				terminal.log('Updating cached data:', url);
-				(
-					await exists.update({
-						response: JSON.stringify(data)
-					})
-				).unwrap();
-			} else {
-				terminal.log('Caching data:', url);
-				(
-					await CachedRequests.new({
-						url,
-						response: JSON.stringify(data)
-					})
-				).unwrap();
-			}
-			terminal.log('Fetched data:', url);
-			return data;
+				// terminal.log('Recieved:', data);
+				if (exists) {
+					terminal.log('Updating cached data:', url);
+					(
+						await exists.update({
+							response: JSON.stringify(data)
+						})
+					).unwrap();
+				} else {
+					terminal.log('Caching data:', url);
+					(
+						await CachedRequests.new({
+							url,
+							response: JSON.stringify(data)
+						})
+					).unwrap();
+				}
+				terminal.log('Fetched data:', url);
+				return data;
 			}
 
 			throw new Error('All servers failed to respond');
