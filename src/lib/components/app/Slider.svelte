@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { Check } from '$lib/model/app/checks';
-	import { Form } from '$lib/utils/form';
 	import { capitalize, fromCamelCase } from 'ts-utils/text';
 	interface Props {
 		check: Check;

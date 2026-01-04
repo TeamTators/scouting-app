@@ -49,8 +49,6 @@ export class AppState {
 			},
 			(_, i) => new Tick(i / TICKS_PER_SECOND, i, this.app)
 		);
-
-		return () => {};
 	}
 
 	serialize() {

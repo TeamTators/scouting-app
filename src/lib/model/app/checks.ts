@@ -1,180 +1,56 @@
-import { writable, type Writable } from 'svelte/store';
+import { writable  } from 'svelte/store';
 import type { App } from './app';
-import { Gradient } from 'colors/gradient';
-import { Color } from 'colors/color';
+import { WritableArray, WritableBase } from '$lib/writables';
+import type { Comment } from './comments';
 
 type C =
+	{
+		value: boolean;
+		name: string;
+		doSlider: true;
+		type: 'success' | 'primary' | 'warning' | 'danger';
+		render: boolean;
+		slider: number;
+		values: [string, string, string, string, string];
+		color: [string, string, string, string, string];
+		alert: false | string;
+		doComment: boolean;
+		comment?: Comment;
+	}
 	| {
-			value: boolean;
-			name: string;
-			comment: string;
-			doSlider: true;
-			type: 'success' | 'primary' | 'warning' | 'danger';
-			render: boolean;
-			slider: number;
-			values: [string, string, string, string, string];
-			color: [string, string, string, string, string];
-	  }
-	| {
-			value: boolean;
-			name: string;
-			comment: string;
-			doSlider: false;
-			type: 'success' | 'primary' | 'warning' | 'danger';
-			render: boolean;
-			slider: 0;
-	  };
+		value: boolean;
+		name: string;
+		doSlider: false;
+		type: 'success' | 'primary' | 'warning' | 'danger';
+		render: boolean;
+		slider: 0;
+		alert: false | string;
+		doComment: boolean;
+		comment?: Comment;
+	};
 
-export class Check implements Writable<C> {
-	constructor(public readonly data: C) {}
-
-	public readonly subscribers = new Set<(value: C) => void>();
-
-	public subscribe(run: (value: C) => void): () => void {
-		this.subscribers.add(run);
-		run(this.data);
-		return () => this.subscribers.delete(run);
-	}
-
-	public set(value: C): void {
-		this.data.value = value.value;
-		this.data.name = value.name;
-		this.data.comment = value.comment;
-		this.data.doSlider = value.doSlider;
-		this.data.render = value.render;
-		this.data.type = value.type;
-		this.data.slider = value.slider;
-		this.inform();
-	}
-
-	public update(fn: (value: C) => C): void {
-		this.set(fn(this.data));
-	}
-
-	init() {
-		return () => {
-			this.subscribers.clear();
-		};
-	}
-
-	inform() {
-		this.subscribers.forEach((run) => run(this.data));
-	}
+export class Check extends WritableBase<C> {
 }
 
-export class Checks implements Writable<Check[]> {
-	public data: Check[] = [];
-
-	constructor(public readonly app: App) {}
-
-	private readonly subscribers = new Set<(value: Check[]) => void>();
-
-	private unsubs = new Set<() => void>();
-
-	public inform() {
-		this.subscribers.forEach((run) => run(this.data));
-	}
-
-	public subscribe(run: (value: Check[]) => void): () => void {
-		this.subscribers.add(run);
-		run(this.data);
-		return () => this.subscribers.delete(run);
-	}
-
-	public set(value: Check[]): void {
-		this.data = value;
-		this.inform();
-	}
-
-	public update(updater: (value: Check[]) => Check[]): void {
-		this.set(updater(this.data));
-	}
-
-	public init() {
-		this.data = [];
-		this.writables.success.set([]);
-		this.writables.primary.set([]);
-		this.writables.warning.set([]);
-		this.writables.danger.set([]);
-		// CHECKS:
-		this.addCheck('success', 'autoMobility')
-			.addCheck('success', 'parked')
-			.addCheck('success', {
-				name: 'climbed',
-				slider: ['Very Slow', 'Slow', 'Medium', 'Fast', 'Very Fast'],
-				color: ['red', 'orange', 'yellow', 'green', 'blue']
-			})
-			.addCheck('success', 'stoleGamePieces')
-			.addCheck('success', 'coopertition')
-			.addCheck('primary', {
-				name: 'playedDefense',
-				slider: [
-					'Not effective at all',
-					'Not very effective',
-					'A little effective',
-					'Effective',
-					'Very effective'
-				],
-				color: ['red', 'orange', 'yellow', 'green', 'blue']
-			})
-			.addCheck('primary', 'couldPlayDefense')
-			.addCheck('primary', {
-				name: 'groundPicksCoral',
-				slider: ['Very Slow', 'Slow', 'Medium', 'Fast', 'Very Fast'],
-				color: ['red', 'orange', 'yellow', 'green', 'blue']
-			})
-			.addCheck('primary', {
-				name: 'groundPicksAlgae',
-				slider: ['Very Slow', 'Slow', 'Medium', 'Fast', 'Very Fast'],
-				color: ['red', 'orange', 'yellow', 'green', 'blue']
-			})
-			// .addCheck('primary', 'placesCoral')
-			// .addCheck('primary', 'placesAlgae')
-			.addCheck('warning', 'tippy')
-			.addCheck('warning', 'easilyDefended')
-			.addCheck('warning', 'slow')
-			.addCheck('warning', 'droppedGamePieces')
-			.addCheck('warning', {
-				name: 'disabledInAuto',
-				slider: [
-					'Caused significant issues',
-					'Caused issues',
-					'Got in partners way',
-					'Unknown reason',
-					'Purposeful for auto mobility'
-				],
-				color: Color.fromHex('#FF0000')
-					.linearFade(Color.fromHex('#FF7F00'), 5)
-					.colors.map((c) => c.toString('rgb')) as [string, string, string, string, string]
-			})
-			.addCheck('danger', 'robotDied')
-			.addCheck('danger', 'problemsDriving')
-			.addCheck('danger', 'spectator')
-			.addCheck('success', 'harvestsAlgae');
-
-		return () => {
-			for (const check of this.data) {
-				check.update((c) => ({
-					...c,
-					comment: '',
-					value: c.render ? false : c.value
-				}));
-				check.subscribers.clear();
-			}
-			this.set([]);
-			this.subscribers.clear();
-			this.unsubs.forEach((u) => u());
-		};
+export class Checks extends WritableArray<Check> {
+	constructor(public readonly app: App) {
+		super([]);
 	}
 
 	addCheck(
 		type: 'success' | 'primary' | 'warning' | 'danger',
 		check:
-			| {
-					name: string;
-					slider: [string, string, string, string, string];
-					color: [string, string, string, string, string];
-			  }
+			{
+				name: string;
+				slider: [string, string, string, string, string];
+				color: [string, string, string, string, string];
+				alert: false | string;
+				doComment: boolean;
+			} | {
+				name: string;
+				alert: false | string;
+				doComment: boolean;
+			}
 			| string
 	) {
 		let c: Check;
@@ -182,24 +58,46 @@ export class Checks implements Writable<Check[]> {
 			c = new Check({
 				name: check,
 				doSlider: false,
-				comment: '',
 				value: false,
 				type,
-				render: true,
-				slider: 0
-			});
-		} else {
-			c = new Check({
-				name: check.name,
-				type,
-				doSlider: true,
-				comment: '',
-				value: false,
 				render: true,
 				slider: 0,
-				values: check.slider,
-				color: check.color
+				doComment: false,
+				alert: false,
 			});
+		} else {
+			let comment: Comment | undefined;
+			if (check.doComment) {
+				comment = this.app.comments.addComment(check.name, type);
+			}
+
+			if ('slider' in check) {
+				c = new Check({
+					name: check.name,
+					doSlider: true,
+					value: false,
+					type,
+					render: true,
+					slider: 0,
+					values: check.slider,
+					color: check.color,
+					alert: check.alert,
+					doComment: check.doComment,
+					comment,
+				});
+			} else {
+				c = new Check({
+					name: check.name,
+					doSlider: false,
+					value: false,
+					type,
+					render: true,
+					slider: 0,
+					alert: check.alert,
+					doComment: check.doComment,
+					comment,
+				});
+			}
 		}
 
 		this.update((checks) => {
@@ -212,6 +110,7 @@ export class Checks implements Writable<Check[]> {
 			return checks;
 		});
 
+		this.pipe(c);
 		return this;
 	}
 
@@ -250,16 +149,6 @@ export class Checks implements Writable<Check[]> {
 		return { checks, sliders };
 	}
 
-	setComment(name: string, comment: string) {
-		this.update((checks) => {
-			const check = checks.find((c) => c.data.name === name);
-			if (!check) return checks;
-			check.data.comment = comment;
-			check.inform();
-			return checks;
-		});
-	}
-
 	setCheck(name: string, value: boolean) {
 		this.update((checks) => {
 			const check = checks.find((c) => c.data.name === name);
@@ -268,5 +157,13 @@ export class Checks implements Writable<Check[]> {
 			check.inform();
 			return checks;
 		});
+	}
+
+	reset() {
+		for (const check of this.data) {
+			check.data.value = false;
+			check.data.slider = 0;
+			check.inform();
+		}
 	}
 }

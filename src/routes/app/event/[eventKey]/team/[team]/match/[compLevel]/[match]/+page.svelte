@@ -3,7 +3,7 @@
 	import MatchTable from '$lib/components/app/MatchTable.svelte';
 	import Modal from '$lib/components/bootstrap/Modal.svelte';
 	import { App } from '$lib/model/app/app.js';
-	import { onMount } from 'svelte';
+	import { mount, onMount } from 'svelte';
 	import type { CompLevel } from 'tatorscout/tba';
 	import { globalData } from '$lib/model/app/global-data.svelte.js';
 	import { AppData } from '$lib/model/app/data-pull.js';
@@ -14,9 +14,9 @@
 	import PostApp from '$lib/components/app/PostApp.svelte';
 	import { getAlliance, MatchData } from '$lib/model/app/match-data.js';
 	import { fullscreen, isFullscreen } from '$lib/utils/fullscreen.js';
-	import { Form } from '$lib/utils/form.js';
-	import { confirm, prompt } from '$lib/utils/prompts.js';
+	import { confirm, prompt, rawModal } from '$lib/utils/prompts.js';
 	import ScoutInput from '$lib/components/app/ScoutInput.svelte';
+	import Slider from '$lib/components/app/Slider.svelte';
 
 	const { data } = $props();
 	const eventKey = $derived(data.eventKey);
@@ -78,21 +78,54 @@
 		});
 	};
 
-	const algaeHarvestForm = async () => {
-		if (await confirm('Can this robot harvest algae?')) {
-			const howWell = await prompt(
-				'How well did the robot harvest algae? Be descriptive and critical.'
-			);
+	const runAlerts = async () => {
+		for (const check of app?.checks.data || []) {
+			if (check.data.alert && !check.data.value) {
+				const res = await confirm(check.data.alert);
+				if (res) {
+					check.data.value = true;
+					check.inform();
 
-			console.log(howWell);
-			if (howWell) {
-				app?.comments.get('Algae')?.set(['Algae', howWell]);
-				console.log('Algae', howWell);
+					if (check.data.doComment) {
+						const c = await prompt(
+							`Please provide more details about ${check.data.name}:`
+						);
+						if (c) check.data.comment?.update(([name, _]) => ([name, c]));
+						check.inform();
+					}
+
+					if (check.data.doSlider) {
+						const modal = rawModal('Select Slider Value', [
+							{
+								color: 'primary',
+								text: 'Done',
+								onClick: () => {
+									modal.hide();
+								}
+							},
+						], (body) => {
+							return mount(
+								Slider,
+								{
+									target: body,
+									props: {
+										check,
+										color: 'primary',
+									}
+								}
+							);
+						});
+
+						modal.show();
+
+						await new Promise<void>((res) => {
+							modal.on('hide', () => res());
+						});
+					}
+
+					check.inform();
+				}
 			}
-			app?.checks.get('harvestsAlgae')?.update((a) => ({
-				...a,
-				value: true
-			}));
 		}
 	};
 
@@ -173,7 +206,7 @@
 					type="button"
 					class="btn btn-primary btn-lg"
 					onclick={async () => {
-						await algaeHarvestForm();
+						await runAlerts();
 						app?.comments.get('Scout')?.set(['Scout', globalData.scout]);
 						page = 'post';
 						exitFullscreen();
@@ -221,19 +254,24 @@
 								disabled={disableSubmit}
 								onclick={async () => {
 									disableSubmit = true;
+									const eventKey = app?.matchData.data.eventKey;
 									await app?.submit();
 									const data = await app?.matchData.next();
-									if (!data) return console.error('Could not find next match');
-									if (data.isErr()) return console.error(data.error);
+									if (!data) {
+										goto(`/app/event/${eventKey}`);
+										return console.error('No next match data returned');
+									}
+									if (data.isErr()) {
+										goto(`/app/event/${eventKey}`);
+										return console.error(data.error);
+									}
 									goto(
 										`/app/event/${data.value.eventKey}/team/${data.value.team}/match/${data.value.compLevel}/${data.value.match}`
 									);
 									app?.matchData.set(data.value);
-									page = 'app';
-									app?.reset();
-									disableSubmit = false;
-									console.log(app?.comments.comments);
-									// window.location.reload();
+										app?.reset();
+										page = 'app';
+										disableSubmit = false;
 								}}
 							>
 								<i class="material-icons"> file_upload </i>

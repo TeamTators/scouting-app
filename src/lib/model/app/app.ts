@@ -128,34 +128,19 @@ export class App {
 		});
 	}
 
-	private _offState = () => {};
-	private _offView = () => {};
-	private _offData = () => {};
-	private _offCollected = () => {};
-	private _offComments = () => {};
-	private _target: HTMLElement | undefined;
-
-	private _deinit = () => {};
-
 	init(target: HTMLElement) {
-		this._target = target;
-		this._offState = this.state.init();
-		this._offComments = this.comments.init();
-		this._offView = this.view.init(target);
-		this._offData = this.matchData.init();
-		this._offCollected = this.checks.init();
+		this.state.init();
+		this.comments.init();
+		this.view.init(target);
+		this.matchData.init();
+	}
 
-		// for some reason, this code will never run. I have no idea why. not totally sure what it does either.
-		this._deinit = () => {
-			// console.log('Deinitializing app');
-			this._offState();
-			this._offComments();
-			this._offView();
-			this._offData();
-			this._offCollected();
-		};
-
-		return this._deinit;
+	// resets all stored data in the app
+	reset() {
+		this.state.init();
+		this.comments.reset();
+		this.checks.reset();
+		this.view.timer.reset();
 	}
 
 	// Main event loop
@@ -255,19 +240,6 @@ export class App {
 	resume() {
 		if (this.state.currentIndex !== -1) return this.emit('resume', undefined);
 		return this.start();
-	}
-
-	reset() {
-		this._offState();
-		this._offCollected();
-		this._offComments();
-
-		// this._deinit();
-		// i do not understand
-		// console.log('App reset.');
-		if (this._target) {
-			this.init(this._target);
-		}
 	}
 
 	goto(section: Section) {

@@ -1,15 +1,15 @@
-import type { Writable } from 'svelte/store';
 import { App } from './app';
+import { WritableArray, WritableBase } from '$lib/writables';
 
-type C = Comment[];
-
-export class Comment implements Writable<[string, string]> {
+export class Comment  extends WritableBase<[string, string]> {
 	public readonly subscribers = new Set<(value: [string, string]) => void>();
 
 	constructor(
-		public readonly data: [string, string],
+		data: [string, string],
 		public readonly color: string
-	) {}
+	) {
+		super(data);
+	}
 
 	get key() {
 		return this.data[0];
@@ -23,75 +23,43 @@ export class Comment implements Writable<[string, string]> {
 		this.data[1] = value;
 		this.inform();
 	}
-
-	public subscribe(run: (value: [string, string]) => void): () => void {
-		this.subscribers.add(run);
-		run(this.data);
-		return () => this.subscribers.delete(run);
-	}
-
-	public set(value: [string, string]): void {
-		this.data[0] = value[0];
-		this.data[1] = value[1];
-		this.inform();
-	}
-
-	public update(fn: (value: [string, string]) => [string, string]): void {
-		this.set(fn(this.data));
-	}
-
-	inform() {
-		this.subscribers.forEach((run) => run(this.data));
-	}
 }
 
-export class Comments implements Writable<C> {
-	public comments: C = [];
-
-	constructor(public readonly app: App) {}
-
-	private readonly subscribers = new Set<(value: C) => void>();
-
-	public subscribe(run: (value: C) => void): () => void {
-		this.subscribers.add(run);
-		run(this.comments);
-		return () => this.subscribers.delete(run);
-	}
-
-	public inform() {
-		this.subscribers.forEach((run) => run(this.comments));
-	}
-
-	public set(value: C): void {
-		this.comments = value;
-		this.inform();
-	}
-
-	public update(fn: (value: C) => C): void {
-		this.set(fn(this.comments));
+export class Comments extends WritableArray<Comment> {
+	constructor(public readonly app: App) {
+		super([]);
 	}
 
 	public addComment(key: string, color: string) {
-		this.comments.push(new Comment([key, ''], color));
+		const c = new Comment([key, ''], color);
+		this.data.push(c);
 		this.inform();
+		this.pipe(c);
+		return c;
 	}
 
 	init() {
-		this.addComment('Algae', 'warning');
 		this.addComment('Auto', 'success');
 		this.addComment('Teleop', 'primary');
 		this.addComment('Overall', 'info');
 		return () => {
-			this.comments = [];
+			this.data = [];
 			this.inform();
 		};
 	}
 
 	serialize() {
-		return Object.fromEntries(this.comments.map((c) => c.data));
+		return Object.fromEntries(this.data.map((c) => c.data));
 	}
 
 	get(key: string) {
-		return this.comments.find((c) => c.key === key);
+		return this.data.find((c) => c.key === key);
+	}
+
+	reset() {
+		// go through all comments and remove their values
+		for (const comment of this.data) {
+			comment.value = '';
+		}
 	}
 }

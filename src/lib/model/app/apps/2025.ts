@@ -382,6 +382,78 @@ export default (config: {
 	// 		// condition: (app) => isInside(app.state.currentLocation || [-1, -1], redEnd.points as Point2D[])
 	// 	});
 
+	app.checks
+		.addCheck('success', 'autoMobility')
+		.addCheck('success', 'parked')
+		.addCheck('success', {
+			name: 'climbed',
+			slider: ['Very Slow', 'Slow', 'Medium', 'Fast', 'Very Fast'],
+			color: ['red', 'orange', 'yellow', 'green', 'blue'],
+			alert: false,
+			doComment: false,
+		})
+		.addCheck('success', 'stoleGamePieces')
+		.addCheck('success', 'coopertition')
+		.addCheck('primary', {
+			name: 'playedDefense',
+			slider: [
+				'Not effective at all',
+				'Not very effective',
+				'A little effective',
+				'Effective',
+				'Very effective'
+			],
+			color: ['red', 'orange', 'yellow', 'green', 'blue'],
+			alert: false,
+			doComment: false,
+		})
+		.addCheck('primary', 'couldPlayDefense')
+		.addCheck('primary', {
+			name: 'groundPicksCoral',
+			slider: ['Very Slow', 'Slow', 'Medium', 'Fast', 'Very Fast'],
+			color: ['red', 'orange', 'yellow', 'green', 'blue'],
+			alert: false,
+			doComment: false,
+		})
+		.addCheck('primary', {
+			name: 'groundPicksAlgae',
+			slider: ['Very Slow', 'Slow', 'Medium', 'Fast', 'Very Fast'],
+			color: ['red', 'orange', 'yellow', 'green', 'blue'],
+			alert: false,
+			doComment: false,
+		})
+		// .addCheck('primary', 'placesCoral')
+		// .addCheck('primary', 'placesAlgae')
+		.addCheck('warning', 'tippy')
+		.addCheck('warning', 'easilyDefended')
+		.addCheck('warning', 'slow')
+		.addCheck('warning', 'droppedGamePieces')
+		.addCheck('warning', {
+			name: 'disabledInAuto',
+			slider: [
+				'Caused significant issues',
+				'Caused issues',
+				'Got in partners way',
+				'Unknown reason',
+				'Purposeful for auto mobility'
+			],
+			color: Color.fromHex('#FF0000')
+				.linearFade(Color.fromHex('#FF7F00'), 5)
+				.colors.map((c) => c.toString('rgb')) as [string, string, string, string, string],
+			alert: false,
+			doComment: false,
+		})
+		.addCheck('danger', 'robotDied')
+		.addCheck('danger', 'problemsDriving')
+		.addCheck('danger', 'spectator')
+		.addCheck('success', {
+			name: 'harvestsAlgae',
+			doComment: true,
+			alert: 'Does this robot harvest algae?',
+			slider: ['Very Slow', 'Slow', 'Medium', 'Fast', 'Very Fast'],
+			color: ['red', 'orange', 'yellow', 'green', 'blue'],
+		});
+
 	app.on('tick', () => {
 		if (app.state.section === 'auto' && app.state.currentLocation) {
 			if (app.matchData.alliance === 'red') {
