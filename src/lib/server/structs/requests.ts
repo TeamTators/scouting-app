@@ -142,7 +142,7 @@ export namespace Requests {
 				})
 			).unwrap();
 
-			const payload = compress(body);
+			const payload = compress(body).unwrap();
 			const arrayBuffer = new Uint8Array(payload).buffer;
 
 			// return post('/submit-match/compressed', payload).unwrap();

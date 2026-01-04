@@ -33,8 +33,8 @@ describe('Compression utilities', () => {
 			}
 		};
 
-		const compressed = compress(match);
-		const decompressed = decompress(Buffer.from(compressed));
+		const compressed = compress(match).unwrap();
+		const decompressed = decompress(Buffer.from(compressed)).unwrap();
 		expect(decompressed).toBeDefined();
 		deepEqual(decompressed, match);
 	});
