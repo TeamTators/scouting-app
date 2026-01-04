@@ -158,7 +158,7 @@ export namespace AppData {
 						if (parsed.success) {
 							const data = {
 								...parsed.data,
-								trace: Trace.parse(parsed.data.trace).unwrap().serialize(true),
+								trace: Trace.parse(parsed.data.trace).unwrap().serialize(true)
 							};
 
 							return (await downloadMatch(data)).unwrap();

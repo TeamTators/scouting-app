@@ -34,7 +34,8 @@
 		"backup": "pnpm script backup",
 		"restore": "pnpm script restore",
 		"deploy:docs": "pnpm script build-docs",
-		"build:docs": "pnpm script generate-doc-mds"
+		"build:docs": "pnpm script generate-doc-mds",
+		"submit-stale": "pnpm script submit-stale"
 	},
 	"packageManager": "pnpm@10.16.0",
 	"engines": {

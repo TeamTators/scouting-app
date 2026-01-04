@@ -6,7 +6,7 @@ export const compress = (data: unknown) => {
 	return brotliCompressSync(msgpacked);
 };
 
-export const decompress = (compressed: Buffer) => {
+export const decompress = (compressed: Buffer): unknown => {
 	const msgpacked = brotliDecompressSync(compressed);
 	return decode(msgpacked);
 };
