@@ -8,7 +8,6 @@ import { Account } from './account';
 import { MatchSchema, TeamSchema, EventSchema } from 'tatorscout/tba';
 import { AssignmentSchema } from 'tatorscout/scout-groups';
 import { Loop } from 'ts-utils/loop';
-import { TraceSchema } from 'tatorscout/trace';
 import { MatchSchema as MS, type MatchSchemaType } from '../../types/match';
 import terminal from '../utils/terminal';
 
