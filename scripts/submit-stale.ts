@@ -6,5 +6,5 @@ export default async (event: string) => {
 	if (!event) throw new Error('Must provide an event key');
 	await Struct.buildAll(DB).unwrap();
 
-	await Scouting.submitStale(event);
+	(await Scouting.submitStale(event)).unwrap();
 };

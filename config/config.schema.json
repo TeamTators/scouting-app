@@ -215,7 +215,7 @@
 		},
 		"match_queue": {
 			"type": "object",
-			"description": "Configuration on how the match submission.",
+			"description": "Configuration for match submission queue.",
 			"properties": {
 				"concurrency": {
 					"type": "integer",
@@ -231,7 +231,7 @@
 				},
 				"timeout": {
 					"type": "integer",
-					"description": "How long to wait for the"
+					"description": "How long, in ms, to wait for a match submission to complete"
 				}
 			},
 			"required": ["concurrency", "interval", "limit", "timeout"]
