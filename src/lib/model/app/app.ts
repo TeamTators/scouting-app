@@ -18,7 +18,7 @@ import { attemptAsync } from 'ts-utils/check';
 import { globalData } from './global-data.svelte';
 import type { CompressedMatchSchemaType } from '$lib/types/match';
 import { Comments } from './comments';
-import { compress } from 'tatorscout/trace';
+import { Trace } from 'tatorscout/trace';
 
 export const TICKS_PER_SECOND = 4;
 export const SECTIONS = {
@@ -98,7 +98,7 @@ export class App {
 
 	serialize() {
 		return attemptAsync<CompressedMatchSchemaType>(async () => {
-			const trace = compress(this.state.serialize());
+			const trace = Trace.parse(this.state.traceArray()).unwrap();
 			const { checks, sliders } = this.checks.serialize();
 			const comments = this.comments.serialize();
 			const { eventKey, compLevel, match, team } = this.matchData.data;
@@ -109,7 +109,7 @@ export class App {
 			if (g.isOk() && g.value !== null) group = g.value;
 
 			return {
-				trace,
+				trace: trace.serialize(true),
 				checks,
 				comments,
 				eventKey,

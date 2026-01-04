@@ -9,7 +9,7 @@ import {
 	MatchSchema as MS
 } from '$lib/types/match';
 import { notify } from '$lib/utils/prompts';
-import { compress, type TraceArray } from 'tatorscout/trace';
+import { Trace } from 'tatorscout/trace';
 
 export namespace AppData {
 	const CACHE_VERSION = 'v2';
@@ -158,7 +158,7 @@ export namespace AppData {
 						if (parsed.success) {
 							const data = {
 								...parsed.data,
-								trace: compress(parsed.data.trace as TraceArray)
+								trace: Trace.parse(parsed.data.trace).unwrap().serialize(true),
 							};
 
 							return (await downloadMatch(data)).unwrap();
