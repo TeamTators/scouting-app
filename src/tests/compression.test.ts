@@ -2,7 +2,6 @@ import type { CompressedMatchSchemaType } from '$lib/types/match';
 import { Trace } from 'tatorscout/trace';
 import { describe, it, expect } from 'vitest';
 import { compress, decompress } from '$lib/server/utils/compression';
-import { deepEqual } from 'assert';
 
 describe('Compression utilities', () => {
 	it('Create compressed data and decompress it back', async () => {
@@ -35,7 +34,6 @@ describe('Compression utilities', () => {
 
 		const compressed = compress(match).unwrap();
 		const decompressed = decompress(Buffer.from(compressed)).unwrap();
-		expect(decompressed).toBeDefined();
-		deepEqual(decompressed, match);
+		expect(decompressed).toEqual(match);
 	});
 });
