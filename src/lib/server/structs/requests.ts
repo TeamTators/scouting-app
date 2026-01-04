@@ -8,28 +8,29 @@ import { Account } from './account';
 import { MatchSchema, TeamSchema, EventSchema } from 'tatorscout/tba';
 import { AssignmentSchema } from 'tatorscout/scout-groups';
 import { Loop } from 'ts-utils/loop';
-import { MatchSchema as MS, type MatchSchemaType } from '../../types/match';
+import { CompressedMatchSchema as MS, type CompressedMatchSchemaType } from '../../types/match';
+import { compress } from '../utils/compression';
 import terminal from '../utils/terminal';
 import { Queue } from 'ts-utils/queue';
 import { config } from '../utils/env';
 
 const { SECRET_SERVER_API_KEY, SECRET_SERVER_DOMAIN, REMOTE } = process.env;
 export namespace Requests {
-	const post = (url: string, data: unknown) => {
-		return attemptAsync(async () => {
-			const res = await fetch(SECRET_SERVER_DOMAIN + '/event-server' + url, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'X-API-KEY': SECRET_SERVER_API_KEY || ''
-				},
-				body: JSON.stringify(data)
-			});
+	// const post = (url: string, data: unknown) => {
+	// 	return attemptAsync(async () => {
+	// 		const res = await fetch(SECRET_SERVER_DOMAIN + '/event-server' + url, {
+	// 			method: 'POST',
+	// 			headers: {
+	// 				'Content-Type': 'application/json',
+	// 				'X-API-KEY': SECRET_SERVER_API_KEY || ''
+	// 			},
+	// 			body: JSON.stringify(data)
+	// 		});
 
-			if (res.ok) return true;
-			else throw new Error('Failed to send data');
-		});
-	};
+	// 		if (res.ok) return true;
+	// 		else throw new Error('Failed to send data');
+	// 	});
+	// };
 
 	export const CachedRequests = new Struct({
 		name: 'cached_requests',
@@ -92,15 +93,17 @@ export namespace Requests {
 	};
 
 	export const queue = new Queue(
-		async (data: {
-			body: MatchSchemaType & {
-				remote: boolean;
-			};
-			matchData: Scouting.MatchData;
-		}) => {
-			const res = await post('/submit-match', data.body);
+		async (data: { body: ArrayBuffer; matchData: Scouting.MatchData }) => {
+			const res = await fetch(SECRET_SERVER_DOMAIN + '/event-server/submit-match/compressed', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/octet-stream',
+					'X-API-KEY': SECRET_SERVER_API_KEY || ''
+				},
+				body: data.body
+			});
 
-			if (res.isOk()) {
+			if (res.ok) {
 				await data.matchData.delete();
 				return true;
 			}
@@ -117,7 +120,7 @@ export namespace Requests {
 
 	queue.init();
 
-	export const submitMatch = (match: MatchSchemaType) => {
+	export const submitMatch = (match: CompressedMatchSchemaType) => {
 		return attemptAsync(async () => {
 			const parsed = MS.safeParse(match);
 			if (!parsed.success) {
@@ -139,9 +142,21 @@ export namespace Requests {
 				})
 			).unwrap();
 
+			const payload = compress(body).unwrap();
+			const arrayBuffer = new Uint8Array(payload).buffer;
+
+			// return post('/submit-match/compressed', payload).unwrap();
+			// return fetch(SECRET_SERVER_DOMAIN + '/event-server/submit-match/compressed', {
+			// 	method: 'POST',
+			// 	headers: {
+			// 		'Content-Type': 'application/octet-stream',
+			// 		'X-API-KEY': SECRET_SERVER_API_KEY || ''
+			// 	},
+			// 	body: arrayBuffer
+			// });
 			return queue
 				.enqueue({
-					body,
+					body: arrayBuffer,
 					matchData
 				})
 				.unwrap();

@@ -3,7 +3,7 @@
 	import type { TBAEvent } from 'tatorscout/tba';
 	import { AppData } from '$lib/model/app/data-pull';
 	import { goto } from '$app/navigation';
-    import { page } from '$app/state';
+	import { page } from '$app/state';
 
 	let events: TBAEvent[] = $state([]);
 	let eventKey = $state('');
