@@ -20,14 +20,21 @@ export default defineConfig({
 		allowedHosts: [
 			'dev.tsaxking.com',
 			'dev.tatorscout.org',
-			'sophie.tatorscout.org',
 			'sylvie.tatorscout.org',
-			'app.sophie.tatorscout.org'
+			'app.sophie.tatorscout.org',
+			'sophie.tatorscout.org',
+			'landon.tatorscout.org',
+			'anvita.tatorscout.org',
+			'daniel.tatorscout.org'
 		]
 	},
 	define: {
 		__APP_ENV__: JSON.stringify({
-			name: config.app_name
+			environment: config.environment,
+			name: config.app_name,
+			indexed_db: config.indexed_db,
+			struct_cache: config.struct_cache,
+			struct_batching: config.struct_batching
 		})
 	}
 });

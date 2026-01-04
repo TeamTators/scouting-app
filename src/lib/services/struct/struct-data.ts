@@ -9,10 +9,11 @@ import {
 	type StatusMessage,
 	type Structable
 } from './index';
-import { type Writable, type Readable } from 'svelte/store';
+import { type Readable } from 'svelte/store';
 import { DataAction, PropertyAction } from 'drizzle-struct/types';
 import { z } from 'zod';
 import { StructDataVersion, type VersionStructable } from './data-version';
+import { WritableArray, WritableBase } from '$lib/writables';
 
 /**
  * Struct data for a single data point
@@ -21,9 +22,9 @@ import { StructDataVersion, type VersionStructable } from './data-version';
  * @class StructData
  * @typedef {StructData}
  * @template {Blank} T
- * @implements {Writable<PartialStructable<T & GlobalCols>>}
+ * @extends {WritableBase<PartialStructable<T & GlobalCols>>}
  */
-export class StructData<T extends Blank> implements Writable<PartialStructable<T & GlobalCols>> {
+export class StructData<T extends Blank> extends WritableBase<PartialStructable<T & GlobalCols>> {
 	/**
 	 * Creates an instance of StructData.
 	 *
@@ -34,41 +35,8 @@ export class StructData<T extends Blank> implements Writable<PartialStructable<T
 	constructor(
 		public readonly struct: Struct<T>,
 		public data: PartialStructable<T> & PartialStructable<GlobalCols>
-	) {}
-
-	/**
-	 * Svelte store subscribers, used to automatically update the view
-	 *
-	 * @private
-	 * @type {*}
-	 */
-	private subscribers = new Set<(value: PartialStructable<T & GlobalCols>) => void>();
-
-	/**
-	 * Subscribe to the data
-	 *
-	 * @public
-	 * @param {(value:  PartialStructable<T & GlobalCols>) => void} fn
-	 * @returns {() => void}
-	 */
-	public subscribe(fn: (value: PartialStructable<T & GlobalCols>) => void): () => void {
-		this.subscribers.add(fn);
-		fn(this.data);
-		return () => {
-			this.subscribers.delete(fn);
-		};
-	}
-
-	// this is what will set in the store
-	/**
-	 * Sets the data and updates the subscribers, this will not update the backend
-	 *
-	 * @public
-	 * @param {(PartialStructable<T & GlobalCols>)} value
-	 */
-	public set(value: PartialStructable<T & GlobalCols>): void {
-		this.data = value;
-		this.subscribers.forEach((fn) => fn(value));
+	) {
+		super(data);
 	}
 
 	// this is what will send to the backend
@@ -103,13 +71,13 @@ export class StructData<T extends Blank> implements Writable<PartialStructable<T
 			delete result.canUpdate;
 
 			const res = (
-				await this.struct.post(PropertyAction.Update, {
+				await this.struct.postReq(PropertyAction.Update, {
 					data: result,
 					id: this.data.id
 				})
 			).unwrap();
 			return {
-				result: (await res.json()) as StatusMessage,
+				result: res,
 				undo: () => this.update(() => prev)
 			};
 		});
@@ -129,10 +97,10 @@ export class StructData<T extends Blank> implements Writable<PartialStructable<T
 				})
 				.parse(
 					await this.struct
-						.post(DataAction.Delete, {
+						.postReq(DataAction.Delete, {
 							id: this.data.id
 						})
-						.then((r) => r.unwrap().json())
+						.then((r) => r.unwrap())
 				);
 		});
 	}
@@ -153,10 +121,10 @@ export class StructData<T extends Blank> implements Writable<PartialStructable<T
 					})
 					.parse(
 						await this.struct
-							.post(DataAction.Archive, {
+							.postReq(DataAction.Archive, {
 								id: this.data.id
 							})
-							.then((r) => r.unwrap().json())
+							.then((r) => r.unwrap())
 					);
 			}
 			return z
@@ -166,10 +134,10 @@ export class StructData<T extends Blank> implements Writable<PartialStructable<T
 				})
 				.parse(
 					await this.struct
-						.post(DataAction.RestoreArchive, {
+						.postReq(DataAction.RestoreArchive, {
 							id: this.data.id
 						})
-						.then((r) => r.unwrap().json())
+						.then((r) => r.unwrap())
 				);
 		});
 	}
@@ -255,18 +223,22 @@ export class StructData<T extends Blank> implements Writable<PartialStructable<T
 			}
 
 			const res = await this.struct
-				.post(PropertyAction.SetAttributes, {
+				.postReq(PropertyAction.SetAttributes, {
 					id: this.data.id,
 					attributes
 				})
 				.unwrap();
 
-			const result = (await res.json()) as StatusMessage<string[]>;
+			const result = res as StatusMessage<string[]>;
 			if (!result.success) {
 				throw new DataError(result.message || 'Failed to set attributes');
 			}
 
-			this.data.attributes = JSON.stringify(result.data);
+			// this.data.attributes = JSON.stringify(result.data);
+			Object.assign(this.data, {
+				attributes: JSON.stringify(result.data)
+			});
+			this.inform();
 			return this.getAttributes().unwrap();
 		});
 	}
@@ -303,11 +275,18 @@ export class StructData<T extends Blank> implements Writable<PartialStructable<T
 	 *
 	 * @returns {*}
 	 */
-	getVersions() {
+	getVersions(config?: {
+		cache?: {
+			expires: Date;
+		};
+	}) {
 		return attemptAsync(async () => {
 			const versions = (await this.struct
-				.post(PropertyAction.ReadVersionHistory, {
-					id: this.data.id
+				.getReq(PropertyAction.ReadVersionHistory, {
+					data: {
+						id: this.data.id
+					},
+					cache: config?.cache
 				})
 				.then((r) => r.unwrap().json())) as StatusMessage<VersionStructable<T>[]>;
 
@@ -315,7 +294,13 @@ export class StructData<T extends Blank> implements Writable<PartialStructable<T
 				throw new DataError(versions.message || 'Failed to get versions');
 			}
 
-			return versions.data?.map((v) => new StructDataVersion(this.struct, v)) || [];
+			return new WritableArray(
+				versions.data?.map((v) => new StructDataVersion(this.struct, v)) || []
+			);
 		});
+	}
+
+	staging() {
+		return this.struct.Stage(this);
 	}
 }

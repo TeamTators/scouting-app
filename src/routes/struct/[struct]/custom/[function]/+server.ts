@@ -2,7 +2,7 @@ import { Errors, EventErrorCode, EventSuccessCode, status } from '$lib/server/ev
 import { Struct } from 'drizzle-struct/back-end';
 import { SendListener } from '$lib/server/services/struct-listeners';
 
-export const POST = async (event) => {
+export const GET = async (event) => {
 	// console.log('Custom request:', event.params.struct, event.params.function);
 	// if (event.params.struct !== 'test') {
 	// 	if (!event.locals.account) return Errors.noAccount();
@@ -13,7 +13,7 @@ export const POST = async (event) => {
 	if (!struct.frontend) {
 		return Errors.noFrontend(struct.name);
 	}
-	const body = await event.request.json();
+	const body = JSON.parse(event.request.headers.get('X-Body') || '{}');
 
 	const res = await SendListener.run(event, struct, event.params.function, body);
 	if (res.isErr()) {

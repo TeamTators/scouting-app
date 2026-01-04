@@ -4,7 +4,7 @@
 	"properties": {
 		"environment": {
 			"type": "string",
-			"enum": ["dev", "prod", "test"],
+			"enum": ["dev", "prod", "test", "staging"],
 			"description": "Application environment"
 		},
 		"app_name": {
@@ -81,14 +81,9 @@
 					"type": "integer",
 					"minimum": 0,
 					"description": "Password reset request lifetime in milliseconds"
-				},
-				"fingerprint_secret": {
-					"type": "string",
-					"minLength": 1,
-					"description": "Secret for fingerprinting sessions"
 				}
 			},
-			"required": ["duration", "password_request_lifetime", "fingerprint_secret"],
+			"required": ["duration", "password_request_lifetime"],
 			"additionalProperties": false
 		},
 		"redis": {
@@ -245,6 +240,88 @@
 				"limit",
 				"timeout"
 			]
+		},
+		"struct_cache": {
+			"description": "Struct caching configuration",
+			"type": "object",
+			"properties": {
+				"enabled": {
+					"type": "boolean",
+					"description": "Whether struct caching is enabled"
+				},
+				"debug": {
+					"type": "boolean",
+					"description": "Whether to enable debug mode for IndexedDB"
+				}
+			},
+			"required": ["enabled", "debug"],
+			"additionalProperties": false
+		},
+		"indexed_db": {
+			"description": "IndexedDB configuration",
+			"type": "object",
+			"properties": {
+				"enabled": {
+					"type": "boolean",
+					"description": "Whether IndexedDB is enabled"
+				},
+				"db_name": {
+					"type": "string",
+					"description": "Name of the IndexedDB database"
+				},
+				"version": {
+					"type": "integer",
+					"minimum": 1,
+					"description": "Version of the IndexedDB database"
+				},
+				"debug": {
+					"type": "boolean",
+					"description": "Whether to enable debug mode for IndexedDB"
+				},
+				"debounce_interval_ms": {
+					"type": "integer",
+					"minimum": 0,
+					"description": "Debounce interval for IndexedDB operations in milliseconds"
+				}
+			},
+			"required": ["enabled", "db_name", "version", "debug", "debounce_interval_ms"],
+			"additionalProperties": false
+		},
+		"struct_batching": {
+			"description": "Struct batching configuration",
+			"type": "object",
+			"properties": {
+				"enabled": {
+					"type": "boolean",
+					"description": "Whether struct batching is enabled"
+				},
+				"interval": {
+					"type": "integer",
+					"minimum": 1,
+					"description": "Batching interval in milliseconds"
+				},
+				"timeout": {
+					"type": "integer",
+					"minimum": 1,
+					"description": "Batching timeout in milliseconds"
+				},
+				"limit": {
+					"type": "integer",
+					"minimum": 1,
+					"description": "Maximum number of items to batch"
+				},
+				"batch_size": {
+					"type": "integer",
+					"minimum": 1,
+					"description": "Size of each batch"
+				},
+				"debug": {
+					"type": "boolean",
+					"description": "Whether to enable debug mode for struct batching"
+				}
+			},
+			"required": ["enabled", "interval", "timeout", "limit", "batch_size", "debug"],
+			"additionalProperties": false
 		}
 	},
 	"required": [
@@ -259,7 +336,10 @@
 		"email",
 		"ntp",
 		"limiting",
-		"match_queue"
+		"match_queue",
+		"struct_cache",
+		"struct_batching",
+		"indexed_db"
 	],
 	"additionalProperties": false
 }

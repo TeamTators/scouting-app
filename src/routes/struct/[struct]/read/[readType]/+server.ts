@@ -1,11 +1,12 @@
 import { Errors } from '$lib/server/event-handler.js';
 import { Permissions } from '$lib/server/structs/permissions.js';
 import terminal from '$lib/server/utils/terminal.js';
+import { fail } from '@sveltejs/kit';
 import { Struct, StructData, type Blank } from 'drizzle-struct/back-end';
 import { PropertyAction } from 'drizzle-struct/types';
 import { z } from 'zod';
 
-export const POST = async (event) => {
+export const GET = async (event) => {
 	// console.log('Read request for struct:', event.params.struct, event.params.readType);
 	if (event.params.struct !== 'test') {
 		if (!event.locals.account) return Errors.noAccount();
@@ -18,7 +19,9 @@ export const POST = async (event) => {
 	}
 
 	// console.log(event.params.readType, 'is the read type');
-	const body = await event.request.json();
+
+	const body = JSON.parse(event.request.headers.get('X-Body') || '{}');
+
 	const safeBody = z
 		.object({
 			args: z.unknown()
@@ -42,14 +45,41 @@ export const POST = async (event) => {
 		}
 	}
 
+	const paginated = event.url.searchParams.get('pagination') === 'true';
+	const page = Number(event.url.searchParams.get('page') || '0');
+	const size = Number(event.url.searchParams.get('size') || '10');
+
 	let data: StructData<Blank, string>[] = [];
+	let total = 0;
 	try {
 		switch (event.params.readType) {
 			case 'all':
-				data = await struct.all({ type: 'all' }).unwrap();
+				if (paginated) {
+					data = await struct
+						.all({
+							type: 'array',
+							limit: size,
+							offset: page * size
+						})
+						.unwrap();
+					total = await struct.all({ type: 'count' }).unwrap();
+				} else {
+					data = await struct.all({ type: 'all' }).unwrap();
+				}
 				break;
 			case 'archived':
-				data = await struct.archived({ type: 'all' }).unwrap();
+				if (paginated) {
+					data = await struct
+						.archived({
+							type: 'array',
+							limit: size,
+							offset: page * size
+						})
+						.unwrap();
+					total = await struct.archived({ type: 'count' }).unwrap();
+				} else {
+					data = await struct.archived({ type: 'all' }).unwrap();
+				}
 				break;
 			case 'property':
 				{
@@ -59,14 +89,38 @@ export const POST = async (event) => {
 							value: z.unknown()
 						})
 						.parse(safeBody.data.args);
-					data = await struct
-						.fromProperty(
-							safe.key,
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
-							safe.value as any,
-							{ type: 'all' }
-						)
-						.unwrap();
+					if (paginated) {
+						data = await struct
+							.fromProperty(
+								safe.key,
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any
+								safe.value as any,
+								{
+									type: 'array',
+									limit: size,
+									offset: page * size
+								}
+							)
+							.unwrap();
+
+						total = await struct
+							.fromProperty(
+								safe.key,
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any
+								safe.value as any,
+								{ type: 'count' }
+							)
+							.unwrap();
+					} else {
+						data = await struct
+							.fromProperty(
+								safe.key,
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any
+								safe.value as any,
+								{ type: 'all' }
+							)
+							.unwrap();
+					}
 				}
 				break;
 			case 'from-id':
@@ -94,6 +148,51 @@ export const POST = async (event) => {
 					data = [found];
 				}
 				break;
+			case 'from-ids':
+				{
+					if (paginated) {
+						throw fail(400, 'Pagination is not supported for from-ids read type.');
+					}
+					const safe = z
+						.object({
+							ids: z.array(z.string())
+						})
+						.parse(safeBody.data.args);
+					data = await struct
+						.fromIds(safe.ids, {
+							type: 'all'
+						})
+						.unwrap();
+				}
+				break;
+			case 'get': {
+				const safe = z
+					.record(z.union([z.string(), z.number(), z.boolean(), z.null()]))
+					.parse(safeBody.data.args);
+				if (paginated) {
+					data = await struct
+						.get(
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							safe as any,
+							{
+								type: 'array',
+								limit: size,
+								offset: page * size
+							}
+						)
+						.unwrap();
+				} else {
+					data = await struct
+						.get(
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							safe as any,
+							{ type: 'all' }
+						)
+						.unwrap();
+				}
+				// Read by multiple properties
+				break;
+			}
 			default:
 				terminal.error('Invalid read type:', event.params.readType);
 				return new Response(
@@ -142,7 +241,8 @@ export const POST = async (event) => {
 		{
 			status: 200,
 			headers: {
-				'Content-Type': 'application/json'
+				'Content-Type': 'application/json',
+				'X-Total-Count': String(total)
 			}
 		}
 	);
