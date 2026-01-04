@@ -47,12 +47,12 @@ export namespace Scouting {
 
 	export const submitStale = (event: string) => {
 		Matches.fromProperty('eventKey', event, {
-			type: 'stream',
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			type: 'stream'
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		}).pipe((m) => Requests.submitMatch(JSON.parse(m.data.body) as any));
 
 		return Requests.queue.flush();
-	}
+	};
 }
 
 export const _matches = Scouting.Matches.table;

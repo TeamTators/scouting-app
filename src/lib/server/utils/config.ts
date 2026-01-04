@@ -56,7 +56,7 @@ export default z.object({
 		concurrency: z.number().min(1),
 		interval: z.number().min(1),
 		limit: z.number().min(1),
-		timeout: z.number().min(1),
+		timeout: z.number().min(1)
 	}),
 	struct_batching: z.object({
 		enabled: z.boolean(),

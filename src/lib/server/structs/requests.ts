@@ -91,24 +91,29 @@ export namespace Requests {
 		});
 	};
 
-	export const queue = new Queue( async (data: {
-				body: MatchSchemaType & {
+	export const queue = new Queue(
+		async (data: {
+			body: MatchSchemaType & {
 				remote: boolean;
-			},
+			};
 			matchData: Scouting.MatchData;
 		}) => {
 			const res = await post('/submit-match', data.body);
 
 			if (res.isOk()) {
 				await data.matchData.delete();
+				return true;
 			}
-		}, {
-		concurrency: config.match_queue.concurrency,
-		interval: config.match_queue.interval,
-		limit: config.match_queue.limit,
-		timeout: config.match_queue.timeout,
-		type: 'fifo',
-	});
+			return false;
+		},
+		{
+			concurrency: config.match_queue.concurrency,
+			interval: config.match_queue.interval,
+			limit: config.match_queue.limit,
+			timeout: config.match_queue.timeout,
+			type: 'fifo'
+		}
+	);
 
 	queue.init();
 
@@ -134,10 +139,12 @@ export namespace Requests {
 				})
 			).unwrap();
 
-			return queue.enqueue({
-				body,
-				matchData
-			}).unwrap();
+			return queue
+				.enqueue({
+					body,
+					matchData
+				})
+				.unwrap();
 		});
 	};
 
