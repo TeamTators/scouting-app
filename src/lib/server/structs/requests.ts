@@ -16,21 +16,21 @@ import { config } from '../utils/env';
 
 const { SECRET_SERVER_API_KEY, SECRET_SERVER_DOMAIN, REMOTE } = process.env;
 export namespace Requests {
-	const post = (url: string, data: unknown) => {
-		return attemptAsync(async () => {
-			const res = await fetch(SECRET_SERVER_DOMAIN + '/event-server' + url, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'X-API-KEY': SECRET_SERVER_API_KEY || ''
-				},
-				body: JSON.stringify(data)
-			});
+	// const post = (url: string, data: unknown) => {
+	// 	return attemptAsync(async () => {
+	// 		const res = await fetch(SECRET_SERVER_DOMAIN + '/event-server' + url, {
+	// 			method: 'POST',
+	// 			headers: {
+	// 				'Content-Type': 'application/json',
+	// 				'X-API-KEY': SECRET_SERVER_API_KEY || ''
+	// 			},
+	// 			body: JSON.stringify(data)
+	// 		});
 
-			if (res.ok) return true;
-			else throw new Error('Failed to send data');
-		});
-	};
+	// 		if (res.ok) return true;
+	// 		else throw new Error('Failed to send data');
+	// 	});
+	// };
 
 	export const CachedRequests = new Struct({
 		name: 'cached_requests',
@@ -94,9 +94,16 @@ export namespace Requests {
 
 	export const queue = new Queue(
 		async (data: { body: ArrayBuffer; matchData: Scouting.MatchData }) => {
-			const res = await post('/submit-match/compressed', data.body);
+			const res = await fetch(SECRET_SERVER_DOMAIN + '/event-server/submit-match/compressed', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/octet-stream',
+					'X-API-KEY': SECRET_SERVER_API_KEY || ''
+				},
+				body: data.body
+			});
 
-			if (res.isOk()) {
+			if (res.ok) {
 				await data.matchData.delete();
 				return true;
 			}
