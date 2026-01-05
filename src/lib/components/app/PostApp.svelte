@@ -8,7 +8,6 @@
 
 	export const render = (app: App) => {
 		if (summary) {
-			console.log('Destroying previous summary view');
 			summary.destroy();
 
 			target.parentElement?.querySelector('.slider-container')?.remove();

@@ -3,7 +3,6 @@ import { App } from '../app';
 import { Color } from 'colors/color';
 import type { Point2D } from 'math/point';
 import { AppObject } from '../app-object';
-import { Img } from 'canvas/image';
 import { isInside } from 'math/polygon';
 import YearInfo2025 from 'tatorscout/years/2025.js';
 
@@ -303,43 +302,43 @@ export default (config: {
 		staticY: false
 	});
 
-	const redZone = app.view.addArea({
+	const _redZone = app.view.addArea({
 		color: Color.fromName('red').setAlpha(0.5),
 		condition: () => true,
 		points: alliances.red,
 		zone: 'RedZone'
 	});
-	const blueZone = app.view.addArea({
+	const _blueZone = app.view.addArea({
 		color: Color.fromName('blue').setAlpha(0.5),
 		condition: () => true,
 		points: alliances.blue,
 		zone: 'BlueZone'
 	});
-	const blueCoral = app.view.addArea({
+	const _blueCoral = app.view.addArea({
 		color: Color.fromName('blue').setAlpha(0.5),
 		condition: () => true,
 		points: coralStation.blue,
 		zone: 'BlueCoral'
 	});
-	const redCoral = app.view.addArea({
+	const _redCoral = app.view.addArea({
 		color: Color.fromName('red').setAlpha(0.5),
 		condition: () => true,
 		points: coralStation.red,
 		zone: 'RedCoral'
 	});
-	const redEnd = app.view.addArea({
+	const _redEnd = app.view.addArea({
 		color: Color.fromName('red').setAlpha(0.5),
 		condition: () => true,
 		points: endZone.red,
 		zone: 'RedEnd'
 	});
-	const blueEnd = app.view.addArea({
+	const _blueEnd = app.view.addArea({
 		color: Color.fromName('blue').setAlpha(0.5),
 		condition: () => true,
 		points: endZone.blue,
 		zone: 'BlueEnd'
 	});
-	const middleZone = app.view.addArea({
+	const _middleZone = app.view.addArea({
 		color: Color.fromName('black').setAlpha(0.5),
 		condition: () => true,
 		points: middle,

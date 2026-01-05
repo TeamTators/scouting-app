@@ -19,7 +19,7 @@
 	}
 
 	const { timer }: Props = $props();
-	const running = timer.app.running;
+	const running = $derived(timer.app.running);
 
 	const matchData = $derived(timer.app.matchData);
 

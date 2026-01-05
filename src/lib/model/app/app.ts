@@ -18,7 +18,6 @@ import { Trace } from 'tatorscout/trace';
 // import { ScoreCorrection } from './score-correction';
 import type { YearInfo } from 'tatorscout/years';
 import { ScoreContribution } from './score-contribution';
-import { Color } from 'colors/color';
 
 export const TICKS_PER_SECOND = 4;
 export const SECTIONS = {
