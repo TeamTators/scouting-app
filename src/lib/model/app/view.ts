@@ -80,10 +80,9 @@ export class AppView {
 		this.target = target;
 		target.innerHTML = '';
 		target.style.position = 'relative';
-		target.style.height = '100vh';
 		target.style.overflow = 'hidden';
-		target.style.width = '100vw';
 		target.style.userSelect = 'none';
+		target.style.margin = 'auto';
 
 		this.container = document.createElement('div');
 		this.container.style.position = 'absolute';
@@ -320,6 +319,21 @@ export class AppView {
 
 	draw() {
 		if (!(this.svg && this.path && this.border && this.target)) return;
+{
+	// always keep aspect ratio 2:1
+	const viewWidth = window.innerWidth;
+	const viewHeight = window.innerHeight;
+
+	if (viewWidth / viewHeight > 2) {
+		this.target.style.width = `${viewHeight * 2}px`;
+		this.target.style.height = `${viewHeight}px`;
+	} else {
+		this.target.style.height = `${viewWidth / 2}px`;
+		this.target.style.width = `${viewWidth}px`;
+	}
+
+}
+
 		const { flipX, flipY } = globalData;
 
 		const getPoint = (point: Point2D): Point2D => {
