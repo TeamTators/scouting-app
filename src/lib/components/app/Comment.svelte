@@ -2,7 +2,6 @@
 	import type { Comment } from '$lib/model/app/comments';
 	import { onMount } from 'svelte';
 	import { capitalize, fromCamelCase } from 'ts-utils';
-	// import { onMount } from 'svelte';
 
 	interface Props {
 		comment: Comment;
