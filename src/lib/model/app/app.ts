@@ -7,10 +7,6 @@ import { EventEmitter } from 'ts-utils/event-emitter';
 import type { Point2D } from 'math/point';
 import { Loop } from 'ts-utils/loop';
 import { ActionState, type AppObject } from './app-object';
-import { browser } from '$app/environment';
-import { Circle } from 'canvas/circle';
-import { Polygon } from 'canvas/polygon';
-import { Color } from 'colors/color';
 import { Checks } from './checks';
 import { AppData } from './data-pull';
 import { writable } from 'svelte/store';
@@ -19,6 +15,9 @@ import { globalData } from './global-data.svelte';
 import type { CompressedMatchSchemaType } from '$lib/types/match';
 import { Comments } from './comments';
 import { Trace } from 'tatorscout/trace';
+// import { ScoreCorrection } from './score-correction';
+import type { YearInfo } from 'tatorscout/years';
+import { ScoreContribution } from './score-contribution';
 
 export const TICKS_PER_SECOND = 4;
 export const SECTIONS = {
@@ -60,6 +59,8 @@ export class App {
 	public readonly view: AppView;
 	public readonly checks: Checks;
 	public readonly comments: Comments;
+	// public readonly scoreCorrection: ScoreCorrection;
+	public readonly contribution: ScoreContribution;
 	public readonly gameObjects: {
 		point: Point2D;
 		object: AppObject;
@@ -79,6 +80,7 @@ export class App {
 			compLevel: CompLevel;
 			team: number;
 			alliance: 'red' | 'blue' | null;
+			yearInfo: YearInfo;
 		}>
 	) {
 		this.matchData = new MatchData(
@@ -94,6 +96,8 @@ export class App {
 		this.view = new AppView(this);
 		this.checks = new Checks(this);
 		this.comments = new Comments(this);
+		this.contribution = new ScoreContribution(this);
+		// this.scoreCorrection = new ScoreCorrection(this);
 	}
 
 	serialize() {
@@ -124,38 +128,24 @@ export class App {
 				alliance,
 				group,
 				sliders
+				// scoreCorrection: this.scoreCorrection.serialize(),
 			};
 		});
 	}
 
-	private _offState = () => {};
-	private _offView = () => {};
-	private _offData = () => {};
-	private _offCollected = () => {};
-	private _offComments = () => {};
-	private _target: HTMLElement | undefined;
-
-	private _deinit = () => {};
-
 	init(target: HTMLElement) {
-		this._target = target;
-		this._offState = this.state.init();
-		this._offComments = this.comments.init();
-		this._offView = this.view.init(target);
-		this._offData = this.matchData.init();
-		this._offCollected = this.checks.init();
+		this.state.init();
+		this.comments.init();
+		this.view.init(target);
+		this.matchData.init();
+	}
 
-		// for some reason, this code will never run. I have no idea why. not totally sure what it does either.
-		this._deinit = () => {
-			// console.log('Deinitializing app');
-			this._offState();
-			this._offComments();
-			this._offView();
-			this._offData();
-			this._offCollected();
-		};
-
-		return this._deinit;
+	// resets all stored data in the app
+	reset() {
+		this.state.init();
+		this.comments.reset();
+		this.checks.reset();
+		this.view.reset();
 	}
 
 	// Main event loop
@@ -218,7 +208,7 @@ export class App {
 			this.off('pause', pause);
 			loop.stop();
 			// loop.destroyEvents();
-			loop['em'].destroy();
+			loop['em'].destroyEvents();
 		};
 		this.on('pause', pause);
 
@@ -255,19 +245,6 @@ export class App {
 	resume() {
 		if (this.state.currentIndex !== -1) return this.emit('resume', undefined);
 		return this.start();
-	}
-
-	reset() {
-		this._offState();
-		this._offCollected();
-		this._offComments();
-
-		// this._deinit();
-		// i do not understand
-		// console.log('App reset.');
-		if (this._target) {
-			this.init(this._target);
-		}
 	}
 
 	goto(section: Section) {
@@ -319,9 +296,6 @@ export class App {
 
 		if (!config.button.innerHTML) config.button.innerText = config.object.config.name;
 		const defaultHTML = config.button.innerHTML;
-		config.button.style.position = 'absolute';
-		config.button.style.zIndex = '100';
-		config.button.style.transform = 'translate(-50%, -50%)';
 
 		config.object.on('change', (state) => {
 			if (!state.state) {
@@ -336,17 +310,13 @@ export class App {
 
 		config.button.onclick = () => {
 			config.object.update(this.state.currentLocation ?? undefined);
-			this.emit('action', {
-				action: config.object.config.abbr,
-				alliance: config.alliance,
-				point: this.state.currentLocation || [0, 0]
-			});
-			this.state.tick?.set(
+			this.state.tick?.setActionState(
 				new ActionState({
 					object: config.object as AppObject<unknown>,
 					state: config.object.state,
 					point: this.state.currentLocation || [0, 0]
-				}) as ActionState<unknown>
+				}) as ActionState<unknown>,
+				config.alliance
 			);
 		};
 
@@ -374,96 +344,71 @@ export class App {
 		config.button.addEventListener('mouseleave', end);
 		config.button.addEventListener('touchleave', end);
 	}
-
 	clickPoints(sigFigs: number) {
-		if (!browser) return;
-		const canvas = this.view.canvas;
-		if (!canvas) return;
-		const enable = () => {
-			console.log(`Enabling click points.
+		if (!Number.isInteger(sigFigs))
+			throw new Error('Cannot have non-integer number of sig figs. Recieved: ' + sigFigs);
+		console.log(`Click points enabled.
 To reset points: ctrl + r
 To view points: ctrl + v
-To disable: ctrl + d`);
-			if (!Number.isInteger(sigFigs))
-				throw new Error('Cannot have non-integer number of sig figs. Recieved: ' + sigFigs);
-			let points: [string, string][] = [];
-			let drawables: Circle[] = [];
-			const shape = new Polygon([]);
-			shape.fill = {
-				color: Color.fromName('gray').setAlpha(0.75).toString('rgba')
-			};
-			shape.line = {
-				color: 'transparent'
-			};
-			canvas.add(shape);
-			const reset = () => {
-				points = [];
-				canvas.remove(...drawables, shape);
-				drawables = [];
-			};
-			const add = (point: Point2D) => {
-				points.push([point[0].toFixed(sigFigs), point[1].toFixed(sigFigs)]);
-				const circle = new Circle(point, 0.01);
-				drawables.push(circle);
-				canvas.add(circle);
-				shape.points.push(point);
-			};
-			const view = () => {
-				console.log(`[
-    ${points.map((p) => `[${p[0]}, ${p[1]}]`).join(',\n    ')}
+To disable: ctrl + d
+To enable: ctrl + e`);
+		let points: [string, string][] = [];
+		const target = this.view.container;
+		if (!target) return;
+
+		const reset = () => {
+			points = [];
+		};
+
+		const add = (point: Point2D) => {
+			points.push([point[0].toFixed(sigFigs), point[1].toFixed(sigFigs)]);
+		};
+
+		const view = () => {
+			console.log(`[
+	${points.map((p) => `[${p[0]}, ${p[1]}]`).join(',\n    ')}
 ]`);
-			};
-
-			canvas.on('click', (e) => {
-				const [point] = e.points;
-				add(point);
-			});
-
-			const keydown = (e: KeyboardEvent) => {
-				// console.log('Keydown:', {
-				//     shift: e.shiftKey,
-				//     ctrl: e.ctrlKey,
-				//     key: e.key,
-				// })
-				if (e.ctrlKey) {
-					switch (e.key) {
-						case 'r':
-							e.preventDefault();
-							reset();
-							break;
-						case 'v':
-							e.preventDefault();
-							view();
-							break;
-						case 'd':
-							e.preventDefault();
-							console.log('Click points disabled.');
-							document.removeEventListener('keydown', keydown);
-							reset();
-							canvas.remove(shape);
-							enabler();
-							break;
-					}
-				}
-			};
-
-			document.addEventListener('keydown', keydown);
 		};
 
-		const enabler = () => {
-			console.log('Click points allowed, press ctrl + e to enable');
-
-			const keydownEnable = (e: KeyboardEvent) => {
-				if (e.ctrlKey && e.key === 'e') {
-					e.preventDefault();
-					enable();
-					document.removeEventListener('keydown', keydownEnable);
-				}
-			};
-			document.addEventListener('keydown', keydownEnable);
+		const onclick = (e: MouseEvent) => {
+			const rect = target.getBoundingClientRect();
+			const x = (e.clientX - rect.left) / rect.width;
+			const y = 8 - (e.clientY - rect.top) / rect.height;
+			add([x, y]);
 		};
 
-		enabler();
+		document.addEventListener('keydown', (e) => {
+			if (e.ctrlKey && enabled) {
+				e.preventDefault();
+				switch (e.key) {
+					case 'r':
+						reset();
+						break;
+					case 'v':
+						view();
+						break;
+					case 'd':
+						disable();
+						break;
+				}
+			}
+		});
+
+		let enabled = false;
+
+		const enable = () => {
+			enabled = true;
+			console.log('Click points enabled.');
+			target.addEventListener('click', onclick);
+		};
+
+		const disable = () => {
+			enabled = false;
+			console.log('Click points disabled.');
+			target.removeEventListener('click', onclick);
+		};
+
+		enable();
 	}
 
 	submit() {

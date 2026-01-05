@@ -11,23 +11,23 @@
 
 	const { app }: Props = $props();
 
-	const checks = app.checks;
-	const comments = app.comments;
+	const checks = $derived(app.checks);
+	const comments = $derived(app.comments);
 
-	const success = checks.writables.success;
-	const primary = checks.writables.primary;
-	const warning = checks.writables.warning;
-	const danger = checks.writables.danger;
+	const success = $derived(checks.writables.success);
+	const primary = $derived(checks.writables.primary);
+	const warning = $derived(checks.writables.warning);
+	const danger = $derived(checks.writables.danger);
 </script>
 
 {#snippet checksRow(checks: Check[], color: 'success' | 'primary' | 'warning' | 'danger')}
 	<div class="row mb-3">
 		<div
 			style="
-            display: grid;
-            grid-template-columns: repeat(var(--grid-size), 1fr);
-            gap: 8px;
-        "
+				display: grid;
+				grid-template-columns: repeat(var(--grid-size), 1fr);
+				gap: 8px;
+			"
 		>
 			{#each checks as check}
 				{#if check.data.render}

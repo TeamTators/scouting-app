@@ -23,6 +23,10 @@ export const MatchSchema = z.object({
 			color: z.string()
 		})
 	)
+	// scoreCorrection: z.object({
+	// 	auto: z.record(z.number()),
+	// 	teleop: z.record(z.number())
+	// }),
 });
 export type MatchSchemaType = z.infer<typeof MatchSchema>;
 
@@ -49,6 +53,10 @@ export const CompressedMatchSchema = z.object({
 			color: z.string()
 		})
 	)
+	// scoreCorrection: z.object({
+	// 	auto: z.record(z.number()),
+	// 	teleop: z.record(z.number())
+	// }),
 });
 
 export type CompressedMatchSchemaType = z.infer<typeof CompressedMatchSchema>;

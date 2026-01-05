@@ -1,7 +1,6 @@
 import { EventEmitter } from 'ts-utils/event-emitter';
 import { type Point2D } from 'math/point';
 import { Tick } from './tick';
-import { App } from './app';
 
 export class AppObject<T = unknown> {
 	private readonly em = new EventEmitter<{

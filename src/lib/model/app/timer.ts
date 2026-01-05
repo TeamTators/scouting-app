@@ -1,4 +1,4 @@
-import { TOTAL_TICKS, type App } from './app';
+import { type App } from './app';
 import TimerComponent from '$lib/components/app/Timer.svelte';
 import { mount } from 'svelte';
 import { type Writable } from 'svelte/store';
@@ -71,5 +71,13 @@ export class Timer implements Writable<{ second: number; section: string | null 
 			offSection();
 			offTick();
 		};
+	}
+
+	reset() {
+		this.set({
+			second: -1,
+			section: null,
+			index: -1
+		});
 	}
 }
