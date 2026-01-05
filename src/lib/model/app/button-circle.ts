@@ -214,25 +214,3 @@
 // 	}
 // }
 
-// const getAlliance = (data: {
-// 	matches: TBAMatch[];
-// 	matchNumber: number;
-// 	compLevel: string;
-// 	teamNumber: number;
-// }): 'red' | 'blue' | null => {
-// 	const match = data.matches.find(
-// 		(m) => m.match_number === data.matchNumber && m.comp_level === data.compLevel
-// 	);
-
-// 	if (!match) return null;
-
-// 	const teams = teamsFromMatch(match);
-
-// 	if (teams.slice(0, 4).includes(data.teamNumber)) {
-// 		return 'red';
-// 	}
-// 	if (teams.slice(4).includes(data.teamNumber)) {
-// 		return 'blue';
-// 	}
-// 	return null;
-// };
