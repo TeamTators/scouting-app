@@ -267,11 +267,11 @@
 									const data = await app?.matchData.next();
 									if (!data) {
 										goto(`/app/event/${eventKey}`);
-										return console.error('No next match data returned');
+										return;
 									}
 									if (data.isErr()) {
 										goto(`/app/event/${eventKey}`);
-										return console.error(data.error);
+										return;
 									}
 									goto(
 										`/app/event/${data.value.eventKey}/team/${data.value.team}/match/${data.value.compLevel}/${data.value.match}`
