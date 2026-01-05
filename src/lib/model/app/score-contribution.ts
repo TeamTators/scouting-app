@@ -28,7 +28,6 @@ export class ScoreContribution extends WritableBase<ScoreContributionData> {
 			const section = tick.section;
 			if (tick.action && section) {
 				const action = tick.action;
-				if (!action) continue;
 				switch (section) {
 					case 'auto':
 						newData.auto[action] = (newData.auto[action] || 0) + 1;
