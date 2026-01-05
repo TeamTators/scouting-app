@@ -340,7 +340,7 @@ export class AppView {
 
 		for (const obj of this.app.gameObjects) {
 			obj.element.style.position = 'absolute';
-			obj.element.style.transform = 'translate(-50%, -50%) !important;';
+			obj.element.style.transform = 'translate(-50%, -50%)';
 			const show = () => {
 				const [x, y] = obj.point;
 				const { staticX, staticY } = obj;
