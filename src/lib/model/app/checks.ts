@@ -1,36 +1,35 @@
-import { writable  } from 'svelte/store';
+import { writable } from 'svelte/store';
 import type { App } from './app';
 import { WritableArray, WritableBase } from '$lib/writables';
 import type { Comment } from './comments';
 
 type C =
-	{
-		value: boolean;
-		name: string;
-		doSlider: true;
-		type: 'success' | 'primary' | 'warning' | 'danger';
-		render: boolean;
-		slider: number;
-		values: [string, string, string, string, string];
-		color: [string, string, string, string, string];
-		alert: false | string;
-		doComment: boolean;
-		comment?: Comment;
-	}
 	| {
-		value: boolean;
-		name: string;
-		doSlider: false;
-		type: 'success' | 'primary' | 'warning' | 'danger';
-		render: boolean;
-		slider: 0;
-		alert: false | string;
-		doComment: boolean;
-		comment?: Comment;
-	};
+			value: boolean;
+			name: string;
+			doSlider: true;
+			type: 'success' | 'primary' | 'warning' | 'danger';
+			render: boolean;
+			slider: number;
+			values: [string, string, string, string, string];
+			color: [string, string, string, string, string];
+			alert: false | string;
+			doComment: boolean;
+			comment?: Comment;
+	  }
+	| {
+			value: boolean;
+			name: string;
+			doSlider: false;
+			type: 'success' | 'primary' | 'warning' | 'danger';
+			render: boolean;
+			slider: 0;
+			alert: false | string;
+			doComment: boolean;
+			comment?: Comment;
+	  };
 
-export class Check extends WritableBase<C> {
-}
+export class Check extends WritableBase<C> {}
 
 export class Checks extends WritableArray<Check> {
 	constructor(public readonly app: App) {
@@ -40,17 +39,18 @@ export class Checks extends WritableArray<Check> {
 	addCheck(
 		type: 'success' | 'primary' | 'warning' | 'danger',
 		check:
-			{
-				name: string;
-				slider: [string, string, string, string, string];
-				color: [string, string, string, string, string];
-				alert: false | string;
-				doComment: boolean;
-			} | {
-				name: string;
-				alert: false | string;
-				doComment: boolean;
-			}
+			| {
+					name: string;
+					slider: [string, string, string, string, string];
+					color: [string, string, string, string, string];
+					alert: false | string;
+					doComment: boolean;
+			  }
+			| {
+					name: string;
+					alert: false | string;
+					doComment: boolean;
+			  }
 			| string
 	) {
 		let c: Check;
@@ -63,7 +63,7 @@ export class Checks extends WritableArray<Check> {
 				render: true,
 				slider: 0,
 				doComment: false,
-				alert: false,
+				alert: false
 			});
 		} else {
 			let comment: Comment | undefined;
@@ -83,7 +83,7 @@ export class Checks extends WritableArray<Check> {
 					color: check.color,
 					alert: check.alert,
 					doComment: check.doComment,
-					comment,
+					comment
 				});
 			} else {
 				c = new Check({
@@ -95,7 +95,7 @@ export class Checks extends WritableArray<Check> {
 					slider: 0,
 					alert: check.alert,
 					doComment: check.doComment,
-					comment,
+					comment
 				});
 			}
 		}

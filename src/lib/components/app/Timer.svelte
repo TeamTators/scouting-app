@@ -57,7 +57,6 @@
 		position: fixed;
 		opacity: 0.7;
 		margin: auto;
-		z-index: 1050;
 	"
 >
 	<div class="card-body p-0">
@@ -218,6 +217,7 @@
 <style>
 	* {
 		transition: all 0.3s ease-in-out;
+		z-index: 100;
 	}
 
 	.do-hide {

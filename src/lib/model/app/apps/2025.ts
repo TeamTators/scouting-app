@@ -5,6 +5,7 @@ import type { Point2D } from 'math/point';
 import { AppObject } from '../app-object';
 import { Img } from 'canvas/image';
 import { isInside } from 'math/polygon';
+import YearInfo2025 from 'tatorscout/years/2025.js';
 
 export default (config: {
 	eventKey: string;
@@ -20,7 +21,8 @@ export default (config: {
 
 	const app = new App({
 		...config,
-		year: 2025
+		year: 2025,
+		yearInfo: YearInfo2025
 	});
 
 	const alliances: Zone = {
@@ -208,32 +210,32 @@ export default (config: {
 		object: blueObjects.cl1,
 		button: blueButtons.cl1,
 		alliance: 'blue',
-		staticX: true,
-		staticY: false
+		staticX: false,
+		staticY: true
 	});
 	app.addAppObject({
 		point: [0.267, 0.54],
 		object: blueObjects.cl2,
 		button: blueButtons.cl2,
 		alliance: 'blue',
-		staticX: true,
-		staticY: false
+		staticX: false,
+		staticY: true
 	});
 	app.addAppObject({
 		point: [0.267, 0.477],
 		object: blueObjects.cl3,
 		button: blueButtons.cl3,
 		alliance: 'blue',
-		staticX: true,
-		staticY: false
+		staticX: false,
+		staticY: true
 	});
 	app.addAppObject({
 		point: [0.267, 0.398],
 		object: blueObjects.cl4,
 		button: blueButtons.cl4,
 		alliance: 'blue',
-		staticX: true,
-		staticY: false
+		staticX: false,
+		staticY: true
 	});
 	app.addAppObject({
 		point: [0.5, 0.46],
@@ -257,32 +259,32 @@ export default (config: {
 		object: redObjects.cl1,
 		button: redButtons.cl1,
 		alliance: 'red',
-		staticX: true,
-		staticY: false
+		staticX: false,
+		staticY: true
 	});
 	app.addAppObject({
 		point: [0.733, 0.54],
 		object: redObjects.cl2,
 		button: redButtons.cl2,
 		alliance: 'red',
-		staticX: true,
-		staticY: false
+		staticX: false,
+		staticY: true
 	});
 	app.addAppObject({
 		point: [0.733, 0.477],
 		object: redObjects.cl3,
 		button: redButtons.cl3,
 		alliance: 'red',
-		staticX: true,
-		staticY: false
+		staticX: false,
+		staticY: true
 	});
 	app.addAppObject({
 		point: [0.733, 0.398],
 		object: redObjects.cl4,
 		button: redButtons.cl4,
 		alliance: 'red',
-		staticX: true,
-		staticY: false
+		staticX: false,
+		staticY: true
 	});
 	app.addAppObject({
 		point: [0.5, 0.54],
@@ -390,7 +392,7 @@ export default (config: {
 			slider: ['Very Slow', 'Slow', 'Medium', 'Fast', 'Very Fast'],
 			color: ['red', 'orange', 'yellow', 'green', 'blue'],
 			alert: false,
-			doComment: false,
+			doComment: false
 		})
 		.addCheck('success', 'stoleGamePieces')
 		.addCheck('success', 'coopertition')
@@ -405,7 +407,7 @@ export default (config: {
 			],
 			color: ['red', 'orange', 'yellow', 'green', 'blue'],
 			alert: false,
-			doComment: false,
+			doComment: false
 		})
 		.addCheck('primary', 'couldPlayDefense')
 		.addCheck('primary', {
@@ -413,14 +415,14 @@ export default (config: {
 			slider: ['Very Slow', 'Slow', 'Medium', 'Fast', 'Very Fast'],
 			color: ['red', 'orange', 'yellow', 'green', 'blue'],
 			alert: false,
-			doComment: false,
+			doComment: false
 		})
 		.addCheck('primary', {
 			name: 'groundPicksAlgae',
 			slider: ['Very Slow', 'Slow', 'Medium', 'Fast', 'Very Fast'],
 			color: ['red', 'orange', 'yellow', 'green', 'blue'],
 			alert: false,
-			doComment: false,
+			doComment: false
 		})
 		// .addCheck('primary', 'placesCoral')
 		// .addCheck('primary', 'placesAlgae')
@@ -441,7 +443,7 @@ export default (config: {
 				.linearFade(Color.fromHex('#FF7F00'), 5)
 				.colors.map((c) => c.toString('rgb')) as [string, string, string, string, string],
 			alert: false,
-			doComment: false,
+			doComment: false
 		})
 		.addCheck('danger', 'robotDied')
 		.addCheck('danger', 'problemsDriving')
@@ -451,7 +453,7 @@ export default (config: {
 			doComment: true,
 			alert: 'Does this robot harvest algae?',
 			slider: ['Very Slow', 'Slow', 'Medium', 'Fast', 'Very Fast'],
-			color: ['red', 'orange', 'yellow', 'green', 'blue'],
+			color: ['red', 'orange', 'yellow', 'green', 'blue']
 		});
 
 	app.on('tick', () => {
@@ -485,7 +487,7 @@ export default (config: {
 
 		// iterate backwards through checks, and if there's a climb, remove the parked check
 		for (let i = app.state.ticks.length - 1; i >= 0; i--) {
-			const tick = app.state.ticks[i];
+			const tick = app.state.ticks.data[i];
 			if (tick.action === 'dpc' || tick.action === 'shc') {
 				app.checks.setCheck('parked', false);
 				break;

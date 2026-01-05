@@ -1,7 +1,7 @@
 import { App } from './app';
 import { WritableArray, WritableBase } from '$lib/writables';
 
-export class Comment  extends WritableBase<[string, string]> {
+export class Comment extends WritableBase<[string, string]> {
 	public readonly subscribers = new Set<(value: [string, string]) => void>();
 
 	constructor(

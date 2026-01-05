@@ -92,7 +92,7 @@ export class ButtonCircle extends Drawable<ButtonCircle> {
 				alliance: config.alliance
 			});
 			if (button.iterator.state !== undefined)
-				this.app.state.tick?.set(
+				this.app.state.tick?.setActionState(
 					new ActionState({
 						object: button.iterator,
 						state: button.iterator.state,

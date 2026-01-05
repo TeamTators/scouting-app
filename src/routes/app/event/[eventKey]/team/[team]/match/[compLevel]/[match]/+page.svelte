@@ -87,34 +87,33 @@
 					check.inform();
 
 					if (check.data.doComment) {
-						const c = await prompt(
-							`Please provide more details about ${check.data.name}:`
-						);
-						if (c) check.data.comment?.update(([name, _]) => ([name, c]));
+						const c = await prompt(`Please provide more details about ${check.data.name}:`);
+						if (c) check.data.comment?.update(([name, _]) => [name, c]);
 						check.inform();
 					}
 
 					if (check.data.doSlider) {
-						const modal = rawModal('Select Slider Value', [
-							{
-								color: 'primary',
-								text: 'Done',
-								onClick: () => {
-									modal.hide();
-								}
-							},
-						], (body) => {
-							return mount(
-								Slider,
+						const modal = rawModal(
+							'Select Slider Value',
+							[
 								{
+									color: 'primary',
+									text: 'Done',
+									onClick: () => {
+										modal.hide();
+									}
+								}
+							],
+							(body) => {
+								return mount(Slider, {
 									target: body,
 									props: {
 										check,
-										color: 'primary',
+										color: 'primary'
 									}
-								}
-							);
-						});
+								});
+							}
+						);
 
 						modal.show();
 
@@ -174,7 +173,7 @@
 	});
 
 	let target: HTMLDivElement;
-	let exitFullscreen: () => void;
+	let exitFullscreen = $state(() => {});
 </script>
 
 <div class="position-relative" style="height: 100vh;" bind:this={target}>
@@ -269,9 +268,9 @@
 										`/app/event/${data.value.eventKey}/team/${data.value.team}/match/${data.value.compLevel}/${data.value.match}`
 									);
 									app?.matchData.set(data.value);
-										app?.reset();
-										page = 'app';
-										disableSubmit = false;
+									app?.reset();
+									page = 'app';
+									disableSubmit = false;
 								}}
 							>
 								<i class="material-icons"> file_upload </i>
@@ -290,7 +289,7 @@
 						</div>
 					</div>
 					<div class="row mb-3">
-						<PostApp {app} bind:this={postApp} />
+						<PostApp bind:this={postApp} />
 					</div>
 				</div>
 			</div>

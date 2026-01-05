@@ -8,8 +8,6 @@
 	}
 
 	const { comment }: Props = $props();
-
-	$inspect(comment);
 </script>
 
 {#key $comment}
@@ -17,7 +15,9 @@
 		<div class="col">
 			<div class="card" style="border-color: var(--bs-{comment.color})">
 				<div class="card-body">
-					<label for="comment-{comment.key}" class="form-label">{capitalize(fromCamelCase(comment.key))}:</label>
+					<label for="comment-{comment.key}" class="form-label"
+						>{capitalize(fromCamelCase(comment.key))}:</label
+					>
 					<textarea id="comment-{comment.key}" class="form-control" bind:value={$comment[1]}
 					></textarea>
 				</div>

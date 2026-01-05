@@ -1,21 +1,48 @@
 import type { Point2D } from 'math/point';
 import { App, TOTAL_TICKS, TICKS_PER_SECOND, SECTIONS, type Section } from './app';
-import { Tick } from './tick';
+import { Tick, Ticks } from './tick';
 import { type TraceArray } from 'tatorscout/trace';
+import { WritableBase } from '$lib/writables';
 
-export class AppState {
-	public currentLocation: Point2D | null;
+export class AppState extends WritableBase<{
+	currentLocation: Point2D | null;
+	currentIndex: number;
+}> {
 
-	public currentIndex: number;
-	public ticks: Tick[] = [];
+	public ticks: Ticks;
 
 	constructor(public readonly app: App) {
-		this.currentLocation = null;
-		this.currentIndex = -1;
+		super({
+			currentLocation: null,
+			currentIndex: -1
+		});
+		this.ticks = new Ticks(app);
+	}
+
+	get currentLocation() {
+		return this.data.currentLocation;
+	}
+
+	set currentLocation(value: Point2D | null) {
+		this.update(state => ({
+			...state,
+			currentLocation: value
+		}));
+	}
+
+	get currentIndex() {
+		return this.data.currentIndex;
+	}
+
+	set currentIndex(value: number) {
+		this.update(state => ({
+			...state,
+			currentIndex: value
+		}));
 	}
 
 	get tick(): Tick | undefined {
-		return this.ticks[this.currentIndex];
+		return this.ticks.data[this.currentIndex];
 	}
 
 	get section() {
@@ -32,7 +59,7 @@ export class AppState {
 
 	get lastLocation() {
 		for (let i = this.currentIndex; i >= 0; i--) {
-			const tick = this.ticks[i];
+			const tick = this.ticks.data[i];
 			if (tick.point) {
 				return tick.point;
 			}
@@ -43,23 +70,29 @@ export class AppState {
 	init() {
 		this.currentIndex = -1;
 		this.currentLocation = null;
-		this.ticks = Array.from(
+		this.ticks.set(Array.from(
 			{
 				length: TOTAL_TICKS
 			},
-			(_, i) => new Tick(i / TICKS_PER_SECOND, i, this.app)
-		);
+			(_, i) => {
+				const t = new Tick(i / TICKS_PER_SECOND, i, this.app);
+				this.ticks.pipe(t);
+				return t;
+			}
+		));
 	}
 
 	serialize() {
 		const toFixed = (num: number) => Math.round(num * 1000);
 		return this.ticks
+			.data
 			.filter((t) => !!t.point)
 			.map((t) => [t.index, toFixed(t.point?.[0] || 0), toFixed(t.point?.[1] || 0), t.action]);
 	}
 
 	traceArray(): TraceArray {
 		return this.ticks
+			.data
 			.filter((t) => !!t.point)
 			.map((t) => [t.index, t.point?.[0] || 0, t.point?.[1] || 0, t.action]);
 	}

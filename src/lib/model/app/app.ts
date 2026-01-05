@@ -7,10 +7,6 @@ import { EventEmitter } from 'ts-utils/event-emitter';
 import type { Point2D } from 'math/point';
 import { Loop } from 'ts-utils/loop';
 import { ActionState, type AppObject } from './app-object';
-import { browser } from '$app/environment';
-import { Circle } from 'canvas/circle';
-import { Polygon } from 'canvas/polygon';
-import { Color } from 'colors/color';
 import { Checks } from './checks';
 import { AppData } from './data-pull';
 import { writable } from 'svelte/store';
@@ -19,6 +15,8 @@ import { globalData } from './global-data.svelte';
 import type { CompressedMatchSchemaType } from '$lib/types/match';
 import { Comments } from './comments';
 import { Trace } from 'tatorscout/trace';
+import { ScoreCorrection } from './score-correction';
+import type { YearInfo } from 'tatorscout/years';
 
 export const TICKS_PER_SECOND = 4;
 export const SECTIONS = {
@@ -60,6 +58,7 @@ export class App {
 	public readonly view: AppView;
 	public readonly checks: Checks;
 	public readonly comments: Comments;
+	public readonly scoreCorrection: ScoreCorrection;
 	public readonly gameObjects: {
 		point: Point2D;
 		object: AppObject;
@@ -79,6 +78,7 @@ export class App {
 			compLevel: CompLevel;
 			team: number;
 			alliance: 'red' | 'blue' | null;
+			yearInfo: YearInfo;
 		}>
 	) {
 		this.matchData = new MatchData(
@@ -94,6 +94,7 @@ export class App {
 		this.view = new AppView(this);
 		this.checks = new Checks(this);
 		this.comments = new Comments(this);
+		this.scoreCorrection = new ScoreCorrection(this);
 	}
 
 	serialize() {
@@ -123,7 +124,8 @@ export class App {
 				practice,
 				alliance,
 				group,
-				sliders
+				sliders,
+				scoreCorrection: this.scoreCorrection.serialize(),
 			};
 		});
 	}
@@ -140,7 +142,7 @@ export class App {
 		this.state.init();
 		this.comments.reset();
 		this.checks.reset();
-		this.view.timer.reset();
+		this.view.reset();
 	}
 
 	// Main event loop
@@ -203,7 +205,7 @@ export class App {
 			this.off('pause', pause);
 			loop.stop();
 			// loop.destroyEvents();
-			loop['em'].destroy();
+			loop['em'].destroyEvents();
 		};
 		this.on('pause', pause);
 
@@ -313,7 +315,7 @@ export class App {
 				alliance: config.alliance,
 				point: this.state.currentLocation || [0, 0]
 			});
-			this.state.tick?.set(
+			this.state.tick?.setActionState(
 				new ActionState({
 					object: config.object as AppObject<unknown>,
 					state: config.object.state,
@@ -347,97 +349,97 @@ export class App {
 		config.button.addEventListener('touchleave', end);
 	}
 
-	clickPoints(sigFigs: number) {
-		if (!browser) return;
-		const canvas = this.view.canvas;
-		if (!canvas) return;
-		const enable = () => {
-			console.log(`Enabling click points.
-To reset points: ctrl + r
-To view points: ctrl + v
-To disable: ctrl + d`);
-			if (!Number.isInteger(sigFigs))
-				throw new Error('Cannot have non-integer number of sig figs. Recieved: ' + sigFigs);
-			let points: [string, string][] = [];
-			let drawables: Circle[] = [];
-			const shape = new Polygon([]);
-			shape.fill = {
-				color: Color.fromName('gray').setAlpha(0.75).toString('rgba')
-			};
-			shape.line = {
-				color: 'transparent'
-			};
-			canvas.add(shape);
-			const reset = () => {
-				points = [];
-				canvas.remove(...drawables, shape);
-				drawables = [];
-			};
-			const add = (point: Point2D) => {
-				points.push([point[0].toFixed(sigFigs), point[1].toFixed(sigFigs)]);
-				const circle = new Circle(point, 0.01);
-				drawables.push(circle);
-				canvas.add(circle);
-				shape.points.push(point);
-			};
-			const view = () => {
-				console.log(`[
-    ${points.map((p) => `[${p[0]}, ${p[1]}]`).join(',\n    ')}
-]`);
-			};
+// 	clickPoints(sigFigs: number) {
+// 		if (!browser) return;
+// 		const canvas = this.view.canvas;
+// 		if (!canvas) return;
+// 		const enable = () => {
+// 			console.log(`Enabling click points.
+// To reset points: ctrl + r
+// To view points: ctrl + v
+// To disable: ctrl + d`);
+// 			if (!Number.isInteger(sigFigs))
+// 				throw new Error('Cannot have non-integer number of sig figs. Recieved: ' + sigFigs);
+// 			let points: [string, string][] = [];
+// 			let drawables: Circle[] = [];
+// 			const shape = new Polygon([]);
+// 			shape.fill = {
+// 				color: Color.fromName('gray').setAlpha(0.75).toString('rgba')
+// 			};
+// 			shape.line = {
+// 				color: 'transparent'
+// 			};
+// 			canvas.add(shape);
+// 			const reset = () => {
+// 				points = [];
+// 				canvas.remove(...drawables, shape);
+// 				drawables = [];
+// 			};
+// 			const add = (point: Point2D) => {
+// 				points.push([point[0].toFixed(sigFigs), point[1].toFixed(sigFigs)]);
+// 				const circle = new Circle(point, 0.01);
+// 				drawables.push(circle);
+// 				canvas.add(circle);
+// 				shape.points.push(point);
+// 			};
+// 			const view = () => {
+// 				console.log(`[
+//     ${points.map((p) => `[${p[0]}, ${p[1]}]`).join(',\n    ')}
+// ]`);
+// 			};
 
-			canvas.on('click', (e) => {
-				const [point] = e.points;
-				add(point);
-			});
+// 			canvas.on('click', (e) => {
+// 				const [point] = e.points;
+// 				add(point);
+// 			});
 
-			const keydown = (e: KeyboardEvent) => {
-				// console.log('Keydown:', {
-				//     shift: e.shiftKey,
-				//     ctrl: e.ctrlKey,
-				//     key: e.key,
-				// })
-				if (e.ctrlKey) {
-					switch (e.key) {
-						case 'r':
-							e.preventDefault();
-							reset();
-							break;
-						case 'v':
-							e.preventDefault();
-							view();
-							break;
-						case 'd':
-							e.preventDefault();
-							console.log('Click points disabled.');
-							document.removeEventListener('keydown', keydown);
-							reset();
-							canvas.remove(shape);
-							enabler();
-							break;
-					}
-				}
-			};
+// 			const keydown = (e: KeyboardEvent) => {
+// 				// console.log('Keydown:', {
+// 				//     shift: e.shiftKey,
+// 				//     ctrl: e.ctrlKey,
+// 				//     key: e.key,
+// 				// })
+// 				if (e.ctrlKey) {
+// 					switch (e.key) {
+// 						case 'r':
+// 							e.preventDefault();
+// 							reset();
+// 							break;
+// 						case 'v':
+// 							e.preventDefault();
+// 							view();
+// 							break;
+// 						case 'd':
+// 							e.preventDefault();
+// 							console.log('Click points disabled.');
+// 							document.removeEventListener('keydown', keydown);
+// 							reset();
+// 							canvas.remove(shape);
+// 							enabler();
+// 							break;
+// 					}
+// 				}
+// 			};
 
-			document.addEventListener('keydown', keydown);
-		};
+// 			document.addEventListener('keydown', keydown);
+// 		};
 
-		const enabler = () => {
-			console.log('Click points allowed, press ctrl + e to enable');
+// 		const enabler = () => {
+// 			console.log('Click points allowed, press ctrl + e to enable');
 
-			const keydownEnable = (e: KeyboardEvent) => {
-				if (e.ctrlKey && e.key === 'e') {
-					e.preventDefault();
-					enable();
-					document.removeEventListener('keydown', keydownEnable);
-				}
-			};
-			document.addEventListener('keydown', keydownEnable);
-		};
+// 			const keydownEnable = (e: KeyboardEvent) => {
+// 				if (e.ctrlKey && e.key === 'e') {
+// 					e.preventDefault();
+// 					enable();
+// 					document.removeEventListener('keydown', keydownEnable);
+// 				}
+// 			};
+// 			document.addEventListener('keydown', keydownEnable);
+// 		};
 
-		enabler();
-	}
-
+// 		enabler();
+// 	}
+	clickPoints(sigFigs: number) {}
 	submit() {
 		return attemptAsync(async () => {
 			const serialized = (await this.serialize()).unwrap();
