@@ -319,20 +319,19 @@ export class AppView {
 
 	draw() {
 		if (!(this.svg && this.path && this.border && this.target)) return;
-{
-	// always keep aspect ratio 2:1
-	const viewWidth = window.innerWidth;
-	const viewHeight = window.innerHeight;
+		{
+			// always keep aspect ratio 2:1
+			const viewWidth = window.innerWidth;
+			const viewHeight = window.innerHeight;
 
-	if (viewWidth / viewHeight > 2) {
-		this.target.style.width = `${viewHeight * 2}px`;
-		this.target.style.height = `${viewHeight}px`;
-	} else {
-		this.target.style.height = `${viewWidth / 2}px`;
-		this.target.style.width = `${viewWidth}px`;
-	}
-
-}
+			if (viewWidth / viewHeight > 2) {
+				this.target.style.width = `${viewHeight * 2}px`;
+				this.target.style.height = `${viewHeight}px`;
+			} else {
+				this.target.style.height = `${viewWidth / 2}px`;
+				this.target.style.width = `${viewWidth}px`;
+			}
+		}
 
 		const { flipX, flipY } = globalData;
 

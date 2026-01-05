@@ -356,27 +356,26 @@ To enable: ctrl + e`);
 		const target = this.view.container;
 		if (!target) return;
 
-
 		const reset = () => {
 			points = [];
-		}
+		};
 
 		const add = (point: Point2D) => {
 			points.push([point[0].toFixed(sigFigs), point[1].toFixed(sigFigs)]);
-		}
+		};
 
 		const view = () => {
 			console.log(`[
 	${points.map((p) => `[${p[0]}, ${p[1]}]`).join(',\n    ')}
 ]`);
-		}
+		};
 
 		const onclick = (e: MouseEvent) => {
 			const rect = target.getBoundingClientRect();
-			const x = ((e.clientX - rect.left) / rect.width);
-			const y = 8 - ((e.clientY - rect.top) / rect.height);
+			const x = (e.clientX - rect.left) / rect.width;
+			const y = 8 - (e.clientY - rect.top) / rect.height;
 			add([x, y]);
-		}
+		};
 
 		document.addEventListener('keydown', (e) => {
 			if (e.ctrlKey && enabled) {
@@ -407,12 +406,10 @@ To enable: ctrl + e`);
 			enabled = false;
 			console.log('Click points disabled.');
 			target.removeEventListener('click', onclick);
-		}
+		};
 
 		enable();
 	}
-
-
 
 	submit() {
 		return attemptAsync(async () => {
