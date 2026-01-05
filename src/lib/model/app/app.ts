@@ -18,6 +18,7 @@ import { Trace } from 'tatorscout/trace';
 // import { ScoreCorrection } from './score-correction';
 import type { YearInfo } from 'tatorscout/years';
 import { ScoreContribution } from './score-contribution';
+import { Color } from 'colors/color';
 
 export const TICKS_PER_SECOND = 4;
 export const SECTIONS = {
@@ -435,7 +436,76 @@ export class App {
 
 	// 		enabler();
 	// 	}
-	clickPoints(sigFigs: number) {}
+	clickPoints(sigFigs: number) {
+		if (!Number.isInteger(sigFigs))
+			throw new Error('Cannot have non-integer number of sig figs. Recieved: ' + sigFigs);
+		console.log(`Click points enabled.
+To reset points: ctrl + r
+To view points: ctrl + v
+To disable: ctrl + d
+To enable: ctrl + e`);
+		let points: [string, string][] = [];
+		const target = this.view.container;
+		if (!target) return;
+
+
+		const reset = () => {
+			points = [];
+		}
+
+		const add = (point: Point2D) => {
+			points.push([point[0].toFixed(sigFigs), point[1].toFixed(sigFigs)]);
+		}
+
+		const view = () => {
+			console.log(`[
+	${points.map((p) => `[${p[0]}, ${p[1]}]`).join(',\n    ')}
+]`);
+		}
+
+		const onclick = (e: MouseEvent) => {
+			const rect = target.getBoundingClientRect();
+			const x = ((e.clientX - rect.left) / rect.width);
+			const y = 8 - ((e.clientY - rect.top) / rect.height);
+			add([x, y]);
+		}
+
+		document.addEventListener('keydown', (e) => {
+			if (e.ctrlKey && enabled) {
+				e.preventDefault();
+				switch (e.key) {
+					case 'r':
+						reset();
+						break;
+					case 'v':
+						view();
+						break;
+					case 'd':
+						disable();
+						break;
+				}
+			}
+		});
+
+		let enabled = false;
+
+		const enable = () => {
+			enabled = true;
+			console.log('Click points enabled.');
+			target.addEventListener('click', onclick);
+		};
+
+		const disable = () => {
+			enabled = false;
+			console.log('Click points disabled.');
+			target.removeEventListener('click', onclick);
+		}
+
+		enable();
+	}
+
+
+
 	submit() {
 		return attemptAsync(async () => {
 			const serialized = (await this.serialize()).unwrap();

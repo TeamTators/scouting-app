@@ -11,9 +11,8 @@ import { SimpleEventEmitter } from 'ts-utils';
 import { WritableBase } from '$lib/writables';
 import type { P, TraceArray } from 'tatorscout/trace';
 import { contextmenu } from '$lib/utils/contextmenu';
-import { alert, confirm, rawModal } from '$lib/utils/prompts';
+import { confirm, rawModal } from '$lib/utils/prompts';
 import ActionEditor from '$lib/components/app/ActionEditor.svelte';
-import { ActionState } from './app-object';
 
 class Points {
 	points: Point2D[] = [];
@@ -61,6 +60,7 @@ export class AppView {
 	public path: SVGPathElement | undefined;
 	public border: SVGPolygonElement | undefined;
 	public background: HTMLImageElement | undefined;
+	public container: HTMLDivElement | undefined;
 	public readonly areas: {
 		polygon: SVGPolygonElement;
 		condition: (shape: Point2D[]) => boolean;
@@ -85,13 +85,13 @@ export class AppView {
 		target.style.width = '100vw';
 		target.style.userSelect = 'none';
 
-		const objContainer = document.createElement('div');
-		objContainer.style.position = 'absolute';
-		objContainer.style.top = '0';
-		objContainer.style.left = '0';
-		objContainer.style.width = '100%';
-		objContainer.style.height = '100%';
-		target.appendChild(objContainer);
+		this.container = document.createElement('div');
+		this.container.style.position = 'absolute';
+		this.container.style.top = '0';
+		this.container.style.left = '0';
+		this.container.style.width = '100%';
+		this.container.style.height = '100%';
+		target.appendChild(this.container);
 
 		const img = document.createElement('img');
 		img.src = `/fields/${this.app.matchData.year}.png`;
@@ -102,7 +102,7 @@ export class AppView {
 		img.style.height = '100%';
 		img.style.objectFit = 'cover';
 		this.background = img;
-		objContainer.appendChild(img);
+		this.container.appendChild(img);
 
 		this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		this.svg.setAttribute('width', '100%');
@@ -111,7 +111,7 @@ export class AppView {
 		this.svg.style.position = 'absolute';
 		this.svg.style.top = '0';
 		this.svg.style.left = '0';
-		objContainer.appendChild(this.svg);
+		this.container.appendChild(this.svg);
 
 		this.path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 		this.path.setAttribute('fill', 'none');
@@ -154,11 +154,11 @@ export class AppView {
 				this.app.start();
 
 				if (e instanceof MouseEvent) {
-					objContainer.dispatchEvent(new MouseEvent('mousedown', e));
+					this.container?.dispatchEvent(new MouseEvent('mousedown', e));
 				}
 
 				if (e instanceof TouchEvent) {
-					objContainer.dispatchEvent(
+					this.container?.dispatchEvent(
 						new TouchEvent('touchstart', {
 							touches: Array.from(e.touches),
 							targetTouches: Array.from(e.targetTouches),
@@ -170,7 +170,7 @@ export class AppView {
 			};
 
 			const transferMove = (e: TouchEvent) => {
-				objContainer.dispatchEvent(
+				this.container?.dispatchEvent(
 					new TouchEvent('touchmove', {
 						touches: Array.from(e.touches),
 						targetTouches: Array.from(e.targetTouches),
@@ -181,7 +181,7 @@ export class AppView {
 			};
 
 			const transferEnd = (e: TouchEvent) => {
-				objContainer.dispatchEvent(
+				this.container?.dispatchEvent(
 					new TouchEvent('touchend', {
 						touches: Array.from(e.touches),
 						targetTouches: Array.from(e.targetTouches),
@@ -202,7 +202,7 @@ export class AppView {
 			coverContainer.addEventListener('touchmove', transferMove);
 			coverContainer.addEventListener('touchend', transferEnd);
 
-			objContainer.appendChild(coverContainer);
+			this.container.appendChild(coverContainer);
 		}
 
 		for (const object of this.app.gameObjects) {
@@ -297,12 +297,12 @@ export class AppView {
 			up(...getXY(e));
 		};
 
-		objContainer.addEventListener('mousedown', mousedown);
-		objContainer.addEventListener('mousemove', mousemove);
-		objContainer.addEventListener('mouseup', mouseup);
-		objContainer.addEventListener('touchstart', touchstart, { passive: false });
-		objContainer.addEventListener('touchmove', touchmove, { passive: false });
-		objContainer.addEventListener('touchend', touchend, { passive: false });
+		this.container.addEventListener('mousedown', mousedown);
+		this.container.addEventListener('mousemove', mousemove);
+		this.container.addEventListener('mouseup', mouseup);
+		this.container.addEventListener('touchstart', touchstart, { passive: false });
+		this.container.addEventListener('touchmove', touchmove, { passive: false });
+		this.container.addEventListener('touchend', touchend, { passive: false });
 
 		this.draw();
 

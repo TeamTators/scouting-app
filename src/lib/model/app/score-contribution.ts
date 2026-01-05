@@ -24,7 +24,6 @@ export class ScoreContribution extends WritableBase<ScoreContributionData> {
 		};
 
 		for (const tick of this.app.state.ticks.data) {
-			console.log(tick);
 			const section = tick.section;
 			if (tick.action && section) {
 				const action = tick.action;
@@ -41,8 +40,6 @@ export class ScoreContribution extends WritableBase<ScoreContributionData> {
 				}
 			}
 		}
-
-		console.log(newData);
 
 		this.set(newData);
 	}
