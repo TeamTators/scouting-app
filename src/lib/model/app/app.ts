@@ -15,8 +15,9 @@ import { globalData } from './global-data.svelte';
 import type { CompressedMatchSchemaType } from '$lib/types/match';
 import { Comments } from './comments';
 import { Trace } from 'tatorscout/trace';
-import { ScoreCorrection } from './score-correction';
+// import { ScoreCorrection } from './score-correction';
 import type { YearInfo } from 'tatorscout/years';
+import { ScoreContribution } from './score-contribution';
 
 export const TICKS_PER_SECOND = 4;
 export const SECTIONS = {
@@ -58,7 +59,8 @@ export class App {
 	public readonly view: AppView;
 	public readonly checks: Checks;
 	public readonly comments: Comments;
-	public readonly scoreCorrection: ScoreCorrection;
+	// public readonly scoreCorrection: ScoreCorrection;
+	public readonly contribution: ScoreContribution;
 	public readonly gameObjects: {
 		point: Point2D;
 		object: AppObject;
@@ -94,7 +96,8 @@ export class App {
 		this.view = new AppView(this);
 		this.checks = new Checks(this);
 		this.comments = new Comments(this);
-		this.scoreCorrection = new ScoreCorrection(this);
+		this.contribution = new ScoreContribution(this);
+		// this.scoreCorrection = new ScoreCorrection(this);
 	}
 
 	serialize() {
@@ -124,8 +127,8 @@ export class App {
 				practice,
 				alliance,
 				group,
-				sliders,
-				scoreCorrection: this.scoreCorrection.serialize(),
+				sliders
+				// scoreCorrection: this.scoreCorrection.serialize(),
 			};
 		});
 	}
@@ -293,9 +296,6 @@ export class App {
 
 		if (!config.button.innerHTML) config.button.innerText = config.object.config.name;
 		const defaultHTML = config.button.innerHTML;
-		config.button.style.position = 'absolute';
-		config.button.style.zIndex = '100';
-		config.button.style.transform = 'translate(-50%, -50%)';
 
 		config.object.on('change', (state) => {
 			if (!state.state) {
@@ -310,17 +310,13 @@ export class App {
 
 		config.button.onclick = () => {
 			config.object.update(this.state.currentLocation ?? undefined);
-			this.emit('action', {
-				action: config.object.config.abbr,
-				alliance: config.alliance,
-				point: this.state.currentLocation || [0, 0]
-			});
 			this.state.tick?.setActionState(
 				new ActionState({
 					object: config.object as AppObject<unknown>,
 					state: config.object.state,
 					point: this.state.currentLocation || [0, 0]
-				}) as ActionState<unknown>
+				}) as ActionState<unknown>,
+				config.alliance
 			);
 		};
 
@@ -349,96 +345,96 @@ export class App {
 		config.button.addEventListener('touchleave', end);
 	}
 
-// 	clickPoints(sigFigs: number) {
-// 		if (!browser) return;
-// 		const canvas = this.view.canvas;
-// 		if (!canvas) return;
-// 		const enable = () => {
-// 			console.log(`Enabling click points.
-// To reset points: ctrl + r
-// To view points: ctrl + v
-// To disable: ctrl + d`);
-// 			if (!Number.isInteger(sigFigs))
-// 				throw new Error('Cannot have non-integer number of sig figs. Recieved: ' + sigFigs);
-// 			let points: [string, string][] = [];
-// 			let drawables: Circle[] = [];
-// 			const shape = new Polygon([]);
-// 			shape.fill = {
-// 				color: Color.fromName('gray').setAlpha(0.75).toString('rgba')
-// 			};
-// 			shape.line = {
-// 				color: 'transparent'
-// 			};
-// 			canvas.add(shape);
-// 			const reset = () => {
-// 				points = [];
-// 				canvas.remove(...drawables, shape);
-// 				drawables = [];
-// 			};
-// 			const add = (point: Point2D) => {
-// 				points.push([point[0].toFixed(sigFigs), point[1].toFixed(sigFigs)]);
-// 				const circle = new Circle(point, 0.01);
-// 				drawables.push(circle);
-// 				canvas.add(circle);
-// 				shape.points.push(point);
-// 			};
-// 			const view = () => {
-// 				console.log(`[
-//     ${points.map((p) => `[${p[0]}, ${p[1]}]`).join(',\n    ')}
-// ]`);
-// 			};
+	// 	clickPoints(sigFigs: number) {
+	// 		if (!browser) return;
+	// 		const canvas = this.view.canvas;
+	// 		if (!canvas) return;
+	// 		const enable = () => {
+	// 			console.log(`Enabling click points.
+	// To reset points: ctrl + r
+	// To view points: ctrl + v
+	// To disable: ctrl + d`);
+	// 			if (!Number.isInteger(sigFigs))
+	// 				throw new Error('Cannot have non-integer number of sig figs. Recieved: ' + sigFigs);
+	// 			let points: [string, string][] = [];
+	// 			let drawables: Circle[] = [];
+	// 			const shape = new Polygon([]);
+	// 			shape.fill = {
+	// 				color: Color.fromName('gray').setAlpha(0.75).toString('rgba')
+	// 			};
+	// 			shape.line = {
+	// 				color: 'transparent'
+	// 			};
+	// 			canvas.add(shape);
+	// 			const reset = () => {
+	// 				points = [];
+	// 				canvas.remove(...drawables, shape);
+	// 				drawables = [];
+	// 			};
+	// 			const add = (point: Point2D) => {
+	// 				points.push([point[0].toFixed(sigFigs), point[1].toFixed(sigFigs)]);
+	// 				const circle = new Circle(point, 0.01);
+	// 				drawables.push(circle);
+	// 				canvas.add(circle);
+	// 				shape.points.push(point);
+	// 			};
+	// 			const view = () => {
+	// 				console.log(`[
+	//     ${points.map((p) => `[${p[0]}, ${p[1]}]`).join(',\n    ')}
+	// ]`);
+	// 			};
 
-// 			canvas.on('click', (e) => {
-// 				const [point] = e.points;
-// 				add(point);
-// 			});
+	// 			canvas.on('click', (e) => {
+	// 				const [point] = e.points;
+	// 				add(point);
+	// 			});
 
-// 			const keydown = (e: KeyboardEvent) => {
-// 				// console.log('Keydown:', {
-// 				//     shift: e.shiftKey,
-// 				//     ctrl: e.ctrlKey,
-// 				//     key: e.key,
-// 				// })
-// 				if (e.ctrlKey) {
-// 					switch (e.key) {
-// 						case 'r':
-// 							e.preventDefault();
-// 							reset();
-// 							break;
-// 						case 'v':
-// 							e.preventDefault();
-// 							view();
-// 							break;
-// 						case 'd':
-// 							e.preventDefault();
-// 							console.log('Click points disabled.');
-// 							document.removeEventListener('keydown', keydown);
-// 							reset();
-// 							canvas.remove(shape);
-// 							enabler();
-// 							break;
-// 					}
-// 				}
-// 			};
+	// 			const keydown = (e: KeyboardEvent) => {
+	// 				// console.log('Keydown:', {
+	// 				//     shift: e.shiftKey,
+	// 				//     ctrl: e.ctrlKey,
+	// 				//     key: e.key,
+	// 				// })
+	// 				if (e.ctrlKey) {
+	// 					switch (e.key) {
+	// 						case 'r':
+	// 							e.preventDefault();
+	// 							reset();
+	// 							break;
+	// 						case 'v':
+	// 							e.preventDefault();
+	// 							view();
+	// 							break;
+	// 						case 'd':
+	// 							e.preventDefault();
+	// 							console.log('Click points disabled.');
+	// 							document.removeEventListener('keydown', keydown);
+	// 							reset();
+	// 							canvas.remove(shape);
+	// 							enabler();
+	// 							break;
+	// 					}
+	// 				}
+	// 			};
 
-// 			document.addEventListener('keydown', keydown);
-// 		};
+	// 			document.addEventListener('keydown', keydown);
+	// 		};
 
-// 		const enabler = () => {
-// 			console.log('Click points allowed, press ctrl + e to enable');
+	// 		const enabler = () => {
+	// 			console.log('Click points allowed, press ctrl + e to enable');
 
-// 			const keydownEnable = (e: KeyboardEvent) => {
-// 				if (e.ctrlKey && e.key === 'e') {
-// 					e.preventDefault();
-// 					enable();
-// 					document.removeEventListener('keydown', keydownEnable);
-// 				}
-// 			};
-// 			document.addEventListener('keydown', keydownEnable);
-// 		};
+	// 			const keydownEnable = (e: KeyboardEvent) => {
+	// 				if (e.ctrlKey && e.key === 'e') {
+	// 					e.preventDefault();
+	// 					enable();
+	// 					document.removeEventListener('keydown', keydownEnable);
+	// 				}
+	// 			};
+	// 			document.addEventListener('keydown', keydownEnable);
+	// 		};
 
-// 		enabler();
-// 	}
+	// 		enabler();
+	// 	}
 	clickPoints(sigFigs: number) {}
 	submit() {
 		return attemptAsync(async () => {

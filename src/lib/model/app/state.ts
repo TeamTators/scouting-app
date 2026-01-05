@@ -8,7 +8,6 @@ export class AppState extends WritableBase<{
 	currentLocation: Point2D | null;
 	currentIndex: number;
 }> {
-
 	public ticks: Ticks;
 
 	constructor(public readonly app: App) {
@@ -24,7 +23,7 @@ export class AppState extends WritableBase<{
 	}
 
 	set currentLocation(value: Point2D | null) {
-		this.update(state => ({
+		this.update((state) => ({
 			...state,
 			currentLocation: value
 		}));
@@ -35,7 +34,7 @@ export class AppState extends WritableBase<{
 	}
 
 	set currentIndex(value: number) {
-		this.update(state => ({
+		this.update((state) => ({
 			...state,
 			currentIndex: value
 		}));
@@ -70,30 +69,38 @@ export class AppState extends WritableBase<{
 	init() {
 		this.currentIndex = -1;
 		this.currentLocation = null;
-		this.ticks.set(Array.from(
-			{
-				length: TOTAL_TICKS
-			},
-			(_, i) => {
-				const t = new Tick(i / TICKS_PER_SECOND, i, this.app);
-				this.ticks.pipe(t);
-				return t;
-			}
-		));
+		this.ticks.set(
+			Array.from(
+				{
+					length: TOTAL_TICKS
+				},
+				(_, i) => {
+					const t = new Tick(i / TICKS_PER_SECOND, i, this.app);
+					this.ticks.pipe(t);
+					return t;
+				}
+			)
+		);
 	}
 
 	serialize() {
 		const toFixed = (num: number) => Math.round(num * 1000);
-		return this.ticks
-			.data
+		return this.ticks.data
 			.filter((t) => !!t.point)
 			.map((t) => [t.index, toFixed(t.point?.[0] || 0), toFixed(t.point?.[1] || 0), t.action]);
 	}
 
 	traceArray(): TraceArray {
-		return this.ticks
-			.data
+		return this.ticks.data
 			.filter((t) => !!t.point)
 			.map((t) => [t.index, t.point?.[0] || 0, t.point?.[1] || 0, t.action]);
+	}
+
+	removeActionStates() {
+		for (const tick of this.ticks.data) {
+			tick.clear();
+		}
+
+		this.app.contribution.render();
 	}
 }

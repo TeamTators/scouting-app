@@ -17,6 +17,7 @@
 	import { confirm, prompt, rawModal } from '$lib/utils/prompts.js';
 	import ScoutInput from '$lib/components/app/ScoutInput.svelte';
 	import Slider from '$lib/components/app/Slider.svelte';
+	import ScoreContribution from '$lib/components/app/Contribution.svelte';
 
 	const { data } = $props();
 	const eventKey = $derived(data.eventKey);
@@ -87,8 +88,14 @@
 					check.inform();
 
 					if (check.data.doComment) {
-						const c = await prompt(`Please provide more details about ${check.data.name}:`);
-						if (c) check.data.comment?.update(([name, _]) => [name, c]);
+						const c = await prompt(`Please provide more details about ${check.data.name}:`, {
+							multiline: true
+						});
+						if (c)
+							check.data.comment?.update((comment) => ({
+								...comment,
+								value: c.trim()
+							}));
 						check.inform();
 					}
 
@@ -206,10 +213,10 @@
 					class="btn btn-primary btn-lg"
 					onclick={async () => {
 						await runAlerts();
-						app?.comments.get('Scout')?.set(['Scout', globalData.scout]);
 						page = 'post';
 						exitFullscreen();
 						if (app) postApp?.render(app);
+						app?.contribution.render();
 					}}
 				>
 					Post Match
@@ -238,10 +245,12 @@
 						<Comments {app} />
 					</div>
 					<div class="row mb-3">
-						<div class="w-100 d-flex justify-content-center">
-							<div class="mb-3">
-								<ScoutInput {accounts} />
-							</div>
+						<div class="col-md-4 col-sm-12">
+							<ScoutInput {accounts} />
+						</div>
+
+						<div class="col-md-8 col-sm-12">
+							<ScoreContribution {app} />
 						</div>
 					</div>
 					<div class="row mb-3">

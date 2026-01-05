@@ -1,24 +1,26 @@
-import { WritableBase } from "$lib/writables";
-import type { App } from "./app";
+import { WritableBase } from '$lib/writables';
+import type { App } from './app';
 
 export type ScoreCorrectionData = {
-    auto: Record<string, number>;
-    teleop: Record<string, number>;
+	auto: Record<string, number>;
+	teleop: Record<string, number>;
+	endgame: Record<string, number>;
 };
 
 export class ScoreCorrection extends WritableBase<ScoreCorrectionData> {
-    constructor(public readonly app: App) {
-        super({
-            auto: {},
-            teleop: {}
-        });
-    }
+	constructor(public readonly app: App) {
+		super({
+			auto: {},
+			teleop: {},
+			endgame: {}
+		});
+	}
 
-    init() {}
+	init() {}
 
-    reset() {}
+	reset() {}
 
-    serialize() {
-        return this.data;
-    }
+	serialize() {
+		return this.data;
+	}
 }

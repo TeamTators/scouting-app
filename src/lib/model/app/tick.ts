@@ -39,7 +39,7 @@ export class Tick extends WritableBase<ActionState | null> {
 		this.data = null;
 	}
 
-	setActionState(state: ActionState) {
+	setActionState(state: ActionState, alliance: 'red' | 'blue' | null = null) {
 		if (this.data instanceof ActionState) {
 			this.next()?.setActionState(state);
 			return;
@@ -49,6 +49,14 @@ export class Tick extends WritableBase<ActionState | null> {
 		state.tick = this;
 		this.action = state.config.object.config.abbr as Action;
 		this.inform();
+
+		this.app.emit('action', {
+			action: state.config.object.config.abbr,
+			alliance: alliance,
+			point: this.app.state.currentLocation || [0, 0]
+		});
+
+		this.app.contribution.render();
 	}
 
 	next(): Tick | undefined {

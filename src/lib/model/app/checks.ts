@@ -68,7 +68,7 @@ export class Checks extends WritableArray<Check> {
 		} else {
 			let comment: Comment | undefined;
 			if (check.doComment) {
-				comment = this.app.comments.addComment(check.name, type);
+				comment = this.app.comments.addComment(check.name, type, false);
 			}
 
 			if ('slider' in check) {
@@ -98,6 +98,21 @@ export class Checks extends WritableArray<Check> {
 					comment
 				});
 			}
+			this.onAllUnsubscribe(
+				c.subscribe((data) => {
+					if (data.value && data.doComment && data.comment) {
+						comment?.update((c) => ({
+							...c,
+							show: true
+						}));
+					} else {
+						comment?.update((c) => ({
+							...c,
+							show: false
+						}));
+					}
+				})
+			);
 		}
 
 		this.update((checks) => {
@@ -111,6 +126,7 @@ export class Checks extends WritableArray<Check> {
 		});
 
 		this.pipe(c);
+
 		return this;
 	}
 

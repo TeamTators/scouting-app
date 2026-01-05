@@ -1,26 +1,31 @@
 import { App } from './app';
 import { WritableArray, WritableBase } from '$lib/writables';
 
-export class Comment extends WritableBase<[string, string]> {
-	public readonly subscribers = new Set<(value: [string, string]) => void>();
-
-	constructor(
-		data: [string, string],
-		public readonly color: string
-	) {
-		super(data);
+export class Comment extends WritableBase<{
+	key: string;
+	value: string;
+	color: string;
+	show: boolean;
+}> {
+	constructor(key: string, color: string, show: boolean) {
+		super({
+			key,
+			value: '',
+			color,
+			show
+		});
 	}
 
 	get key() {
-		return this.data[0];
+		return this.data.key;
 	}
 
 	get value() {
-		return this.data[1];
+		return this.data.value;
 	}
 
 	set value(value: string) {
-		this.data[1] = value;
+		this.data.value = value;
 		this.inform();
 	}
 }
@@ -30,8 +35,8 @@ export class Comments extends WritableArray<Comment> {
 		super([]);
 	}
 
-	public addComment(key: string, color: string) {
-		const c = new Comment([key, ''], color);
+	public addComment(key: string, color: string, show: boolean) {
+		const c = new Comment(key, color, show);
 		this.data.push(c);
 		this.inform();
 		this.pipe(c);
@@ -39,9 +44,9 @@ export class Comments extends WritableArray<Comment> {
 	}
 
 	init() {
-		this.addComment('Auto', 'success');
-		this.addComment('Teleop', 'primary');
-		this.addComment('Overall', 'info');
+		this.addComment('Auto', 'success', true);
+		this.addComment('Teleop', 'primary', true);
+		this.addComment('Overall', 'info', true);
 		return () => {
 			this.data = [];
 			this.inform();
@@ -49,7 +54,7 @@ export class Comments extends WritableArray<Comment> {
 	}
 
 	serialize() {
-		return Object.fromEntries(this.data.map((c) => c.data));
+		return Object.fromEntries(this.data.map((c) => [c.key, c.value]));
 	}
 
 	get(key: string) {

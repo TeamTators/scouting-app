@@ -11,8 +11,9 @@ import { SimpleEventEmitter } from 'ts-utils';
 import { WritableBase } from '$lib/writables';
 import type { P, TraceArray } from 'tatorscout/trace';
 import { contextmenu } from '$lib/utils/contextmenu';
-import { confirm, rawModal } from '$lib/utils/prompts';
+import { alert, confirm, rawModal } from '$lib/utils/prompts';
 import ActionEditor from '$lib/components/app/ActionEditor.svelte';
+import { ActionState } from './app-object';
 
 class Points {
 	points: Point2D[] = [];
@@ -69,7 +70,6 @@ export class AppView {
 	}[] = [];
 	points = new Points(200, 1500);
 
-
 	constructor(public readonly app: App) {
 		this.timer = new Timer(app);
 	}
@@ -84,7 +84,6 @@ export class AppView {
 		target.style.overflow = 'hidden';
 		target.style.width = '100vw';
 		target.style.userSelect = 'none';
-		target.style.zIndex = '0';
 
 		const objContainer = document.createElement('div');
 		objContainer.style.position = 'absolute';
@@ -92,7 +91,6 @@ export class AppView {
 		objContainer.style.left = '0';
 		objContainer.style.width = '100%';
 		objContainer.style.height = '100%';
-		objContainer.style.zIndex = '1';
 		target.appendChild(objContainer);
 
 		const img = document.createElement('img');
@@ -103,10 +101,9 @@ export class AppView {
 		img.style.width = '100%';
 		img.style.height = '100%';
 		img.style.objectFit = 'cover';
-		img.style.zIndex = '0';
 		this.background = img;
 		objContainer.appendChild(img);
-		
+
 		this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		this.svg.setAttribute('width', '100%');
 		this.svg.setAttribute('height', '100%');
@@ -114,7 +111,6 @@ export class AppView {
 		this.svg.style.position = 'absolute';
 		this.svg.style.top = '0';
 		this.svg.style.left = '0';
-		this.svg.style.zIndex = '1';
 		objContainer.appendChild(this.svg);
 
 		this.path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -133,80 +129,80 @@ export class AppView {
 		// Cover screen until first interaction
 		{
 			const coverContainer = document.createElement('div');
-		const cover = mount(Cover, {
-			target: coverContainer,
-			props: {
-				app: this.app,
-				scout: globalData.scout
-			}
-		});
+			const cover = mount(Cover, {
+				target: coverContainer,
+				props: {
+					app: this.app,
+					scout: globalData.scout
+				}
+			});
 
-		if (this.app.matchData.alliance === null) console.error('alliance value is null');
+			// if (this.app.matchData.alliance === null) console.error('alliance value is null');
 
-		coverContainer.style.position = 'absolute';
-		coverContainer.style.width = '100vw';
-		coverContainer.style.height = '100vh';
-		coverContainer.style.zIndex = '200';
-		coverContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+			coverContainer.style.position = 'absolute';
+			coverContainer.style.width = '100vw';
+			coverContainer.style.height = '100vh';
+			coverContainer.style.zIndex = '9999';
+			coverContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
 
-		const transferStart = (e: MouseEvent | TouchEvent) => {
-			coverContainer.removeEventListener('mousedown', transferStart);
-			coverContainer.removeEventListener('touchstart', transferStart);
-			unmount(cover);
-			coverContainer.remove();
+			const transferStart = (e: MouseEvent | TouchEvent) => {
+				coverContainer.removeEventListener('mousedown', transferStart);
+				coverContainer.removeEventListener('touchstart', transferStart);
+				unmount(cover);
+				coverContainer.remove();
 
-			this.app.start();
+				this.app.start();
 
-			if (e instanceof MouseEvent) {
-				objContainer.dispatchEvent(new MouseEvent('mousedown', e));
-			}
+				if (e instanceof MouseEvent) {
+					objContainer.dispatchEvent(new MouseEvent('mousedown', e));
+				}
 
-			if (e instanceof TouchEvent) {
+				if (e instanceof TouchEvent) {
+					objContainer.dispatchEvent(
+						new TouchEvent('touchstart', {
+							touches: Array.from(e.touches),
+							targetTouches: Array.from(e.targetTouches),
+							changedTouches: Array.from(e.changedTouches),
+							composed: e.composed
+						})
+					);
+				}
+			};
+
+			const transferMove = (e: TouchEvent) => {
 				objContainer.dispatchEvent(
-					new TouchEvent('touchstart', {
+					new TouchEvent('touchmove', {
 						touches: Array.from(e.touches),
 						targetTouches: Array.from(e.targetTouches),
 						changedTouches: Array.from(e.changedTouches),
 						composed: e.composed
 					})
 				);
-			}
-		};
+			};
 
-		const transferMove = (e: TouchEvent) => {
-			objContainer.dispatchEvent(
-				new TouchEvent('touchmove', {
-					touches: Array.from(e.touches),
-					targetTouches: Array.from(e.targetTouches),
-					changedTouches: Array.from(e.changedTouches),
-					composed: e.composed
-				})
-			);
-		};
+			const transferEnd = (e: TouchEvent) => {
+				objContainer.dispatchEvent(
+					new TouchEvent('touchend', {
+						touches: Array.from(e.touches),
+						targetTouches: Array.from(e.targetTouches),
+						changedTouches: Array.from(e.changedTouches),
+						composed: e.composed
+					})
+				);
 
-		const transferEnd = (e: TouchEvent) => {
-			objContainer.dispatchEvent(
-				new TouchEvent('touchend', {
-					touches: Array.from(e.touches),
-					targetTouches: Array.from(e.targetTouches),
-					changedTouches: Array.from(e.changedTouches),
-					composed: e.composed
-				})
-			);
+				coverContainer.removeEventListener('touchmove', transferMove);
+				coverContainer.removeEventListener('touchend', transferEnd);
+			};
 
-			coverContainer.removeEventListener('touchmove', transferMove);
-			coverContainer.removeEventListener('touchend', transferEnd);
-		};
+			// TODO: integrate touch move and end
+			// On the first start event, we need to forward all pointer events to the canvas
 
-		// TODO: integrate touch move and end
-		// On the first start event, we need to forward all pointer events to the canvas
+			coverContainer.addEventListener('mousedown', transferStart);
+			coverContainer.addEventListener('touchstart', transferStart);
+			coverContainer.addEventListener('touchmove', transferMove);
+			coverContainer.addEventListener('touchend', transferEnd);
 
-		coverContainer.addEventListener('mousedown', transferStart);
-		coverContainer.addEventListener('touchstart', transferStart);
-		coverContainer.addEventListener('touchmove', transferMove);
-		coverContainer.addEventListener('touchend', transferEnd);
-
-		objContainer.appendChild(coverContainer);
+			objContainer.appendChild(coverContainer);
 		}
 
 		for (const object of this.app.gameObjects) {
@@ -269,17 +265,17 @@ export class AppView {
 			const y = (clientY - rect.top) / rect.height;
 
 			return [x, y];
-		}
+		};
 
 		const mousedown = (e: MouseEvent) => {
 			e.preventDefault();
 			down(...getXY(e));
-		}
+		};
 
 		const mousemove = (e: MouseEvent) => {
 			e.preventDefault();
 			move(...getXY(e));
-		}
+		};
 
 		const mouseup = (e: MouseEvent) => {
 			e.preventDefault();
@@ -289,17 +285,17 @@ export class AppView {
 		const touchstart = (e: TouchEvent) => {
 			e.preventDefault();
 			down(...getXY(e));
-		}
+		};
 
 		const touchmove = (e: TouchEvent) => {
 			e.preventDefault();
 			move(...getXY(e));
-		}
+		};
 
 		const touchend = (e: TouchEvent) => {
 			e.preventDefault();
 			up(...getXY(e));
-		}
+		};
 
 		objContainer.addEventListener('mousedown', mousedown);
 		objContainer.addEventListener('mousemove', mousemove);
@@ -323,20 +319,12 @@ export class AppView {
 	}
 
 	draw() {
-		if (!(
-			this.svg &&
-			this.path &&
-			this.border &&
-			this.target
-		)) return;
+		if (!(this.svg && this.path && this.border && this.target)) return;
 		const { flipX, flipY } = globalData;
 
 		const getPoint = (point: Point2D): Point2D => {
-			return [
-				flipX ? 1 - point[0] : point[0],
-				flipY ? 1 - point[1] : point[1]
-			];
-		}
+			return [flipX ? 1 - point[0] : point[0], flipY ? 1 - point[1] : point[1]];
+		};
 
 		if (flipX) {
 			this.background!.style.transform = 'scaleX(-1)';
@@ -356,13 +344,14 @@ export class AppView {
 			const show = () => {
 				const [x, y] = obj.point;
 				const { staticX, staticY } = obj;
-				const [px, py] = [
-					staticX ? x : (flipX ? 1 - x : x),
-					staticY ? y : (flipY ? 1 - y : y)
-				];
-				obj.element.style.display = 'block';
+				const [px, py] = [staticX ? x : flipX ? 1 - x : x, staticY ? y : flipY ? 1 - y : y];
 				obj.element.style.left = `${px * this.target!.clientWidth}px`;
 				obj.element.style.top = `${py * this.target!.clientHeight}px`;
+				if (obj.alliance && obj.alliance !== this.app.matchData.alliance) {
+					obj.element.style.display = 'none';
+				} else {
+					obj.element.style.display = 'block';
+				}
 			};
 			if (!obj.viewCondition) {
 				show();
@@ -379,16 +368,24 @@ export class AppView {
 		for (const zone of this.areas) {
 			if (zone.condition(zone.points.map(getPoint))) {
 				zone.polygon.setAttribute('fill', zone.color.setAlpha(0.25).toString('rgba'));
-				zone.polygon.setAttribute('points', zone.points.map(getPoint).map(([x, y]) => `${x * 2} ${y}`).join(', '));
+				zone.polygon.setAttribute(
+					'points',
+					zone.points
+						.map(getPoint)
+						.map(([x, y]) => `${x * 2} ${y}`)
+						.join(', ')
+				);
 			}
 		}
 
 		// this.border.setAttribute('points', this.borderPoints.map(getPoint).map(([x, y]) => `${x * 2} ${y}`).join(', '));
 
-		const pathData = this.points.points.map((point, i) => {
-			const [x, y] = point;
-			return `${i === 0 ? 'M' : 'L'} ${x * 2} ${y}`;
-		}).join(' ');
+		const pathData = this.points.points
+			.map((point, i) => {
+				const [x, y] = point;
+				return `${i === 0 ? 'M' : 'L'} ${x * 2} ${y}`;
+			})
+			.join(' ');
 
 		this.path.setAttribute('d', pathData);
 	}
@@ -403,7 +400,7 @@ export class AppView {
 		requestAnimationFrame(view);
 		return () => {
 			doStop = true;
-		}
+		};
 	}
 
 	setBorder(points: Point2D[]) {
@@ -483,19 +480,28 @@ export class AppView {
 export class SummaryView extends WritableBase<{}> {
 	public readonly svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 	public readonly background = document.createElement('img');
-	public readonly trace: TraceArray;
+	public trace: TraceArray = [];
 
-	constructor(public readonly app: App, public readonly target: HTMLDivElement) {
+	constructor(
+		public readonly app: App,
+		public readonly target: HTMLDivElement
+	) {
 		super({});
-		this.trace = app.state.traceArray();
 	}
 
 	init() {
-		console.log(this.trace);
+		this.trace = this.app.state.traceArray();
+	}
+
+	render(from: number, to: number) {
+		this.init();
+		const trace = this.trace.slice(from, to);
 		const rerender = () => {
+			this.commit();
 			this.destroy();
-			this.init();
-		}
+			this.render(from, to);
+			onreset();
+		};
 
 		const { flipX, flipY } = globalData;
 
@@ -533,7 +539,29 @@ export class SummaryView extends WritableBase<{}> {
 		this.svg.style.left = '0';
 		this.svg.style.zIndex = '1';
 		this.target.appendChild(this.svg);
+
+		const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+		path.setAttribute('fill', 'none');
+		path.setAttribute('stroke', 'rgba(255, 230, 0, 0.5)');
+		path.setAttribute('stroke-width', '.005');
+		path.setAttribute('stroke-linecap', 'round');
+
+		const showPath = (from: number, to: number) => {
+			const d = trace
+				.slice(from, to + 1)
+				.map((point, i) => {
+					const [, x, y] = point;
+					return `${i === 0 ? 'M' : 'L'} ${x * 2} ${y}`;
+				})
+				.join(' ');
+			path.setAttribute('d', d);
+		};
+		showPath(0, trace.length - 1);
+
+		this.svg.appendChild(path);
+
 		const removeListeners: (() => void)[] = [];
+		const buttons: HTMLButtonElement[] = [];
 
 		const moveState = (point: P) => {
 			const newSVG = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -573,54 +601,33 @@ export class SummaryView extends WritableBase<{}> {
 			};
 
 			const onmousedown = (e: MouseEvent) => {
-				move(
-					e.clientX,
-					e.clientY
-				);
+				move(e.clientX, e.clientY);
 			};
 			const onmousemove = (e: MouseEvent) => {
-				move(
-					e.clientX,
-					e.clientY,
-				);
+				move(e.clientX, e.clientY);
 			};
 			const onmouseup = (e: MouseEvent) => {
-				set(
-					e.clientX,
-					e.clientY,
-				);
+				set(e.clientX, e.clientY);
 			};
 			const onleave = () => {
 				end();
 			};
 			const onclick = (e: MouseEvent) => {
-				set(
-					e.clientX,
-					e.clientY,
-				);
-			}
+				set(e.clientX, e.clientY);
+			};
 			const ontouchstart = (e: TouchEvent) => {
 				if (e.touches.length > 0) {
-					move(
-						e.touches[0].clientX,
-						e.touches[0].clientY,
-					);
+					move(e.touches[0].clientX, e.touches[0].clientY);
 				}
 			};
 			const ontouchmove = (e: TouchEvent) => {
 				if (e.touches.length > 0) {
-					move(
-						e.touches[0].clientX,
-						e.touches[0].clientY,
-					);
+					move(e.touches[0].clientX, e.touches[0].clientY);
 				}
 			};
 			const ontouchend = (e: TouchEvent) => {
 				if (e.changedTouches.length > 0) {
-					set(
-						e.changedTouches[0].clientX,
-						e.changedTouches[0].clientY,
-					);
+					set(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
 				}
 			};
 
@@ -657,230 +664,259 @@ export class SummaryView extends WritableBase<{}> {
 			return end;
 		};
 
-		for (const point of this.trace) {
-			const [,x, y] = point;
-			const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-			const px = flipX ? 1 - x : x;
-			const py = flipY ? 1 - y : y;
-			circle.setAttribute('cx', (px * 2).toString());
-			circle.setAttribute('cy', py.toString());
-			circle.setAttribute('r', '0.008');
-			circle.setAttribute('fill', 'rgba(255, 0, 0, 0.5)');
+		const items: {
+			show: () => void;
+			hide: () => void;
+			destroy: () => void;
+		}[] = trace.map((point, i) => {
+			const [, x, y, a] = point;
+			if (a) {
+				const btn = document.createElement('button');
+				buttons.push(btn);
+				btn.classList.add('btn', 'btn-primary', 'p-0', 'm-0', 'circle', 'hover-grow');
+				btn.style.position = 'absolute';
+				btn.style.height = '30px';
+				btn.style.width = '30px';
+				btn.style.zIndex = '200';
+				btn.style.left = `${x * 100}%`;
+				btn.style.top = `${y * 100}%`;
+				btn.style.cursor = 'pointer';
 
-			const onhover = (
-			) => {
-				circle.setAttribute('r', '0.012');
-			}
-
-			const onleave = (
-			) => {
-				circle.setAttribute('r', '0.008');
-			}
-
-			circle.addEventListener('pointerenter', onhover);
-			circle.addEventListener('pointerleave', onleave);
-			const onclick = (e: PointerEvent) => {
-				contextmenu(e, {
-					options: [
-						'Location Point',
-						'X: ' + x.toFixed(3),
-						'Y: ' + y.toFixed(3),
-						{
-							name: 'Add Action Here',
-							icon: {
-								type: 'material-icons',
-								name: 'add'
-							},
-							action: () => {
-								const modal = rawModal('Select Action', [], (body) => {
-									const editor  = mount(ActionEditor, {
-									target: body,
-									props: {
-										app: this.app,
+				const onclick = (e: PointerEvent) => {
+					contextmenu(e, {
+						options: [
+							'Action Options',
+							`Action: ${this.app.config.yearInfo.actions[a] || a}`,
+							`X: ${x.toFixed(3)}`,
+							`Y: ${y.toFixed(3)}`,
+							{
+								name: 'Delete',
+								icon: {
+									type: 'material-icons',
+									name: 'delete'
+								},
+								action: async () => {
+									if (await confirm('Are you sure you want to delete this action?')) {
+										trace[i][3] = 0;
+										rerender();
 									}
-								});
-
-								editor.on('select', (newAction) => {
-									point[3] = newAction;
-									modal.hide();
-									rerender();
-								});
-								editor.on('cancel', () => {
-									modal.hide();
-								});
-
-								return editor;
-							});
-
-								modal.show();
-							}
-						},
-						{
-							name: 'Move',
-							icon: {
-								type: 'material-icons',
-								name: 'open_with'
-							},
-							action: () => {
-								moveState(point);
-							},
-						},
-						{
-							name: 'Close',
-							icon: {
-								type: 'material-icons',
-								name: 'close'
-							},
-							action: () => {}
-						}
-					],
-					width: '200px',
-				});
-			};
-
-			circle.addEventListener('click', onclick);
-			removeListeners.push(() => {
-				circle.removeEventListener('click', onclick);
-				circle.removeEventListener('pointerenter', onhover);
-				circle.removeEventListener('pointerleave', onleave);
-			});
-
-
-			this.svg.appendChild(circle);
-		}
-
-		const buttons: HTMLButtonElement[] = [];
-
-		for (let i = 0; i < this.trace.length; i++) {
-			const point = this.trace[i];
-			const [,x, y, a] = point;
-			if (!a) continue;
-			const btn = document.createElement('button');
-			buttons.push(btn);
-			btn.classList.add('btn', 'btn-primary', 'p-0', 'm-0', 'circle', 'hover-grow');
-			btn.style.position = 'absolute';
-			btn.style.transform = 'translate(-50%, -50%) !important;';
-			btn.style.height = '30px';
-			btn.style.width = '30px';
-			btn.style.zIndex = '200';
-			const px = flipX ? 1 - x : x;
-			const py = flipY ? 1 - y : y;
-			btn.style.left = `${px * 100}%`;
-			btn.style.top = `${py * 100}%`;
-			btn.style.cursor = 'pointer';
-
-			const onclick = (e: PointerEvent) => {
-				contextmenu(e, {
-					options: [
-						'Action Options',
-						{
-							name: 'Delete',
-							icon: {
-								type: 'material-icons',
-								name: 'delete'
-							},
-							action: async () => {
-								if (await confirm('Are you sure you want to delete this action?')) {
-									this.trace[i][3] = 0;
-									rerender();
 								}
-							}
-						},
-						{
-							name: 'Change Action',
-							icon: {
-								type: 'material-icons',
-								name: 'edit'
 							},
-							action: () => {
-								const modal = rawModal('Change Action', [], (body) => {
-									const editor  = mount(ActionEditor, {
-									target: body,
-									props: {
-										app: this.app,
-										current: a,
-									}
-								});
+							{
+								name: 'Change Action',
+								icon: {
+									type: 'material-icons',
+									name: 'edit'
+								},
+								action: () => {
+									const modal = rawModal('Change Action', [], (body) => {
+										const editor = mount(ActionEditor, {
+											target: body,
+											props: {
+												app: this.app,
+												current: a
+											}
+										});
 
-								editor.on('select', (newAction) => {
-									this.trace[i][3] = newAction;
-									modal.hide();
-									rerender();
-								});
-								editor.on('cancel', () => {
-									modal.hide();
-								});
+										editor.on('select', (newAction) => {
+											trace[i][3] = newAction;
+											modal.hide();
+											rerender();
+										});
+										editor.on('cancel', () => {
+											modal.hide();
+										});
 
-								return editor;
-								});
+										return editor;
+									});
 
-								modal.show();
-							}
-						},
-						{
-							name: 'Move',
-							icon: {
-								type: 'material-icons',
-								name: 'open_with'
+									modal.show();
+								}
 							},
-							action: () => {
-								moveState(point);
-							}
-						},
-						// {
-						// 	name: 'View Details',
-						// 	icon: {
-						// 		type: 'material-icons',
-						// 		name: 'info'
-						// 	},
-						// 	action: () => {
-						// 		alert()
-						// 	}
-						// },
-						{
-							name: 'Cancel',
-							icon: {
-								type: 'material-icons',
-								name: 'close'
+							{
+								name: 'Move',
+								icon: {
+									type: 'material-icons',
+									name: 'open_with'
+								},
+								action: () => {
+									moveState(point);
+								}
 							},
-							action: () => {}
-						}
-					],
-					width: '150px',
+							{
+								name: 'Cancel',
+								icon: {
+									type: 'material-icons',
+									name: 'close'
+								},
+								action: () => {}
+							}
+						],
+						width: '150px'
+					});
+				};
+
+				btn.addEventListener('click', onclick);
+
+				const img = document.createElement('img');
+				img.src = `/icons/${a}.png`;
+				img.style.height = '100%';
+				img.style.width = '100%';
+				img.style.objectFit = 'contain';
+				btn.appendChild(img);
+
+				this.target.appendChild(btn);
+
+				return {
+					show: () => {
+						btn.style.display = 'block';
+					},
+					hide: () => {
+						btn.style.display = 'none';
+					},
+					destroy: () => {
+						btn.removeEventListener('click', onclick);
+						btn.remove();
+					}
+				};
+			} else {
+				const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+				const px = flipX ? 1 - x : x;
+				const py = flipY ? 1 - y : y;
+				circle.setAttribute('cx', (px * 2).toString());
+				circle.setAttribute('cy', py.toString());
+				circle.setAttribute('r', '0.015');
+				circle.setAttribute('fill', 'rgba(255, 0, 0, 0.5)');
+
+				const onhover = () => {
+					circle.setAttribute('r', '0.030');
+				};
+
+				const onleave = () => {
+					circle.setAttribute('r', '0.015');
+				};
+
+				circle.addEventListener('pointerenter', onhover);
+				circle.addEventListener('pointerleave', onleave);
+				const onclick = (e: PointerEvent) => {
+					contextmenu(e, {
+						options: [
+							'Location Point',
+							'X: ' + x.toFixed(3),
+							'Y: ' + y.toFixed(3),
+							{
+								name: 'Add Action Here',
+								icon: {
+									type: 'material-icons',
+									name: 'add'
+								},
+								action: () => {
+									const modal = rawModal('Select Action', [], (body) => {
+										const editor = mount(ActionEditor, {
+											target: body,
+											props: {
+												app: this.app
+											}
+										});
+
+										editor.on('select', (newAction) => {
+											point[3] = newAction;
+											modal.hide();
+											rerender();
+										});
+										editor.on('cancel', () => {
+											modal.hide();
+										});
+
+										return editor;
+									});
+
+									modal.show();
+								}
+							},
+							{
+								name: 'Move',
+								icon: {
+									type: 'material-icons',
+									name: 'open_with'
+								},
+								action: () => {
+									moveState(point);
+								}
+							},
+							{
+								name: 'Close',
+								icon: {
+									type: 'material-icons',
+									name: 'close'
+								},
+								action: () => {}
+							}
+						],
+						width: '200px'
+					});
+				};
+
+				circle.addEventListener('click', onclick);
+				removeListeners.push(() => {
+					circle.removeEventListener('click', onclick);
+					circle.removeEventListener('pointerenter', onhover);
+					circle.removeEventListener('pointerleave', onleave);
 				});
-			};
 
-			btn.onclick = (e) => {
-				onclick(e);
+				this.svg.appendChild(circle);
+
+				return {
+					show: () => {
+						circle.style.display = 'block';
+					},
+					hide: () => {
+						circle.style.display = 'none';
+					},
+					destroy: () => {
+						circle.removeEventListener('click', onclick);
+						circle.removeEventListener('pointerenter', onhover);
+						circle.removeEventListener('pointerleave', onleave);
+						circle.remove();
+					}
+				};
 			}
-
-			const img = document.createElement('img');
-			img.src = `/icons/${a}.png`;
-			img.style.height = '100%';
-			img.style.width = '100%';
-			img.style.objectFit = 'contain';
-			btn.appendChild(img);
-
-			this.target.appendChild(btn);
-
-			removeListeners.push(() => {
-				btn.removeEventListener('click', onclick);
-			});
-		}
+		});
 
 		this.destroy = () => {
 			for (const remove of removeListeners) {
 				remove();
 			}
+			for (const item of items) {
+				item.destroy();
+			}
 			this.target.innerHTML = '';
 			this.svg.innerHTML = '';
+		};
+
+		let onreset = () => {};
+
+		return {
+			onreset: (cb: () => void) => {
+				onreset = cb;
+			}
 		};
 	}
 
 	destroy = () => {};
 
-	reset() {}
+	commit() {
+		this.app.state.removeActionStates();
 
+		for (const [i, x, y, a] of this.trace) {
+			const toSet = this.app.state.ticks.data.find((t) => t.index === i);
+			if (!toSet) continue; // should never happen
+			if (a) {
+				toSet.action = a;
+			}
+			toSet.point = [x, y];
+		}
 
-	commit() {}
+		this.app.contribution.render();
+	}
 }

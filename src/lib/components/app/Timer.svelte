@@ -57,6 +57,7 @@
 		position: fixed;
 		opacity: 0.7;
 		margin: auto;
+		z-index: 50;
 	"
 >
 	<div class="card-body p-0">
