@@ -213,6 +213,29 @@
 			"required": ["enabled", "requests", "window"],
 			"additionalProperties": false
 		},
+		"match_queue": {
+			"type": "object",
+			"description": "Configuration for match submission queue.",
+			"properties": {
+				"concurrency": {
+					"type": "integer",
+					"description": "How many async submissions can happen at once"
+				},
+				"interval": {
+					"type": "integer",
+					"description": "Time, in ms, between submissions"
+				},
+				"limit": {
+					"type": "integer",
+					"description": "How many total matches can exist in the cache"
+				},
+				"timeout": {
+					"type": "integer",
+					"description": "How long, in ms, to wait for a match submission to complete"
+				}
+			},
+			"required": ["concurrency", "interval", "limit", "timeout"]
+		},
 		"struct_cache": {
 			"description": "Struct caching configuration",
 			"type": "object",
@@ -308,6 +331,7 @@
 		"email",
 		"ntp",
 		"limiting",
+		"match_queue",
 		"struct_cache",
 		"struct_batching",
 		"indexed_db"

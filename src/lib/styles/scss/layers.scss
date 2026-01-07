@@ -90,29 +90,29 @@ ul.list {
 }
 
 input.form-control {
-	background-color: var(--layer-1);
-	color: var(--text-layer-1);
-	border-color: var(--layer-3);
+	background-color: var(--layer-3);
+	color: var(--text-layer-3);
+	border-color: var(--layer-5);
 
 	&:focus {
-		background-color: var(--layer-0);
-		color: var(--text-layer-0);
+		background-color: var(--layer-1);
+		color: var(--text-layer-1);
 		border-color: var(--layer-4);
 	}
 
 	&::placeholder {
-		color: var(--text-layer-2);
+		color: var(--text-layer-5);
 	}
 }
 
 textarea.form-control {
-	background-color: var(--layer-1);
-	color: var(--text-layer-1);
-	border-color: var(--layer-3);
+	background-color: var(--layer-3);
+	color: var(--text-layer-3);
+	border-color: var(--layer-5);
 
 	&:focus {
-		background-color: var(--layer-0);
-		color: var(--text-layer-0);
+		background-color: var(--layer-1);
+		color: var(--text-layer-1);
 		border-color: var(--layer-4);
 	}
 
@@ -123,13 +123,13 @@ textarea.form-control {
 
 select.form-select,
 select.form-control {
-	background-color: var(--layer-1);
-	color: var(--text-layer-1);
-	border-color: var(--layer-3);
+	background-color: var(--layer-3);
+	color: var(--text-layer-3);
+	border-color: var(--layer-5);
 
 	&:focus {
-		background-color: var(--layer-0);
-		color: var(--text-layer-0);
+		background-color: var(--layer-1);
+		color: var(--text-layer-1);
 		border-color: var(--layer-4);
 	}
 

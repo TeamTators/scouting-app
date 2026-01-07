@@ -34,7 +34,8 @@
 		"backup": "pnpm script backup",
 		"restore": "pnpm script restore",
 		"deploy:docs": "pnpm script build-docs",
-		"build:docs": "pnpm script generate-doc-mds"
+		"build:docs": "pnpm script generate-doc-mds",
+		"submit-stale": "pnpm script submit-stale"
 	},
 	"packageManager": "pnpm@10.16.0",
 	"engines": {
@@ -157,6 +158,7 @@
 		"math": "git+https://github.com/tsaxking/calculations#v1.0.0",
 		"mime-types": "^3.0.1",
 		"mjml": "^4.15.3",
+		"msgpackr": "^1.11.5",
 		"multiparty": "^4.2.3",
 		"nodemailer": "^6.10.1",
 		"pg": "^8.16.3",
@@ -166,6 +168,8 @@
 		"redis-utils": "github:tsaxking/redis#v2.0.7",
 		"svelte-filepond": "^0.2.2",
 		"svelte-portal": "^2.2.1",
+		"tatorscout": "github:TeamTators/tatorscout-utils#v1.0.0",
+		"typescript": "^5.7.3",
 		"ts-utils": "github:tsaxking/global-ts-utilities#v1.0.9",
 		"uuid": "^11.1.0",
 		"vite-node": "^3.2.4",
@@ -182,11 +186,12 @@
 			"esbuild",
 			"html-constructor",
 			"math",
+			"msgpackr-extract",
 			"redis-service",
 			"svelte-preprocess",
+			"tatorscout",
 			"ts-utils",
-			"html-constructor",
-			"redis-service"
+			"utils"
 		],
 		"overrides": {
 			"axios@>=0.8.1 <0.28.0": ">=0.28.0",
