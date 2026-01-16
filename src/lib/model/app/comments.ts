@@ -1,5 +1,5 @@
 import { App } from './app';
-import { WritableArray, WritableBase } from '$lib/writables';
+import { WritableArray, WritableBase } from '$lib/utils/writables';
 
 export class Comment extends WritableBase<{
 	key: string;

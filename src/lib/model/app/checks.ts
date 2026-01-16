@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
 import type { App } from './app';
-import { WritableArray, WritableBase } from '$lib/writables';
+import { WritableArray, WritableBase } from '$lib/utils/writables';
 import type { Comment } from './comments';
 
 type C =

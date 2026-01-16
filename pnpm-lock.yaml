@@ -210,8 +210,8 @@ importers:
         specifier: ^14.1.0
         version: 14.1.0
       math:
-        specifier: git+https://github.com/tsaxking/calculations#v1.0.0
-        version: https://codeload.github.com/tsaxking/calculations/tar.gz/6f735b3ade72c81393ee5f07db93647c3d4fff91
+        specifier: github:tsaxking/calculations#v1.0.1
+        version: https://codeload.github.com/tsaxking/calculations/tar.gz/8dc28cd2f76df6e3a8f6c9745459309291f40279
       mime-types:
         specifier: ^3.0.1
         version: 3.0.2
@@ -3799,6 +3799,10 @@ packages:
 
   math@https://codeload.github.com/tsaxking/calculations/tar.gz/6f735b3ade72c81393ee5f07db93647c3d4fff91:
     resolution: {tarball: https://codeload.github.com/tsaxking/calculations/tar.gz/6f735b3ade72c81393ee5f07db93647c3d4fff91}
+    version: 1.0.0
+
+  math@https://codeload.github.com/tsaxking/calculations/tar.gz/8dc28cd2f76df6e3a8f6c9745459309291f40279:
+    resolution: {tarball: https://codeload.github.com/tsaxking/calculations/tar.gz/8dc28cd2f76df6e3a8f6c9745459309291f40279}
     version: 1.0.0
 
   mdn-data@2.0.28:
@@ -7880,7 +7884,7 @@ snapshots:
     dependencies:
       colors: https://codeload.github.com/tsaxking/colors/tar.gz/033743f3dc346eb907160d770ba1bced183e4565
       material-icons: 1.13.14
-      math: https://codeload.github.com/tsaxking/calculations/tar.gz/6f735b3ade72c81393ee5f07db93647c3d4fff91
+      math: https://codeload.github.com/tsaxking/calculations/tar.gz/8dc28cd2f76df6e3a8f6c9745459309291f40279
       ts-utils: https://codeload.github.com/tsaxking/global-ts-utilities/tar.gz/41d2ddec9d5552a057d4272e57805283a2e580b4(@types/node@22.19.3)(sass-embedded@1.97.2)(sass@1.97.2)
       typescript: 5.9.3
     transitivePeerDependencies:
@@ -9339,6 +9343,10 @@ snapshots:
     dependencies:
       typescript: 5.9.3
 
+  math@https://codeload.github.com/tsaxking/calculations/tar.gz/8dc28cd2f76df6e3a8f6c9745459309291f40279:
+    dependencies:
+      typescript: 5.9.3
+
   mdn-data@2.0.28: {}
 
   mdsvex@0.11.2(svelte@5.46.1):
@@ -10639,7 +10647,7 @@ snapshots:
       eslint: 9.39.2
       eslint-config-prettier: 10.1.8(eslint@9.39.2)
       eslint-plugin-svelte: 2.46.1(eslint@9.39.2)(svelte@5.46.1)(ts-node@10.9.2(@types/node@22.19.3)(typescript@5.9.3))
-      math: https://codeload.github.com/tsaxking/calculations/tar.gz/6f735b3ade72c81393ee5f07db93647c3d4fff91
+      math: https://codeload.github.com/tsaxking/calculations/tar.gz/8dc28cd2f76df6e3a8f6c9745459309291f40279
       prettier: 3.7.4
       prettier-plugin-svelte: 3.4.1(prettier@3.7.4)(svelte@5.46.1)
       svelte: 5.46.1

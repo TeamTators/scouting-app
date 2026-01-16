@@ -1,38 +1,39 @@
 <script lang="ts">
 	import { App } from '$lib/model/app/app';
 	import { SummaryView } from '$lib/model/app/view';
-	// import rangeSlider from 'range-slider-input';
+	import { RangeSlider } from '$lib/utils/form';
 	let target: HTMLDivElement;
 
 	let summary: SummaryView | undefined;
 
+	let unsub = () => {};
+
 	export const render = (app: App) => {
+		unsub();
 		if (summary) {
 			summary.destroy();
 
 			target.parentElement?.querySelector('.slider-container')?.remove();
 		}
 
-		const slider = document.createElement('div');
-		slider.className = 'slider-container my-2';
-		target.parentElement?.append(slider);
+		const sliderEl = document.createElement('div');
+		sliderEl.className = 'slider-container my-2';
+		target.parentElement?.append(sliderEl);
 
 		summary = new SummaryView(app, target);
-		summary.render(0, summary.trace.length - 1);
+		const opts = summary.render(0, summary.trace.length - 1);
 
-		// const s = rangeSlider(slider, {
-		// 	min: 0,
-		// 	max: summary.trace.length - 1,
-		// 	value: [0, summary.trace.length - 1],
-		// 	step: 1,
-		// 	onInput: (values) => {
-		// 		obj.segment(values[0], values[1]);
-		// 	}
-		// });
+		const slider = new RangeSlider({
+			min: 0,
+			max: summary.trace.length - 1,
+			target: sliderEl,
+			step: 1,
+		});
+		unsub = slider.subscribe(({ min, max }) => {
+			opts.view(min, max);
+		});
 
-		// obj.onreset((from, to) => {
-		// 	s.value([from, to]);
-		// });
+		slider.render();
 	};
 </script>
 

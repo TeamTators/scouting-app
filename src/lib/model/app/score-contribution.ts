@@ -1,4 +1,4 @@
-import { WritableBase } from '$lib/writables';
+import { WritableBase } from '$lib/utils/writables';
 import type { App } from './app';
 
 export type ScoreContributionData = {

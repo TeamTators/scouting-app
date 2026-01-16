@@ -2,13 +2,11 @@ import type { Action } from 'tatorscout/trace';
 import { App, SECTIONS, TICKS_PER_SECOND, type Section } from './app';
 import type { Point2D } from 'math/point';
 import { ActionState } from './app-object';
-import { WritableArray, WritableBase } from '$lib/writables';
+import { WritableArray, WritableBase } from '$lib/utils/writables';
 
 export class Tick extends WritableBase<ActionState | null> {
 	public action: Action | 0 = 0;
 	public point: Point2D | null = null;
-
-	public data: ActionState | null = null;
 
 	constructor(
 		public readonly time: number,

@@ -8,11 +8,12 @@ import { globalData } from './global-data.svelte';
 import { mount, unmount } from 'svelte';
 import Cover from '$lib/components/app/Cover.svelte';
 import { SimpleEventEmitter } from 'ts-utils';
-import { WritableBase } from '$lib/writables';
+import { WritableBase } from '$lib/utils/writables';
 import type { P, TraceArray } from 'tatorscout/trace';
 import { contextmenu } from '$lib/utils/contextmenu';
 import { confirm, rawModal } from '$lib/utils/prompts';
 import ActionEditor from '$lib/components/app/ActionEditor.svelte';
+import { catmullRom } from 'math/spline';
 
 class Points {
 	points: Point2D[] = [];
@@ -490,7 +491,7 @@ export class AppView {
 	}
 }
 
-export class SummaryView extends WritableBase<{}> {
+export class SummaryView extends WritableBase<{ from: number; to: number; }> {
 	public readonly svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 	public readonly background = document.createElement('img');
 	public trace: TraceArray = [];
@@ -499,7 +500,10 @@ export class SummaryView extends WritableBase<{}> {
 		public readonly app: App,
 		public readonly target: HTMLDivElement
 	) {
-		super({});
+		super({
+			from: 0,
+			to: 0,
+		});
 	}
 
 	init() {
@@ -512,11 +516,14 @@ export class SummaryView extends WritableBase<{}> {
 		const rerender = () => {
 			this.commit();
 			this.destroy();
-			this.render(from, to);
 			onreset();
+			const obj = this.render(from, to);
+			Object.assign(returnObj, obj);			
 		};
 
 		const { flipX, flipY } = globalData;
+		let currentFrom = 0;
+		let currentTo = trace.length - 1;
 
 		this.target.innerHTML = '';
 		this.target.style.position = 'relative';
@@ -560,14 +567,28 @@ export class SummaryView extends WritableBase<{}> {
 		path.setAttribute('stroke-linecap', 'round');
 
 		const showPath = (from: number, to: number) => {
-			const d = trace
-				.slice(from, to + 1)
-				.map((point, i) => {
-					const [, x, y] = point;
-					return `${i === 0 ? 'M' : 'L'} ${x * 2} ${y}`;
-				})
-				.join(' ');
-			path.setAttribute('d', d);
+			currentFrom = from;
+			currentTo = to;
+			// const d = trace
+			// 	.slice(from, to + 1)
+			// 	.map((point, i) => {
+			// 		const [, x, y] = point;
+			// 		return `${i === 0 ? 'M' : 'L'} ${x * 2} ${y}`;
+			// 	})
+			// 	.join(' ');
+			// path.setAttribute('d', d);
+
+			const fn = catmullRom(
+				trace.slice(from, to + 1).map(p => [p[1] * 2, p[2]])
+			);
+
+			const d: string[] = [];
+			for (let i = 0; i <= 1; i += 0.001) {
+				const [x, y] = fn(i);
+				d.push(`${i === 0 ? 'M' : 'L'} ${x} ${y}`);
+			}
+
+			path.setAttribute('d', d.join(' '));
 		};
 		showPath(0, trace.length - 1);
 
@@ -576,7 +597,10 @@ export class SummaryView extends WritableBase<{}> {
 		const removeListeners: (() => void)[] = [];
 		const buttons: HTMLButtonElement[] = [];
 
-		const moveState = (point: P) => {
+		const moveState = (index: number) => {
+			const point = trace[index];
+			const traceCopy = [...trace].map(p => [...p]);
+			
 			const newSVG = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 			newSVG.setAttribute('width', '100%');
 			newSVG.setAttribute('height', '100%');
@@ -586,6 +610,25 @@ export class SummaryView extends WritableBase<{}> {
 			newSVG.style.left = '0';
 			newSVG.style.zIndex = '2';
 			this.target.appendChild(newSVG);
+
+			const newPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+			newPath.setAttribute('fill', 'none');
+			newPath.setAttribute('stroke', 'rgba(255, 230, 0, 0.5)');
+			newPath.setAttribute('stroke-width', '.005');
+			newPath.setAttribute('stroke-linecap', 'round');
+			newSVG.appendChild(newPath);
+
+			const drawNewPath = () => {
+				const d = traceCopy
+					.slice(currentFrom, currentTo + 1)
+					.map((p, i) => {
+						const [, x, y] = p as P;
+						return `${i === 0 ? 'M' : 'L'} ${x * 2} ${y}`;
+					})
+					.join(' ');
+				newPath.setAttribute('d', d);
+			};
+
 			const x = point[1];
 			const y = point[2];
 			const set = (x: number, y: number) => {
@@ -611,6 +654,9 @@ export class SummaryView extends WritableBase<{}> {
 
 				circle.setAttribute('cx', (px * 2).toString());
 				circle.setAttribute('cy', py.toString());
+				traceCopy[index][1] = px;
+				traceCopy[index][2] = py;
+				drawNewPath();
 			};
 
 			const onmousedown = (e: MouseEvent) => {
@@ -753,7 +799,7 @@ export class SummaryView extends WritableBase<{}> {
 									name: 'open_with'
 								},
 								action: () => {
-									moveState(point);
+									moveState(i);
 								}
 							},
 							{
@@ -793,24 +839,39 @@ export class SummaryView extends WritableBase<{}> {
 					}
 				};
 			} else {
-				const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+				const shape = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
 				const px = flipX ? 1 - x : x;
 				const py = flipY ? 1 - y : y;
-				circle.setAttribute('cx', (px * 2).toString());
-				circle.setAttribute('cy', py.toString());
-				circle.setAttribute('r', '0.015');
-				circle.setAttribute('fill', 'rgba(255, 0, 0, 0.5)');
+				const nextPoint = trace[i + 1];
+				const nx = nextPoint ? (flipX ? 1 - nextPoint[1] : nextPoint[1]) : px;
+				const ny = nextPoint ? (flipY ? 1 - nextPoint[2] : nextPoint[2]) : py;
+				const angle = Math.atan2(ny - py, (nx - px) * 2);
+				const size = 0.015;
+				// isosceles triangle points to clearly show direction, not equilateral
+				const points = [
+					[(px * 2) + Math.cos(angle) * size, py + Math.sin(angle) * size],
+					[(px * 2) + Math.cos(angle + (120 * (Math.PI / 180))) * size, py + Math.sin(angle + (120 * (Math.PI / 180))) * size],
+					[(px * 2) + Math.cos(angle + (240 * (Math.PI / 180))) * size, py + Math.sin(angle + (240 * (Math.PI / 180))) * size],
+				];
+				shape.setAttribute('points', points.map(p => p.join(' ')).join(', '));
+				shape.setAttribute('fill', 'rgba(255, 0, 0, 0.5)');
 
 				const onhover = () => {
-					circle.setAttribute('r', '0.030');
+					const PERCENT = 0.5;
+					const hoverPoints = [
+						[(px * 2) + Math.cos(angle) * size * (1 + PERCENT), py + Math.sin(angle) * size * (1 + PERCENT)],
+						[(px * 2) + Math.cos(angle + (120 * (Math.PI / 180))) * size * (1 + PERCENT), py + Math.sin(angle + (120 * (Math.PI / 180))) * size * (1 + PERCENT)],
+						[(px * 2) + Math.cos(angle + (240 * (Math.PI / 180))) * size * (1 + PERCENT), py + Math.sin(angle + (240 * (Math.PI / 180))) * size * (1 + PERCENT)]
+					];
+					shape.setAttribute('points', hoverPoints.map(p => p.join(' ')).join(', '));
 				};
 
 				const onleave = () => {
-					circle.setAttribute('r', '0.015');
+					shape.setAttribute('points', points.map(p => p.join(' ')).join(', '));
 				};
 
-				circle.addEventListener('pointerenter', onhover);
-				circle.addEventListener('pointerleave', onleave);
+				shape.addEventListener('pointerenter', onhover);
+				shape.addEventListener('pointerleave', onleave);
 				const onclick = (e: PointerEvent) => {
 					contextmenu(e, {
 						options: [
@@ -854,7 +915,7 @@ export class SummaryView extends WritableBase<{}> {
 									name: 'open_with'
 								},
 								action: () => {
-									moveState(point);
+									moveState(i);
 								}
 							},
 							{
@@ -870,27 +931,27 @@ export class SummaryView extends WritableBase<{}> {
 					});
 				};
 
-				circle.addEventListener('click', onclick);
+				shape.addEventListener('click', onclick);
 				removeListeners.push(() => {
-					circle.removeEventListener('click', onclick);
-					circle.removeEventListener('pointerenter', onhover);
-					circle.removeEventListener('pointerleave', onleave);
+					shape.removeEventListener('click', onclick);
+					shape.removeEventListener('pointerenter', onhover);
+					shape.removeEventListener('pointerleave', onleave);
 				});
 
-				this.svg.appendChild(circle);
+				this.svg.appendChild(shape);
 
 				return {
 					show: () => {
-						circle.style.display = 'block';
+						shape.style.display = 'block';
 					},
 					hide: () => {
-						circle.style.display = 'none';
+						shape.style.display = 'none';
 					},
 					destroy: () => {
-						circle.removeEventListener('click', onclick);
-						circle.removeEventListener('pointerenter', onhover);
-						circle.removeEventListener('pointerleave', onleave);
-						circle.remove();
+						shape.removeEventListener('click', onclick);
+						shape.removeEventListener('pointerenter', onhover);
+						shape.removeEventListener('pointerleave', onleave);
+						shape.remove();
 					}
 				};
 			}
@@ -909,11 +970,22 @@ export class SummaryView extends WritableBase<{}> {
 
 		let onreset = () => {};
 
-		return {
+		const returnObj = {
 			onreset: (cb: () => void) => {
 				onreset = cb;
-			}
+			},
+			view: (from: number, to: number) => {
+				showPath(from, to);
+				for (const item of items) {
+					item.hide();
+				}
+				for (let i = from; i <= to; i++) {
+					items[i]?.show();
+				}
+			},
 		};
+
+		return returnObj;
 	}
 
 	destroy = () => {};
