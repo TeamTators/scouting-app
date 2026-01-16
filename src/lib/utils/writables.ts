@@ -22,7 +22,7 @@ export class WritableBase<T> implements Writable<T> {
 	 * @param {number} [_config.debounceMs=0] - Debounce delay in milliseconds for updates
 	 */
 	constructor(
-		public data: T,
+		public _data: T,
 		private _config?: {
 			debounceMs?: number;
 		}
@@ -30,6 +30,15 @@ export class WritableBase<T> implements Writable<T> {
 		this._informDebounced = debounce(() => {
 			this._informImmediate();
 		}, this._config?.debounceMs ?? 0);
+	}
+
+	get data(): T {
+		return this._data;
+	}
+
+	set data(value: T) {
+		this._data = value;
+		this.inform();
 	}
 
 	/**
@@ -110,7 +119,6 @@ export class WritableBase<T> implements Writable<T> {
 	 */
 	set(value: T): void {
 		this.data = value;
-		this.inform();
 	}
 
 	/**
@@ -157,7 +165,7 @@ export class WritableBase<T> implements Writable<T> {
 	 * Once this writable has no subscribers, the pipe subscription will be unsubscribed
 	 * @param {Writable<unknown>} target - The writable store to pipe from
 	 */
-	pipe(target: Writable<unknown>) {
+	pipe(target: Writable<unknown>): void {
 		this.onAllUnsubscribe(target.subscribe(() => this.inform()));
 	}
 }
