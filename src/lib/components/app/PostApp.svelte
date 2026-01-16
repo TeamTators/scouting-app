@@ -1,123 +1,53 @@
 <script lang="ts">
-	import { App, SECTIONS } from '$lib/model/app/app';
-	import { confirm } from '$lib/utils/prompts';
-	import { Canvas } from 'canvas/canvas';
-	import { Circle } from 'canvas/circle';
-	import { Container } from 'canvas/container';
-	import type { Drawable } from 'canvas/drawable';
-	import { Img } from 'canvas/image';
-	import { Path } from 'canvas/path';
-	import { onMount } from 'svelte';
-	interface Props {
-		app: App;
-	}
+	import { App } from '$lib/model/app/app';
+	import { SummaryView } from '$lib/model/app/view';
+	import { RangeSlider } from '$lib/utils/form';
+	let target: HTMLDivElement;
 
-	const { app }: Props = $props();
+	let summary: SummaryView | undefined;
 
-	let target: HTMLCanvasElement;
-	let canvas: Canvas;
-	const actions = new Map<number, number>();
-	let container: Container;
+	let unsub = () => {};
 
-	export const render = async (app: App) => {
-		actions.clear();
-		canvas.emitter.destroyEvents();
-		if (!canvas) return;
-		canvas.clear();
-		const field = new Img(`/fields/${app.matchData.year}.png`, {
-			width: 1,
-			height: 1,
-			x: 0,
-			y: 0
-		});
-		const trace = app.state.traceArray();
-		container = new Container(
-			...(trace
-				.map((p, i, a) => {
-					if (i === 0) {
-						const [, x, y, a] = p;
-						if (a) {
-							return new Circle([x, y], 0.03);
-						}
-						return;
-					}
-					const [, x, y, act] = p;
-					const [, prevX, prevY] = a[i - 1];
-					const path = new Path([
-						[prevX, prevY],
-						[x, y]
-					]);
+	export const render = (app: App) => {
+		unsub();
+		if (summary) {
+			summary.destroy();
 
-					if (i < SECTIONS.auto[1]) {
-						path.properties.line.color = 'blue';
-					} else if (i < SECTIONS.teleop[1]) {
-						path.properties.line.color = 'green';
-					} else {
-						path.properties.line.color = 'red';
-					}
-
-					if (act) {
-						const action = new Circle([x, y], 0.03);
-						action.fill.color = 'red';
-						action.properties.line.color = 'red';
-						actions.set(action.id, i + 1);
-						const img = new Img(`/icons/${act}.png`, {
-							width: 0.05,
-							height: 0.05,
-							x: x - 0.025,
-							y: y - 0.025
-						});
-						return [path, new Container(action, img)];
-					}
-
-					return [path];
-				})
-				.filter((d) => d)
-				.flat() as Drawable[])
-		);
-		canvas.add(field, container);
-		canvas.on('click', (event) => {
-			const [[x, y]] = event.points;
-			const el = container.children.find((d) => {
-				if (!(d instanceof Container)) return;
-				const [circle] = d.children;
-				if (!(circle instanceof Circle)) return;
-				return circle.isIn([x, y]);
-			}) as Container | undefined;
-			if (el) {
-				const [circle] = el.children as [Circle, Img];
-				confirm('Are you sure you want to delete this action?').then((res) => {
-					if (res) {
-						const index = actions.get(circle.id);
-						// console.log(index);
-						if (index !== undefined) {
-							// console.log(app.ticks);
-							const tick = app.state.ticks[index];
-							// console.log(tick);
-							if (tick) {
-								tick.action = 0;
-								tick.data = null;
-								render(app);
-							}
-						}
-					}
-				});
-			}
-		});
-	};
-
-	onMount(() => {
-		const ctx = target.getContext('2d');
-		if (!ctx) {
-			throw new Error('Could not get 2d context');
+			target.parentElement?.querySelector('.slider-container')?.remove();
 		}
-		canvas = new Canvas(ctx, {
-			events: ['click']
-		});
-		render(app);
 
-		return canvas.animate();
-	});
+		const sliderEl = document.createElement('div');
+		sliderEl.className = 'slider-container my-2';
+		target.parentElement?.append(sliderEl);
+
+		summary = new SummaryView(app, target);
+		const opts = summary.render(0, summary.trace.length - 1);
+
+		const slider = new RangeSlider({
+			min: 0,
+			max: summary.trace.length - 1,
+			target: sliderEl,
+			step: 1,
+		});
+		unsub = slider.subscribe(({ min, max }) => {
+			opts.view(min, max);
+		});
+
+		slider.render();
+	};
 </script>
 
-<canvas bind:this={target} style="width: 100%; aspect-ratio: 2;" height="500" width="1000"></canvas>
+<div class="card">
+	<div class="card-body py-3 px-1">
+		<p class="text-muted">
+			This is a summary of the match data collected, please take the time to review it. You can
+			adjust positions, add/remove/change actions here if there are any mistakes. Changes made here
+			will be reflected in the robot's data.
+			<br />
+			<span class="text-danger">
+				Do not spend too much time here, you have a match coming up!
+			</span>
+		</p>
+		<div bind:this={target}></div>
+	</div>
+</div>

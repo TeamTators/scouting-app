@@ -19,7 +19,7 @@
 	}
 
 	const { timer }: Props = $props();
-	const running = timer.app.running;
+	const running = $derived(timer.app.running);
 
 	const matchData = $derived(timer.app.matchData);
 
@@ -57,7 +57,7 @@
 		position: fixed;
 		opacity: 0.7;
 		margin: auto;
-		z-index: 1050;
+		z-index: 50;
 	"
 >
 	<div class="card-body p-0">
@@ -218,6 +218,7 @@
 <style>
 	* {
 		transition: all 0.3s ease-in-out;
+		z-index: 100;
 	}
 
 	.do-hide {

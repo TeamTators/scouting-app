@@ -1,7 +1,6 @@
-import { teamsFromMatch, type CompLevel, type TBAMatch } from 'tatorscout/tba';
+import { type CompLevel, type TBAMatch } from 'tatorscout/tba';
 import { App } from './app';
 import { AppData } from './data-pull';
-import type { Assignment } from 'tatorscout/scout-groups';
 import { attemptAsync } from 'ts-utils/check';
 import type { Writable } from 'svelte/store';
 

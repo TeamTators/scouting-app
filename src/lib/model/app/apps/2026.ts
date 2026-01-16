@@ -1,10 +1,8 @@
 import type { CompLevel } from 'tatorscout/tba';
 import { App } from '../app';
-import { Color } from 'colors/color';
 import type { Point2D } from 'math/point';
 import { AppObject } from '../app-object';
-import { Img } from 'canvas/image';
-import { isInside } from 'math/polygon';
+import YearInfo2025  from 'tatorscout/years/2025.js';
 
 export default (config: {
     eventKey: string;
@@ -20,7 +18,8 @@ export default (config: {
 
     const app = new App({
         ...config,
-        year: 2026
+        year: 2026,
+        yearInfo: YearInfo2025
     });
 
     const alliances: Zone = {

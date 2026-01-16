@@ -2,18 +2,19 @@ import type { Action } from 'tatorscout/trace';
 import { App, SECTIONS, TICKS_PER_SECOND, type Section } from './app';
 import type { Point2D } from 'math/point';
 import { ActionState } from './app-object';
+import { WritableArray, WritableBase } from '$lib/utils/writables';
 
-export class Tick {
+export class Tick extends WritableBase<ActionState | null> {
 	public action: Action | 0 = 0;
 	public point: Point2D | null = null;
-
-	public data: ActionState | null = null;
 
 	constructor(
 		public readonly time: number,
 		public readonly index: number,
 		public readonly app: App
-	) {}
+	) {
+		super(null);
+	}
 
 	public get second() {
 		return Math.round(this.index / TICKS_PER_SECOND);
@@ -36,19 +37,37 @@ export class Tick {
 		this.data = null;
 	}
 
-	set(state: ActionState) {
+	setActionState(state: ActionState, alliance: 'red' | 'blue' | null = null) {
 		if (this.data instanceof ActionState) {
-			this.next()?.set(state);
+			this.next()?.setActionState(state);
 			return;
 		}
 
 		this.data = state;
 		state.tick = this;
-		console.log('set', state.config.object.config.abbr);
 		this.action = state.config.object.config.abbr as Action;
+		this.inform();
+
+		this.app.emit('action', {
+			action: state.config.object.config.abbr,
+			alliance: alliance,
+			point: this.app.state.currentLocation || [0, 0]
+		});
+
+		this.app.contribution.render();
 	}
 
 	next(): Tick | undefined {
-		return this.app.state.ticks[this.app.state.currentIndex + 1];
+		return this.app.state.ticks.data[this.index + 1];
+	}
+
+	prev(): Tick | undefined {
+		return this.app.state.ticks.data[this.index - 1];
+	}
+}
+
+export class Ticks extends WritableArray<Tick> {
+	constructor(public readonly app: App) {
+		super([]);
 	}
 }
