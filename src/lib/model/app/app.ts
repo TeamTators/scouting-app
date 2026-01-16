@@ -18,6 +18,11 @@ import { Trace } from 'tatorscout/trace';
 // import { ScoreCorrection } from './score-correction';
 import type { YearInfo } from 'tatorscout/years';
 import { ScoreContribution } from './score-contribution';
+import { Canvas } from 'canvas/canvas';
+import { Circle } from 'canvas/circle';
+import { Polygon } from 'canvas/polygon';
+import { Color } from 'colors/color';
+import { Img } from 'canvas/image';
 
 export const TICKS_PER_SECOND = 4;
 export const SECTIONS = {
@@ -350,36 +355,75 @@ export class App {
 		console.log(`Click points enabled.
 To reset points: ctrl + r
 To view points: ctrl + v
-To disable: ctrl + d
-To enable: ctrl + e`);
-		let points: [string, string][] = [];
-		const target = this.view.container;
-		if (!target) return;
+To disable: ctrl + d`);
+			if (!Number.isInteger(sigFigs))
+				throw new Error('Cannot have non-integer number of sig figs. Recieved: ' + sigFigs);
 
-		const reset = () => {
-			points = [];
-		};
+			const target = this.view.target;
+			if (!target) {
+				console.warn('No target element for click points.');
+				return;
+			}
 
-		const add = (point: Point2D) => {
-			points.push([point[0].toFixed(sigFigs), point[1].toFixed(sigFigs)]);
-		};
+			const cvs = document.createElement('canvas');
+			cvs.style.width = '100%';
+			cvs.style.height = '100%';
+			cvs.width = 2000; //cvs.clientWidth;
+			cvs.height = 1000; //cvs.clientHeight;
+			cvs.style.position = 'absolute';
+			cvs.style.top = '0';
+			cvs.style.left = '0';
+			const ctx = cvs.getContext('2d');
+			if (!ctx) return;
 
-		const view = () => {
-			console.log(`[
-	${points.map((p) => `[${p[0]}, ${p[1]}]`).join(',\n    ')}
+			const canvas = new Canvas(ctx);
+
+			const img = new Img(`/assets/fields/${this.config.year}.png`);
+			img.width = 1;
+			img.height = 1;
+			canvas.add(img);
+
+			let points: [string, string][] = [];
+			let drawables: Circle[] = [];
+			const shape = new Polygon([]);
+			shape.fill = {
+				color: Color.fromName('gray').setAlpha(0.75).toString('rgba')
+			};
+			shape.line = {
+				color: 'transparent'
+			};
+			canvas.add(shape);
+			const reset = () => {
+				points = [];
+				canvas.remove(...drawables);
+				shape.points = [];
+				drawables = [];
+			};
+			const add = (point: Point2D) => {
+				points.push([point[0].toFixed(sigFigs), point[1].toFixed(sigFigs)]);
+				const circle = new Circle(point, 0.003);
+				drawables.push(circle);
+				canvas.add(circle);
+				shape.points.push(point);
+			};
+			const view = () => {
+				console.log(`[
+    ${points.map((p) => `[${p[0]}, ${p[1]}]`).join(',\n    ')}
 ]`);
 		};
 
 		const onclick = (e: MouseEvent) => {
 			const rect = target.getBoundingClientRect();
 			const x = (e.clientX - rect.left) / rect.width;
-			const y = 8 - (e.clientY - rect.top) / rect.height;
+			const y = (e.clientY - rect.top) / rect.height;
 			add([x, y]);
 		};
 
 		document.addEventListener('keydown', (e) => {
-			if (e.ctrlKey && enabled) {
+			if (e.ctrlKey) {
 				e.preventDefault();
+				if (e.key === 'e') enable();
+				else if (enabled) {
 				switch (e.key) {
 					case 'r':
 						reset();
@@ -390,25 +434,35 @@ To enable: ctrl + e`);
 					case 'd':
 						disable();
 						break;
+					case 'e':
+						enable();
+						break;
+				}
 				}
 			}
 		});
 
 		let enabled = false;
 
+		let stop = () => {};
+
 		const enable = () => {
+			target.appendChild(cvs);
+			stop = canvas.animate();
 			enabled = true;
-			console.log('Click points enabled.');
+			console.log('Click points enabled. Press ctrl + d to disable.');
 			target.addEventListener('click', onclick);
 		};
 
 		const disable = () => {
+			stop();
+			target.removeChild(cvs);
 			enabled = false;
-			console.log('Click points disabled.');
+			console.log('Click points disabled. Press ctrl + e to enable.');
 			target.removeEventListener('click', onclick);
 		};
 
-		enable();
+		console.log('Click points disabled. Press ctrl + e to enable.');
 	}
 
 	submit() {
