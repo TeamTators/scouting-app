@@ -398,7 +398,8 @@ To disable: ctrl + d`);
 			canvas.add(shape);
 			const reset = () => {
 				points = [];
-				canvas.remove(...drawables, shape);
+				canvas.remove(...drawables);
+				shape.points = [];
 				drawables = [];
 			};
 			const add = (point: Point2D) => {

@@ -10,11 +10,10 @@
 	import Comments from '$lib/components/app/Comments.svelte';
 	import AppView from '$lib/components/app/App.svelte';
 	import { goto } from '$app/navigation';
-	import createApp from '$lib/model/app/apps/2025.js';
+	import createApp from '$lib/model/app/apps/2026.js';
 	import PostApp from '$lib/components/app/PostApp.svelte';
 	import { getAlliance, MatchData } from '$lib/model/app/match-data.js';
 	import { fullscreen, isFullscreen } from '$lib/utils/fullscreen.js';
-	import { Form } from '$lib/utils/form.js';
 	import { confirm, prompt } from '$lib/utils/prompts.js';
 	import ScoutInput from '$lib/components/app/ScoutInput.svelte';
 
