@@ -4,7 +4,7 @@ import { Struct } from 'drizzle-struct/back-end';
 import { attemptAsync } from 'ts-utils/check';
 import { DB } from '../db';
 import { and, eq } from 'drizzle-orm';
-import { z } from 'zod';
+import { Requests } from './requests';
 
 export namespace Scouting {
 	export const Matches = new Struct({
@@ -43,6 +43,15 @@ export namespace Scouting {
 
 			return res.map((r) => Matches.Generator(r));
 		});
+	};
+
+	export const submitStale = (event: string) => {
+		Matches.fromProperty('eventKey', event, {
+			type: 'stream'
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		}).pipe((m) => Requests.submitMatch(JSON.parse(m.data.body) as any));
+
+		return Requests.queue.flush();
 	};
 }
 

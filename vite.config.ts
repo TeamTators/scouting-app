@@ -21,6 +21,7 @@ export default defineConfig({
 			'dev.tsaxking.com',
 			'dev.tatorscout.org',
 			'sylvie.tatorscout.org',
+			'app.sophie.tatorscout.org',
 			'sophie.tatorscout.org',
 			'landon.tatorscout.org',
 			'anvita.tatorscout.org',

@@ -3,8 +3,8 @@ import { App } from '../app';
 import { Color } from 'colors/color';
 import type { Point2D } from 'math/point';
 import { AppObject } from '../app-object';
-import { Img } from 'canvas/image';
 import { isInside } from 'math/polygon';
+import YearInfo2025 from 'tatorscout/years/2025.js';
 
 export default (config: {
 	eventKey: string;
@@ -20,7 +20,8 @@ export default (config: {
 
 	const app = new App({
 		...config,
-		year: 2025
+		year: 2025,
+		yearInfo: YearInfo2025
 	});
 
 	const alliances: Zone = {
@@ -208,32 +209,32 @@ export default (config: {
 		object: blueObjects.cl1,
 		button: blueButtons.cl1,
 		alliance: 'blue',
-		staticX: true,
-		staticY: false
+		staticX: false,
+		staticY: true
 	});
 	app.addAppObject({
 		point: [0.267, 0.54],
 		object: blueObjects.cl2,
 		button: blueButtons.cl2,
 		alliance: 'blue',
-		staticX: true,
-		staticY: false
+		staticX: false,
+		staticY: true
 	});
 	app.addAppObject({
 		point: [0.267, 0.477],
 		object: blueObjects.cl3,
 		button: blueButtons.cl3,
 		alliance: 'blue',
-		staticX: true,
-		staticY: false
+		staticX: false,
+		staticY: true
 	});
 	app.addAppObject({
 		point: [0.267, 0.398],
 		object: blueObjects.cl4,
 		button: blueButtons.cl4,
 		alliance: 'blue',
-		staticX: true,
-		staticY: false
+		staticX: false,
+		staticY: true
 	});
 	app.addAppObject({
 		point: [0.5, 0.46],
@@ -257,32 +258,32 @@ export default (config: {
 		object: redObjects.cl1,
 		button: redButtons.cl1,
 		alliance: 'red',
-		staticX: true,
-		staticY: false
+		staticX: false,
+		staticY: true
 	});
 	app.addAppObject({
 		point: [0.733, 0.54],
 		object: redObjects.cl2,
 		button: redButtons.cl2,
 		alliance: 'red',
-		staticX: true,
-		staticY: false
+		staticX: false,
+		staticY: true
 	});
 	app.addAppObject({
 		point: [0.733, 0.477],
 		object: redObjects.cl3,
 		button: redButtons.cl3,
 		alliance: 'red',
-		staticX: true,
-		staticY: false
+		staticX: false,
+		staticY: true
 	});
 	app.addAppObject({
 		point: [0.733, 0.398],
 		object: redObjects.cl4,
 		button: redButtons.cl4,
 		alliance: 'red',
-		staticX: true,
-		staticY: false
+		staticX: false,
+		staticY: true
 	});
 	app.addAppObject({
 		point: [0.5, 0.54],
@@ -301,43 +302,43 @@ export default (config: {
 		staticY: false
 	});
 
-	const redZone = app.view.addArea({
+	const _redZone = app.view.addArea({
 		color: Color.fromName('red').setAlpha(0.5),
 		condition: () => true,
 		points: alliances.red,
 		zone: 'RedZone'
 	});
-	const blueZone = app.view.addArea({
+	const _blueZone = app.view.addArea({
 		color: Color.fromName('blue').setAlpha(0.5),
 		condition: () => true,
 		points: alliances.blue,
 		zone: 'BlueZone'
 	});
-	const blueCoral = app.view.addArea({
+	const _blueCoral = app.view.addArea({
 		color: Color.fromName('blue').setAlpha(0.5),
 		condition: () => true,
 		points: coralStation.blue,
 		zone: 'BlueCoral'
 	});
-	const redCoral = app.view.addArea({
+	const _redCoral = app.view.addArea({
 		color: Color.fromName('red').setAlpha(0.5),
 		condition: () => true,
 		points: coralStation.red,
 		zone: 'RedCoral'
 	});
-	const redEnd = app.view.addArea({
+	const _redEnd = app.view.addArea({
 		color: Color.fromName('red').setAlpha(0.5),
 		condition: () => true,
 		points: endZone.red,
 		zone: 'RedEnd'
 	});
-	const blueEnd = app.view.addArea({
+	const _blueEnd = app.view.addArea({
 		color: Color.fromName('blue').setAlpha(0.5),
 		condition: () => true,
 		points: endZone.blue,
 		zone: 'BlueEnd'
 	});
-	const middleZone = app.view.addArea({
+	const _middleZone = app.view.addArea({
 		color: Color.fromName('black').setAlpha(0.5),
 		condition: () => true,
 		points: middle,
@@ -382,6 +383,78 @@ export default (config: {
 	// 		// condition: (app) => isInside(app.state.currentLocation || [-1, -1], redEnd.points as Point2D[])
 	// 	});
 
+	app.checks
+		.addCheck('success', 'autoMobility')
+		.addCheck('success', 'parked')
+		.addCheck('success', {
+			name: 'climbed',
+			slider: ['Very Slow', 'Slow', 'Medium', 'Fast', 'Very Fast'],
+			color: ['red', 'orange', 'yellow', 'green', 'blue'],
+			alert: false,
+			doComment: false
+		})
+		.addCheck('success', 'stoleGamePieces')
+		.addCheck('success', 'coopertition')
+		.addCheck('primary', {
+			name: 'playedDefense',
+			slider: [
+				'Not effective at all',
+				'Not very effective',
+				'A little effective',
+				'Effective',
+				'Very effective'
+			],
+			color: ['red', 'orange', 'yellow', 'green', 'blue'],
+			alert: false,
+			doComment: false
+		})
+		.addCheck('primary', 'couldPlayDefense')
+		.addCheck('primary', {
+			name: 'groundPicksCoral',
+			slider: ['Very Slow', 'Slow', 'Medium', 'Fast', 'Very Fast'],
+			color: ['red', 'orange', 'yellow', 'green', 'blue'],
+			alert: false,
+			doComment: false
+		})
+		.addCheck('primary', {
+			name: 'groundPicksAlgae',
+			slider: ['Very Slow', 'Slow', 'Medium', 'Fast', 'Very Fast'],
+			color: ['red', 'orange', 'yellow', 'green', 'blue'],
+			alert: false,
+			doComment: false
+		})
+		// .addCheck('primary', 'placesCoral')
+		// .addCheck('primary', 'placesAlgae')
+		.addCheck('warning', 'tippy')
+		.addCheck('warning', 'easilyDefended')
+		.addCheck('warning', 'slow')
+		.addCheck('warning', 'droppedGamePieces')
+		.addCheck('warning', {
+			name: 'disabledInAuto',
+			slider: [
+				'Caused significant issues',
+				'Caused issues',
+				'Got in partners way',
+				'Unknown reason',
+				'Purposeful for auto mobility'
+			],
+			color: Color.fromHex('#FF0000')
+				.linearFade(Color.fromHex('#FF7F00'), 5)
+				.colors.map((c) => c.toString('rgb')) as [string, string, string, string, string],
+			alert: false,
+			doComment: false
+		})
+		.addCheck('danger', 'robotDied')
+		.addCheck('danger', 'problemsDriving')
+		.addCheck('danger', 'spectator')
+		.addCheck('success', {
+			name: 'harvestsAlgae',
+			doComment: true,
+			alert: 'Does this robot harvest algae?',
+			slider: ['Very Slow', 'Slow', 'Medium', 'Fast', 'Very Fast'],
+			color: ['red', 'orange', 'yellow', 'green', 'blue']
+		});
+
 	app.on('tick', () => {
 		if (app.state.section === 'auto' && app.state.currentLocation) {
 			if (app.matchData.alliance === 'red') {
@@ -413,7 +486,7 @@ export default (config: {
 
 		// iterate backwards through checks, and if there's a climb, remove the parked check
 		for (let i = app.state.ticks.length - 1; i >= 0; i--) {
-			const tick = app.state.ticks[i];
+			const tick = app.state.ticks.data[i];
 			if (tick.action === 'dpc' || tick.action === 'shc') {
 				app.checks.setCheck('parked', false);
 				break;

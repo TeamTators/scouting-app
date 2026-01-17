@@ -47,6 +47,12 @@
 		"requests": 100,
 		"window": 600
 	},
+	"match_queue": {
+		"concurrency": 1,
+		"interval": 1000,
+		"limit": 12,
+		"timeout": 5000
+	},
 	"struct_batching": {
 		"enabled": true,
 		"interval": 100,

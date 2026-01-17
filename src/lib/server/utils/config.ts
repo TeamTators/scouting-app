@@ -52,6 +52,12 @@ export default z.object({
 		requests: z.number().min(1),
 		window: z.number().min(1)
 	}),
+	match_queue: z.object({
+		concurrency: z.number().min(1),
+		interval: z.number().min(1),
+		limit: z.number().min(1),
+		timeout: z.number().min(1)
+	}),
 	struct_batching: z.object({
 		enabled: z.boolean(),
 		interval: z.number().min(1),
