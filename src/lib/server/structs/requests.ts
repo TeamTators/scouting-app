@@ -90,7 +90,7 @@ export namespace Requests {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/octet-stream',
-						'X-API-Key': server.api_key,
+						'X-API-KEY': server.api_key,
 					},
 					body: data.body,
 				});
