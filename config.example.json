@@ -71,6 +71,8 @@
 			{
 				"domain": "http://localhost:2122",
 				"api_key": "some_api_key",
+				"data_pull": true,
+				"images": true,
 				"primary": true
 			}
 		],

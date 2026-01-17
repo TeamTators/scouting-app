@@ -314,12 +314,19 @@
 								"description": "API key for the dashboard server",
 								"type": "string"
 							},
-							"primary": {
-								"description": "Whether this is the primary server",
+							"data_pull": {
+								"description": "Whether to use this server to pull data from - use this with localhost to prevent latency and internet traffic",
 								"type": "boolean"
+							},
+							"images": {
+								"description": "Pull robot images from this server",
+								"type": "boolean"
+							},
+							"primary": {
+								"description": "Whether this is the primary"
 							}
 						},
-						"required": ["domain", "api_key", "primary"]
+						"required": ["domain", "api_key", "data_pull", "images", "primary"]
 					}
 				},
 				"remote": {

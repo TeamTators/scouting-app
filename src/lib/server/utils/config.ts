@@ -76,7 +76,9 @@ export default z.object({
 			z.object({
 				domain: z.string().url(),
 				api_key: z.string(),
-				primary: z.boolean()
+				data_pull: z.boolean(),
+				images: z.boolean(),
+				primary: z.boolean(),
 			})
 		),
 		remote: z.boolean()
