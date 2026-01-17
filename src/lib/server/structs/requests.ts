@@ -1,6 +1,5 @@
 import { Scouting } from './scouting';
 import { attemptAsync } from 'ts-utils/check';
-// import { SECRET_SERVER_API_KEY, SECRET_SERVER_DOMAIN } from "$env/static/private";
 import { Struct } from 'drizzle-struct/back-end';
 import { text } from 'drizzle-orm/pg-core';
 import { z } from 'zod';
@@ -15,22 +14,6 @@ import { Queue } from 'ts-utils/queue';
 import { config } from '../utils/env';
 
 export namespace Requests {
-	// const post = (url: string, data: unknown) => {
-	// 	return attemptAsync(async () => {
-	// 		const res = await fetch(SECRET_SERVER_DOMAIN + '/event-server' + url, {
-	// 			method: 'POST',
-	// 			headers: {
-	// 				'Content-Type': 'application/json',
-	// 				'X-API-KEY': SECRET_SERVER_API_KEY || ''
-	// 			},
-	// 			body: JSON.stringify(data)
-	// 		});
-
-	// 		if (res.ok) return true;
-	// 		else throw new Error('Failed to send data');
-	// 	});
-	// };
-
 	export const CachedRequests = new Struct({
 		name: 'cached_requests',
 		structure: {
@@ -156,15 +139,6 @@ export namespace Requests {
 			const payload = compress(body).unwrap();
 			const arrayBuffer = new Uint8Array(payload).buffer;
 
-			// return post('/submit-match/compressed', payload).unwrap();
-			// return fetch(SECRET_SERVER_DOMAIN + '/event-server/submit-match/compressed', {
-			// 	method: 'POST',
-			// 	headers: {
-			// 		'Content-Type': 'application/octet-stream',
-			// 		'X-API-KEY': SECRET_SERVER_API_KEY || ''
-			// 	},
-			// 	body: arrayBuffer
-			// });
 			return queue
 				.enqueue({
 					body: arrayBuffer,
