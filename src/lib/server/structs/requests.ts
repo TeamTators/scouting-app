@@ -101,7 +101,11 @@ export namespace Requests {
 
 				return res.ok;
 			}));
-			return res.every(d => d);
+			const allOk = res.every(d => d);
+			if (allOk) {
+				await data.matchData.delete();
+			}
+			return allOk;
 		},
 		{
 			concurrency: config.match_queue.concurrency,
