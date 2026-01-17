@@ -184,7 +184,7 @@ export namespace AppData {
 				});
 			} else {
 				notify({
-					title: 'Match app_config Failed',
+					title: 'Match Submission Failed',
 					message: `Match ${data.eventKey}:${data.compLevel}${data.match} failed to submit!`,
 					color: 'danger',
 					autoHide: 3000
