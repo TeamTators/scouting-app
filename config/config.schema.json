@@ -317,6 +317,47 @@
 			},
 			"required": ["enabled", "interval", "timeout", "limit", "batch_size", "debug"],
 			"additionalProperties": false
+		},
+		"app_config": {
+			"description": "Dashboard servers to submit the match to",
+			"type": "object",
+			"properties": {
+				"servers": {
+					"description": "Servers to submit to",
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"domain": {
+								"description": "Domain to submit to",
+								"type": "string",
+								"format": "uri"
+							},
+							"api_key": {
+								"description": "API key for the dashboard server",
+								"type": "string"
+							},
+							"data_pull": {
+								"description": "Whether to use this server to pull data from - use this with localhost to prevent latency and internet traffic",
+								"type": "boolean"
+							},
+							"images": {
+								"description": "Pull robot images from this server",
+								"type": "boolean"
+							},
+							"primary": {
+								"description": "Whether this is the primary"
+							}
+						},
+						"required": ["domain", "api_key", "data_pull", "images", "primary"]
+					}
+				},
+				"remote": {
+					"description": "Whether this app is a remote app",
+					"type": "boolean"
+				}
+			},
+			"required": ["servers", "remote"]
 		}
 	},
 	"required": [
@@ -334,7 +375,8 @@
 		"match_queue",
 		"struct_cache",
 		"struct_batching",
-		"indexed_db"
+		"indexed_db",
+		"app_config"
 	],
 	"additionalProperties": false
 }

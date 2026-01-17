@@ -1,6 +1,5 @@
 import { Scouting } from './scouting';
 import { attemptAsync } from 'ts-utils/check';
-// import { SECRET_SERVER_API_KEY, SECRET_SERVER_DOMAIN } from "$env/static/private";
 import { Struct } from 'drizzle-struct/back-end';
 import { text } from 'drizzle-orm/pg-core';
 import { z } from 'zod';
@@ -14,24 +13,7 @@ import terminal from '../utils/terminal';
 import { Queue } from 'ts-utils/queue';
 import { config } from '../utils/env';
 
-const { SECRET_SERVER_API_KEY, SECRET_SERVER_DOMAIN, REMOTE } = process.env;
 export namespace Requests {
-	// const post = (url: string, data: unknown) => {
-	// 	return attemptAsync(async () => {
-	// 		const res = await fetch(SECRET_SERVER_DOMAIN + '/event-server' + url, {
-	// 			method: 'POST',
-	// 			headers: {
-	// 				'Content-Type': 'application/json',
-	// 				'X-API-KEY': SECRET_SERVER_API_KEY || ''
-	// 			},
-	// 			body: JSON.stringify(data)
-	// 		});
-
-	// 		if (res.ok) return true;
-	// 		else throw new Error('Failed to send data');
-	// 	});
-	// };
-
 	export const CachedRequests = new Struct({
 		name: 'cached_requests',
 		structure: {
@@ -54,60 +36,76 @@ export namespace Requests {
 				return JSON.parse(exists.data.response);
 			}
 
-			const data = await fetch(SECRET_SERVER_DOMAIN + '/event-server' + url, {
-				method: 'GET',
-				headers: {
-					'X-API-KEY': SECRET_SERVER_API_KEY || ''
+			// sort servers so primary is first
+			config.app_config.servers.sort((a, b) => (a.primary === b.primary ? 0 : a.primary ? -1 : 1));
+
+			for (const server of config.app_config.servers) {
+				const data = await fetch(server.domain + '/event-server' + url, {
+					method: 'GET',
+					headers: {
+						'X-API-KEY': server.api_key || ''
+					}
+				})
+					.then((res) => res.json())
+					.catch((e) => {
+						console.log(e);
+					});
+
+				if (!data && exists) {
+					terminal.log('Failed to fetch data, using cached data:', url);
+					return JSON.parse(exists.data.response);
 				}
-			})
-				.then((res) => res.json())
-				.catch((e) => {
-					console.log(e);
-				});
 
-			if (!data && exists) {
-				terminal.log('Failed to fetch data, using cached data:', url);
-				return JSON.parse(exists.data.response);
+				// terminal.log('Recieved:', data);
+				if (exists) {
+					terminal.log('Updating cached data:', url);
+					(
+						await exists.update({
+							response: JSON.stringify(data)
+						})
+					).unwrap();
+				} else {
+					terminal.log('Caching data:', url);
+					(
+						await CachedRequests.new({
+							url,
+							response: JSON.stringify(data)
+						})
+					).unwrap();
+				}
+				terminal.log('Fetched data:', url);
+				return data;
 			}
 
-			// terminal.log('Recieved:', data);
-			if (exists) {
-				terminal.log('Updating cached data:', url);
-				(
-					await exists.update({
-						response: JSON.stringify(data)
-					})
-				).unwrap();
-			} else {
-				terminal.log('Caching data:', url);
-				(
-					await CachedRequests.new({
-						url,
-						response: JSON.stringify(data)
-					})
-				).unwrap();
-			}
-			terminal.log('Fetched data:', url);
-			return data;
+			throw new Error('All servers failed to respond');
 		});
 	};
 
 	export const queue = new Queue(
 		async (data: { body: ArrayBuffer; matchData: Scouting.MatchData }) => {
-			const res = await fetch(SECRET_SERVER_DOMAIN + '/event-server/submit-match/compressed', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/octet-stream',
-					'X-API-KEY': SECRET_SERVER_API_KEY || ''
-				},
-				body: data.body
-			});
+			config.app_config.servers.sort((a, b) => Number(a.primary) - Number(b.primary));
 
-			if (res.ok) {
+			const res = await Promise.all(config.app_config.servers.map(async (server) => {
+				const res = await fetch(server.domain + '/event-server/submit-match/compressed', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/octet-stream',
+						'X-API-KEY': server.api_key,
+					},
+					body: data.body,
+				});
+
+				if (!res.ok) {
+					terminal.error('Error submitting match data', res.status, res.statusText);
+				}
+
+				return res.ok;
+			}));
+			const allOk = res.every(d => d);
+			if (allOk) {
 				await data.matchData.delete();
-				return true;
 			}
-			return false;
+			return allOk;
 		},
 		{
 			concurrency: config.match_queue.concurrency,
@@ -130,7 +128,7 @@ export namespace Requests {
 			}
 			const body = {
 				...match,
-				remote: REMOTE === 'true'
+				remote: config.app_config.remote
 			};
 			const matchData = (
 				await Scouting.Matches.new({
@@ -145,15 +143,6 @@ export namespace Requests {
 			const payload = compress(body).unwrap();
 			const arrayBuffer = new Uint8Array(payload).buffer;
 
-			// return post('/submit-match/compressed', payload).unwrap();
-			// return fetch(SECRET_SERVER_DOMAIN + '/event-server/submit-match/compressed', {
-			// 	method: 'POST',
-			// 	headers: {
-			// 		'Content-Type': 'application/octet-stream',
-			// 		'X-API-KEY': SECRET_SERVER_API_KEY || ''
-			// 	},
-			// 	body: arrayBuffer
-			// });
 			return queue
 				.enqueue({
 					body: arrayBuffer,
@@ -209,10 +198,12 @@ export namespace Requests {
 	export const ping = () => {
 		return attemptAsync(async () => {
 			const start = Date.now();
-			const res = await fetch(SECRET_SERVER_DOMAIN + '/api/ping', {
+			const primary = config.app_config.servers.find((server) => server.primary);
+			if (!primary) throw new Error('No dashboard servers configured');
+			const res = await fetch(primary.domain + '/event-server/ping', {
 				method: 'GET',
 				headers: {
-					'X-AUTH-KEY': SECRET_SERVER_API_KEY || ''
+					'X-API-KEY': primary.api_key || ''
 				}
 			});
 
