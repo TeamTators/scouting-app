@@ -22,8 +22,8 @@ export namespace Requests {
 		}
 	});
 
-	const get = (url: string, threshold: number) => {
-		return attemptAsync<unknown>(async () => {
+	const get = <T>(url: string, threshold: number, schema: z.ZodSchema<T>) => {
+		return attemptAsync<T>(async () => {
 			terminal.log('Requesting: ', url);
 			const exists = (
 				await CachedRequests.fromProperty('url', url, {
@@ -33,27 +33,30 @@ export namespace Requests {
 			EXISTS: if (exists) {
 				if (exists.created.getTime() + threshold < Date.now()) break EXISTS;
 				terminal.log('Using cached data:', url);
-				return JSON.parse(exists.data.response);
+				return schema.parse(JSON.parse(exists.data.response));
 			}
 
 			// sort servers so primary is first
 			config.app_config.servers.sort((a, b) => (a.primary === b.primary ? 0 : a.primary ? -1 : 1));
 
+			if (!config.app_config.servers.filter(s => s.data_pull).length) {
+				throw new Error('No data pull servers configured');
+			}
+
 			for (const server of config.app_config.servers) {
-				const data = await fetch(server.domain + '/event-server' + url, {
+				if (!server.data_pull) continue;
+				const data = await fetch(server.domain + '/api/event-server' + url, {
 					method: 'GET',
 					headers: {
 						'X-API-KEY': server.api_key || ''
 					}
 				})
 					.then((res) => res.json())
-					.catch((e) => {
-						console.log(e);
-					});
+					.then((json) => schema.parse(json))
 
 				if (!data && exists) {
 					terminal.log('Failed to fetch data, using cached data:', url);
-					return JSON.parse(exists.data.response);
+					return schema.parse(JSON.parse(exists.data.response));
 				}
 
 				// terminal.log('Recieved:', data);
@@ -157,7 +160,13 @@ export namespace Requests {
 			const res = (
 				await get(
 					'/accounts',
-					1000 * 60 * 60 * 24 // 1 day
+					1000 * 60 * 60 * 24, // 1 day
+					z.object({
+						id: z.string(),
+						username: z.string(),
+						firstName: z.string(),
+						lastName: z.string(),
+					}),
 				)
 			).unwrap();
 
@@ -173,7 +182,12 @@ export namespace Requests {
 			const res = (
 				await get(
 					`/event/${eventKey}`,
-					1000 * 60 * 60 // 1 hour
+					1000 * 60 * 60, // 1 hour
+					z.object({
+						event: EventSchema,
+						teams: z.array(TeamSchema),
+						matches: z.array(MatchSchema)
+					}),
 				)
 			).unwrap();
 
@@ -189,7 +203,18 @@ export namespace Requests {
 
 	export const getScoutGroups = (eventKey: string) => {
 		return attemptAsync(async () => {
-			const res = (await get(`/event/${eventKey}/scout-groups`, 1000 * 60 * 60)).unwrap();
+			const res = await get(`/event/${eventKey}/scout-groups`, 1000 * 60 * 60, z.object({
+				groups: z.array(z.array(z.number())),
+				matchAssignments: z.array(z.tuple([
+					z.array(z.number()),
+					z.array(z.number()),
+					z.array(z.number()),
+					z.array(z.number()),
+					z.array(z.number()),
+					z.array(z.number()),
+				])),
+				interferences: z.number(),
+			})).unwrap();
 
 			return AssignmentSchema.parse(res);
 		});
@@ -242,7 +267,8 @@ export namespace Requests {
 			const res = (
 				await get(
 					`/events/${year}`,
-					1000 * 60 * 60 * 24 // 1 day
+					1000 * 60 * 60 * 24, // 1 day
+					z.array(EventSchema)
 				)
 			).unwrap();
 
@@ -250,6 +276,18 @@ export namespace Requests {
 
 			return z.array(EventSchema).parse(res);
 		});
+	};
+
+	export const getPictures = (eventKey: string, team: number) => {
+		return get(`/event/${eventKey}/team/${team}/pictures`, 1000 * 60 * 60, z.array(z.string()));
+	};
+
+	export const getRankings = (eventKey: string, team: number) => {
+		return get(`/event/${eventKey}/team/${team}/rankings`, 1000 * 60 * 20, z.record(z.record(z.number())))
+	};
+
+	export const getStats = (eventKey: string, team: number) => {
+		return  get(`/event/${eventKey}/team/${team}/stats`, 1000 * 60 * 20, z.record(z.record(z.number())))
 	};
 }
 

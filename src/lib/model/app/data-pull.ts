@@ -14,7 +14,7 @@ import { Trace } from 'tatorscout/trace';
 export namespace AppData {
 	const CACHE_VERSION = 'v2';
 
-	const get = async (url: string, threshold: number) => {
+	const get = <T>(url: string, threshold: number, schema: z.ZodSchema<T>) => {
 		return attemptAsync<unknown>(async () => {
 			const exists = localStorage.getItem(`${CACHE_VERSION}:${url}`);
 			let d: unknown;
@@ -27,7 +27,7 @@ export namespace AppData {
 						})
 						.parse(JSON.parse(exists));
 					d = data;
-					if (timestamp + threshold > Date.now()) return data;
+					if (timestamp + threshold > Date.now()) return schema.parse(data);
 				} catch (error) {
 					console.error('Cached item is corrupted:', url, error);
 					localStorage.removeItem(`${CACHE_VERSION}:${url}`);
@@ -46,13 +46,13 @@ export namespace AppData {
 					`${CACHE_VERSION}:${url}`,
 					JSON.stringify({
 						timestamp: Date.now(),
-						data: data
+						data: schema.parse(data)
 					})
 				);
 
 				return data;
 			} catch (error) {
-				if (d) return d;
+				if (d) return schema.parse(d);
 				throw new Error(`Failed to fetch data: ${url} ${error}`);
 			}
 		});
@@ -74,50 +74,42 @@ export namespace AppData {
 	};
 
 	export const getAccounts = () => {
-		return attemptAsync(async () => {
-			const res = (await get('/accounts', 1000 * 60 * 60 * 24)).unwrap();
-
-			return z
-				.array(
-					z.object({
-						id: z.string(),
-						username: z.string(),
-						firstName: z.string(),
-						lastName: z.string()
-					})
-				)
-				.parse(res);
-		});
+		return get('/accounts', 1000 * 60 * 60 * 24, z.array(z.object({
+				id: z.string(),
+				username: z.string(),
+				firstName: z.string(),
+				lastName: z.string(),
+			})));
 	};
 
 	export const getEvent = (eventKey: string) => {
-		return attemptAsync(async () => {
-			const res = (await get(`/event/${eventKey}`, 1000 * 60 * 60)).unwrap();
-
-			return z
-				.object({
-					event: EventSchema,
-					matches: z.array(MatchSchema),
-					teams: z.array(TeamSchema)
-				})
-				.parse(res);
-		});
+		return get(`/event/${eventKey}`, 1000 * 60 * 60, z.object({
+				event: EventSchema,
+				matches: z.array(MatchSchema),
+				teams: z.array(TeamSchema)
+			}));
 	};
 
 	export const getEvents = (year: number) => {
-		return attemptAsync(async () => {
-			const res = (await get(`/events/${year}`, 1000 * 60 * 60 * 24)).unwrap();
-			return z.array(EventSchema).parse(res);
-		});
+		return get(`/events/${year}`, 1000 * 60 * 60 * 24, z.array(EventSchema));
 	};
 
 	export const getScoutGroups = (eventKey: string) => {
-		return attemptAsync(async () => {
-			const res = (await get(`/event/${eventKey}/scout-groups`, 1000 * 60 * 60)).unwrap();
-
-			return AssignmentSchema.parse(res);
-		});
+		return get(`/event/${eventKey}/scout-groups`, 1000 * 60 * 60, AssignmentSchema);
 	};
+
+	export const getRankings = (eventKey: string, team: number) => {
+		return get(`/event/${eventKey}/team/${team}/rankings`, 1000 * 60 * 20, z.record(z.record(z.number())));
+	};
+
+	export const getPictures = (eventKey: string, team: number) => {
+		return get(`/event/${eventKey}/team/${team}/pictures`, 1000 * 60 * 60, z.array(z.string()));
+	};
+
+	export const getStats = (eventKey: string, team: number) => {
+		return get(`/event/${eventKey}/team/${team}/stats`, 1000 * 60 * 20, z.record(z.record(z.number())));
+	};
+
 	// const saveMatches = (data: MatchSchemaType[]) => {
 	// 	return attempt(() => {
 	// 		const saved = localStorage.getItem(CACHE_VERSION + 'saved-matches') || '[]';
