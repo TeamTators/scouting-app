@@ -162,7 +162,7 @@ export default (config: {
     };
 
     app.addAppObject({
-		point: [0.014, 0.178],
+		point: [0.025, 0.336],
 		object: blueObjects.hub1,
 		button: blueButtons.hub1,
 		alliance: 'blue',
@@ -170,7 +170,7 @@ export default (config: {
 		staticY: true
 	});
     app.addAppObject({
-		point: [0.014, 0.238],
+		point: [0.025, 0.396],
 		object: blueObjects.hub5,
 		button: blueButtons.hub5,
 		alliance: 'blue',
@@ -178,33 +178,9 @@ export default (config: {
 		staticY: true
 	});
     app.addAppObject({
-		point: [0.014, 0.298],
+		point: [0.025, 0.456],
 		object: blueObjects.hub10,
 		button: blueButtons.hub10,
-		alliance: 'blue',
-		staticX: false,
-		staticY: true
-	});
-    app.addAppObject({
-		point: [0.014, 0.358],
-		object: blueObjects.lob1,
-		button: blueButtons.lob1,
-		alliance: 'blue',
-		staticX: false,
-		staticY: true
-	});
-    app.addAppObject({
-		point: [0.014, 0.418],
-		object: blueObjects.lob5,
-		button: blueButtons.lob5,
-		alliance: 'blue',
-		staticX: false,
-		staticY: true
-	});
-    app.addAppObject({
-		point: [0.014, 0.478],
-		object: blueObjects.lob10,
-		button: blueButtons.lob10,
 		alliance: 'blue',
 		staticX: false,
 		staticY: true
@@ -218,7 +194,7 @@ export default (config: {
 		staticY: true
 	});
     app.addAppObject({
-		point: [0.014, 0.178],
+		point: [0.025, 0.336],
 		object: redObjects.hub1,
 		button: redButtons.hub1,
 		alliance: 'red',
@@ -226,7 +202,7 @@ export default (config: {
 		staticY: true
 	});
     app.addAppObject({
-		point: [0.014, 0.238],
+		point: [0.025, 0.396],
 		object: redObjects.hub5,
 		button: redButtons.hub5,
 		alliance: 'red',
@@ -234,33 +210,9 @@ export default (config: {
 		staticY: true
 	});
     app.addAppObject({
-		point: [0.014, 0.298],
+		point: [0.025, 0.456],
 		object: redObjects.hub10,
 		button: redButtons.hub10,
-		alliance: 'red',
-		staticX: false,
-		staticY: true
-	});
-    app.addAppObject({
-		point: [0.014, 0.358],
-		object: redObjects.lob1,
-		button: redButtons.lob1,
-		alliance: 'red',
-		staticX: false,
-		staticY: true
-	});
-    app.addAppObject({
-		point: [0.014, 0.418],
-		object: redObjects.lob5,
-		button: redButtons.lob5,
-		alliance: 'red',
-		staticX: false,
-		staticY: true
-	});
-    app.addAppObject({
-		point: [0.014, 0.478],
-		object: redObjects.lob10,
-		button: redButtons.lob10,
 		alliance: 'red',
 		staticX: false,
 		staticY: true
