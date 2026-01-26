@@ -7,7 +7,8 @@ export const build = (year: 2025 | 2026) => {
 			return build2025;
 		case 2026:
 			return build2026;
-	}
 
-	throw new Error('Not found');
+		default:
+			throw new Error('Not found');
+	}
 };
