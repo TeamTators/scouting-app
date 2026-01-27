@@ -361,7 +361,7 @@ export class AppView {
 				const [px, py] = [staticX ? x : flipX ? 1 - x : x, staticY ? y : flipY ? 1 - y : y];
 				obj.element.style.left = `${px * this.target!.clientWidth}px`;
 				obj.element.style.top = `${py * this.target!.clientHeight}px`;
-				if (obj.alliance && obj.alliance !== this.app.matchData.alliance) {
+				if (this.app.matchData.alliance && obj.alliance !== this.app.matchData.alliance) {
 					obj.element.style.display = 'none';
 				} else {
 					obj.element.style.display = 'block';

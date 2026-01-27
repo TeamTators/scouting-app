@@ -2,7 +2,7 @@ import type { CompLevel } from 'tatorscout/tba';
 import { App } from '../app';
 import type { Point2D } from 'math/point';
 import { AppObject } from '../app-object';
-import YearInfo2026  from 'tatorscout/years/2025.js';
+import YearInfo2026 from 'tatorscout/years/2025.js';
 
 export default (config: {
     eventKey: string;
@@ -141,6 +141,10 @@ export default (config: {
         return button;
     };
 
+	const createLargeButton = (obj: AppObject, color: 'red' | 'blue') => {
+		// TODO: Sophie, do the large buttons here
+	};
+
     const blueButtons = {
         hub1: createButton(blueObjects.hub1, 'blue'),
 		hub5: createButton(blueObjects.hub5, 'blue'),
@@ -167,7 +171,8 @@ export default (config: {
 		button: blueButtons.hub1,
 		alliance: 'blue',
 		staticX: false,
-		staticY: true
+		staticY: true,
+		// viewCondition: () => app.matchData.alliance === 'blue',
 	});
     app.addAppObject({
 		point: [0.025, 0.396],
@@ -175,7 +180,8 @@ export default (config: {
 		button: blueButtons.hub5,
 		alliance: 'blue',
 		staticX: false,
-		staticY: true
+		staticY: true,
+		// viewCondition: () => app.matchData.alliance === 'blue',
 	});
     app.addAppObject({
 		point: [0.025, 0.456],
@@ -183,7 +189,8 @@ export default (config: {
 		button: blueButtons.hub10,
 		alliance: 'blue',
 		staticX: false,
-		staticY: true
+		staticY: true,
+		// viewCondition: () => app.matchData.alliance === 'blue',
 	});
     app.addAppObject({
 		point: [0.033, 0.869],
@@ -191,7 +198,8 @@ export default (config: {
 		button: blueButtons.out,
 		alliance: 'blue',
 		staticX: false,
-		staticY: true
+		staticY: true,
+		// viewCondition: () => app.matchData.alliance === 'blue',
 	});
     app.addAppObject({
 		point: [0.025, 0.336],
@@ -199,7 +207,8 @@ export default (config: {
 		button: redButtons.hub1,
 		alliance: 'red',
 		staticX: false,
-		staticY: true
+		staticY: true,
+		// viewCondition: () => app.matchData.alliance === 'red',
 	});
     app.addAppObject({
 		point: [0.025, 0.396],
@@ -207,7 +216,8 @@ export default (config: {
 		button: redButtons.hub5,
 		alliance: 'red',
 		staticX: false,
-		staticY: true
+		staticY: true,
+		// viewCondition: () => app.matchData.alliance === 'red',
 	});
     app.addAppObject({
 		point: [0.025, 0.456],
@@ -215,7 +225,8 @@ export default (config: {
 		button: redButtons.hub10,
 		alliance: 'red',
 		staticX: false,
-		staticY: true
+		staticY: true,
+		// viewCondition: () => app.matchData.alliance === 'red',
 	});
     app.addAppObject({
 		point: [0.967, 0.124],
@@ -223,7 +234,8 @@ export default (config: {
 		button: redButtons.out,
 		alliance: 'red',
 		staticX: false,
-		staticY: true
+		staticY: true,
+		// viewCondition: () => app.matchData.alliance === 'red',
 	});
 
     return app;
