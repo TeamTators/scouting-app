@@ -7,6 +7,7 @@ Admin accounts list page at `/dashboard/admin/account`.
 Admin accounts list page at `/dashboard/admin/account`.
 -->
 <script lang="ts">
+	/* eslint-disable @typescript-eslint/no-explicit-any */
 	import Grid from '$lib/components/general/Grid.svelte';
 	import { Account } from '$lib/model/account.js';
 	import { type ICellRendererParams } from 'ag-grid-community';
@@ -83,26 +84,26 @@ Admin accounts list page at `/dashboard/admin/account`.
 						// },
 						{
 							headerName: 'Verified',
-							cellRenderer: (params: ICellRendererParams<Row>) => {
+							cellRenderer: (params: ICellRendererParams) => {
 								return params.data?.account.data.verified ? 'Yes' : 'No';
 							}
 						},
 						{
 							headerName: 'Created',
-							cellRenderer: (params: ICellRendererParams<Row>) => {
+							cellRenderer: (params: ICellRendererParams) => {
 								return dateTime(params.data?.account.data.created);
 							}
 						},
 						{
 							headerName: 'Last Login',
-							cellRenderer: (params: ICellRendererParams<Row>) => {
+							cellRenderer: (params: ICellRendererParams) => {
 								return dateTime(params.data?.account.data.lastLogin);
 							}
 						},
 						{
 							headerName: 'Roles',
-							cellRenderer: (params: ICellRendererParams<Row>) => {
-								return params.data?.roles.map((role) => role.data.name).join(', ') || 'None';
+							cellRenderer: (params: ICellRendererParams) => {
+								return params.data?.roles.map((role: any) => role.data.name).join(', ') || 'None';
 							}
 						}
 					],

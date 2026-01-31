@@ -101,20 +101,4 @@ Top navigation bar with stack controls, theme toggle, account menu, and notifica
 </nav>
 <SideNav id="pages" />
 
-<Notifications bind:notifs />
-
-<style>
-	.stack-btn {
-		background: transparent;
-		border: none;
-		color: inherit;
-		font: inherit;
-		cursor: pointer;
-		outline: inherit;
-	}
-
-	.stack-btn:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-</style>
+<!-- <Notifications bind:notifs /> -->
