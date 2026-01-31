@@ -8,7 +8,7 @@ import { globalData } from './global-data.svelte';
 import { mount, unmount } from 'svelte';
 import Cover from '$lib/components/app/Cover.svelte';
 import { SimpleEventEmitter } from 'ts-utils';
-import { WritableBase } from '$lib/utils/writables';
+import { WritableBase } from '$lib/services/writables';
 import type { P, TraceArray } from 'tatorscout/trace';
 import { contextmenu } from '$lib/utils/contextmenu';
 import { confirm, rawModal } from '$lib/utils/prompts';
