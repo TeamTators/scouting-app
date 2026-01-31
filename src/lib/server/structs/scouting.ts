@@ -1,10 +1,11 @@
 import { integer } from 'drizzle-orm/pg-core';
 import { text } from 'drizzle-orm/pg-core';
-import { Struct } from 'drizzle-struct/back-end';
+import { Struct } from 'drizzle-struct';
 import { attemptAsync } from 'ts-utils/check';
 import { DB } from '../db';
 import { and, eq } from 'drizzle-orm';
 import { Requests } from './requests';
+import type { CompressedMatchSchemaType } from '$lib/types/match';
 
 export namespace Scouting {
 	export const Matches = new Struct({
@@ -46,10 +47,12 @@ export namespace Scouting {
 	};
 
 	export const submitStale = (event: string) => {
-		Matches.get({'eventKey': event}, {
-			type: 'stream'
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		}).pipe((m) => Requests.submitMatch(JSON.parse(m.data.body) as any));
+		Matches.get(
+			{ eventKey: event },
+			{
+				type: 'stream'
+			}
+		).pipe((m) => Requests.submitMatch(JSON.parse(m.data.body) as CompressedMatchSchemaType));
 
 		return Requests.queue.flush();
 	};

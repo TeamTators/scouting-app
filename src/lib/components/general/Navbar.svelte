@@ -12,7 +12,7 @@ Top navigation bar with stack controls, theme toggle, account menu, and notifica
 -->
 <script lang="ts">
 	import SideNav from './SideNav.svelte';
-	import Notifications from './Notifications.svelte';
+	// import Notifications from './Notifications.svelte';
 	import { Account } from '$lib/model/account';
 	import { Stack } from '$lib/utils/stack';
 	import ThemeSwitch from './ThemeSwitch.svelte';

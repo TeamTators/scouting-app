@@ -1,7 +1,7 @@
 import { Scouting } from './scouting';
 import { attemptAsync } from 'ts-utils/check';
 // import { SECRET_SERVER_API_KEY, SECRET_SERVER_DOMAIN } from "$env/static/private";
-import { Struct } from 'drizzle-struct/back-end';
+import { Struct } from 'drizzle-struct';
 import { text } from 'drizzle-orm/pg-core';
 import { z } from 'zod';
 import { Account } from './account';
@@ -44,9 +44,12 @@ export namespace Requests {
 		return attemptAsync<unknown>(async () => {
 			terminal.log('Requesting: ', url);
 			const exists = (
-				await CachedRequests.get({'url': url}, {
-					type: 'single'
-				})
+				await CachedRequests.get(
+					{ url: url },
+					{
+						type: 'single'
+					}
+				)
 			).unwrap();
 			EXISTS: if (exists) {
 				if (exists.created.getTime() + threshold < Date.now()) break EXISTS;

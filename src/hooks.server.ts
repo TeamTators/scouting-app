@@ -20,8 +20,9 @@ import ignore from 'ignore';
 import redis from '$lib/server/services/redis';
 import { config } from '$lib/server/utils/env';
 import createTree from '../scripts/create-route-tree';
-import { env, str } from '$lib/server/utils/env';
 import { Remote } from '$lib/server/structs/remote';
+import { sse } from '$lib/server/services/sse';
+import { sleep } from 'ts-utils';
 
 (async () => {
 	await redis.init();
@@ -385,9 +386,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 
 		event.locals.isTrusted = !!(
-			await Remote.TrustedSessions.get({'ssid': session.value.data.id}, {
-				type: 'count'
-			})
+			await Remote.TrustedSessions.get(
+				{ ssid: session.value.data.id },
+				{
+					type: 'count'
+				}
+			)
 		).unwrap();
 
 		if (

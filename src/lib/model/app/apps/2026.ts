@@ -22,28 +22,28 @@ export default (config: {
 		yearInfo: YearInfo2025
 	});
 
-	const alliances: Zone = {
+	const _alliances: Zone = {
 		red: [],
 		blue: []
 	};
 
-	const coralStation: Zone = {
+	const _coralStation: Zone = {
 		red: [],
 		blue: []
 	};
 
-	const endZone: Zone = {
+	const _endZone: Zone = {
 		red: [],
 		blue: []
 	};
 
-	const middle: Point2D[] = [];
+	const _middle: Point2D[] = [];
 
-	const blueObjects = {};
+	const _blueObjects = {};
 
-	const redObjects = {};
+	const _redObjects = {};
 
-	const createButton = (object: AppObject, color: 'red' | 'blue') => {
+	const _createButton = (object: AppObject, color: 'red' | 'blue') => {
 		const button = document.createElement('button');
 		button.classList.add('btn', color === 'red' ? 'btn-danger' : 'btn-primary', 'p-0');
 		button.innerHTML = `
@@ -55,9 +55,9 @@ export default (config: {
 		return button;
 	};
 
-	const blueButtons = {};
+	const _blueButtons = {};
 
-	const redButtons = {};
+	const _redButtons = {};
 
 	return app;
 };
