@@ -356,58 +356,58 @@ export class App {
 To reset points: ctrl + r
 To view points: ctrl + v
 To disable: ctrl + d`);
-			if (!Number.isInteger(sigFigs))
-				throw new Error('Cannot have non-integer number of sig figs. Recieved: ' + sigFigs);
+		if (!Number.isInteger(sigFigs))
+			throw new Error('Cannot have non-integer number of sig figs. Recieved: ' + sigFigs);
 
-			const target = this.view.target;
-			if (!target) {
-				console.warn('No target element for click points.');
-				return;
-			}
+		const target = this.view.target;
+		if (!target) {
+			console.warn('No target element for click points.');
+			return;
+		}
 
-			const cvs = document.createElement('canvas');
-			cvs.style.width = '100%';
-			cvs.style.height = '100%';
-			cvs.width = 2000; //cvs.clientWidth;
-			cvs.height = 1000; //cvs.clientHeight;
-			cvs.style.position = 'absolute';
-			cvs.style.top = '0';
-			cvs.style.left = '0';
-			const ctx = cvs.getContext('2d');
-			if (!ctx) return;
+		const cvs = document.createElement('canvas');
+		cvs.style.width = '100%';
+		cvs.style.height = '100%';
+		cvs.width = 2000; //cvs.clientWidth;
+		cvs.height = 1000; //cvs.clientHeight;
+		cvs.style.position = 'absolute';
+		cvs.style.top = '0';
+		cvs.style.left = '0';
+		const ctx = cvs.getContext('2d');
+		if (!ctx) return;
 
-			const canvas = new Canvas(ctx);
+		const canvas = new Canvas(ctx);
 
-			const img = new Img(`/assets/fields/${this.config.year}.png`);
-			img.width = 1;
-			img.height = 1;
-			canvas.add(img);
+		const img = new Img(`/assets/fields/${this.config.year}.png`);
+		img.width = 1;
+		img.height = 1;
+		canvas.add(img);
 
-			let points: [string, string][] = [];
-			let drawables: Circle[] = [];
-			const shape = new Polygon([]);
-			shape.fill = {
-				color: Color.fromName('gray').setAlpha(0.75).toString('rgba')
-			};
-			shape.line = {
-				color: 'transparent'
-			};
-			canvas.add(shape);
-			const reset = () => {
-				points = [];
-				canvas.remove(...drawables);
-				shape.points = [];
-				drawables = [];
-			};
-			const add = (point: Point2D) => {
-				points.push([point[0].toFixed(sigFigs), point[1].toFixed(sigFigs)]);
-				const circle = new Circle(point, 0.003);
-				drawables.push(circle);
-				canvas.add(circle);
-				shape.points.push(point);
-			};
-			const view = () => {
-				console.log(`[
+		let points: [string, string][] = [];
+		let drawables: Circle[] = [];
+		const shape = new Polygon([]);
+		shape.fill = {
+			color: Color.fromName('gray').setAlpha(0.75).toString('rgba')
+		};
+		shape.line = {
+			color: 'transparent'
+		};
+		canvas.add(shape);
+		const reset = () => {
+			points = [];
+			canvas.remove(...drawables);
+			shape.points = [];
+			drawables = [];
+		};
+		const add = (point: Point2D) => {
+			points.push([point[0].toFixed(sigFigs), point[1].toFixed(sigFigs)]);
+			const circle = new Circle(point, 0.003);
+			drawables.push(circle);
+			canvas.add(circle);
+			shape.points.push(point);
+		};
+		const view = () => {
+			console.log(`[
     ${points.map((p) => `[${p[0]}, ${p[1]}]`).join(',\n    ')}
 ]`);
 		};
@@ -424,20 +424,20 @@ To disable: ctrl + d`);
 				e.preventDefault();
 				if (e.key === 'e') enable();
 				else if (enabled) {
-				switch (e.key) {
-					case 'r':
-						reset();
-						break;
-					case 'v':
-						view();
-						break;
-					case 'd':
-						disable();
-						break;
-					case 'e':
-						enable();
-						break;
-				}
+					switch (e.key) {
+						case 'r':
+							reset();
+							break;
+						case 'v':
+							view();
+							break;
+						case 'd':
+							disable();
+							break;
+						case 'e':
+							enable();
+							break;
+					}
 				}
 			}
 		});

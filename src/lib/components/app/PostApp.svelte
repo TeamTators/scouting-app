@@ -27,7 +27,7 @@
 			min: 0,
 			max: summary.trace.length - 1,
 			target: sliderEl,
-			step: 1,
+			step: 1
 		});
 		unsub = slider.subscribe(({ min, max }) => {
 			opts.view(min, max);

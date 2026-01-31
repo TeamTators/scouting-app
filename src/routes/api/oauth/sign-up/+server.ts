@@ -1,3 +1,6 @@
+/**
+ * @fileoverview OAuth sign-up endpoint at `/api/oauth/sign-up`.
+ */
 import { Account } from '$lib/server/structs/account.js';
 import { fail, redirect } from '@sveltejs/kit';
 import { OAuth2Client } from 'google-auth-library';
@@ -37,9 +40,8 @@ export const GET = async (event) => {
 			.userinfo.get();
 
 		// log(r);
-		const account = await Account.Account.fromProperty(
-			'email',
-			info.data.email || 'nothing should never happen',
+		const account = await Account.Account.get(
+			{ email: info.data.email || 'nothing should never happen' },
 			{
 				type: 'single'
 			}

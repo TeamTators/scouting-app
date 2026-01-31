@@ -2,7 +2,7 @@ import type { Point2D } from 'math/point';
 import { App, TOTAL_TICKS, TICKS_PER_SECOND, SECTIONS, type Section } from './app';
 import { Tick, Ticks } from './tick';
 import { type TraceArray } from 'tatorscout/trace';
-import { WritableBase } from '$lib/utils/writables';
+import { WritableBase } from '$lib/services/writables';
 
 export class AppState extends WritableBase<{
 	currentLocation: Point2D | null;

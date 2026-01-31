@@ -14,9 +14,12 @@ export const actions = {
 
 		const session = event.locals.session;
 		const exists = (
-			await Remote.TrustedSessions.fromProperty('ssid', session.data.id, {
-				type: 'single'
-			})
+			await Remote.TrustedSessions.get(
+				{ ssid: session.data.id },
+				{
+					type: 'single'
+				}
+			)
 		).unwrap();
 		if (!exists) {
 			Remote.TrustedSessions.new({
