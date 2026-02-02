@@ -39,8 +39,8 @@ export default (config: {
 
 	const _middle: Point2D[] = [];
 
-    const blueObjects = {
-        hub1: new AppObject({
+	const blueObjects = {
+		hub1: new AppObject({
 			abbr: 'hub1',
 			name: 'Blue Hub 1x',
 			description: 'Blue scored 1 fuel into hub'
@@ -65,20 +65,20 @@ export default (config: {
 			name: 'Blue Lob 5x',
 			description: 'Blue lobbed 5 fuel'
 		}),
-        lob10: new AppObject({
+		lob10: new AppObject({
 			abbr: 'lob10',
 			name: 'Blue Lob 10x',
 			description: 'Blue lobbed 10 fuel'
 		}),
-        out: new AppObject({
+		out: new AppObject({
 			abbr: 'out',
 			name: 'Blue Outpost',
 			description: 'Blue dumped fuel into outpost'
 		})
-    };
+	};
 
-    const redObjects = {
-        hub1: new AppObject({
+	const redObjects = {
+		hub1: new AppObject({
 			abbr: 'hub1',
 			name: 'Red Hub 1x',
 			description: 'Red scored 1 fuel into hub'
@@ -103,19 +103,19 @@ export default (config: {
 			name: 'Red Lob 5x',
 			description: 'Red lobbed 5 fuel'
 		}),
-        lob10: new AppObject({
+		lob10: new AppObject({
 			abbr: 'lob10',
 			name: 'Red Lob 10x',
 			description: 'Red lobbed 10 fuel'
 		}),
-        out: new AppObject({
+		out: new AppObject({
 			abbr: 'out',
 			name: 'Red Outpost',
 			description: 'Red dumped fuel into outpost'
 		})
-    };
+	};
 
-	const _createButton = (object: AppObject, color: 'red' | 'blue') => {
+	const createButton = (object: AppObject, color: 'red' | 'blue') => {
 		const button = document.createElement('button');
 		button.classList.add('btn', color === 'red' ? 'btn-danger' : 'btn-primary', 'p-0');
 		button.innerHTML = `
@@ -124,103 +124,103 @@ export default (config: {
                 width: 50px;
             " />
         `;
-        return button;
-    };
+		return button;
+	};
 
 	const createLargeButton = (obj: AppObject, color: 'red' | 'blue') => {
 		// TODO: Sophie, do the large buttons here
 	};
 
-    const blueButtons = {
-        hub1: createButton(blueObjects.hub1, 'blue'),
+	const blueButtons = {
+		hub1: createButton(blueObjects.hub1, 'blue'),
 		hub5: createButton(blueObjects.hub5, 'blue'),
 		hub10: createButton(blueObjects.hub10, 'blue'),
 		lob1: createButton(blueObjects.lob1, 'blue'),
 		lob5: createButton(blueObjects.lob5, 'blue'),
-        lob10: createButton(blueObjects.lob10, 'blue'),
-        out: createButton(blueObjects.out, 'blue')
-    };
+		lob10: createButton(blueObjects.lob10, 'blue'),
+		out: createButton(blueObjects.out, 'blue')
+	};
 
-    const redButtons = {
-        hub1: createButton(redObjects.hub1, 'red'),
+	const redButtons = {
+		hub1: createButton(redObjects.hub1, 'red'),
 		hub5: createButton(redObjects.hub5, 'red'),
 		hub10: createButton(redObjects.hub10, 'red'),
 		lob1: createButton(redObjects.lob1, 'red'),
 		lob5: createButton(redObjects.lob5, 'red'),
-        lob10: createButton(redObjects.lob10, 'red'),
-        out: createButton(redObjects.out, 'red')
-    };
+		lob10: createButton(redObjects.lob10, 'red'),
+		out: createButton(redObjects.out, 'red')
+	};
 
-    app.addAppObject({
+	app.addAppObject({
 		point: [0.025, 0.336],
 		object: blueObjects.hub1,
 		button: blueButtons.hub1,
 		alliance: 'blue',
 		staticX: false,
-		staticY: true,
+		staticY: true
 		// viewCondition: () => app.matchData.alliance === 'blue',
 	});
-    app.addAppObject({
+	app.addAppObject({
 		point: [0.025, 0.396],
 		object: blueObjects.hub5,
 		button: blueButtons.hub5,
 		alliance: 'blue',
 		staticX: false,
-		staticY: true,
+		staticY: true
 		// viewCondition: () => app.matchData.alliance === 'blue',
 	});
-    app.addAppObject({
+	app.addAppObject({
 		point: [0.025, 0.456],
 		object: blueObjects.hub10,
 		button: blueButtons.hub10,
 		alliance: 'blue',
 		staticX: false,
-		staticY: true,
+		staticY: true
 		// viewCondition: () => app.matchData.alliance === 'blue',
 	});
-    app.addAppObject({
+	app.addAppObject({
 		point: [0.033, 0.869],
 		object: blueObjects.out,
 		button: blueButtons.out,
 		alliance: 'blue',
 		staticX: false,
-		staticY: true,
+		staticY: true
 		// viewCondition: () => app.matchData.alliance === 'blue',
 	});
-    app.addAppObject({
+	app.addAppObject({
 		point: [0.025, 0.336],
 		object: redObjects.hub1,
 		button: redButtons.hub1,
 		alliance: 'red',
 		staticX: false,
-		staticY: true,
+		staticY: true
 		// viewCondition: () => app.matchData.alliance === 'red',
 	});
-    app.addAppObject({
+	app.addAppObject({
 		point: [0.025, 0.396],
 		object: redObjects.hub5,
 		button: redButtons.hub5,
 		alliance: 'red',
 		staticX: false,
-		staticY: true,
+		staticY: true
 		// viewCondition: () => app.matchData.alliance === 'red',
 	});
-    app.addAppObject({
+	app.addAppObject({
 		point: [0.025, 0.456],
 		object: redObjects.hub10,
 		button: redButtons.hub10,
 		alliance: 'red',
 		staticX: false,
-		staticY: true,
+		staticY: true
 		// viewCondition: () => app.matchData.alliance === 'red',
 	});
-    app.addAppObject({
+	app.addAppObject({
 		point: [0.967, 0.124],
 		object: redObjects.out,
 		button: redButtons.out,
 		alliance: 'red',
 		staticX: false,
-		staticY: true,
+		staticY: true
 		// viewCondition: () => app.matchData.alliance === 'red',
 	});
 
