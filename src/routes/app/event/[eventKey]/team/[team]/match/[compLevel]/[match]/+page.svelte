@@ -24,7 +24,7 @@
 	const match = $derived(parseInt(data.match));
 	const team = $derived(parseInt(data.team));
 	const compLevel = $derived(data.compLevel) as CompLevel;
-	const year = $derived(data.year);
+	const _year = $derived(data.year);
 
 	let alliance: 'red' | 'blue' | null = $state(null);
 	let page: 'app' | 'post' = $state('app');
@@ -32,7 +32,7 @@
 	let app: App | undefined = $state(undefined);
 	let matches: Modal;
 	let settings: Modal;
-	let upload: Modal;
+	let _upload: Modal;
 	let postApp: PostApp | undefined = $state(undefined);
 	let group = $state(-1);
 	let matchData: MatchData | undefined = $state(undefined);
@@ -164,7 +164,7 @@
 			accounts = data.value.map((a) => a.username);
 		});
 
-		const unsub = app.matchData.subscribe(async (d) => {
+		const unsub = app.matchData.subscribe(async (_d) => {
 			const res = await app?.matchData.getScoutGroup();
 			if (!res) return;
 			if (res.isErr()) return console.error(res.error);

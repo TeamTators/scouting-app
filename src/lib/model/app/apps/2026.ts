@@ -5,53 +5,39 @@ import { AppObject } from '../app-object';
 import YearInfo2026 from 'tatorscout/years/2025.js';
 
 export default (config: {
-    eventKey: string;
-    match: number;
-    team: number;
-    compLevel: CompLevel;
-    alliance: 'red' | 'blue' | null;
+	eventKey: string;
+	match: number;
+	team: number;
+	compLevel: CompLevel;
+	alliance: 'red' | 'blue' | null;
 }) => {
-    type Zone = {
-        red: Point2D[];
-        blue: Point2D[];
-    };
+	type Zone = {
+		red: Point2D[];
+		blue: Point2D[];
+	};
 
-    const app = new App({
-        ...config,
-        year: 2026,
-        yearInfo: YearInfo2026
-    });
+	const app = new App({
+		...config,
+		year: 2026,
+		yearInfo: YearInfo2026
+	});
 
-    const alliances: Zone = {
-        red: [
-     
-        ],
-        blue: [
-       
-        ]
-    };
+	const _alliances: Zone = {
+		red: [],
+		blue: []
+	};
 
-    const coralStation: Zone = {
-        red: [
-   
-        ],
-        blue: [
-       
-        ]
-    };
+	const _coralStation: Zone = {
+		red: [],
+		blue: []
+	};
 
-    const endZone: Zone = {
-        red: [
-        
-        ],
-        blue: [
-            
-        ]
-    };
+	const _endZone: Zone = {
+		red: [],
+		blue: []
+	};
 
-    const middle: Point2D[] = [
-       
-    ];
+	const _middle: Point2D[] = [];
 
     const blueObjects = {
         hub1: new AppObject({
@@ -129,10 +115,10 @@ export default (config: {
 		})
     };
 
-    const createButton = (object: AppObject, color: 'red' | 'blue') => {
-        const button = document.createElement('button');
-        button.classList.add('btn', color === 'red' ? 'btn-danger' : 'btn-primary', 'p-0');
-        button.innerHTML = `
+	const _createButton = (object: AppObject, color: 'red' | 'blue') => {
+		const button = document.createElement('button');
+		button.classList.add('btn', color === 'red' ? 'btn-danger' : 'btn-primary', 'p-0');
+		button.innerHTML = `
             <img src="/icons/${object.config.abbr}.png" alt="${object.config.name}" style="
                 height: 50px;
                 width: 50px;
@@ -238,5 +224,5 @@ export default (config: {
 		// viewCondition: () => app.matchData.alliance === 'red',
 	});
 
-    return app;
+	return app;
 };

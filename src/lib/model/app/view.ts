@@ -8,7 +8,7 @@ import { globalData } from './global-data.svelte';
 import { mount, unmount } from 'svelte';
 import Cover from '$lib/components/app/Cover.svelte';
 import { SimpleEventEmitter } from 'ts-utils';
-import { WritableBase } from '$lib/utils/writables';
+import { WritableBase } from '$lib/services/writables';
 import type { P, TraceArray } from 'tatorscout/trace';
 import { contextmenu } from '$lib/utils/contextmenu';
 import { confirm, rawModal } from '$lib/utils/prompts';
@@ -491,7 +491,7 @@ export class AppView {
 	}
 }
 
-export class SummaryView extends WritableBase<{ from: number; to: number; }> {
+export class SummaryView extends WritableBase<{ from: number; to: number }> {
 	public readonly svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 	public readonly background = document.createElement('img');
 	public trace: TraceArray = [];
@@ -502,7 +502,7 @@ export class SummaryView extends WritableBase<{ from: number; to: number; }> {
 	) {
 		super({
 			from: 0,
-			to: 0,
+			to: 0
 		});
 	}
 
@@ -518,7 +518,7 @@ export class SummaryView extends WritableBase<{ from: number; to: number; }> {
 			this.destroy();
 			onreset();
 			const obj = this.render(from, to);
-			Object.assign(returnObj, obj);			
+			Object.assign(returnObj, obj);
 		};
 
 		const { flipX, flipY } = globalData;
@@ -578,9 +578,7 @@ export class SummaryView extends WritableBase<{ from: number; to: number; }> {
 			// 	.join(' ');
 			// path.setAttribute('d', d);
 
-			const fn = catmullRom(
-				trace.slice(from, to + 1).map(p => [p[1] * 2, p[2]])
-			);
+			const fn = catmullRom(trace.slice(from, to + 1).map((p) => [p[1] * 2, p[2]]));
 
 			const d: string[] = [];
 			for (let i = 0; i <= 1; i += 0.001) {
@@ -599,8 +597,8 @@ export class SummaryView extends WritableBase<{ from: number; to: number; }> {
 
 		const moveState = (index: number) => {
 			const point = trace[index];
-			const traceCopy = [...trace].map(p => [...p]);
-			
+			const traceCopy = [...trace].map((p) => [...p]);
+
 			const newSVG = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 			newSVG.setAttribute('width', '100%');
 			newSVG.setAttribute('height', '100%');
@@ -849,25 +847,40 @@ export class SummaryView extends WritableBase<{ from: number; to: number; }> {
 				const size = 0.015;
 				// isosceles triangle points to clearly show direction, not equilateral
 				const points = [
-					[(px * 2) + Math.cos(angle) * size, py + Math.sin(angle) * size],
-					[(px * 2) + Math.cos(angle + (120 * (Math.PI / 180))) * size, py + Math.sin(angle + (120 * (Math.PI / 180))) * size],
-					[(px * 2) + Math.cos(angle + (240 * (Math.PI / 180))) * size, py + Math.sin(angle + (240 * (Math.PI / 180))) * size],
+					[px * 2 + Math.cos(angle) * size, py + Math.sin(angle) * size],
+					[
+						px * 2 + Math.cos(angle + 120 * (Math.PI / 180)) * size,
+						py + Math.sin(angle + 120 * (Math.PI / 180)) * size
+					],
+					[
+						px * 2 + Math.cos(angle + 240 * (Math.PI / 180)) * size,
+						py + Math.sin(angle + 240 * (Math.PI / 180)) * size
+					]
 				];
-				shape.setAttribute('points', points.map(p => p.join(' ')).join(', '));
+				shape.setAttribute('points', points.map((p) => p.join(' ')).join(', '));
 				shape.setAttribute('fill', 'rgba(255, 0, 0, 0.5)');
 
 				const onhover = () => {
 					const PERCENT = 0.5;
 					const hoverPoints = [
-						[(px * 2) + Math.cos(angle) * size * (1 + PERCENT), py + Math.sin(angle) * size * (1 + PERCENT)],
-						[(px * 2) + Math.cos(angle + (120 * (Math.PI / 180))) * size * (1 + PERCENT), py + Math.sin(angle + (120 * (Math.PI / 180))) * size * (1 + PERCENT)],
-						[(px * 2) + Math.cos(angle + (240 * (Math.PI / 180))) * size * (1 + PERCENT), py + Math.sin(angle + (240 * (Math.PI / 180))) * size * (1 + PERCENT)]
+						[
+							px * 2 + Math.cos(angle) * size * (1 + PERCENT),
+							py + Math.sin(angle) * size * (1 + PERCENT)
+						],
+						[
+							px * 2 + Math.cos(angle + 120 * (Math.PI / 180)) * size * (1 + PERCENT),
+							py + Math.sin(angle + 120 * (Math.PI / 180)) * size * (1 + PERCENT)
+						],
+						[
+							px * 2 + Math.cos(angle + 240 * (Math.PI / 180)) * size * (1 + PERCENT),
+							py + Math.sin(angle + 240 * (Math.PI / 180)) * size * (1 + PERCENT)
+						]
 					];
-					shape.setAttribute('points', hoverPoints.map(p => p.join(' ')).join(', '));
+					shape.setAttribute('points', hoverPoints.map((p) => p.join(' ')).join(', '));
 				};
 
 				const onleave = () => {
-					shape.setAttribute('points', points.map(p => p.join(' ')).join(', '));
+					shape.setAttribute('points', points.map((p) => p.join(' ')).join(', '));
 				};
 
 				shape.addEventListener('pointerenter', onhover);
@@ -982,7 +995,7 @@ export class SummaryView extends WritableBase<{ from: number; to: number; }> {
 				for (let i = from; i <= to; i++) {
 					items[i]?.show();
 				}
-			},
+			}
 		};
 
 		return returnObj;
