@@ -127,32 +127,41 @@ export default (config: {
 		return button;
 	};
 
-	const createLargeButton = (obj: AppObject, color: 'red' | 'blue') => {
-		// TODO: Sophie, do the large buttons here
+	const createLargeButton = (object: AppObject, color: 'red' | 'blue') => {
+		const button = document.createElement('button');
+		button.classList.add('btn', color === 'red' ? 'btn-danger' : 'btn-primary', 'p-0');
+		button.innerHTML = `
+            <img src="/icons/${object.config.abbr}.png" alt="${object.config.name}" style="
+                height: 50px;
+                width: 50px;
+            " />
+        `;
+		button.style.height = '120px';
+		return button;
 	};
 
 	const blueButtons = {
-		hub1: createButton(blueObjects.hub1, 'blue'),
-		hub5: createButton(blueObjects.hub5, 'blue'),
-		hub10: createButton(blueObjects.hub10, 'blue'),
-		lob1: createButton(blueObjects.lob1, 'blue'),
-		lob5: createButton(blueObjects.lob5, 'blue'),
-		lob10: createButton(blueObjects.lob10, 'blue'),
+		hub1: createLargeButton(blueObjects.hub1, 'blue'),
+		hub5: createLargeButton(blueObjects.hub5, 'blue'),
+		hub10: createLargeButton(blueObjects.hub10, 'blue'),
+		// lob1: createButton(blueObjects.lob1, 'blue'),
+		// lob5: createButton(blueObjects.lob5, 'blue'),
+		// lob10: createButton(blueObjects.lob10, 'blue'),
 		out: createButton(blueObjects.out, 'blue')
 	};
 
 	const redButtons = {
-		hub1: createButton(redObjects.hub1, 'red'),
-		hub5: createButton(redObjects.hub5, 'red'),
-		hub10: createButton(redObjects.hub10, 'red'),
-		lob1: createButton(redObjects.lob1, 'red'),
-		lob5: createButton(redObjects.lob5, 'red'),
-		lob10: createButton(redObjects.lob10, 'red'),
+		hub1: createLargeButton(redObjects.hub1, 'red'),
+		hub5: createLargeButton(redObjects.hub5, 'red'),
+		hub10: createLargeButton(redObjects.hub10, 'red'),
+		// lob1: createButton(redObjects.lob1, 'red'),
+		// lob5: createButton(redObjects.lob5, 'red'),
+		// lob10: createButton(redObjects.lob10, 'red'),
 		out: createButton(redObjects.out, 'red')
 	};
 
 	app.addAppObject({
-		point: [0.025, 0.336],
+		point: [0.025, 0.216],
 		object: blueObjects.hub1,
 		button: blueButtons.hub1,
 		alliance: 'blue',
@@ -170,7 +179,7 @@ export default (config: {
 		// viewCondition: () => app.matchData.alliance === 'blue',
 	});
 	app.addAppObject({
-		point: [0.025, 0.456],
+		point: [0.025, 0.576],
 		object: blueObjects.hub10,
 		button: blueButtons.hub10,
 		alliance: 'blue',
@@ -188,7 +197,7 @@ export default (config: {
 		// viewCondition: () => app.matchData.alliance === 'blue',
 	});
 	app.addAppObject({
-		point: [0.025, 0.336],
+		point: [0.025, 0.216],
 		object: redObjects.hub1,
 		button: redButtons.hub1,
 		alliance: 'red',
@@ -206,7 +215,7 @@ export default (config: {
 		// viewCondition: () => app.matchData.alliance === 'red',
 	});
 	app.addAppObject({
-		point: [0.025, 0.456],
+		point: [0.025, 0.576],
 		object: redObjects.hub10,
 		button: redButtons.hub10,
 		alliance: 'red',

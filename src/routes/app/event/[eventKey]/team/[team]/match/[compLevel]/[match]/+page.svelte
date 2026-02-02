@@ -141,7 +141,7 @@
 		// deinit = app.init(target);
 		// app.start();
 		// app.clickPoints(3);
-		app = createApp(year as 2025 | 2026)({
+		app = createApp(_year as 2025 | 2026)({
 			eventKey,
 			match,
 			team,
