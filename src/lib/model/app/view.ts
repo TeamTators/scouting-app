@@ -361,7 +361,7 @@ export class AppView {
 				const [px, py] = [staticX ? x : flipX ? 1 - x : x, staticY ? y : flipY ? 1 - y : y];
 				obj.element.style.left = `${px * this.target!.clientWidth}px`;
 				obj.element.style.top = `${py * this.target!.clientHeight}px`;
-				if (obj.alliance && obj.alliance !== this.app.matchData.alliance) {
+				if (this.app.matchData.alliance && obj.alliance !== this.app.matchData.alliance) {
 					obj.element.style.display = 'none';
 				} else {
 					obj.element.style.display = 'block';
@@ -446,7 +446,7 @@ export class AppView {
 
 	animateIcon(icon: string, position: Point2D, alliance: 'red' | 'blue' | null) {
 		if (!browser) return;
-		if (!this.target) return;
+		if (!this.container) return;
 		const img = document.createElement('img');
 		img.src = `/icons/${icon}.png`;
 		img.style.position = 'absolute';
@@ -455,8 +455,8 @@ export class AppView {
 		img.style.width = '25px';
 		img.style.zIndex = '200';
 		const [x, y] = position;
-		img.style.left = `${x * this.target.clientWidth}px`;
-		img.style.top = `${y * this.target.clientHeight}px`;
+		img.style.left = `${x * this.container.clientWidth}px`;
+		img.style.top = `${y * this.container.clientHeight}px`;
 		img.style.backgroundColor = (() => {
 			switch (alliance) {
 				case 'red':
@@ -472,7 +472,7 @@ export class AppView {
 
 		img.classList.add('animate__animated', 'animate__bounceIn', 'circle');
 
-		this.target?.appendChild(img);
+		this.container?.appendChild(img);
 
 		const onEnd = async () => {
 			img.removeEventListener('animationend', onEnd);
