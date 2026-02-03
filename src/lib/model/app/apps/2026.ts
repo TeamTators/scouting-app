@@ -130,13 +130,13 @@ export default (config: {
 	const createLargeButton = (object: AppObject, color: 'red' | 'blue') => {
 		const button = document.createElement('button');
 		button.classList.add('btn', color === 'red' ? 'btn-danger' : 'btn-primary', 'p-0');
+		button.style.height = '20%';
 		button.innerHTML = `
             <img src="/icons/${object.config.abbr}.png" alt="${object.config.name}" style="
                 height: 50px;
                 width: 50px;
             " />
         `;
-		button.style.height = '120px';
 		return button;
 	};
 
@@ -161,7 +161,7 @@ export default (config: {
 	};
 
 	app.addAppObject({
-		point: [0.025, 0.216],
+		point: [0.025, 0.2],
 		object: blueObjects.hub1,
 		button: blueButtons.hub1,
 		alliance: 'blue',
@@ -170,7 +170,7 @@ export default (config: {
 		// viewCondition: () => app.matchData.alliance === 'blue',
 	});
 	app.addAppObject({
-		point: [0.025, 0.396],
+		point: [0.025, 0.4],
 		object: blueObjects.hub5,
 		button: blueButtons.hub5,
 		alliance: 'blue',
@@ -179,7 +179,7 @@ export default (config: {
 		// viewCondition: () => app.matchData.alliance === 'blue',
 	});
 	app.addAppObject({
-		point: [0.025, 0.576],
+		point: [0.025, 0.6],
 		object: blueObjects.hub10,
 		button: blueButtons.hub10,
 		alliance: 'blue',
@@ -197,7 +197,7 @@ export default (config: {
 		// viewCondition: () => app.matchData.alliance === 'blue',
 	});
 	app.addAppObject({
-		point: [0.025, 0.216],
+		point: [0.025, 0.2],
 		object: redObjects.hub1,
 		button: redButtons.hub1,
 		alliance: 'red',
@@ -206,7 +206,7 @@ export default (config: {
 		// viewCondition: () => app.matchData.alliance === 'red',
 	});
 	app.addAppObject({
-		point: [0.025, 0.396],
+		point: [0.025, 0.4],
 		object: redObjects.hub5,
 		button: redButtons.hub5,
 		alliance: 'red',
@@ -215,7 +215,7 @@ export default (config: {
 		// viewCondition: () => app.matchData.alliance === 'red',
 	});
 	app.addAppObject({
-		point: [0.025, 0.576],
+		point: [0.025, 0.6],
 		object: redObjects.hub10,
 		button: redButtons.hub10,
 		alliance: 'red',
