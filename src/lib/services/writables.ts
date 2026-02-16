@@ -368,13 +368,32 @@ export class WritableBase<T> implements Writable<T> {
 	 * store.set(2); // derived will update to "Number is: 2"
 	 * ```
 	 */
-	derive<U>(
+	derived<U>(
 		transform: (data: T) => U,
 		config?: { debounceMs?: number; debug?: boolean }
 	): WritableBase<U> {
 		const derived = new WritableBase<U>(transform(this.data), config);
 		derived.pipeData(this, transform);
 		return derived;
+	}
+
+	/**
+	 * Creates a new WritableStage that allows for staging updates to this WritableBase. The stage will apply the optional copy function to the data before staging, and will use the provided config for debouncing and debugging. When the stage is committed, it will update this WritableBase with the staged value.
+	 * @param copy - Optional function to create a copy of the data for staging (useful for complex objects to avoid mutating the original data during staging)
+	 * @param config - Optional configuration for the WritableStage (debounceMs and debug)
+	 * @returns {WritableStage<T>} A new WritableStage instance for staging updates to this WritableBase
+	 */
+	stage(
+		copy?: (data: T) => T,
+		config?: {
+			debounceMs?: number;
+			debug?: boolean;
+		}
+	) {
+		return new WritableStage(this, {
+			copy,
+			...config
+		});
 	}
 }
 
@@ -1350,5 +1369,107 @@ export class WritableAsync<T> extends WritableBase<{
 		const errorStore = new WritableBase(this.data.error);
 		errorStore.pipeData(this, (state) => state.error);
 		return errorStore;
+	}
+}
+
+/**
+ * Merge strategy for resolving staged/local changes against a remote source.
+ *
+ * @template T
+ * @param data - Merge context containing the base snapshot, remote value, and local value
+ * @returns The merged value to apply
+ */
+type Merge<T> = (data: { base: T; remote: T; local: T }) => T;
+
+/**
+ * Writable stage that tracks local edits against a remote source with a base snapshot.
+ *
+ * @export
+ * @class WritableStage
+ * @template T
+ * @extends {WritableBase<T>}
+ */
+export class WritableStage<T> extends WritableBase<T> {
+	public readonly base: WritableBase<T>;
+	public readonly remoteChanged: WritableBase<boolean>;
+	public readonly localChanged: WritableBase<boolean>;
+
+	/**
+	 * Creates a stage bound to a remote writable.
+	 *
+	 * @param remote - The remote/source writable to stage against
+	 * @param config - Optional configuration for debouncing, debug, and copy behavior
+	 */
+	constructor(
+		public readonly remote: WritableBase<T>,
+		private readonly config?: {
+			debounceMs?: number;
+			debug?: boolean;
+			copy?: (data: T) => T;
+		}
+	) {
+		super(remote.data, config);
+		const copy = (data: T) => {
+			if (config?.copy) {
+				return config.copy(data);
+			}
+			return data;
+		};
+		this.pipeData(remote, copy);
+		this.base = new WritableBase(copy(remote.data));
+		this.remoteChanged = remote.derived((data) => {
+			return data !== this.base.data;
+		});
+		this.localChanged = this.derived((data) => {
+			return data !== this.base.data;
+		});
+	}
+
+	/**
+	 * Pulls remote changes into the local stage using a merge strategy.
+	 *
+	 * @param merge - Merge strategy applied to base, remote, and local values
+	 */
+	pull(merge: Merge<T>) {
+		this.update((local) => {
+			const remote = this.remote.data;
+			const base = this.base.data;
+			return merge({ base, remote, local });
+		});
+	}
+
+	/**
+	 * Pushes local changes to the remote source using a merge strategy.
+	 *
+	 * @param merge - Merge strategy applied to base, remote, and local values
+	 */
+	push(merge: Merge<T>) {
+		this.remote.update((remote) => {
+			const base = this.base.data;
+			const local = this.data;
+			return merge({ base, remote, local });
+		});
+	}
+
+	/**
+	 * Updates the base snapshot from the current remote value.
+	 */
+	fetch() {
+		this.base.set(this.config?.copy ? this.config.copy(this.remote.data) : this.remote.data);
+	}
+
+	/**
+	 * Resets the local stage to the base snapshot.
+	 */
+	reset() {
+		this.set(this.base.data);
+	}
+
+	/**
+	 * Fetches the latest remote value into the base snapshot and resets the local stage to match it.
+	 */
+	fetchAndReset() {
+		this.fetch();
+		this.reset();
 	}
 }
