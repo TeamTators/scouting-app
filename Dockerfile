@@ -1,4 +1,4 @@
-FROM node:22.12.0-alpine
+FROM node:24.13.1-alpine
 
 # Install pnpm globally
 RUN npm install -g pnpm@latest
