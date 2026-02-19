@@ -348,10 +348,23 @@ describe('WritableArray', () => {
 
 	test('map can be non-reactive', () => {
 		const source = new WritableArray([1, 2]);
-		const mapped = source.map((value) => value * 2, false);
+		const mapped = source.map((value) => value * 2, {
+			reactive: false,
+		});
 
 		source.push(3);
 		expect(mapped.data).toEqual([2, 4]);
+	});
+
+	test('Array.toggle() adds or removes items based on presence', () => {
+		const store = new WritableArray([1, 2], {
+			informType: 'immediate',
+		});
+		store.toggle(3);
+		expect(store.data).toEqual([1, 2, 3]);
+
+		store.toggle(2);
+		expect(store.data).toEqual([1, 3]);
 	});
 });
 

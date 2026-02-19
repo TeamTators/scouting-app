@@ -1505,13 +1505,14 @@ export class WritableStage<T> extends WritableBase<T> {
 	 */
 	fetch() {
 		this.base.set(this.config?.copy ? this.config.copy(this.remote.data) : this.remote.data);
+		this.inform();
 	}
 
 	/**
 	 * Resets the local stage to the base snapshot.
 	 */
 	reset() {
-		this.set(this.base.data);
+		this.set(this.config?.copy ? this.config.copy(this.base.data) : this.base.data);
 	}
 
 	/**
