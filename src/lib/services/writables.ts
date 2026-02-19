@@ -619,15 +619,13 @@ export class WritableArray<T> extends WritableBase<T[]> {
 		const mapped = new WritableArray<U>(this.data.map(fn));
 		if (reactive) {
 			mapped.pipeData(this, (arr) => {
-				const copy = [
-				...arr
-			];
-			if (this._reverse) {
-				copy.reverse();
-			}
-			return copy.filter(this._filter)
-				.sort(this._sort)
-				.map(fn);
+				const sortedAndFiltered = arr.filter(this._filter).sort(this._sort);
+
+				if (this._reverse) {
+					sortedAndFiltered.reverse();
+				}
+
+				return sortedAndFiltered.map(fn);
 			});
 		}
 		return mapped;
