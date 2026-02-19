@@ -1454,10 +1454,10 @@ export class WritableStage<T> extends WritableBase<T> {
 		};
 		this.base = new WritableBase(copy(remote.data));
 		this.remoteChanged = remote.derived((data) => {
-			return data !== this.base.data;
+			return !deepEqual(data, this.base.data);
 		});
 		this.localChanged = this.derived((data) => {
-			return data !== this.base.data;
+			return !deepEqual(data, this.base.data);
 		});
 	}
 
