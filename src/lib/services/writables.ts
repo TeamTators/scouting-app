@@ -28,12 +28,14 @@ export class WritableBase<T> implements Writable<T> {
 	 * @param {object} [_config] - Optional configuration
 	 * @param {number} [_config.debounceMs=0] - Debounce delay in milliseconds for updates
 	 * @param {boolean} [_config.debug=false] - Enable debug logging
+	 * @param {'immediate' | 'debounced'} [_config.informType='debounced'] - Default inform type for updates
 	 */
 	constructor(
 		private _data: T,
 		private _config?: {
 			debounceMs?: number;
 			debug?: boolean;
+			informType?: 'immediate' | 'debounced';
 		}
 	) {
 		this._informDebounced = debounce(() => {
@@ -168,7 +170,10 @@ export class WritableBase<T> implements Writable<T> {
 	 * store.inform(true); // notify immediately
 	 * ```
 	 */
-	inform(immediate = false) {
+	inform(immediate?: boolean) {
+		if (typeof immediate === 'undefined') {
+			immediate = this._config?.informType === 'immediate';
+		}
 		if (immediate) {
 			this._informImmediate();
 		} else {
@@ -363,7 +368,7 @@ export class WritableBase<T> implements Writable<T> {
 	 * @example
 	 * ```typescript
 	 * const store = new WritableBase(1);
-	 * const derived = store.derive(num => `Number is: ${num}`);
+	 * const derived = store.derived(num => `Number is: ${num}`);
 	 * store.set(2); // derived will update to "Number is: 2"
 	 * ```
 	 */
@@ -599,15 +604,12 @@ export class WritableArray<T> extends WritableBase<T[]> {
 
 	/**
 	 * Creates a new WritableArray with the results of calling a function on every element
-	 * Note: Filter, sort, and reverse settings are copied to the new array
-	 * By default, the new array will reactively update when the original array changes. You can disable this by passing `false` as the second argument.
+	 * By default, the new array will reactively update when the original array changes. You can disable this behavior by setting reactive to false in the config.
 	 *
 	 * @template U
 	 * @param {(item: T) => U} fn - Function that transforms each element
-	 * @param {object} [config] - Optional configuration for the mapped array
-	 * @param {boolean} [config.reactive=true] - If true, the mapped array will update reactively when the original array changes
-	 * @param {boolean} [config.interceptors=true] - If true, interceptors will be copied to the mapped array
-	 * @param {boolean} [config.validators=true] - If true, validators will be copied to the mapped array
+	 * @param {object} [config] - Optional configuration for the mapped WritableArray
+	 * @param {boolean} [config.reactive=true] - Whether the mapped WritableArray should reactively update when the original array changes (reactive by default)
 	 * @returns {WritableArray<U>} New WritableArray with transformed elements
 	 * @example
 	 * ```typescript
@@ -615,8 +617,12 @@ export class WritableArray<T> extends WritableBase<T[]> {
 	 * const strings = numbers.map(n => n.toString());
 	 * ```
 	 */
-	map<U>(fn: (item: T) => U, reactive = true) {
+	map<U>(fn: (item: T) => U, config?: {
+		reactive?: boolean;
+	}) {
 		const mapped = new WritableArray<U>(this.data.map(fn));
+		let reactive = true;
+		if (config && config.reactive === false) reactive = false;
 		if (reactive) {
 			mapped.pipeData(this, (arr) => {
 				const copy = [
@@ -1443,7 +1449,6 @@ export class WritableStage<T> extends WritableBase<T> {
 			}
 			return data;
 		};
-		this.pipeData(remote, copy);
 		this.base = new WritableBase(copy(remote.data));
 		this.remoteChanged = remote.derived((data) => {
 			return data !== this.base.data;
