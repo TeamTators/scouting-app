@@ -362,8 +362,11 @@ export class WritableBase<T> implements Writable<T> {
 
 	/**
 	 * Creates a new WritableBase that derives its value from this WritableBase using the provided transform function. The derived WritableBase will automatically update whenever this WritableBase changes, applying the transform function to produce the new value.
-	 * @param transform - Function that transforms this WritableBase's data into the type of the derived WritableBase
-	 * @param config - Optional configuration for the derived WritableBase (debounceMs and debug)
+	 * @param {(data: T) => U} transform - Function that transforms this WritableBase's data into the type of the derived WritableBase
+	 * @param {object} config - Optional configuration for the derived WritableBase (debounceMs and debug)
+	 * @param {number} [config.debounceMs] - Debounce delay for the derived WritableBase
+	 * @param {boolean} [config.debug] - Enable debug logging for the derived WritableBase
+	 * @param {'immediate' | 'debounced'} [config.informType] - Default inform type for the derived WritableBase
 	 * @returns {WritableBase<U>} A new WritableBase instance that derives its value from this one
 	 * @example
 	 * ```typescript
@@ -374,7 +377,7 @@ export class WritableBase<T> implements Writable<T> {
 	 */
 	derived<U>(
 		transform: (data: T) => U,
-		config?: { debounceMs?: number; debug?: boolean }
+		config?: { debounceMs?: number; debug?: boolean; informType?: 'immediate' | 'debounced' }
 	): WritableBase<U> {
 		const derived = new WritableBase<U>(transform(this.data), config);
 		derived.pipeData(this, transform);
