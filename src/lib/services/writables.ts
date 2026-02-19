@@ -385,10 +385,23 @@ export class WritableBase<T> implements Writable<T> {
 	}
 
 	/**
-	 * Creates a new WritableStage that allows for staging updates to this WritableBase. The stage will apply the optional copy function to the data before staging, and will use the provided config for debouncing and debugging. When the stage is committed, it will update this WritableBase with the staged value.
-	 * @param copy - Optional function to create a copy of the data for staging (useful for complex objects to avoid mutating the original data during staging)
-	 * @param config - Optional configuration for the WritableStage (debounceMs and debug)
+	 * Creates a WritableStage for staging updates to this WritableBase. The WritableStage allows you to make changes to a copy of the data and then commit those changes back to the original WritableBase when ready. This is useful for scenarios like form editing where you want to stage changes before applying them.
+	 * @param {function} [copy] - Optional function to create a copy of the data for staging (useful for complex objects to avoid mutating the original data during staging)
+	 * @param {object} [config] - Optional configuration for the WritableStage (debounceMs and debug)
 	 * @returns {WritableStage<T>} A new WritableStage instance for staging updates to this WritableBase
+	 * @example
+	 * ```typescript
+	 * const store = new WritableBase({ name: 'Alice', age: 30 });
+	 * const stage = store.stage(data => ({ ...data })); // create a shallow copy for staging
+	 * stage.update(d => { d.age = 31; return d; }); // stage an update
+	 * stage.push(); // commit the staged update back to the original store
+	 * 
+	 * // if you want to resolve conflicts during push, you can provide a merge function:
+	 * stage.push(({ base, remote, local }) => {
+	 * 	// merge strategy to resolve conflicts between base, remote, and local values
+	 * 	return { ...base, ...remote, ...local, age: Math.max(base.age, remote.age, local.age) };
+	 * });
+	 * ```
 	 */
 	stage(
 		copy?: (data: T) => T,
@@ -1466,11 +1479,11 @@ export class WritableStage<T> extends WritableBase<T> {
 	 *
 	 * @param merge - Merge strategy applied to base, remote, and local values
 	 */
-	pull(merge: Merge<T>) {
+	pull(merge?: Merge<T>) {
 		this.update((local) => {
 			const remote = this.remote.data;
 			const base = this.base.data;
-			return merge({ base, remote, local });
+			return merge ? merge({ base, remote, local }) : local;
 		});
 	}
 
@@ -1479,11 +1492,11 @@ export class WritableStage<T> extends WritableBase<T> {
 	 *
 	 * @param merge - Merge strategy applied to base, remote, and local values
 	 */
-	push(merge: Merge<T>) {
+	push(merge?: Merge<T>) {
 		this.remote.update((remote) => {
 			const base = this.base.data;
 			const local = this.data;
-			return merge({ base, remote, local });
+			return merge ? merge({ base, remote, local }) : local;
 		});
 	}
 
