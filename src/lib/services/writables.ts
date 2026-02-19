@@ -644,11 +644,13 @@ export class WritableArray<T> extends WritableBase<T[]> {
 		if (config && config.reactive === false) reactive = false;
 		if (reactive) {
 			mapped.pipeData(this, (arr) => {
-				const copy = [...arr];
+				const sortedAndFiltered = arr.filter(this._filter).sort(this._sort);
+
 				if (this._reverse) {
-					copy.reverse();
+					sortedAndFiltered.reverse();
 				}
-				return copy.filter(this._filter).sort(this._sort).map(fn);
+
+				return sortedAndFiltered.map(fn);
 			});
 		}
 		return mapped;
