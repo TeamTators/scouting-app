@@ -395,7 +395,7 @@ export class WritableBase<T> implements Writable<T> {
 	 * const stage = store.stage(data => ({ ...data })); // create a shallow copy for staging
 	 * stage.update(d => { d.age = 31; return d; }); // stage an update
 	 * stage.push(); // commit the staged update back to the original store
-	 * 
+	 *
 	 * // if you want to resolve conflicts during push, you can provide a merge function:
 	 * stage.push(({ base, remote, local }) => {
 	 * 	// merge strategy to resolve conflicts between base, remote, and local values
@@ -633,23 +633,22 @@ export class WritableArray<T> extends WritableBase<T[]> {
 	 * const strings = numbers.map(n => n.toString());
 	 * ```
 	 */
-	map<U>(fn: (item: T) => U, config?: {
-		reactive?: boolean;
-	}) {
+	map<U>(
+		fn: (item: T) => U,
+		config?: {
+			reactive?: boolean;
+		}
+	) {
 		const mapped = new WritableArray<U>(this.data.map(fn));
 		let reactive = true;
 		if (config && config.reactive === false) reactive = false;
 		if (reactive) {
 			mapped.pipeData(this, (arr) => {
-				const copy = [
-				...arr
-			];
-			if (this._reverse) {
-				copy.reverse();
-			}
-			return copy.filter(this._filter)
-				.sort(this._sort)
-				.map(fn);
+				const copy = [...arr];
+				if (this._reverse) {
+					copy.reverse();
+				}
+				return copy.filter(this._filter).sort(this._sort).map(fn);
 			});
 		}
 		return mapped;
@@ -1018,7 +1017,6 @@ export class WritableArray<T> extends WritableBase<T[]> {
 		return uniqueStore;
 	}
 
-	
 	/**
 	 * Toggles the presence of an item in the array. If the item exists, it is removed; if it does not exist, it is added. Returns true if the item was added, or false if it was removed.
 	 * @param item - The item to toggle in the array
