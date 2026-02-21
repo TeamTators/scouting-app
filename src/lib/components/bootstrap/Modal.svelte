@@ -44,11 +44,12 @@ Bootstrap modal wrapper rendered via a portal.
 		buttons?: Snippet;
 		show?: boolean;
 		size?: 'sm' | 'md' | 'lg' | 'xl';
+		scrollable?: boolean;
 	}
 
 	let self: HTMLDivElement;
 
-	const { title, body, buttons, show: doShow, size = 'md' }: Props = $props();
+	const { title, body, buttons, show: doShow, size = 'md', scrollable = false }: Props = $props();
 
 	const getModal = async () => {
 		return import('bootstrap').then((bs) => {
@@ -94,7 +95,7 @@ Bootstrap modal wrapper rendered via a portal.
 
 <Portal target="body">
 	<div bind:this={self} {id} class="modal fade" aria-modal="true" role="dialog" tabindex="-1">
-		<div class="modal-dialog modal-{size}">
+		<div class="modal-dialog modal-{size}" class:modal-dialog-scrollable={scrollable}>
 			<div class="modal-content layer-1">
 				<div class="modal-header">
 					<h5 class="modal-title">{title}</h5>
