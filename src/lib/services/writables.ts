@@ -5,7 +5,6 @@
  * import { WritableBase } from '$lib/services/writables';
  * const store = new WritableBase(0);
  */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Subscriber, Unsubscriber, Writable } from 'svelte/store';
 import { attempt, attemptAsync, debounce, ResultPromise } from 'ts-utils';
 import deepEqual from 'fast-deep-equal';
@@ -29,12 +28,14 @@ export class WritableBase<T> implements Writable<T> {
 	 * @param {object} [_config] - Optional configuration
 	 * @param {number} [_config.debounceMs=0] - Debounce delay in milliseconds for updates
 	 * @param {boolean} [_config.debug=false] - Enable debug logging
+	 * @param {'immediate' | 'debounced'} [_config.informType='debounced'] - Default inform type for updates
 	 */
 	constructor(
 		private _data: T,
 		private _config?: {
 			debounceMs?: number;
 			debug?: boolean;
+			informType?: 'immediate' | 'debounced';
 		}
 	) {
 		this._informDebounced = debounce(() => {
@@ -169,7 +170,10 @@ export class WritableBase<T> implements Writable<T> {
 	 * store.inform(true); // notify immediately
 	 * ```
 	 */
-	inform(immediate = false) {
+	inform(immediate?: boolean) {
+		if (typeof immediate === 'undefined') {
+			immediate = this._config?.informType === 'immediate';
+		}
 		if (immediate) {
 			this._informImmediate();
 		} else {
@@ -358,23 +362,58 @@ export class WritableBase<T> implements Writable<T> {
 
 	/**
 	 * Creates a new WritableBase that derives its value from this WritableBase using the provided transform function. The derived WritableBase will automatically update whenever this WritableBase changes, applying the transform function to produce the new value.
-	 * @param transform - Function that transforms this WritableBase's data into the type of the derived WritableBase
-	 * @param config - Optional configuration for the derived WritableBase (debounceMs and debug)
+	 * @param {(data: T) => U} transform - Function that transforms this WritableBase's data into the type of the derived WritableBase
+	 * @param {object} config - Optional configuration for the derived WritableBase (debounceMs and debug)
+	 * @param {number} [config.debounceMs] - Debounce delay for the derived WritableBase
+	 * @param {boolean} [config.debug] - Enable debug logging for the derived WritableBase
+	 * @param {'immediate' | 'debounced'} [config.informType] - Default inform type for the derived WritableBase
 	 * @returns {WritableBase<U>} A new WritableBase instance that derives its value from this one
 	 * @example
 	 * ```typescript
 	 * const store = new WritableBase(1);
-	 * const derived = store.derive(num => `Number is: ${num}`);
+	 * const derived = store.derived(num => `Number is: ${num}`);
 	 * store.set(2); // derived will update to "Number is: 2"
 	 * ```
 	 */
-	derive<U>(
+	derived<U>(
 		transform: (data: T) => U,
-		config?: { debounceMs?: number; debug?: boolean }
+		config?: { debounceMs?: number; debug?: boolean; informType?: 'immediate' | 'debounced' }
 	): WritableBase<U> {
 		const derived = new WritableBase<U>(transform(this.data), config);
 		derived.pipeData(this, transform);
 		return derived;
+	}
+
+	/**
+	 * Creates a WritableStage for staging updates to this WritableBase. The WritableStage allows you to make changes to a copy of the data and then commit those changes back to the original WritableBase when ready. This is useful for scenarios like form editing where you want to stage changes before applying them.
+	 * @param {function} [copy] - Optional function to create a copy of the data for staging (useful for complex objects to avoid mutating the original data during staging)
+	 * @param {object} [config] - Optional configuration for the WritableStage (debounceMs and debug)
+	 * @returns {WritableStage<T>} A new WritableStage instance for staging updates to this WritableBase
+	 * @example
+	 * ```typescript
+	 * const store = new WritableBase({ name: 'Alice', age: 30 });
+	 * const stage = store.stage(data => ({ ...data })); // create a shallow copy for staging
+	 * stage.update(d => { d.age = 31; return d; }); // stage an update
+	 * stage.push(); // commit the staged update back to the original store
+	 *
+	 * // if you want to resolve conflicts during push, you can provide a merge function:
+	 * stage.push(({ base, remote, local }) => {
+	 * 	// merge strategy to resolve conflicts between base, remote, and local values
+	 * 	return { ...base, ...remote, ...local, age: Math.max(base.age, remote.age, local.age) };
+	 * });
+	 * ```
+	 */
+	stage(
+		copy?: (data: T) => T,
+		config?: {
+			debounceMs?: number;
+			debug?: boolean;
+		}
+	) {
+		return new WritableStage(this, {
+			copy,
+			...config
+		});
 	}
 }
 
@@ -507,7 +546,7 @@ export class WritableArray<T> extends WritableBase<T[]> {
 	 * @private
 	 * @type {(item: T) => boolean}
 	 */
-	_filter = (_item: T): boolean => true;
+	_filter = (_item: T, _index: number, _array: T[]): boolean => true;
 
 	/**
 	 * Internal reverse flag
@@ -548,15 +587,15 @@ export class WritableArray<T> extends WritableBase<T[]> {
 	/**
 	 * Sets the filter function for the array display
 	 *
-	 * @param {(item: T) => boolean} fn - Predicate function for filtering
+	 * @param {(item: T, index: number, array: T[]) => boolean} fn - Predicate function for filtering
 	 * @returns {void}
 	 * @example
 	 * ```typescript
 	 * // Only show even numbers
-	 * store.filter(n => n % 2 === 0);
+	 * store.filter((n, index, array) => n % 2 === 0);
 	 * ```
 	 */
-	filter(fn: (item: T) => boolean) {
+	filter(fn: (item: T, index: number, array: T[]) => boolean) {
 		this._filter = fn;
 		this.inform();
 		return this;
@@ -581,15 +620,12 @@ export class WritableArray<T> extends WritableBase<T[]> {
 
 	/**
 	 * Creates a new WritableArray with the results of calling a function on every element
-	 * Note: Filter, sort, and reverse settings are copied to the new array
-	 * By default, the new array will reactively update when the original array changes. You can disable this by passing `false` as the second argument.
+	 * By default, the new array will reactively update when the original array changes. You can disable this behavior by setting reactive to false in the config.
 	 *
 	 * @template U
 	 * @param {(item: T) => U} fn - Function that transforms each element
-	 * @param {object} [config] - Optional configuration for the mapped array
-	 * @param {boolean} [config.reactive=true] - If true, the mapped array will update reactively when the original array changes
-	 * @param {boolean} [config.interceptors=true] - If true, interceptors will be copied to the mapped array
-	 * @param {boolean} [config.validators=true] - If true, validators will be copied to the mapped array
+	 * @param {object} [config] - Optional configuration for the mapped WritableArray
+	 * @param {boolean} [config.reactive=true] - Whether the mapped WritableArray should reactively update when the original array changes (reactive by default)
 	 * @returns {WritableArray<U>} New WritableArray with transformed elements
 	 * @example
 	 * ```typescript
@@ -597,17 +633,26 @@ export class WritableArray<T> extends WritableBase<T[]> {
 	 * const strings = numbers.map(n => n.toString());
 	 * ```
 	 */
-	map<U>(fn: (item: T) => U, reactive = true) {
-		const mapped = new WritableArray<U>(this.data.map(fn));
-		// Copy filter, sort, and reverse settings
-		(mapped as any)._filter = this._filter as any;
-		(mapped as any)._sort = this._sort as any;
-		(mapped as any)._reverse = this._reverse;
-
-		if (reactive) {
-			mapped.pipeData(this, (arr) => arr.map(fn));
+	map<U>(
+		fn: (item: T) => U,
+		config?: {
+			reactive?: boolean;
 		}
+	) {
+		const mapped = new WritableArray<U>(this.data.map(fn));
+		let reactive = true;
+		if (config && config.reactive === false) reactive = false;
+		if (reactive) {
+			mapped.pipeData(this, (arr) => {
+				const sortedAndFiltered = arr.filter(this._filter).sort(this._sort);
 
+				if (this._reverse) {
+					sortedAndFiltered.reverse();
+				}
+
+				return sortedAndFiltered.map(fn);
+			});
+		}
 		return mapped;
 	}
 
@@ -972,6 +1017,30 @@ export class WritableArray<T> extends WritableBase<T[]> {
 			});
 		}
 		return uniqueStore;
+	}
+
+	/**
+	 * Toggles the presence of an item in the array. If the item exists, it is removed; if it does not exist, it is added. Returns true if the item was added, or false if it was removed.
+	 * @param item - The item to toggle in the array
+	 * @returns {boolean} True if the item was added, false if it was removed
+	 * @example
+	 * ```typescript
+	 * const store = new WritableArray(['a', 'b']);
+	 * store.toggle('b'); // returns false, array is now ['a']
+	 * store.toggle('c'); // returns true, array is now ['a', 'c']
+	 * ```
+	 */
+	toggle(item: T): boolean {
+		const has = this.data.includes(item);
+		this.update((arr) => {
+			if (arr.includes(item)) {
+				return arr.filter((i) => i !== item);
+			} else {
+				arr.push(item);
+				return arr;
+			}
+		});
+		return !has;
 	}
 }
 
@@ -1350,5 +1419,107 @@ export class WritableAsync<T> extends WritableBase<{
 		const errorStore = new WritableBase(this.data.error);
 		errorStore.pipeData(this, (state) => state.error);
 		return errorStore;
+	}
+}
+
+/**
+ * Merge strategy for resolving staged/local changes against a remote source.
+ *
+ * @template T
+ * @param data - Merge context containing the base snapshot, remote value, and local value
+ * @returns The merged value to apply
+ */
+type Merge<T> = (data: { base: T; remote: T; local: T }) => T;
+
+/**
+ * Writable stage that tracks local edits against a remote source with a base snapshot.
+ *
+ * @export
+ * @class WritableStage
+ * @template T
+ * @extends {WritableBase<T>}
+ */
+export class WritableStage<T> extends WritableBase<T> {
+	public readonly base: WritableBase<T>;
+	public readonly remoteChanged: WritableBase<boolean>;
+	public readonly localChanged: WritableBase<boolean>;
+
+	/**
+	 * Creates a stage bound to a remote writable.
+	 *
+	 * @param remote - The remote/source writable to stage against
+	 * @param config - Optional configuration for debouncing, debug, and copy behavior
+	 */
+	constructor(
+		public readonly remote: WritableBase<T>,
+		private readonly config?: {
+			debounceMs?: number;
+			debug?: boolean;
+			copy?: (data: T) => T;
+		}
+	) {
+		super(remote.data, config);
+		const copy = (data: T) => {
+			if (config?.copy) {
+				return config.copy(data);
+			}
+			return data;
+		};
+		this.base = new WritableBase(copy(remote.data));
+		this.remoteChanged = remote.derived((data) => {
+			return !deepEqual(data, this.base.data);
+		});
+		this.localChanged = this.derived((data) => {
+			return !deepEqual(data, this.base.data);
+		});
+	}
+
+	/**
+	 * Pulls remote changes into the local stage using a merge strategy.
+	 *
+	 * @param merge - Merge strategy applied to base, remote, and local values
+	 */
+	pull(merge?: Merge<T>) {
+		this.update((local) => {
+			const remote = this.remote.data;
+			const base = this.base.data;
+			return merge ? merge({ base, remote, local }) : local;
+		});
+	}
+
+	/**
+	 * Pushes local changes to the remote source using a merge strategy.
+	 *
+	 * @param merge - Merge strategy applied to base, remote, and local values
+	 */
+	push(merge?: Merge<T>) {
+		this.remote.update((remote) => {
+			const base = this.base.data;
+			const local = this.data;
+			return merge ? merge({ base, remote, local }) : local;
+		});
+	}
+
+	/**
+	 * Updates the base snapshot from the current remote value.
+	 */
+	fetch() {
+		this.base.set(this.config?.copy ? this.config.copy(this.remote.data) : this.remote.data);
+		this.inform();
+	}
+
+	/**
+	 * Resets the local stage to the base snapshot.
+	 */
+	reset() {
+		this.set(this.config?.copy ? this.config.copy(this.base.data) : this.base.data);
+	}
+
+	/**
+	 * Fetches the latest remote value into the base snapshot and resets the local stage to match it.
+	 */
+	fetchAndReset() {
+		this.fetch();
+		this.reset();
 	}
 }

@@ -3,7 +3,8 @@ import {
 	WritableBase,
 	WritableAsync,
 	WritableMap,
-	WritableSet
+	WritableSet,
+	WritableStage
 } from '$lib/services/writables';
 import { sleep } from 'ts-utils';
 import { describe, expect, test, vi } from 'vitest';
@@ -153,6 +154,30 @@ describe('WritableBase', () => {
 		const result = await promise;
 		expect(result).toBe(42);
 	});
+
+	test('derived produces reactive values', async () => {
+		const store = new WritableBase(2);
+		const derived = store.derived((value) => value * 3);
+		const values: number[] = [];
+
+		derived.subscribe((value) => values.push(value));
+		store.set(3);
+		await sleep(10);
+
+		expect(values[values.length - 1]).toBe(9);
+	});
+
+	test('intercept can be removed', () => {
+		const store = new WritableBase(1);
+		const remove = store.intercept((value) => value + 1);
+
+		store.set(1);
+		expect(store.data).toBe(2);
+
+		remove();
+		store.set(1);
+		expect(store.data).toBe(1);
+	});
 });
 
 describe('WritableArray', () => {
@@ -300,12 +325,46 @@ describe('WritableArray', () => {
 		expect(uniqueStore.data).toEqual([1, 2, 3, 4]);
 	});
 
+	test('toSet can be non-reactive', async () => {
+		const store = new WritableArray([1, 2]);
+		const setStore = store.toSet(false);
+
+		store.push(3);
+		await sleep(10);
+		expect(Array.from(setStore.data)).toEqual([1, 2]);
+	});
+
+	test('reduce produces reactive aggregate values', async () => {
+		const store = new WritableArray([1, 2, 3]);
+		const sumStore = store.reduce((acc, value) => acc + value, 0);
+		const values: number[] = [];
+
+		sumStore.subscribe((value) => values.push(value));
+		store.push(4);
+		await sleep(10);
+
+		expect(values[values.length - 1]).toBe(10);
+	});
+
 	test('map can be non-reactive', () => {
 		const source = new WritableArray([1, 2]);
-		const mapped = source.map((value) => value * 2, false);
+		const mapped = source.map((value) => value * 2, {
+			reactive: false
+		});
 
 		source.push(3);
 		expect(mapped.data).toEqual([2, 4]);
+	});
+
+	test('Array.toggle() adds or removes items based on presence', () => {
+		const store = new WritableArray([1, 2], {
+			informType: 'immediate'
+		});
+		store.toggle(3);
+		expect(store.data).toEqual([1, 2, 3]);
+
+		store.toggle(2);
+		expect(store.data).toEqual([1, 3]);
 	});
 });
 
@@ -406,5 +465,61 @@ describe('WritableAsync', () => {
 		await sleep(5);
 		expect(store.status(false)).toBe('idle');
 		expect(store.result(false)).toBeUndefined();
+	});
+});
+
+describe('WritableStage', () => {
+	test('tracks remote and local changes', async () => {
+		const remote = new WritableBase(1);
+		const stage = remote.stage();
+
+		expect(stage.remoteChanged.data).toBe(false);
+		expect(stage.localChanged.data).toBe(false);
+
+		stage.set(2);
+		await sleep(10);
+		expect(stage.localChanged.data).toBe(true);
+		expect(stage.remoteChanged.data).toBe(false);
+
+		remote.set(3);
+		await sleep(10);
+		expect(stage.remoteChanged.data).toBe(true);
+	});
+
+	test('pull merges into local stage', () => {
+		const remote = new WritableBase(2);
+		const stage = remote.stage();
+
+		stage.set(3);
+		stage.pull(({ base, remote: remoteValue, local }) => base + remoteValue + local);
+		expect(stage.data).toBe(7);
+	});
+
+	test('push merges into remote', () => {
+		const remote = new WritableBase(2);
+		const stage = remote.stage();
+
+		stage.set(5);
+		stage.push(({ local }) => local);
+		expect(remote.data).toBe(5);
+	});
+
+	test('fetch, reset, and fetchAndReset keep stage in sync', () => {
+		const remote = new WritableBase(1);
+		const stage = new WritableStage(remote);
+
+		remote.set(4);
+		stage.fetch();
+		expect(stage.base.data).toBe(4);
+
+		stage.set(9);
+		stage.reset();
+		expect(stage.data).toBe(4);
+
+		remote.set(7);
+		stage.set(2);
+		stage.fetchAndReset();
+		expect(stage.data).toBe(7);
+		expect(stage.base.data).toBe(7);
 	});
 });
