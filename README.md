@@ -1,4 +1,4 @@
-[![Svelte Check](https://github.com/tsaxking/sveltekit-template/actions/workflows/testing-svelte-check.yml/badge.svg)](https://github.com/tsaxking/sveltekit-template/actions/workflows/testing-svelte-check.yml) [![Unit Tests](https://github.com/tsaxking/sveltekit-template/actions/workflows/testing-unit.yml/badge.svg)](https://github.com/tsaxking/sveltekit-template/actions/workflows/testing-unit.yml) [![Format & Lint](https://github.com/tsaxking/sveltekit-template/actions/workflows/code-formatter.yml/badge.svg)](https://github.com/tsaxking/sveltekit-template/actions/workflows/code-formatter.yml) [![e2e](https://github.com/tsaxking/sveltekit-template/actions/workflows/testing-e2e.yml/badge.svg)](https://github.com/tsaxking/sveltekit-template/actions/workflows/testing-e2e.yml) [![docker](https://github.com/tsaxking/sveltekit-template/actions/workflows/docker-compose-test.yml/badge.svg)](https://github.com/tsaxking/sveltekit-template/actions/workflows/docker-compose-test.yml)
+[![Svelte Check](https://github.com/tsaxking/tators-app-kit/actions/workflows/testing-svelte-check.yml/badge.svg)](https://github.com/tsaxking/tators-app-kit/actions/workflows/testing-svelte-check.yml) [![Unit Tests](https://github.com/tsaxking/tators-app-kit/actions/workflows/testing-unit.yml/badge.svg)](https://github.com/tsaxking/tators-app-kit/actions/workflows/testing-unit.yml) [![Format & Lint](https://github.com/tsaxking/tators-app-kit/actions/workflows/code-formatter.yml/badge.svg)](https://github.com/tsaxking/tators-app-kit/actions/workflows/code-formatter.yml) [![e2e](https://github.com/tsaxking/tators-app-kit/actions/workflows/testing-e2e.yml/badge.svg)](https://github.com/tsaxking/tators-app-kit/actions/workflows/testing-e2e.yml) [![docker](https://github.com/tsaxking/tators-app-kit/actions/workflows/docker-compose-test.yml/badge.svg)](https://github.com/tsaxking/tators-app-kit/actions/workflows/docker-compose-test.yml) [![docs](https://github.com/tsaxking/tators-app-kit/actions/workflows/gh-pages.yml/badge.svg)](https://github.com/tsaxking/tators-app-kit/actions/workflows/gh-pages.yml)
 
 # SvelteKit Template
 
@@ -34,7 +34,7 @@ A full-featured SvelteKit application template with database integration, authen
 
 ## Prerequisites
 
-- Node.js >=22.12.0
+- Node.js >=v24.13.1
 - pnpm (recommended package manager)
 
 ## Installation
@@ -65,7 +65,7 @@ These dependencies are required to run the project. Run these scripts to install
 npm i -g pnpm
 ```
 
-This requires node v22.12.0 or higher. Go ahead and run this script and it will install nvm and the correct version of node for you. If you already have node installed, you can skip this step, but make sure you have the correct version installed.
+This requires node v24.13.1 or higher. Go ahead and run this script and it will install nvm and the correct version of node for you. If you already have node installed, you can skip this step, but make sure you have the correct version installed.
 
 [nvm](https://github.com/nvm-sh/nvm)
 
