@@ -13,7 +13,7 @@ describe('fullscreen utilities', () => {
 		(document as any).exitFullscreen = exitFullscreen;
 
 		const { fullscreen } = await import('$lib/utils/fullscreen');
-		const exit = fullscreen();
+		const exit = fullscreen(document as any);
 		expect(typeof exit).toBe('function');
 
 		const callsBefore = exitFullscreen.mock.calls.length;

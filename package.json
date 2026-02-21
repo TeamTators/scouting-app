@@ -35,7 +35,9 @@
 		"backup": "pnpm script backup",
 		"restore": "pnpm script restore",
 		"dev:docs": "vitepress preview docs",
-		"prepare": "husky install"
+		"prepare": "husky install",
+		"deploy:docs": "pnpm script build-docs",
+		"submit-stale": "pnpm script submit-stale"
 	},
 	"packageManager": "pnpm@10.30.0",
 	"engines": {
@@ -161,9 +163,10 @@
 		"jsoneditor": "^10.3.0",
 		"markdown-it": "^14.1.0",
 		"marked": "^17.0.0",
-		"math": "git+https://github.com/tsaxking/calculations#v1.0.0",
+		"math": "github:tsaxking/calculations#v1.0.1",
 		"mime-types": "^3.0.1",
 		"mjml": "^4.15.3",
+		"msgpackr": "^1.11.5",
 		"multiparty": "^4.2.3",
 		"nodemailer": "^6.10.1",
 		"pg": "^8.16.3",
@@ -173,7 +176,9 @@
 		"redis-utils": "github:tsaxking/redis#v3.0.0",
 		"svelte-filepond": "^0.2.2",
 		"svelte-portal": "^2.2.1",
+		"tatorscout": "github:TeamTators/tatorscout-utils#v1.0.0",
 		"ts-utils": "github:tsaxking/global-ts-utilities#v1.0.9",
+		"typescript": "^5.7.3",
 		"uuid": "^11.1.0",
 		"vite-node": "^3.2.4",
 		"yaml": "^2.8.0",
@@ -191,9 +196,12 @@
 			"esbuild",
 			"html-constructor",
 			"math",
+			"msgpackr-extract",
 			"redis-service",
 			"svelte-preprocess",
-			"ts-utils"
+			"ts-utils",
+			"tatorscout",
+			"utils"
 		],
 		"overrides": {
 			"axios@>=0.8.1 <0.28.0": ">=0.28.0",

@@ -301,7 +301,7 @@ Admin struct data page at `/dashboard/admin/data/[struct]`.
 							buttons: [
 								{
 									html: `<i class="material-icons">delete</i>`,
-									onClick: (data: ICellRendererParams<StructData<Blank>>) => {
+									onClick: (data: ICellRendererParams) => {
 										if (data.data) deleteItem(data.data);
 									},
 									className: 'btn btn-danger',

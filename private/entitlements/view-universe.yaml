@@ -1,0 +1,8 @@
+name: view-universe
+structs:
+  - universe
+permissions:
+  - universe:read:name
+  - universe:read:description
+pages: []
+group: Universe

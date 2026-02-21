@@ -13,6 +13,7 @@ declare global {
 			session: Session.SessionData;
 			start: number;
 			sse?: Connection;
+			isTrusted: boolean;
 		}
 		// interface PageData {}
 		// interface PageState {}

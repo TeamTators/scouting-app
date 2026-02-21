@@ -247,72 +247,64 @@ This project uses pnpm as the package manager. Key commands include:
 - pnpm check - Run Svelte type checking
 - pnpm check:watch - Run Svelte type checking in watch mode
 
+### Testing
+
+- `pnpm test` - Run all tests (schema, unit, e2e)
+- `pnpm test:unit` - Run unit tests
+- `pnpm test:e2e` - Run end-to-end tests
+- `pnpm check:system` - Run complete system check (lint, check, test)
+
+## Build
+
+To create a production version of your app:
+
+```bash
+pnpm build
+```
+
+The build process includes:
+
+1. Route tree generation
+2. Vite production build
+3. SvelteKit adapter compilation
+
+Preview the production build:
+
+```bash
+pnpm preview
+```
+
+## Database (pnpm db:)
+
+This project includes database integration with Drizzle ORM. Available database commands:
+
+```bash
+# Start database with Docker Compose
+pnpm db:start
+
+# Push schema changes to database
+pnpm db:push
+
+# Run database migrations
+pnpm db:migrate
+
+# Open Drizzle Studio (database GUI)
+pnpm db:studio
+```
+
+### Database Setup
+
+1. Ensure Docker is installed and running
+2. Copy `.env.example` to `.env` and configure database settings
+3. Start the database: `pnpm db:start`
+4. Push initial schema: `pnpm db:push`
+
 ## Additional Scripts
 
-- pnpm start - Start production server
-- pnpm cli - Run CLI tools
-- pnpm script <script-name> - Run custom scripts from /scripts directory
+- `pnpm start` - Start production server
+- `pnpm cli` - Run CLI tools
+- `pnpm script <script-name>` - Run custom scripts from `/scripts` directory
 
-## Docker (optional)
+## Docs
 
-```sh
-sudo apt remove $(dpkg --get-selections docker.io docker-compose docker-compose-v2 docker-doc podman-docker containerd runc | cut -f1)
-
-# Add Docker's official GPG key:
-sudo apt update
-sudo apt install ca-certificates curl
-sudo install -m 0755 -d /etc/apt/keyrings
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-sudo chmod a+r /etc/apt/keyrings/docker.asc
-
-# Add the repository to Apt sources:
-sudo tee /etc/apt/sources.list.d/docker.sources <<EOF
-Types: deb
-URIs: https://download.docker.com/linux/ubuntu
-Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
-Components: stable
-Signed-By: /etc/apt/keyrings/docker.asc
-EOF
-
-sudo apt update
-
-sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-```
-
-### Managing
-
-```sh
-sudo systemctl <start|stop|enable|status|restart> docker
-```
-
-### Running containers
-
-```sh
-# Run specific image
-sudo docker run <image>
-```
-
-## Contributing
-
-Contributions are welcome! Please fork the repository and submit a pull request with your changes. Make sure to follow the existing code style and include tests for any new functionality.
-
-All branches must follow this naming convention:
-
-```
-YYYY-MM-DD-<INITIALS>-ShortDescription
-```
-
-All pull requests must be linked to an issue. If there is no issue, create one before submitting the pull request.
-
-Before any branches are merged into main, they must pass all tests and code quality checks.
-
-## License
-
-This software is licensed under the Polyform Noncommercial License 1.0.0.
-You can use, modify, and share it for non-commercial purposes.
-Commercial use requires a separate license from the author.
-View [License](./license.md) for full terms and conditions
-
-## Contact
-
-If you have any questions, feel free to contact me via email at [taylor.reese.king@gmail.com](mailto:taylor.reese.king@gmail.com) or open an issue on GitHub.
+Go to documentation: [Docs](https://tsaxking.github.io/sveltekit-template/#)

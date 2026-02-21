@@ -34,6 +34,9 @@ jobs:
           PORT=3000
           OAUTH2_CLIENT_ID=1234567890
           OAUTH2_CLIENT_SECRET=1234567890
+          SESSION_DURATION=10000000
+          DB_HOST=db
+          REMOTE=false
           EOF
 
           cp config.example.json config.json
@@ -42,6 +45,8 @@ jobs:
           PORT=3000
           OAUTH2_CLIENT_ID=1234567890
           OAUTH2_CLIENT_SECRET=1234567890
+          DB_HOST=localhost
+          REMOTE=false
           EOF
 
       - name: Setup Node.js
