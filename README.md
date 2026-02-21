@@ -34,7 +34,7 @@ A full-featured SvelteKit application template with database integration, authen
 
 ## Prerequisites
 
-- Node.js >=22.12.0
+- Node.js >=v24.13.1
 - pnpm (recommended package manager)
 
 ## Installation
@@ -65,7 +65,7 @@ These dependencies are required to run the project. Run these scripts to install
 npm i -g pnpm
 ```
 
-This requires node v22.12.0 or higher. Go ahead and run this script and it will install nvm and the correct version of node for you. If you already have node installed, you can skip this step, but make sure you have the correct version installed.
+This requires node v24.13.1 or higher. Go ahead and run this script and it will install nvm and the correct version of node for you. If you already have node installed, you can skip this step, but make sure you have the correct version installed.
 
 [nvm](https://github.com/nvm-sh/nvm)
 
