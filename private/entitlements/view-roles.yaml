@@ -1,0 +1,8 @@
+name: view-roles
+structs:
+  - role
+permissions:
+  - role:read:name
+  - role:read:description
+pages: []
+group: Roles
