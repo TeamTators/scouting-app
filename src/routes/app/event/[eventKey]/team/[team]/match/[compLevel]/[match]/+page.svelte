@@ -217,6 +217,7 @@
 						exitFullscreen();
 						if (app) postApp?.render(app);
 						app?.contribution.render();
+						app?.runProcessors();
 					}}
 				>
 					Post Match
