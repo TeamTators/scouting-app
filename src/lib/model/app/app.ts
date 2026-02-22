@@ -473,4 +473,19 @@ To disable: ctrl + d`);
 			// this.reset();
 		});
 	}
+
+	private readonly processors = new Set<Processor>();
+
+	registerProcessor(processor: Processor) {
+		this.processors.add(processor);
+	}
+
+	runProcessors() {
+		for (const processor of this.processors) {
+			processor(this);
+		}
+	}
 }
+
+
+type Processor = (app: App) => void;
