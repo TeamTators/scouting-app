@@ -22,7 +22,8 @@ export const MatchSchema = z.object({
 			text: z.string(),
 			color: z.string()
 		})
-	)
+	),
+	flagForReview: z.boolean(),
 	// scoreCorrection: z.object({
 	// 	auto: z.record(z.number()),
 	// 	teleop: z.record(z.number())
@@ -52,7 +53,11 @@ export const CompressedMatchSchema = z.object({
 			text: z.string(),
 			color: z.string()
 		})
-	)
+	),
+	flagForReview: z.object({
+		flagged: z.boolean(),
+		reason: z.string(),
+	}),
 	// scoreCorrection: z.object({
 	// 	auto: z.record(z.number()),
 	// 	teleop: z.record(z.number())

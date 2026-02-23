@@ -23,6 +23,7 @@ import { Circle } from 'canvas/circle';
 import { Polygon } from 'canvas/polygon';
 import { Color } from 'colors/color';
 import { Img } from 'canvas/image';
+import { ReviewFlag } from './flag';
 
 export const TICKS_PER_SECOND = 4;
 export const SECTIONS = {
@@ -66,6 +67,31 @@ export class App {
 	public readonly comments: Comments;
 	// public readonly scoreCorrection: ScoreCorrection;
 	public readonly contribution: ScoreContribution;
+
+	
+	/**
+	 * Flag this match submission for future review
+	 *
+	 * @public
+	 * @readonly
+	 * @type {ReviewFlag}
+	 */
+	public readonly reviewFlag: ReviewFlag;
+	/**
+	 * Registered interactive game objects and their render constraints.
+	 *
+	 * @public
+	 * @readonly
+	 * @type {{
+	 * 		point: Point2D;
+	 * 		object: AppObject;
+	 * 		element: HTMLElement;
+	 * 		alliance: 'red' | 'blue' | null;
+	 * 		viewCondition?: (tick: Tick) => boolean;
+	 * 		staticX: boolean;
+	 * 		staticY: boolean;
+	 * 	}[]}
+	 */
 	public readonly gameObjects: {
 		point: Point2D;
 		object: AppObject;
@@ -102,6 +128,7 @@ export class App {
 		this.checks = new Checks(this);
 		this.comments = new Comments(this);
 		this.contribution = new ScoreContribution(this);
+		this.reviewFlag = new ReviewFlag(this);
 		// this.scoreCorrection = new ScoreCorrection(this);
 	}
 
@@ -132,7 +159,8 @@ export class App {
 				practice,
 				alliance,
 				group,
-				sliders
+				sliders,
+				flagForReview: this.reviewFlag.serialize(),
 				// scoreCorrection: this.scoreCorrection.serialize(),
 			};
 		});
@@ -151,6 +179,7 @@ export class App {
 		this.comments.reset();
 		this.checks.reset();
 		this.view.reset();
+		this.reviewFlag.reset();
 	}
 
 	// Main event loop

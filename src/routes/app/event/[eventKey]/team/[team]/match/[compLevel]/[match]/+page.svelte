@@ -18,6 +18,7 @@
 	import ScoutInput from '$lib/components/app/ScoutInput.svelte';
 	import Slider from '$lib/components/app/Slider.svelte';
 	import ScoreContribution from '$lib/components/app/Contribution.svelte';
+	import Review from '$lib/components/app/Review.svelte';
 
 	const { data } = $props();
 	const eventKey = $derived(data.eventKey);
@@ -249,10 +250,12 @@
 						<div class="col-md-4 col-sm-12">
 							<ScoutInput {accounts} />
 						</div>
-
 						<div class="col-md-8 col-sm-12">
 							<ScoreContribution {app} />
 						</div>
+					</div>
+					<div class="row mb-3">
+						<Review {app} />
 					</div>
 					<div class="row mb-3">
 						<div class="btn-group w-100" role="group">
