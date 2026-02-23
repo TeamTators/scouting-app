@@ -1,3 +1,6 @@
+/**
+ * @fileoverview API/data access helpers for scouting app event, account, and match IO.
+ */
 import { AssignmentSchema } from 'tatorscout/scout-groups';
 import { EventSchema, MatchSchema, TeamSchema } from 'tatorscout/tba';
 import { attemptAsync } from 'ts-utils/check';
@@ -12,8 +15,16 @@ import { notify } from '$lib/utils/prompts';
 import { Trace } from 'tatorscout/trace';
 
 export namespace AppData {
+	/** Cache key version used for localStorage payloads. */
 	const CACHE_VERSION = 'v2';
 
+	/**
+	 * Performs cached GET requests with staleness fallback.
+	 *
+	 * @param {string} url - API URL path (without `/api` prefix).
+	 * @param {number} threshold - Freshness threshold in milliseconds.
+	 * @returns {ReturnType<typeof attemptAsync<unknown>>} Result-wrapped response JSON.
+	 */
 	const get = async (url: string, threshold: number) => {
 		return attemptAsync<unknown>(async () => {
 			const exists = localStorage.getItem(`${CACHE_VERSION}:${url}`);
@@ -58,6 +69,13 @@ export namespace AppData {
 		});
 	};
 
+	/**
+	 * Performs POST request with JSON body.
+	 *
+	 * @param {string} url - API URL path (without `/api` prefix).
+	 * @param {unknown} body - Request body payload.
+	 * @returns {ReturnType<typeof attemptAsync<unknown>>} Result-wrapped response JSON.
+	 */
 	const post = async (url: string, body: unknown) => {
 		return attemptAsync(async () => {
 			const res = await fetch('/api' + url, {
@@ -73,6 +91,13 @@ export namespace AppData {
 		});
 	};
 
+	/**
+	 * Fetches scout account metadata.
+	 *
+	 * @returns {ReturnType<typeof attemptAsync<Array<{ id: string; username: string; firstName: string; lastName: string }>>>} Accounts list.
+	 * @example
+	 * const accounts = await AppData.getAccounts();
+	 */
 	export const getAccounts = () => {
 		return attemptAsync(async () => {
 			const res = (await get('/accounts', 1000 * 60 * 60 * 24)).unwrap();
@@ -89,7 +114,14 @@ export namespace AppData {
 				.parse(res);
 		});
 	};
-
+	/**
+	 * Fetches event details, matches, and teams.
+	 *
+	 * @param {string} eventKey - Event key (e.g. `2026miket`).
+	 * @returns {ReturnType<typeof attemptAsync<{ event: import('tatorscout/tba').TBAEvent; matches: import('tatorscout/tba').TBAMatch[]; teams: import('tatorscout/tba').TBATeam[] }>>} Event bundle.
+	 * @example
+	 * const event = await AppData.getEvent('2026miket');
+	 */
 	export const getEvent = (eventKey: string) => {
 		return attemptAsync(async () => {
 			const res = (await get(`/event/${eventKey}`, 1000 * 60 * 60)).unwrap();
@@ -104,6 +136,12 @@ export namespace AppData {
 		});
 	};
 
+	/**
+	 * Fetches all events for a year.
+	 *
+	 * @param {number} year - Competition year.
+	 * @returns {ReturnType<typeof attemptAsync<import('tatorscout/tba').TBAEvent[]>>} Year events.
+	 */
 	export const getEvents = (year: number) => {
 		return attemptAsync(async () => {
 			const res = (await get(`/events/${year}`, 1000 * 60 * 60 * 24)).unwrap();
@@ -111,6 +149,12 @@ export namespace AppData {
 		});
 	};
 
+	/**
+	 * Fetches scout group assignments for an event.
+	 *
+	 * @param {string} eventKey - Event key.
+	 * @returns {ReturnType<typeof attemptAsync<import('tatorscout/scout-groups').AssignmentSchemaType>>} Assignment payload.
+	 */
 	export const getScoutGroups = (eventKey: string) => {
 		return attemptAsync(async () => {
 			const res = (await get(`/event/${eventKey}/scout-groups`, 1000 * 60 * 60)).unwrap();
@@ -118,22 +162,13 @@ export namespace AppData {
 			return AssignmentSchema.parse(res);
 		});
 	};
-	// const saveMatches = (data: MatchSchemaType[]) => {
-	// 	return attempt(() => {
-	// 		const saved = localStorage.getItem(CACHE_VERSION + 'saved-matches') || '[]';
-	// 		const parsed = z.array(MS).parse(JSON.parse(saved));
-	// 		parsed.push(...data);
-	// 		localStorage.setItem(CACHE_VERSION + 'saved-matches', JSON.stringify(parsed));
-	// 	});
-	// };
 
-	// const getMatches = () => {
-	// 	return attempt<MatchSchemaType[]>(() => {
-	// 		const saved = localStorage.getItem(CACHE_VERSION + 'saved-matches') || '[]';
-	// 		return z.array(MS).parse(JSON.parse(saved)) as MatchSchemaType[];
-	// 	});
-	// };
-
+	/**
+	 * Downloads a compressed match payload as a local file.
+	 *
+	 * @param {CompressedMatchSchemaType} data - Match payload.
+	 * @returns {ReturnType<typeof downloadText>} Download result.
+	 */
 	const downloadMatch = (data: CompressedMatchSchemaType) => {
 		return downloadText(
 			JSON.stringify(data),
@@ -141,6 +176,13 @@ export namespace AppData {
 		);
 	};
 
+	/**
+	 * Loads local match files and uploads or converts them.
+	 *
+	 * @returns {ReturnType<typeof attemptAsync<unknown[]>>} Upload/conversion results.
+	 * @example
+	 * await AppData.uploadMatch();
+	 */
 	export const uploadMatch = () => {
 		return attemptAsync(async () => {
 			const matches = (await loadFileContents()).unwrap();
@@ -169,6 +211,15 @@ export namespace AppData {
 		});
 	};
 
+	/**
+	 * Submits a compressed match payload to the backend and shows a notification.
+	 *
+	 * @param {CompressedMatchSchemaType} data - Match payload.
+	 * @param {boolean} download - Whether to also download a local `.match` file.
+	 * @returns {ReturnType<typeof attemptAsync<void>>} Submission result.
+	 * @example
+	 * await AppData.submitMatch(payload, true);
+	 */
 	export const submitMatch = (data: CompressedMatchSchemaType, download: boolean) => {
 		return attemptAsync(async () => {
 			// const matches = getMatches().unwrap();

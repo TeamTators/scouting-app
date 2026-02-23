@@ -1,9 +1,16 @@
+/**
+ * @fileoverview Match metadata store with helpers for event/group navigation.
+ */
+
 import { type CompLevel, type TBAMatch } from 'tatorscout/tba';
 import { App } from './app';
 import { AppData } from './data-pull';
 import { attemptAsync } from 'ts-utils/check';
 import type { Writable } from 'svelte/store';
 
+/**
+ * Writable shape for match metadata.
+ */
 type MD = {
 	team: number;
 	eventKey: string;
@@ -12,7 +19,24 @@ type MD = {
 	alliance: 'red' | 'blue' | null;
 };
 
+/**
+ * Writable model for active match/event/team context.
+ *
+ * @implements {Writable<MD>}
+ * @example
+ * const md = new MatchData(app, '2026miket', 'qm', 12, 2337, 'red');
+ */
 export class MatchData implements Writable<MD> {
+	/**
+	 * Creates a match metadata store.
+	 *
+	 * @param {App} app - Owning app instance.
+	 * @param {string} eventKey - Event key.
+	 * @param {CompLevel} compLevel - Competition level.
+	 * @param {number} match - Match number/set.
+	 * @param {number} team - Team number.
+	 * @param {'red' | 'blue' | null} alliance - Known alliance assignment.
+	 */
 	constructor(
 		public readonly app: App,
 		public eventKey: string,
@@ -22,6 +46,11 @@ export class MatchData implements Writable<MD> {
 		public alliance: 'red' | 'blue' | null
 	) {}
 
+	/**
+	 * Current metadata snapshot.
+	 *
+	 * @type {MD}
+	 */
 	get data(): MD {
 		return {
 			eventKey: this.eventKey,
@@ -32,21 +61,50 @@ export class MatchData implements Writable<MD> {
 		};
 	}
 
+	/**
+	 * Parsed event year from `eventKey`.
+	 *
+	 * @type {number}
+	 */
 	get year() {
 		return parseInt(this.eventKey.match(/^\d{4}/)?.[0] || '2023');
 	}
 
+	/**
+	 * Internal writable subscribers.
+	 *
+	 * @private
+	 * @type {Set<(data: MD) => void>}
+	 */
 	private readonly subscribers = new Set<(data: MD) => void>();
+	/**
+	 * Notifies subscribers with current data.
+	 *
+	 * @private
+	 * @returns {void}
+	 */
 	private inform() {
 		this.subscribers.forEach((fn) => fn(this.data));
 	}
 
+	/**
+	 * Subscribes to metadata updates.
+	 *
+	 * @param {(data: MD) => void} fn - Subscriber callback.
+	 * @returns {() => boolean} Unsubscribe callback.
+	 */
 	public subscribe(fn: (data: MD) => void) {
 		this.subscribers.add(fn);
 		fn(this.data);
 		return () => this.subscribers.delete(fn);
 	}
 
+	/**
+	 * Replaces metadata values.
+	 *
+	 * @param {MD} data - New metadata.
+	 * @returns {void}
+	 */
 	set(data: MD) {
 		this.eventKey = data.eventKey;
 		this.match = data.match;
@@ -56,16 +114,38 @@ export class MatchData implements Writable<MD> {
 		this.inform();
 	}
 
+	/**
+	 * Applies updater function to metadata.
+	 *
+	 * @param {(data: MD) => MD} fn - Updater callback.
+	 * @returns {void}
+	 */
 	update(fn: (data: MD) => MD) {
 		this.set(fn(this.data));
 	}
 
+	/**
+	 * Cached event matches.
+	 *
+	 * @private
+	 * @type {TBAMatch[]}
+	 */
 	private _matches: TBAMatch[] = [];
 
+	/**
+	 * Fetches event data bundle.
+	 *
+	 * @returns {ReturnType<typeof AppData.getEvent>} Event request result.
+	 */
 	getEvent() {
 		return AppData.getEvent(this.eventKey);
 	}
 
+	/**
+	 * Fetches scout group assignment data.
+	 *
+	 * @returns {ReturnType<typeof AppData.getScoutGroups>} Scout-group request result.
+	 */
 	getScoutGroups() {
 		return AppData.getScoutGroups(this.eventKey);
 	}
@@ -74,7 +154,7 @@ export class MatchData implements Writable<MD> {
 	 * This will return the matches for the event, it will start with an empty array and then populate it with the matches from the event if it is not already populated.
 	 *
 	 * @readonly
-	 * @type {{}}
+	 * @type {TBAMatch[]}
 	 */
 	get matchesGetter() {
 		if (!this._matches.length) {
@@ -86,6 +166,12 @@ export class MatchData implements Writable<MD> {
 		return this._matches;
 	}
 
+	/**
+	 * Resolves team assignment for a specific scout group at current match index.
+	 *
+	 * @param {number} group - Scout group index.
+	 * @returns {ReturnType<typeof attemptAsync<number>>} Assigned team number.
+	 */
 	newScoutGroup(group: number) {
 		return attemptAsync<number>(async () => {
 			const [eventRes, scoutGroupsRes] = await Promise.all([
@@ -111,6 +197,11 @@ export class MatchData implements Writable<MD> {
 		});
 	}
 
+	/**
+	 * Resolves current scout group index for this team/match.
+	 *
+	 * @returns {ReturnType<typeof attemptAsync<number | null>>} Group index or `null`.
+	 */
 	getScoutGroup() {
 		return attemptAsync(async () => {
 			if (this.compLevel === 'pr') return null;
@@ -139,6 +230,11 @@ export class MatchData implements Writable<MD> {
 		});
 	}
 
+	/**
+	 * Computes metadata for the next assigned match.
+	 *
+	 * @returns {ReturnType<typeof attemptAsync<MD>>} Next match metadata.
+	 */
 	next() {
 		return attemptAsync(async () => {
 			if (this.compLevel === 'pr')
@@ -182,6 +278,11 @@ export class MatchData implements Writable<MD> {
 		});
 	}
 
+	/**
+	 * Computes metadata for the previous assigned match.
+	 *
+	 * @returns {ReturnType<typeof attemptAsync<MD>>} Previous match metadata.
+	 */
 	prev() {
 		return attemptAsync(async () => {
 			if (this.compLevel === 'pr')
@@ -225,6 +326,11 @@ export class MatchData implements Writable<MD> {
 		});
 	}
 
+	/**
+	 * Initializes cached event match data.
+	 *
+	 * @returns {() => void} Cleanup callback.
+	 */
 	init() {
 		// initialize the match data
 		const _ = this.matchesGetter;
@@ -233,6 +339,19 @@ export class MatchData implements Writable<MD> {
 	}
 }
 
+/**
+ * Resolves alliance color for a team in a specific match.
+ *
+ * @param {{
+ * 	team: number;
+ * 	eventKey: string;
+ * 	compLevel: CompLevel;
+ * 	match: number;
+ * }} data - Lookup parameters.
+ * @returns {ReturnType<typeof attemptAsync<'red' | 'blue' | null>>} Alliance lookup result.
+ * @example
+ * const alliance = await getAlliance({ team: 2337, eventKey: '2026miket', compLevel: 'qm', match: 3 });
+ */
 export const getAlliance = (data: {
 	team: number;
 	eventKey: string;
