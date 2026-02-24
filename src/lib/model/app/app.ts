@@ -68,7 +68,6 @@ export class App {
 	// public readonly scoreCorrection: ScoreCorrection;
 	public readonly contribution: ScoreContribution;
 
-	
 	/**
 	 * Flag this match submission for future review
 	 *
@@ -160,7 +159,7 @@ export class App {
 				alliance,
 				group,
 				sliders,
-				flagForReview: this.reviewFlag.serialize(),
+				flagForReview: this.reviewFlag.serialize()
 				// scoreCorrection: this.scoreCorrection.serialize(),
 			};
 		});
@@ -515,6 +514,5 @@ To disable: ctrl + d`);
 		}
 	}
 }
-
 
 type Processor = (app: App) => void;

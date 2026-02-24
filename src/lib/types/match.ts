@@ -23,7 +23,10 @@ export const MatchSchema = z.object({
 			color: z.string()
 		})
 	),
-	flagForReview: z.boolean(),
+	flagForReview: z.object({
+		flagged: z.boolean(),
+		reason: z.string()
+	})
 	// scoreCorrection: z.object({
 	// 	auto: z.record(z.number()),
 	// 	teleop: z.record(z.number())
@@ -56,8 +59,8 @@ export const CompressedMatchSchema = z.object({
 	),
 	flagForReview: z.object({
 		flagged: z.boolean(),
-		reason: z.string(),
-	}),
+		reason: z.string()
+	})
 	// scoreCorrection: z.object({
 	// 	auto: z.record(z.number()),
 	// 	teleop: z.record(z.number())
