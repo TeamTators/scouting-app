@@ -490,5 +490,4 @@ To disable: ctrl + d`);
 	}
 }
 
-
 type Processor = (app: App) => void;
