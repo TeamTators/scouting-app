@@ -157,7 +157,10 @@ export default z.object({
 				api_key: z.string(),
 				data_pull: z.boolean(),
 				images: z.boolean(),
-				primary: z.boolean()
+		})).refine(
+			servers => servers.filter(s => s.primary).length === 1,
+			{ message: "Exactly one server must be marked as primary in app_config.servers" }
+		),
 			})
 		),
 		remote: z.boolean()
