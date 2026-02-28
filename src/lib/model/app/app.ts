@@ -48,6 +48,7 @@ import { Circle } from 'canvas/circle';
 import { Polygon } from 'canvas/polygon';
 import { Color } from 'colors/color';
 import { Img } from 'canvas/image';
+import { Settings } from './settings';
 
 /**
  * Number of discrete ticks processed per second.
@@ -268,6 +269,7 @@ export class App {
 	 * @type {Comments}
 	 */
 	public readonly comments: Comments;
+	public readonly settings: Settings;
 	// public readonly scoreCorrection: ScoreCorrection;
 	/**
 	 * Score contribution estimator for the current trace.
@@ -358,6 +360,7 @@ export class App {
 		this.checks = new Checks(this);
 		this.comments = new Comments(this);
 		this.contribution = new ScoreContribution(this);
+		this.settings = new Settings(this);
 		// this.scoreCorrection = new ScoreCorrection(this);
 	}
 

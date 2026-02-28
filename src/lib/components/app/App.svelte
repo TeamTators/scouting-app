@@ -26,6 +26,9 @@
 	});
 </script>
 
-<div bind:this={target} style="height: 100vh; display: {page === 'app' ? 'block' : 'none'};">
+<div
+	bind:this={target}
+	style="height: 100vh; display: {page === 'app' ? 'block' : 'none'}; z-index: 0;"
+>
 	<h3>Loading...</h3>
 </div>

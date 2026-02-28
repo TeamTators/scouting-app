@@ -18,6 +18,7 @@ import { contextmenu } from '$lib/utils/contextmenu';
 import { confirm, rawModal } from '$lib/utils/prompts';
 import ActionEditor from '$lib/components/app/ActionEditor.svelte';
 import { catmullRom } from 'math/spline';
+import { RangeSlider } from '$lib/utils/form';
 
 /**
  * Sliding point buffer used to render the live path tail.
@@ -694,6 +695,10 @@ export class SummaryView extends WritableBase<{ from: number; to: number }> {
 	 * @type {TraceArray}
 	 */
 	public trace: TraceArray = [];
+	private sliderCleanup = () => {};
+	private sliderUnsub = () => {};
+	private rangeUnsub = () => {};
+	private sliderEl?: HTMLDivElement;
 
 	/**
 	 * Creates a summary editor view.
@@ -728,19 +733,50 @@ export class SummaryView extends WritableBase<{ from: number; to: number }> {
 	 * @returns {{ onreset: (cb: () => void) => void; view: (from: number, to: number) => void }} Controls for reset/view updates.
 	 */
 	render(from: number, to: number) {
+		const cleanupRange = this.rangeUnsub;
+		const cleanupSliderSub = this.sliderUnsub;
+		const cleanupSlider = this.sliderCleanup;
+		this.rangeUnsub = () => {};
+		this.sliderUnsub = () => {};
+		this.sliderCleanup = () => {};
+		cleanupRange();
+		cleanupSliderSub();
+		cleanupSlider();
+		this.sliderEl?.remove();
+		this.sliderEl = undefined;
+
 		this.init();
-		const trace = this.trace.slice(from, to);
+		if (this.trace.length === 0) {
+			this.target.innerHTML = '';
+			let onreset = () => {};
+			return {
+				onreset: (cb: () => void) => {
+					onreset = cb;
+				},
+				view: () => {
+					onreset();
+				}
+			};
+		}
+
+		const maxIndex = this.trace.length - 1;
+		const resolvedFrom = Math.max(0, from);
+		const resolvedTo = to < 0 ? maxIndex : to;
+		const clampedFrom = Math.min(resolvedFrom, maxIndex);
+		const clampedTo = Math.max(clampedFrom, Math.min(resolvedTo, maxIndex));
+		const trace = this.trace;
+		this.set({ from: clampedFrom, to: clampedTo });
 		const rerender = () => {
 			this.commit();
 			this.destroy();
-			onreset();
-			const obj = this.render(from, to);
+			const obj = this.render(this.data.from, this.data.to);
 			Object.assign(returnObj, obj);
+			onreset();
 		};
 
 		const { flipX, flipY } = globalData;
-		let currentFrom = 0;
-		let currentTo = trace.length - 1;
+		let currentFrom = clampedFrom;
+		let currentTo = clampedTo;
 
 		this.target.innerHTML = '';
 		this.target.style.position = 'relative';
@@ -805,7 +841,7 @@ export class SummaryView extends WritableBase<{ from: number; to: number }> {
 
 			path.setAttribute('d', d.join(' '));
 		};
-		showPath(0, trace.length - 1);
+		showPath(currentFrom, currentTo);
 
 		this.svg.appendChild(path);
 
@@ -1196,22 +1232,60 @@ export class SummaryView extends WritableBase<{ from: number; to: number }> {
 			}
 			this.target.innerHTML = '';
 			this.svg.innerHTML = '';
+			const cleanupRange = this.rangeUnsub;
+			const cleanupSliderSub = this.sliderUnsub;
+			const cleanupSlider = this.sliderCleanup;
+			this.rangeUnsub = () => {};
+			this.sliderUnsub = () => {};
+			this.sliderCleanup = () => {};
+			cleanupRange();
+			cleanupSliderSub();
+			cleanupSlider();
+			this.sliderEl?.remove();
+			this.sliderEl = undefined;
 		};
 
 		let onreset = () => {};
+
+		const applyRange = (from: number, to: number) => {
+			const safeFrom = Math.max(0, Math.min(from, trace.length - 1));
+			const safeTo = Math.max(safeFrom, Math.min(to, trace.length - 1));
+			showPath(safeFrom, safeTo);
+			for (const item of items) {
+				item.hide();
+			}
+			for (let i = safeFrom; i <= safeTo; i++) {
+				items[i]?.show();
+			}
+		};
+
+		this.sliderEl = document.createElement('div');
+		this.sliderEl.className = 'slider-container my-2';
+		if (this.target.parentElement) {
+			this.target.parentElement.append(this.sliderEl);
+		}
+
+		const slider = new RangeSlider({
+			min: 0,
+			max: maxIndex,
+			target: this.sliderEl,
+			step: 1,
+			init: [this.data.from, this.data.to]
+		});
+		this.sliderUnsub = slider.subscribe(({ min, max }) => {
+			this.set({ from: min, to: max });
+		});
+		this.sliderCleanup = slider.render();
+		this.rangeUnsub = this.subscribe(({ from, to }) => {
+			applyRange(from, to);
+		});
 
 		const returnObj = {
 			onreset: (cb: () => void) => {
 				onreset = cb;
 			},
 			view: (from: number, to: number) => {
-				showPath(from, to);
-				for (const item of items) {
-					item.hide();
-				}
-				for (let i = from; i <= to; i++) {
-					items[i]?.show();
-				}
+				this.set({ from, to });
 			}
 		};
 
