@@ -87,7 +87,7 @@ export class Tick extends WritableBase<ActionState | null> {
 	 */
 	setActionState<T>(state: ActionState<T>, alliance: 'red' | 'blue' | null = null) {
 		if (this.data instanceof ActionState) {
-			this.next()?.setActionState(state);
+			this.next()?.setActionState(state, alliance);
 			return;
 		}
 
