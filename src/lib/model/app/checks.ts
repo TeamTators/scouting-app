@@ -1,8 +1,15 @@
+/**
+ * @fileoverview Check and slider models used for structured post-match scouting input.
+ */
+
 import { writable } from 'svelte/store';
 import type { App } from './app';
 import { WritableArray, WritableBase } from '$lib/services/writables';
 import type { Comment } from './comments';
 
+/**
+ * Check record union representing plain checks and slider-backed checks.
+ */
 type C =
 	| {
 			value: boolean;
@@ -29,13 +36,55 @@ type C =
 			comment?: Comment;
 	  };
 
+/**
+ * Single mutable check entry.
+ *
+ * @extends {WritableBase<C>}
+ */
 export class Check extends WritableBase<C> {}
 
+/**
+ * Collection of structured checks grouped by severity style.
+ *
+ * @extends {WritableArray<Check>}
+ * @example
+ * checks.addCheck('warning', 'tippy');
+ */
 export class Checks extends WritableArray<Check> {
+	/**
+	 * Creates check collection.
+	 *
+	 * @param {App} app - Owning app instance.
+	 */
 	constructor(public readonly app: App) {
 		super([]);
 	}
 
+	/**
+	 * Adds a check definition.
+	 *
+	 * @param {'success' | 'primary' | 'warning' | 'danger'} type - Visual severity bucket.
+	 * @param {(| {
+	 * 	name: string;
+	 * 	slider: [string, string, string, string, string];
+	 * 	color: [string, string, string, string, string];
+	 * 	alert: false | string;
+	 * 	doComment: boolean;
+	 * } | {
+	 * 	name: string;
+	 * 	alert: false | string;
+	 * 	doComment: boolean;
+	 * } | string} check - Check definition or simple check name.
+	 * @returns {this} Current checks collection for chaining.
+	 * @example
+	 * checks.addCheck('success', {
+	 *   name: 'climbed',
+	 *   slider: ['Very Slow', 'Slow', 'Medium', 'Fast', 'Very Fast'],
+	 *   color: ['red', 'orange', 'yellow', 'green', 'blue'],
+	 *   alert: false,
+	 *   doComment: false
+	 * });
+	 */
 	addCheck(
 		type: 'success' | 'primary' | 'warning' | 'danger',
 		check:
@@ -130,10 +179,26 @@ export class Checks extends WritableArray<Check> {
 		return this;
 	}
 
+	/**
+	 * Returns a check by display name.
+	 *
+	 * @param {string} check - Check name.
+	 * @returns {Check | undefined} Matching check.
+	 */
 	get(check: string) {
 		return this.data.find((c) => c.data.name === check);
 	}
 
+	/**
+	 * Writables grouped by style/severity.
+	 *
+	 * @type {{
+	 * 	success: import('svelte/store').Writable<Check[]>;
+	 * 	primary: import('svelte/store').Writable<Check[]>;
+	 * 	warning: import('svelte/store').Writable<Check[]>;
+	 * 	danger: import('svelte/store').Writable<Check[]>;
+	 * }}
+	 */
 	public readonly writables = {
 		success: writable<Check[]>([]),
 		primary: writable<Check[]>([]),
@@ -141,6 +206,16 @@ export class Checks extends WritableArray<Check> {
 		danger: writable<Check[]>([])
 	};
 
+	/**
+	 * Serializes selected checks and slider values.
+	 *
+	 * @returns {{
+	 * 	checks: string[];
+	 * 	sliders: Record<string, { value: number; text: string; color: string }>;
+	 * }} Serialized check payload.
+	 * @example
+	 * const { checks, sliders } = checksModel.serialize();
+	 */
 	serialize() {
 		const checks: string[] = [];
 		const sliders: Record<
@@ -165,6 +240,13 @@ export class Checks extends WritableArray<Check> {
 		return { checks, sliders };
 	}
 
+	/**
+	 * Sets check boolean value by name.
+	 *
+	 * @param {string} name - Check name.
+	 * @param {boolean} value - Desired checked value.
+	 * @returns {void}
+	 */
 	setCheck(name: string, value: boolean) {
 		this.update((checks) => {
 			const check = checks.find((c) => c.data.name === name);
@@ -175,6 +257,11 @@ export class Checks extends WritableArray<Check> {
 		});
 	}
 
+	/**
+	 * Resets all checks and sliders to default values.
+	 *
+	 * @returns {void}
+	 */
 	reset() {
 		for (const check of this.data) {
 			check.data.value = false;

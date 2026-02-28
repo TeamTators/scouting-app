@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 2025 game-specific app builder with zones, objects, and checks.
+ */
+
 import type { CompLevel } from 'tatorscout/tba';
 import { App } from '../app';
 import { Color } from 'colors/color';
@@ -6,6 +10,20 @@ import { AppObject } from '../app-object';
 import { isInside } from 'math/polygon';
 import YearInfo2025 from 'tatorscout/years/2025.js';
 
+/**
+ * Builds a fully configured 2025 scouting app instance.
+ *
+ * @param {{
+ * 	eventKey: string;
+ * 	match: number;
+ * 	team: number;
+ * 	compLevel: CompLevel;
+ * 	alliance: 'red' | 'blue' | null;
+ * }} config - Match/team configuration.
+ * @returns {App} Configured app instance.
+ * @example
+ * const app = build2025({ eventKey: '2025miket', match: 1, team: 2337, compLevel: 'qm', alliance: 'red' });
+ */
 export default (config: {
 	eventKey: string;
 	match: number;

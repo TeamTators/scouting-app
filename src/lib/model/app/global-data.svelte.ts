@@ -1,5 +1,26 @@
+/**
+ * @fileoverview Shared global scouting UI state persisted in browser storage.
+ */
+
 import { browser } from '$app/environment';
 
+/**
+ * Global, reactive scout preferences and session metadata.
+ *
+ * Values are loaded from `localStorage` in browser environments and defaulted
+ * server-side.
+ *
+ * @type {{
+ * 	scout: string;
+ * 	prescouting: boolean;
+ * 	practice: boolean;
+ * 	flipX: boolean;
+ * 	flipY: boolean;
+ * }}
+ * @example
+ * globalData.scout = 'alice';
+ * globalData.flipX = true;
+ */
 export const globalData = $state(
 	browser
 		? {

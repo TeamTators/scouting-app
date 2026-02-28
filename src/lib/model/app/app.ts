@@ -1,3 +1,28 @@
+/**
+ * @fileoverview Core scouting match runtime for the app model layer.
+ *
+ * This module defines timing constants and the {@link App} class, which coordinates
+ * match state, rendering, checks, comments, user input actions, serialization, and
+ * submission. It also exposes helpers to seek match time, run/pause/stop the loop,
+ * register custom processors, and capture normalized click points on the field.
+ *
+ * @example
+ * const app = new App({
+ *   year: 2026,
+ *   eventKey: '2026miket',
+ *   match: 12,
+ *   compLevel: 'qm',
+ *   team: 2337,
+ *   alliance: 'red',
+ *   yearInfo
+ * });
+ *
+ * app.init(document.getElementById('field')!);
+ * const stop = app.start();
+ * // ...later
+ * stop();
+ */
+
 import type { CompLevel } from 'tatorscout/tba';
 import { MatchData } from './match-data';
 import { Tick } from './tick';
@@ -25,18 +50,86 @@ import { Color } from 'colors/color';
 import { Img } from 'canvas/image';
 import { Settings } from './settings';
 
+/**
+ * Number of discrete ticks processed per second.
+ *
+ * @type {number}
+ * @example
+ * const ticksPerSecond = TICKS_PER_SECOND; // 4
+ */
 export const TICKS_PER_SECOND = 4;
+/**
+ * Match section ranges in whole seconds, inclusive.
+ *
+ * @type {{ auto: [number, number]; teleop: [number, number]; endgame: [number, number]; end: [number, number] }}
+ * @example
+ * const [autoStart, autoEnd] = SECTIONS.auto; // 0, 15
+ */
 export const SECTIONS = {
 	auto: [0, 15],
 	teleop: [16, 135],
 	endgame: [136, 150],
 	end: [151, 160]
 };
+/**
+ * Named match sections used throughout app timing and UI.
+ *
+ * @typedef {'auto' | 'teleop' | 'endgame' | 'end'} Section
+ * @example
+ * const section = /** @type {Section} *\/ ('teleop');
+ */
 export type Section = 'auto' | 'teleop' | 'endgame' | 'end';
+/**
+ * Duration of a single tick in milliseconds.
+ *
+ * @type {number}
+ * @example
+ * const msPerTick = TICK_DURATION; // 250
+ */
 export const TICK_DURATION = 1000 / TICKS_PER_SECOND;
+/**
+ * Total number of ticks in a 160-second match timeline.
+ *
+ * @type {number}
+ * @example
+ * const total = TOTAL_TICKS; // 640
+ */
 export const TOTAL_TICKS = TICKS_PER_SECOND * 160;
 
+/**
+ * Orchestrates scouting runtime behavior for a single team/match context.
+ *
+ * @example
+ * const app = new App({
+ *   year: 2026,
+ *   eventKey: '2026miket',
+ *   match: 12,
+ *   compLevel: 'qm',
+ *   team: 2337,
+ *   alliance: 'blue',
+ *   yearInfo
+ * });
+ * app.init(containerElement);
+ */
 export class App {
+	/**
+	 * Internal event emitter used for runtime app events.
+	 *
+	 * @private
+	 * @type {EventEmitter<{
+	 * 	tick: Tick;
+	 * 	section: Section;
+	 * 	action: { action: string; point: Point2D; alliance: 'red' | 'blue' | null };
+	 * 	second: number;
+	 * 	stopped: undefined;
+	 * 	end: undefined;
+	 * 	stop: undefined;
+	 * 	pause: undefined;
+	 * 	resume: undefined;
+	 * 	error: Error;
+	 * 	reset: undefined;
+	 * }>}
+	 */
 	private readonly emitter = new EventEmitter<{
 		tick: Tick;
 		section: Section;
@@ -55,19 +148,152 @@ export class App {
 		reset: undefined;
 	}>();
 
+	/**
+	 * Subscribes an event handler.
+	 *
+	 * @type {EventEmitter<{
+	 * 	tick: Tick;
+	 * 	section: Section;
+	 * 	action: { action: string; point: Point2D; alliance: 'red' | 'blue' | null };
+	 * 	second: number;
+	 * 	stopped: undefined;
+	 * 	end: undefined;
+	 * 	stop: undefined;
+	 * 	pause: undefined;
+	 * 	resume: undefined;
+	 * 	error: Error;
+	 * 	reset: undefined;
+	 * }>['on']}
+	 * @example
+	 * app.on('tick', (tick) => console.log(tick.time));
+	 */
 	public readonly on = this.emitter.on.bind(this.emitter);
+	/**
+	 * Unsubscribes an event handler.
+	 *
+	 * @type {EventEmitter<{
+	 * 	tick: Tick;
+	 * 	section: Section;
+	 * 	action: { action: string; point: Point2D; alliance: 'red' | 'blue' | null };
+	 * 	second: number;
+	 * 	stopped: undefined;
+	 * 	end: undefined;
+	 * 	stop: undefined;
+	 * 	pause: undefined;
+	 * 	resume: undefined;
+	 * 	error: Error;
+	 * 	reset: undefined;
+	 * }>['off']}
+	 * @example
+	 * app.off('tick', handler);
+	 */
 	public readonly off = this.emitter.off.bind(this.emitter);
+	/**
+	 * Subscribes an event handler for a single invocation.
+	 *
+	 * @type {EventEmitter<{
+	 * 	tick: Tick;
+	 * 	section: Section;
+	 * 	action: { action: string; point: Point2D; alliance: 'red' | 'blue' | null };
+	 * 	second: number;
+	 * 	stopped: undefined;
+	 * 	end: undefined;
+	 * 	stop: undefined;
+	 * 	pause: undefined;
+	 * 	resume: undefined;
+	 * 	error: Error;
+	 * 	reset: undefined;
+	 * }>['once']}
+	 * @example
+	 * app.once('end', () => console.log('Match playback ended'));
+	 */
 	public readonly once = this.emitter.once.bind(this.emitter);
+	/**
+	 * Emits an app event.
+	 *
+	 * @type {EventEmitter<{
+	 * 	tick: Tick;
+	 * 	section: Section;
+	 * 	action: { action: string; point: Point2D; alliance: 'red' | 'blue' | null };
+	 * 	second: number;
+	 * 	stopped: undefined;
+	 * 	end: undefined;
+	 * 	stop: undefined;
+	 * 	pause: undefined;
+	 * 	resume: undefined;
+	 * 	error: Error;
+	 * 	reset: undefined;
+	 * }>['emit']}
+	 * @example
+	 * app.emit('pause', undefined);
+	 */
 	public readonly emit = this.emitter.emit.bind(this.emitter);
 
+	/**
+	 * Match metadata and submission context for the active scout session.
+	 *
+	 * @public
+	 * @readonly
+	 * @type {MatchData}
+	 */
 	public readonly matchData: MatchData;
+	/**
+	 * Mutable runtime state for tick index, location, and trace data.
+	 *
+	 * @public
+	 * @readonly
+	 * @type {AppState}
+	 */
 	public readonly state: AppState;
+	/**
+	 * View/controller abstraction for rendering and timing UI updates.
+	 *
+	 * @public
+	 * @readonly
+	 * @type {AppView}
+	 */
 	public readonly view: AppView;
+	/**
+	 * Match checks manager (booleans/sliders and related serialization).
+	 *
+	 * @public
+	 * @readonly
+	 * @type {Checks}
+	 */
 	public readonly checks: Checks;
+	/**
+	 * Freeform comment manager used in scout submissions.
+	 *
+	 * @public
+	 * @readonly
+	 * @type {Comments}
+	 */
 	public readonly comments: Comments;
 	public readonly settings: Settings;
 	// public readonly scoreCorrection: ScoreCorrection;
+	/**
+	 * Score contribution estimator for the current trace.
+	 *
+	 * @public
+	 * @readonly
+	 * @type {ScoreContribution}
+	 */
 	public readonly contribution: ScoreContribution;
+	/**
+	 * Registered interactive game objects and their render constraints.
+	 *
+	 * @public
+	 * @readonly
+	 * @type {{
+	 * 		point: Point2D;
+	 * 		object: AppObject;
+	 * 		element: HTMLElement;
+	 * 		alliance: 'red' | 'blue' | null;
+	 * 		viewCondition?: (tick: Tick) => boolean;
+	 * 		staticX: boolean;
+	 * 		staticY: boolean;
+	 * 	}[]}
+	 */
 	public readonly gameObjects: {
 		point: Point2D;
 		object: AppObject;
@@ -77,8 +303,38 @@ export class App {
 		staticX: boolean;
 		staticY: boolean;
 	}[] = [];
+	/**
+	 * Reactive running-state store for playback status.
+	 *
+	 * @type {import('svelte/store').Writable<boolean>}
+	 * @example
+	 * app.running.set(true);
+	 */
 	public readonly running = writable(false);
 
+	/**
+	 * Creates an app instance for a specific event/match/team context.
+	 *
+	 * @param {Readonly<{
+	 * 	year: number;
+	 * 	eventKey: string;
+	 * 	match: number;
+	 * 	compLevel: CompLevel;
+	 * 	team: number;
+	 * 	alliance: 'red' | 'blue' | null;
+	 * 	yearInfo: YearInfo;
+	 * }>} config - Immutable app configuration.
+	 * @example
+	 * const app = new App({
+	 *   year: 2026,
+	 *   eventKey: '2026miket',
+	 *   match: 7,
+	 *   compLevel: 'qm',
+	 *   team: 2337,
+	 *   alliance: 'red',
+	 *   yearInfo
+	 * });
+	 */
 	constructor(
 		public readonly config: Readonly<{
 			year: number;
@@ -108,6 +364,14 @@ export class App {
 		// this.scoreCorrection = new ScoreCorrection(this);
 	}
 
+	/**
+	 * Serializes the current scout session into the compressed match schema payload.
+	 *
+	 * @returns {ReturnType<typeof attemptAsync<CompressedMatchSchemaType>>} Result wrapper containing serialized payload.
+	 * @example
+	 * const result = await app.serialize();
+	 * if (result.isOk()) console.log(result.value.match);
+	 */
 	serialize() {
 		return attemptAsync<CompressedMatchSchemaType>(async () => {
 			const trace = Trace.parse(this.state.traceArray()).unwrap();
@@ -141,6 +405,14 @@ export class App {
 		});
 	}
 
+	/**
+	 * Initializes app subsystems and binds the view to a target element.
+	 *
+	 * @param {HTMLElement} target - Root element where the field/timer UI is mounted.
+	 * @returns {void}
+	 * @example
+	 * app.init(document.getElementById('field')!);
+	 */
 	init(target: HTMLElement) {
 		this.state.init();
 		this.comments.init();
@@ -148,7 +420,13 @@ export class App {
 		this.matchData.init();
 	}
 
-	// resets all stored data in the app
+	/**
+	 * Resets app state, checks, comments, and view state for a fresh session.
+	 *
+	 * @returns {void}
+	 * @example
+	 * app.reset();
+	 */
 	reset() {
 		this.state.init();
 		this.comments.reset();
@@ -156,7 +434,17 @@ export class App {
 		this.view.reset();
 	}
 
-	// Main event loop
+	/**
+	 * Starts the main tick loop and emits section/tick/second lifecycle events.
+	 *
+	 * @param {(tick: Tick) => void} [cb] - Optional callback executed each tick.
+	 * @returns {() => void} Cleanup function that fully stops this loop instance.
+	 * @example
+	 * const stop = app.start((tick) => {
+	 *   console.log('Tick index:', app.state.currentIndex, tick.point);
+	 * });
+	 * stop();
+	 */
 	start(cb?: (tick: Tick) => void) {
 		let prevSection: Section | null = null;
 		this.state.currentIndex = 0;
@@ -232,10 +520,24 @@ export class App {
 		return fullStop;
 	}
 
+	/**
+	 * Starts continuous view animation/render updates.
+	 *
+	 * @returns {ReturnType<AppView['start']>} Stop function (or controller) returned by the view layer.
+	 * @example
+	 * const stopAnimation = app.animate();
+	 */
 	animate() {
 		return this.view.start();
 	}
 
+	/**
+	 * Stops playback and resets displayed timer values.
+	 *
+	 * @returns {void}
+	 * @example
+	 * app.stop();
+	 */
 	stop() {
 		this.state.currentIndex = -1;
 		this.view.timer.set({
@@ -246,15 +548,37 @@ export class App {
 		this.emit('stop', undefined);
 	}
 
+	/**
+	 * Pauses playback by emitting the internal pause event.
+	 *
+	 * @returns {void}
+	 * @example
+	 * app.pause();
+	 */
 	pause() {
 		this.emit('pause', undefined);
 	}
 
+	/**
+	 * Resumes playback if paused, or restarts from zero if the app is fully stopped.
+	 *
+	 * @returns {ReturnType<App['emit']> | ReturnType<App['start']>} Event emission result or newly created stop function.
+	 * @example
+	 * app.resume();
+	 */
 	resume() {
 		if (this.state.currentIndex !== -1) return this.emit('resume', undefined);
 		return this.start();
 	}
 
+	/**
+	 * Seeks playback to the beginning of the given match section.
+	 *
+	 * @param {Section} section - Section to seek to.
+	 * @returns {void}
+	 * @example
+	 * app.goto('endgame');
+	 */
 	goto(section: Section) {
 		const [start] = SECTIONS[section];
 		this.state.currentIndex = start * TICKS_PER_SECOND;
@@ -268,6 +592,14 @@ export class App {
 		});
 	}
 
+	/**
+	 * Seeks playback to a specific tick index, clamped to valid range.
+	 *
+	 * @param {number} index - Desired tick index in the inclusive range [0, TOTAL_TICKS].
+	 * @returns {void}
+	 * @example
+	 * app.gotoTickIndex(120);
+	 */
 	gotoTickIndex(index: number) {
 		if (index < 0) index = 0;
 		if (index > TOTAL_TICKS) index = TOTAL_TICKS;
@@ -282,6 +614,31 @@ export class App {
 		});
 	}
 
+	/**
+	 * Registers an interactive app object and wires button interactions.
+	 *
+	 * @template T
+	 * @param {{
+	 * 	point: Point2D;
+	 * 	object: AppObject<T>;
+	 * 	button: HTMLElement;
+	 * 	convert?: (state: T) => string;
+	 * 	alliance: 'red' | 'blue' | null;
+	 * 	viewCondition?: (tick: Tick) => boolean;
+	 * 	staticX: boolean;
+	 * 	staticY: boolean;
+	 * }} config - Object registration configuration.
+	 * @returns {void}
+	 * @example
+	 * app.addAppObject({
+	 *   point: [0.25, 0.4],
+	 *   object: myAppObject,
+	 *   button: myButton,
+	 *   alliance: 'red',
+	 *   staticX: false,
+	 *   staticY: false
+	 * });
+	 */
 	addAppObject<T = unknown>(config: {
 		point: Point2D;
 		object: AppObject<T>;
@@ -352,6 +709,21 @@ export class App {
 		config.button.addEventListener('mouseleave', end);
 		config.button.addEventListener('touchleave', end);
 	}
+	/**
+	 * Enables an overlay utility for collecting normalized click points.
+	 *
+	 * Hotkeys while enabled:
+	 * - Ctrl+R: reset points
+	 * - Ctrl+V: print points
+	 * - Ctrl+D: disable overlay
+	 * - Ctrl+E: enable overlay
+	 *
+	 * @param {number} sigFigs - Number of decimal places used when printing points.
+	 * @returns {void}
+	 * @throws {Error} Thrown if {@link sigFigs} is not an integer.
+	 * @example
+	 * app.clickPoints(3);
+	 */
 	clickPoints(sigFigs: number) {
 		if (!Number.isInteger(sigFigs))
 			throw new Error('Cannot have non-integer number of sig figs. Recieved: ' + sigFigs);
@@ -468,6 +840,14 @@ To disable: ctrl + d`);
 		console.log('Click points disabled. Press ctrl + e to enable.');
 	}
 
+	/**
+	 * Submits the current serialized match payload to the backend.
+	 *
+	 * @returns {ReturnType<typeof attemptAsync<void>>} Result wrapper for submission success/failure.
+	 * @example
+	 * const result = await app.submit();
+	 * if (result.isErr()) console.error(result.error);
+	 */
 	submit() {
 		return attemptAsync(async () => {
 			const serialized = (await this.serialize()).unwrap();
@@ -477,12 +857,35 @@ To disable: ctrl + d`);
 		});
 	}
 
+	/**
+	 * Registered post-processing callbacks executed by {@link runProcessors}.
+	 *
+	 * @private
+	 * @type {Set<Processor>}
+	 */
 	private readonly processors = new Set<Processor>();
 
+	/**
+	 * Registers a processor callback to run against this app instance.
+	 *
+	 * @param {Processor} processor - Processor function to register.
+	 * @returns {void}
+	 * @example
+	 * app.registerProcessor((ctx) => {
+	 *   console.log(ctx.state.section);
+	 * });
+	 */
 	registerProcessor(processor: Processor) {
 		this.processors.add(processor);
 	}
 
+	/**
+	 * Executes all registered processors in insertion order.
+	 *
+	 * @returns {void}
+	 * @example
+	 * app.runProcessors();
+	 */
 	runProcessors() {
 		for (const processor of this.processors) {
 			processor(this);
@@ -490,4 +893,16 @@ To disable: ctrl + d`);
 	}
 }
 
+/**
+ * Callback signature for app-level post processors.
+ *
+ * @param {App} app - Active app instance to inspect/mutate.
+ * @returns {void}
+ * @example
+ * const processor = (app) => {
+ *   if (app.state.section === 'auto') {
+ *     // custom logic
+ *   }
+ * };
+ */
 type Processor = (app: App) => void;
