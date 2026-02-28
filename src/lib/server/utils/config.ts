@@ -157,7 +157,7 @@ export default z.object({
 				api_key: z.string(),
 				data_pull: z.boolean(),
 				images: z.boolean(),
-				primary: z.boolean(),
+				primary: z.boolean()
 			})
 		),
 		remote: z.boolean()

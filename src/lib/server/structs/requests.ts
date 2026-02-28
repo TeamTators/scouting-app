@@ -89,23 +89,25 @@ export namespace Requests {
 		async (data: { body: ArrayBuffer; matchData: Scouting.MatchData }) => {
 			config.app_config.servers.sort((a, b) => Number(a.primary) - Number(b.primary));
 
-			const res = await Promise.all(config.app_config.servers.map(async (server) => {
-				const res = await fetch(server.domain + '/event-server/submit-match/compressed', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/octet-stream',
-						'X-API-KEY': server.api_key,
-					},
-					body: data.body,
-				});
+			const res = await Promise.all(
+				config.app_config.servers.map(async (server) => {
+					const res = await fetch(server.domain + '/event-server/submit-match/compressed', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/octet-stream',
+							'X-API-KEY': server.api_key
+						},
+						body: data.body
+					});
 
-				if (!res.ok) {
-					terminal.error('Error submitting match data', res.status, res.statusText);
-				}
+					if (!res.ok) {
+						terminal.error('Error submitting match data', res.status, res.statusText);
+					}
 
-				return res.ok;
-			}));
-			const allOk = res.every(d => d);
+					return res.ok;
+				})
+			);
+			const allOk = res.every((d) => d);
 			if (allOk) {
 				await data.matchData.delete();
 			}
