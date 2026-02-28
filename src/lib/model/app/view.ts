@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Rendering and interaction layer for match scouting field playback.
+ */
+
 import { App } from './app';
 import { Timer } from './timer';
 import { Color } from 'colors/color';
@@ -14,15 +18,36 @@ import { contextmenu } from '$lib/utils/contextmenu';
 import { confirm, rawModal } from '$lib/utils/prompts';
 import ActionEditor from '$lib/components/app/ActionEditor.svelte';
 import { catmullRom } from 'math/spline';
+import { RangeSlider } from '$lib/utils/form';
 
+/**
+ * Sliding point buffer used to render the live path tail.
+ */
 class Points {
+	/**
+	 * Active point list.
+	 *
+	 * @type {Point2D[]}
+	 */
 	points: Point2D[] = [];
 
+	/**
+	 * Creates a bounded point buffer.
+	 *
+	 * @param {number} max - Maximum number of points to keep in memory.
+	 * @param {number} removeAfter - Milliseconds before a non-trimmed point auto-expires.
+	 */
 	constructor(
 		public readonly max: number,
 		public removeAfter: number // ms
 	) {}
 
+	/**
+	 * Adds a point and schedules expiry.
+	 *
+	 * @param {Point2D} point - Point to append.
+	 * @returns {void}
+	 */
 	add(point: Point2D) {
 		this.points.push(point);
 		let removed = false;
@@ -37,31 +62,130 @@ class Points {
 		}, this.removeAfter);
 	}
 
+	/**
+	 * Clears all buffered points.
+	 *
+	 * @returns {void}
+	 */
 	clear() {
 		this.points = [];
 	}
 }
 
+/**
+ * Main app view/controller for field interactions, drawing, and overlays.
+ *
+ * @example
+ * app.view.init(container);
+ * const stop = app.view.start();
+ */
 export class AppView {
+	/**
+	 * Internal emitter for lifecycle hooks.
+	 *
+	 * @private
+	 * @type {SimpleEventEmitter<'init'>}
+	 */
 	private readonly emitter = new SimpleEventEmitter<'init'>();
 
+	/**
+	 * Subscribe to view events.
+	 *
+	 * @type {SimpleEventEmitter<'init'>['on']}
+	 */
 	public readonly on = this.emitter.on.bind(this.emitter);
+	/**
+	 * Unsubscribe from view events.
+	 *
+	 * @type {SimpleEventEmitter<'init'>['off']}
+	 */
 	public readonly off = this.emitter.off.bind(this.emitter);
+	/**
+	 * Subscribe once to view events.
+	 *
+	 * @type {SimpleEventEmitter<'init'>['once']}
+	 */
 	public readonly once = this.emitter.once.bind(this.emitter);
+	/**
+	 * Emit view events.
+	 *
+	 * @type {SimpleEventEmitter<'init'>['emit']}
+	 */
 	public readonly emit = this.emitter.emit.bind(this.emitter);
 
+	/**
+	 * Timer model bound to app playback.
+	 *
+	 * @type {Timer}
+	 */
 	public readonly timer: Timer;
+	/**
+	 * Optional border points for field constraints.
+	 *
+	 * @type {Point2D[]}
+	 */
 	public borderPoints: Point2D[] = [];
 
+	/**
+	 * Whether pointer drawing is currently active.
+	 *
+	 * @type {boolean}
+	 */
 	public drawing = false;
+	/**
+	 * Whether click-based UI interaction is currently active.
+	 *
+	 * @type {boolean}
+	 */
 	public clicking = false;
 
+	/**
+	 * Root host element.
+	 *
+	 * @type {(HTMLElement | undefined)}
+	 */
 	public target: HTMLElement | undefined;
+	/**
+	 * Overlay SVG element.
+	 *
+	 * @type {(SVGElement | undefined)}
+	 */
 	public svg: SVGElement | undefined;
+	/**
+	 * Path element used for trail rendering.
+	 *
+	 * @type {(SVGPathElement | undefined)}
+	 */
 	public path: SVGPathElement | undefined;
+	/**
+	 * Optional border polygon.
+	 *
+	 * @type {(SVGPolygonElement | undefined)}
+	 */
 	public border: SVGPolygonElement | undefined;
+	/**
+	 * Field background image element.
+	 *
+	 * @type {(HTMLImageElement | undefined)}
+	 */
 	public background: HTMLImageElement | undefined;
+	/**
+	 * Internal positioned container.
+	 *
+	 * @type {(HTMLDivElement | undefined)}
+	 */
 	public container: HTMLDivElement | undefined;
+	/**
+	 * Registered visual areas with dynamic visibility conditions.
+	 *
+	 * @type {{
+	 * 		polygon: SVGPolygonElement;
+	 * 		condition: (shape: Point2D[]) => boolean;
+	 * 		color: Color;
+	 * 		zone: string;
+	 * 		points: Point2D[];
+	 * 	}[]}
+	 */
 	public readonly areas: {
 		polygon: SVGPolygonElement;
 		condition: (shape: Point2D[]) => boolean;
@@ -69,12 +193,28 @@ export class AppView {
 		zone: string;
 		points: Point2D[];
 	}[] = [];
+	/**
+	 * Sliding live trail points.
+	 *
+	 * @type {Points}
+	 */
 	points = new Points(200, 1500);
 
+	/**
+	 * Creates the app view.
+	 *
+	 * @param {App} app - Owning app instance.
+	 */
 	constructor(public readonly app: App) {
 		this.timer = new Timer(app);
 	}
 
+	/**
+	 * Initializes DOM, listeners, overlays, and timer bindings.
+	 *
+	 * @param {HTMLElement} target - View host element.
+	 * @returns {void}
+	 */
 	init(target: HTMLElement) {
 		if (this.target) throw new Error('AppView has already been initialized');
 		if (!browser) throw new Error('AppView.init() can only be used on the client side');
@@ -313,11 +453,21 @@ export class AppView {
 		this.emit('init');
 	}
 
+	/**
+	 * Resets transient view state.
+	 *
+	 * @returns {void}
+	 */
 	reset() {
 		this.points.clear();
 		this.timer.reset();
 	}
 
+	/**
+	 * Draws current path, areas, object positions, and transforms.
+	 *
+	 * @returns {void}
+	 */
 	draw() {
 		if (!(this.svg && this.path && this.border && this.target)) return;
 		{
@@ -404,6 +554,11 @@ export class AppView {
 		this.path.setAttribute('d', pathData);
 	}
 
+	/**
+	 * Starts the animation loop for continuous redraw.
+	 *
+	 * @returns {() => void} Stop callback.
+	 */
 	start() {
 		let doStop = false;
 		const view = () => {
@@ -417,10 +572,27 @@ export class AppView {
 		};
 	}
 
+	/**
+	 * Sets visible border points.
+	 *
+	 * @param {Point2D[]} points - Border polygon points.
+	 * @returns {void}
+	 */
 	setBorder(points: Point2D[]) {
 		this.borderPoints = points;
 	}
 
+	/**
+	 * Registers a conditional colored area overlay.
+	 *
+	 * @param {{
+	 * 		zone: string;
+	 * 		points: Point2D[];
+	 * 		color: Color;
+	 * 		condition: (shape: Point2D[]) => boolean;
+	 * 	}} config - Area configuration.
+	 * @returns {void}
+	 */
 	addArea(config: {
 		zone: string;
 		points: Point2D[];
@@ -444,6 +616,14 @@ export class AppView {
 		});
 	}
 
+	/**
+	 * Animates an action icon at a field position.
+	 *
+	 * @param {string} icon - Icon key.
+	 * @param {Point2D} position - Normalized field position.
+	 * @param {'red' | 'blue' | null} alliance - Alliance tint context.
+	 * @returns {void}
+	 */
 	animateIcon(icon: string, position: Point2D, alliance: 'red' | 'blue' | null) {
 		if (!browser) return;
 		if (!this.target) return;
@@ -491,11 +671,41 @@ export class AppView {
 	}
 }
 
+/**
+ * Editable summary view for reviewing and adjusting a trace segment.
+ *
+ * @extends {WritableBase<{ from: number; to: number }>}
+ */
 export class SummaryView extends WritableBase<{ from: number; to: number }> {
+	/**
+	 * Summary SVG overlay.
+	 *
+	 * @type {SVGSVGElement}
+	 */
 	public readonly svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+	/**
+	 * Background field image for summary.
+	 *
+	 * @type {HTMLImageElement}
+	 */
 	public readonly background = document.createElement('img');
+	/**
+	 * Trace copy currently shown/edited in summary mode.
+	 *
+	 * @type {TraceArray}
+	 */
 	public trace: TraceArray = [];
+	private sliderCleanup = () => {};
+	private sliderUnsub = () => {};
+	private rangeUnsub = () => {};
+	private sliderEl?: HTMLDivElement;
 
+	/**
+	 * Creates a summary editor view.
+	 *
+	 * @param {App} app - Owning app instance.
+	 * @param {HTMLDivElement} target - Summary host element.
+	 */
 	constructor(
 		public readonly app: App,
 		public readonly target: HTMLDivElement
@@ -506,24 +716,67 @@ export class SummaryView extends WritableBase<{ from: number; to: number }> {
 		});
 	}
 
+	/**
+	 * Refreshes internal trace cache from app state.
+	 *
+	 * @returns {void}
+	 */
 	init() {
 		this.trace = this.app.state.traceArray();
 	}
 
+	/**
+	 * Renders summary UI and returns interaction controls.
+	 *
+	 * @param {number} from - Start trace index.
+	 * @param {number} to - End trace index.
+	 * @returns {{ onreset: (cb: () => void) => void; view: (from: number, to: number) => void }} Controls for reset/view updates.
+	 */
 	render(from: number, to: number) {
+		const cleanupRange = this.rangeUnsub;
+		const cleanupSliderSub = this.sliderUnsub;
+		const cleanupSlider = this.sliderCleanup;
+		this.rangeUnsub = () => {};
+		this.sliderUnsub = () => {};
+		this.sliderCleanup = () => {};
+		cleanupRange();
+		cleanupSliderSub();
+		cleanupSlider();
+		this.sliderEl?.remove();
+		this.sliderEl = undefined;
+
 		this.init();
-		const trace = this.trace.slice(from, to);
+		if (this.trace.length === 0) {
+			this.target.innerHTML = '';
+			let onreset = () => {};
+			return {
+				onreset: (cb: () => void) => {
+					onreset = cb;
+				},
+				view: () => {
+					onreset();
+				}
+			};
+		}
+
+		const maxIndex = this.trace.length - 1;
+		const resolvedFrom = Math.max(0, from);
+		const resolvedTo = to < 0 ? maxIndex : to;
+		const clampedFrom = Math.min(resolvedFrom, maxIndex);
+		const clampedTo = Math.max(clampedFrom, Math.min(resolvedTo, maxIndex));
+		const trace = this.trace;
+		this.set({ from: clampedFrom, to: clampedTo });
 		const rerender = () => {
 			this.commit();
 			this.destroy();
-			onreset();
-			const obj = this.render(from, to);
+			const obj = this.render(this.data.from, this.data.to);
 			Object.assign(returnObj, obj);
+			onreset();
 		};
 
 		const { flipX, flipY } = globalData;
-		let currentFrom = 0;
-		let currentTo = trace.length - 1;
+		let currentFrom = clampedFrom;
+		let currentTo = clampedTo;
 
 		this.target.innerHTML = '';
 		this.target.style.position = 'relative';
@@ -588,7 +841,7 @@ export class SummaryView extends WritableBase<{ from: number; to: number }> {
 
 			path.setAttribute('d', d.join(' '));
 		};
-		showPath(0, trace.length - 1);
+		showPath(currentFrom, currentTo);
 
 		this.svg.appendChild(path);
 
@@ -979,30 +1232,78 @@ export class SummaryView extends WritableBase<{ from: number; to: number }> {
 			}
 			this.target.innerHTML = '';
 			this.svg.innerHTML = '';
+			const cleanupRange = this.rangeUnsub;
+			const cleanupSliderSub = this.sliderUnsub;
+			const cleanupSlider = this.sliderCleanup;
+			this.rangeUnsub = () => {};
+			this.sliderUnsub = () => {};
+			this.sliderCleanup = () => {};
+			cleanupRange();
+			cleanupSliderSub();
+			cleanupSlider();
+			this.sliderEl?.remove();
+			this.sliderEl = undefined;
 		};
 
 		let onreset = () => {};
+
+		const applyRange = (from: number, to: number) => {
+			const safeFrom = Math.max(0, Math.min(from, trace.length - 1));
+			const safeTo = Math.max(safeFrom, Math.min(to, trace.length - 1));
+			showPath(safeFrom, safeTo);
+			for (const item of items) {
+				item.hide();
+			}
+			for (let i = safeFrom; i <= safeTo; i++) {
+				items[i]?.show();
+			}
+		};
+
+		this.sliderEl = document.createElement('div');
+		this.sliderEl.className = 'slider-container my-2';
+		if (this.target.parentElement) {
+			this.target.parentElement.append(this.sliderEl);
+		}
+
+		const slider = new RangeSlider({
+			min: 0,
+			max: maxIndex,
+			target: this.sliderEl,
+			step: 1,
+			init: [this.data.from, this.data.to]
+		});
+		this.sliderUnsub = slider.subscribe(({ min, max }) => {
+			this.set({ from: min, to: max });
+		});
+		this.sliderCleanup = slider.render();
+		this.rangeUnsub = this.subscribe(({ from, to }) => {
+			applyRange(from, to);
+		});
 
 		const returnObj = {
 			onreset: (cb: () => void) => {
 				onreset = cb;
 			},
 			view: (from: number, to: number) => {
-				showPath(from, to);
-				for (const item of items) {
-					item.hide();
-				}
-				for (let i = from; i <= to; i++) {
-					items[i]?.show();
-				}
+				this.set({ from, to });
 			}
 		};
 
 		return returnObj;
 	}
 
+	/**
+	 * Destroys current summary DOM and listeners.
+	 *
+	 * @returns {void}
+	 */
 	destroy = () => {};
 
+	/**
+	 * Commits edited summary trace back into app ticks.
+	 *
+	 * @returns {void}
+	 */
 	commit() {
 		this.app.state.removeActionStates();
 
