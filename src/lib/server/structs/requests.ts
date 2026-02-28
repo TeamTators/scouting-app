@@ -41,7 +41,9 @@ export namespace Requests {
 			}
 
 			// sort servers so primary is first
-			config.app_config.servers.sort((a, b) => (a.data_pull === b.data_pull ? 0 : a.primary ? -1 : 1));
+			config.app_config.servers.sort((a, b) =>
+				a.data_pull === b.data_pull ? 0 : a.primary ? -1 : 1
+			);
 
 			for (const server of config.app_config.servers) {
 				const data = await fetch(server.domain + '/event-server' + url, {
@@ -106,7 +108,7 @@ export namespace Requests {
 
 					return {
 						ok: res.ok,
-						primary: server.primary,
+						primary: server.primary
 					};
 				})
 			);
