@@ -48,6 +48,7 @@ import { Circle } from 'canvas/circle';
 import { Polygon } from 'canvas/polygon';
 import { Color } from 'colors/color';
 import { Img } from 'canvas/image';
+import { ReviewFlag } from './flag';
 import { Settings } from './settings';
 
 /**
@@ -269,6 +270,14 @@ export class App {
 	 * @type {Comments}
 	 */
 	public readonly comments: Comments;
+	
+	/**
+	 * Year-specific settings for this app
+	 *
+	 * @public
+	 * @readonly
+	 * @type {Settings}
+	 */
 	public readonly settings: Settings;
 	// public readonly scoreCorrection: ScoreCorrection;
 	/**
@@ -279,6 +288,15 @@ export class App {
 	 * @type {ScoreContribution}
 	 */
 	public readonly contribution: ScoreContribution;
+
+	/**
+	 * Flag this match submission for future review
+	 *
+	 * @public
+	 * @readonly
+	 * @type {ReviewFlag}
+	 */
+	public readonly reviewFlag: ReviewFlag;
 	/**
 	 * Registered interactive game objects and their render constraints.
 	 *
@@ -360,6 +378,7 @@ export class App {
 		this.checks = new Checks(this);
 		this.comments = new Comments(this);
 		this.contribution = new ScoreContribution(this);
+		this.reviewFlag = new ReviewFlag(this);
 		this.settings = new Settings(this);
 		// this.scoreCorrection = new ScoreCorrection(this);
 	}
@@ -399,7 +418,8 @@ export class App {
 				practice,
 				alliance,
 				group,
-				sliders
+				sliders,
+				flagForReview: this.reviewFlag.serialize()
 				// scoreCorrection: this.scoreCorrection.serialize(),
 			};
 		});
@@ -432,6 +452,7 @@ export class App {
 		this.comments.reset();
 		this.checks.reset();
 		this.view.reset();
+		this.reviewFlag.reset();
 	}
 
 	/**

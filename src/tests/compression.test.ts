@@ -29,6 +29,10 @@ describe('Compression utilities', () => {
 					text: 'Average',
 					color: '#ff0000'
 				}
+			},
+			flagForReview: {
+				flagged: true,
+				reason: 'Needs review'
 			}
 		};
 
