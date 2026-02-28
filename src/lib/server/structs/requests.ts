@@ -41,7 +41,7 @@ export namespace Requests {
 			}
 
 			// sort servers so primary is first
-			config.app_config.servers.sort((a, b) => (a.primary === b.primary ? 0 : a.primary ? -1 : 1));
+			config.app_config.servers.sort((a, b) => (a.data_pull === b.data_pull ? 0 : a.primary ? -1 : 1));
 
 			for (const server of config.app_config.servers) {
 				const data = await fetch(server.domain + '/event-server' + url, {
@@ -104,14 +104,21 @@ export namespace Requests {
 						terminal.error('Error submitting match data', res.status, res.statusText);
 					}
 
-					return res.ok;
+					return {
+						ok: res.ok,
+						primary: server.primary,
+					};
 				})
 			);
-			const allOk = res.every((d) => d);
-			if (allOk) {
-				await data.matchData.delete();
+			const primaryOk = res.find((r) => r.primary)?.ok;
+			if (!primaryOk) {
+				terminal.error('Failed to submit match data to primary server');
+				return false;
+			} else {
+				terminal.log('Successfully submitted match data to primary server');
+				data.matchData.delete();
+				return true;
 			}
-			return allOk;
 		},
 		{
 			concurrency: config.match_queue.concurrency,
