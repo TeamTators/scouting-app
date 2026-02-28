@@ -24,6 +24,7 @@ import { Polygon } from 'canvas/polygon';
 import { Color } from 'colors/color';
 import { Img } from 'canvas/image';
 import { ReviewFlag } from './flag';
+import { Settings } from './settings';
 
 export const TICKS_PER_SECOND = 4;
 export const SECTIONS = {
@@ -65,6 +66,7 @@ export class App {
 	public readonly view: AppView;
 	public readonly checks: Checks;
 	public readonly comments: Comments;
+	public readonly settings: Settings;
 	// public readonly scoreCorrection: ScoreCorrection;
 	public readonly contribution: ScoreContribution;
 
@@ -128,6 +130,7 @@ export class App {
 		this.comments = new Comments(this);
 		this.contribution = new ScoreContribution(this);
 		this.reviewFlag = new ReviewFlag(this);
+		this.settings = new Settings(this);
 		// this.scoreCorrection = new ScoreCorrection(this);
 	}
 
