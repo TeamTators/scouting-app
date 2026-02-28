@@ -1,8 +1,21 @@
+<!--
+@component
+Top navigation bar with stack controls, theme toggle, account menu, and notifications.
+
+**Props**
+- `title`: `string` — Brand/title text.
+
+**Example**
+```svelte
+<Navbar title="Dashboard" />
+```
+-->
 <script lang="ts">
 	import SideNav from './SideNav.svelte';
-	import Notifications from './Notifications.svelte';
+	// import Notifications from './Notifications.svelte';
 	import { Account } from '$lib/model/account';
 	import { Stack } from '$lib/utils/stack';
+	import ThemeSwitch from './ThemeSwitch.svelte';
 
 	interface Props {
 		title: string;
@@ -42,6 +55,7 @@
 			<button type="button" class="btn stack-btn" disabled={!$next} onclick={() => Stack.redo()}>
 				<i class="material-icons">redo</i>
 			</button>
+			<ThemeSwitch />
 			<div class="dropdown">
 				<button
 					class="btn dropdown-toggle px-2"
@@ -76,7 +90,9 @@
 			>
 				<i class="material-icons"> notifications </i>
 				{#if notifs}
-					<span class="position-absolute badge rounded-pill bg-danger">
+					<span
+						class="position-absolute badge rounded-pill bg-danger animate__animated animate__bounce animate__delay-2s animate__repeat-2"
+					>
 						{notifs}
 						<span class="visually-hidden">unread messages</span>
 					</span>

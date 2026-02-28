@@ -1,3 +1,10 @@
+/**
+ * @fileoverview Fullscreen helper utilities.
+ *
+ * @example
+ * import { fullscreen } from '$lib/utils/fullscreen';
+ * const exit = fullscreen();
+ */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { browser } from '$app/environment';
 import { writable } from 'svelte/store';

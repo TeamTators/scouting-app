@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-nvm i v22.12.0
-nvm use v22.12.0
+nvm i v24.13.1
+nvm use v24.13.1
 
 node --env-file=../.env ../src/server.js

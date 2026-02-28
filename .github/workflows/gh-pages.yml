@@ -25,37 +25,35 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: v22.12.0
+          node-version: v24.13.1
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10.16.0
+          version: 10.30.0
 
       - name: Install Dependencies
         run: pnpm i
 
-      - name: Load .env variables
+      - name: Configure project
         run: |
+          cp .env.example .env
           cp config.example.json config.json
-          touch .env
-          echo "OAUTH2_CLIENT_ID=1234567890" >> .env
-          echo "OAUTH2_CLIENT_SECRET=1234567890" >> .env
-          export $(cat .env | xargs)
 
       - name: Generate Documentation
-        run: pnpm deploy:docs
+        run: pnpm build:docs
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./docs
+          path: ./docs/.vitepress/dist
 
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-        with:
-          token: ${{ secrets.GH_TOKEN }}

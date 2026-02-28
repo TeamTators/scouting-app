@@ -3,9 +3,12 @@ import { Session } from '../src/lib/server/structs/session';
 import { Account } from '../src/lib/server/structs/account';
 
 export const signIn = async (page: Page, username: string, password: string) => {
-	const account = await Account.Account.fromProperty('username', username, {
-		type: 'single'
-	}).unwrap();
+	const account = await Account.Account.get(
+		{ username: username },
+		{
+			type: 'single'
+		}
+	).unwrap();
 
 	if (!account) {
 		throw new Error(`Account with username ${username} not found`);
@@ -23,11 +26,27 @@ export const signIn = async (page: Page, username: string, password: string) => 
 	await usernameInput.fill(username);
 	await passwordInput.fill(password);
 
-	await signInButton.click();
+	const signInResponse = page.waitForResponse((response) => {
+		return response.request().method() === 'POST' && response.url().includes('/account/sign-in');
+	});
 
-	const sessions = await Session.Session.fromProperty('accountId', account.id, {
-		type: 'all'
-	}).unwrap();
+	await signInButton.click();
+	await signInResponse;
+	await page.waitForLoadState('networkidle');
+	await page
+		.waitForURL((url) => !url.pathname.startsWith('/account/sign-in'), {
+			timeout: 2000
+		})
+		.catch(() => {
+			// Some tests navigate immediately after sign-in; ignore if redirect is slow.
+		});
+
+	const sessions = await Session.Session.get(
+		{ accountId: account.id },
+		{
+			type: 'all'
+		}
+	).unwrap();
 
 	if (sessions.length === 0) {
 		throw new Error('No session found after sign in');

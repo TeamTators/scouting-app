@@ -4,5 +4,5 @@ export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || pr
 
 source "$NVM_DIR/bash_completion" 2>/dev/null && \. "$NVM_DIR/bash_completion"
 
-nvm i v22.12.0
-nvm use v22.12.0
+nvm i v24.13.1
+nvm use v24.13.1

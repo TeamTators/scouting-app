@@ -24,7 +24,7 @@
 		"
 		id="check-{color}-{$check.name}"
 		bind:checked={$check.value}
-		onchange={(e) => {
+		onchange={(_e) => {
 			// check.set({
 			// 	...check.data,
 			// 	value: e.currentTarget.checked

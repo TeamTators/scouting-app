@@ -1,4 +1,4 @@
-import { Struct } from 'drizzle-struct/back-end';
+import { Struct } from 'drizzle-struct';
 import { Scouting } from '../src/lib/server/structs/scouting';
 import { DB } from '../src/lib/server/db';
 

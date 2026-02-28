@@ -51,3 +51,7 @@ docs/search-index.json
 
 config.json
 config.docker.json
+
+docs/
+
+private/features.json

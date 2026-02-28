@@ -1,3 +1,6 @@
+/**
+ * @fileoverview OAuth sign-in endpoint at `/api/oauth/sign-in`.
+ */
 import { Account } from '$lib/server/structs/account.js';
 import { Session } from '$lib/server/structs/session.js';
 import { redirect } from '@sveltejs/kit';
@@ -39,9 +42,8 @@ export const GET = async (event) => {
 		})
 		.userinfo.get();
 	// token exists, check if account exists
-	const account = await Account.Account.fromProperty(
-		'email',
-		info.data.email || 'nothing should never happen',
+	const account = await Account.Account.get(
+		{ email: info.data.email || 'nothing should never happen' },
 		{
 			type: 'single'
 		}

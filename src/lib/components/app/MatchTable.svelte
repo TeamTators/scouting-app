@@ -14,7 +14,7 @@
 
 	const { app }: Props = $props();
 
-	const matchData = app.matchData;
+	const matchData = $derived(app.matchData);
 
 	let assignments: number[] = $state([]);
 	let eventData:

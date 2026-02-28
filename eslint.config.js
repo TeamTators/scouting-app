@@ -57,7 +57,19 @@ export default ts.config(
 				{ argsIgnorePattern: '^_', varsIgnorePattern: '^_' }
 			],
 			'@typescript-eslint/no-empty-object-type': 'off',
-			'svelte/valid-compile': 'warn'
+			'svelte/valid-compile': 'error',
+			'svelte/require-each-key': 'off',
+			'svelte/no-navigation-without-resolve': [
+				'off',
+				{
+					ignoreGoto: false,
+					ignoreLinks: true,
+					ignorePushState: false,
+					ignoreReplaceState: false
+				}
+			],
+			'svelte/prefer-writable-derived': 'warn',
+			'svelte/prefer-svelte-reactivity': 'warn'
 		}
 	}
 );

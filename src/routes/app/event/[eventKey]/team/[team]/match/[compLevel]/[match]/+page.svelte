@@ -10,7 +10,8 @@
 	import Comments from '$lib/components/app/Comments.svelte';
 	import AppView from '$lib/components/app/App.svelte';
 	import { goto } from '$app/navigation';
-	import createApp from '$lib/model/app/apps/2026.js';
+	import create2025App from '$lib/model/app/apps/2025.js';
+	import create2026App from '$lib/model/app/apps/2026.js';
 	import PostApp from '$lib/components/app/PostApp.svelte';
 	import { getAlliance, MatchData } from '$lib/model/app/match-data.js';
 	import { fullscreen, isFullscreen } from '$lib/utils/fullscreen.js';
@@ -18,13 +19,14 @@
 	import ScoutInput from '$lib/components/app/ScoutInput.svelte';
 	import Slider from '$lib/components/app/Slider.svelte';
 	import ScoreContribution from '$lib/components/app/Contribution.svelte';
+	import Settings from '$lib/components/app/Settings.svelte';
 
 	const { data } = $props();
 	const eventKey = $derived(data.eventKey);
 	const match = $derived(parseInt(data.match));
 	const team = $derived(parseInt(data.team));
 	const compLevel = $derived(data.compLevel) as CompLevel;
-	const year = $derived(data.year);
+	const _year = $derived(data.year);
 
 	let alliance: 'red' | 'blue' | null = $state(null);
 	let page: 'app' | 'post' = $state('app');
@@ -32,7 +34,7 @@
 	let app: App | undefined = $state(undefined);
 	let matches: Modal;
 	let settings: Modal;
-	let upload: Modal;
+	let _upload: Modal;
 	let postApp: PostApp | undefined = $state(undefined);
 	let group = $state(-1);
 	let matchData: MatchData | undefined = $state(undefined);
@@ -141,13 +143,36 @@
 		// deinit = app.init(target);
 		// app.start();
 		// app.clickPoints(3);
-		app = createApp({
-			eventKey,
-			match,
-			team,
-			compLevel,
-			alliance
-		});
+		// app = createApp({
+		// 	eventKey,
+		// 	match,
+		// 	team,
+		// 	compLevel,
+		// 	alliance
+		// });
+
+		switch (_year) {
+			case 2025:
+				app = create2025App({
+					eventKey,
+					match,
+					team,
+					compLevel,
+					alliance
+				});
+				break;
+			case 2026:
+				app = create2026App({
+					eventKey,
+					match,
+					team,
+					compLevel,
+					alliance
+				});
+				break;
+			default:
+				throw new Error(`Unsupported year ${_year}`);
+		}
 
 		matchData = app.matchData;
 
@@ -164,7 +189,7 @@
 			accounts = data.value.map((a) => a.username);
 		});
 
-		const unsub = app.matchData.subscribe(async (d) => {
+		const unsub = app.matchData.subscribe(async (_d) => {
 			const res = await app?.matchData.getScoutGroup();
 			if (!res) return;
 			if (res.isErr()) return console.error(res.error);
@@ -217,6 +242,7 @@
 						exitFullscreen();
 						if (app) postApp?.render(app);
 						app?.contribution.render();
+						app?.runProcessors();
 					}}
 				>
 					Post Match
@@ -449,9 +475,11 @@
 					Upload Matches</button
 				>
 			</div>
+			{#if app}
+				<Settings {app} />
+			{:else}
+				<p>App not generated yet, no app settings available.</p>
+			{/if}
 		</div>
-
-		<!-- TODO: Flip x and y -->
 	{/snippet}
-	{#snippet buttons()}{/snippet}
 </Modal>

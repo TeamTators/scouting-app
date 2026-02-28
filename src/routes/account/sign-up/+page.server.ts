@@ -1,3 +1,6 @@
+/**
+ * @fileoverview Server load/actions for `/account/sign-up`.
+ */
 import { Account } from '$lib/server/structs/account.js';
 import { fail, redirect } from '@sveltejs/kit';
 import { ServerCode } from 'ts-utils/status';
@@ -83,12 +86,18 @@ export const actions = {
 
 		// Check if user exists
 		{
-			const byEmail = await Account.Account.fromProperty('email', email.data, {
-				type: 'single'
-			});
-			const byUser = await Account.Account.fromProperty('username', username.data, {
-				type: 'single'
-			});
+			const byEmail = await Account.Account.get(
+				{ email: email.data },
+				{
+					type: 'single'
+				}
+			);
+			const byUser = await Account.Account.get(
+				{ username: username.data },
+				{
+					type: 'single'
+				}
+			);
 
 			if (byEmail.isErr())
 				return fail(ServerCode.internalServerError, {
