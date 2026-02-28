@@ -19,6 +19,7 @@ import configSchema from './config';
 import { openJSONSync } from './files';
 dotenv();
 
+let timeout: ReturnType<typeof setTimeout>;
 const keys = new Map<
 	string,
 	{
@@ -44,12 +45,16 @@ export class EnvironmentError extends Error {
  * Parsed and validated application configuration.
  */
 export const config = (() => {
-	if (!fs.existsSync(path.join(process.cwd(), 'config.json'))) {
-		throw new EnvironmentError('config.json does not exist');
+	let configPath = str('CONFIG_PATH', true);
+	if (configPath.startsWith('./')) {
+		configPath = path.join(process.cwd(), configPath.slice(2));
 	}
-	// const json = fs.readFileSync(path.join(process.cwd(), 'config.json'), 'utf-8');
-	// return configSchema.parse(JSON.parse(json));
-	return openJSONSync(path.join(process.cwd(), 'config.json'), configSchema).unwrap();
+
+	if (!fs.existsSync(configPath)) {
+		throw new EnvironmentError(`Config file does not exist at path: ${configPath}`);
+	}
+
+	return openJSONSync(configPath, configSchema).unwrap();
 })();
 
 /**
@@ -71,7 +76,6 @@ type EnvConfig<T> = {
 	type?: string;
 };
 
-let timeout: ReturnType<typeof setTimeout>;
 
 const filepath = path.join(process.cwd(), '.env.example');
 let current = '';

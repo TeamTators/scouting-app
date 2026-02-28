@@ -84,12 +84,14 @@ export default z.object({
 		port: z.number().min(1).max(65535),
 		protocol: z.enum(['http', 'https'])
 	}),
-	database: z.object({
-		port: z.number().min(1).max(65535),
-		host: z.string().min(1),
-		user: z.string().min(1),
-		pass: z.string().min(1),
-		name: z.string().min(1)
+	supabase: z.object({
+		// port: z.number().min(1).max(65535),
+		// host: z.string().min(1),
+		// user: z.string().min(1),
+		// pass: z.string().min(1),
+		// name: z.string().min(1)
+		url: z.string().url(),
+		anon_key: z.string().min(1)
 	}),
 	sessions: z.object({
 		auto_sign_in: z.string().optional(),

@@ -34,34 +34,44 @@
 			"required": ["host", "port", "protocol"],
 			"additionalProperties": false
 		},
-		"database": {
-			"description": "Database configuration",
+		"supabase": {
+			"description": "Supabase configuration",
 			"type": "object",
 			"properties": {
-				"port": {
-					"type": "integer",
-					"minimum": 1,
-					"maximum": 65535,
-					"description": "Database port"
-				},
-				"host": {
+				// "port": {
+				// 	"type": "integer",
+				// 	"minimum": 1,
+				// 	"maximum": 65535,
+				// 	"description": "Database port"
+				// },
+				// "host": {
+				// 	"type": "string",
+				// 	"description": "Database host"
+				// },
+				// "user": {
+				// 	"type": "string",
+				// 	"description": "Database username"
+				// },
+				// "pass": {
+				// 	"type": "string",
+				// 	"description": "Database password"
+				// },
+				// "name": {
+				// 	"type": "string",
+				// 	"description": "Database name"
+				// }
+				"url": {
 					"type": "string",
-					"description": "Database host"
+					"format": "uri",
+					"description": "Supabase connection URL"
 				},
-				"user": {
+				"anon_key": {
 					"type": "string",
-					"description": "Database username"
-				},
-				"pass": {
-					"type": "string",
-					"description": "Database password"
-				},
-				"name": {
-					"type": "string",
-					"description": "Database name"
+					"description": "Supabase anon key (for client-side use)"
 				}
 			},
-			"required": ["port", "host", "user", "pass", "name"],
+			// "required": ["port", "host", "user", "pass", "name"],
+			"required": ["url", "anon_key"],
 			"additionalProperties": false
 		},
 		"sessions": {
@@ -326,7 +336,7 @@
 		"environment",
 		"app_name",
 		"network",
-		"database",
+		"supabase",
 		"sessions",
 		"redis",
 		"logs",

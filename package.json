@@ -103,6 +103,7 @@
 		"@oslojs/crypto": "^1.0.1",
 		"@oslojs/encoding": "^1.1.0",
 		"@rajesh896/broprint.js": "^2.1.1",
+		"@supabase/supabase-js": "^2.98.0",
 		"@trpc/client": "11.0.0-rc.682",
 		"@trpc/server": "11.0.0-rc.682",
 		"@types/adm-zip": "^0.5.7",
