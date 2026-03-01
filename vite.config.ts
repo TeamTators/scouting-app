@@ -35,7 +35,11 @@ export default defineConfig({
 			indexed_db: config.indexed_db,
 			struct_cache: config.struct_cache,
 			struct_batching: config.struct_batching,
-			sse: config.sse
+			sse: config.sse,
+			supabase: {
+				url: `${config.supabase.protocol}://${config.supabase.ip}:${config.supabase.port}`,
+				anon_key: config.supabase.anon_key
+			}
 		})
 	}
 });

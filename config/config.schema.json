@@ -38,32 +38,33 @@
 			"description": "Supabase configuration",
 			"type": "object",
 			"properties": {
-				// "port": {
-				// 	"type": "integer",
-				// 	"minimum": 1,
-				// 	"maximum": 65535,
-				// 	"description": "Database port"
-				// },
-				// "host": {
-				// 	"type": "string",
-				// 	"description": "Database host"
-				// },
-				// "user": {
-				// 	"type": "string",
-				// 	"description": "Database username"
-				// },
-				// "pass": {
-				// 	"type": "string",
-				// 	"description": "Database password"
-				// },
-				// "name": {
-				// 	"type": "string",
-				// 	"description": "Database name"
-				// }
-				"url": {
+				"schema": {
 					"type": "string",
-					"format": "uri",
-					"description": "Supabase connection URL"
+					"description": "Supabase schema name"
+				},
+				"tenant_id": {
+					"type": "string",
+					"description": "Supabase tenant ID (for self-hosted instances)"
+				},
+				"password": {
+					"type": "string",
+					"description": "Supabase password (for self-hosted instances)"
+				},
+				"ip": {
+					"type": "string",
+					"format": "ipv4",
+					"description": "Supabase IP address (for self-hosted instances)"
+				},
+				"port": {
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 65535,
+					"description": "Supabase port (for self-hosted instances)"
+				},
+				"protocol": {
+					"type": "string",
+					"enum": ["http", "https"],
+					"description": "Protocol to use for Supabase (for self-hosted instances)"
 				},
 				"anon_key": {
 					"type": "string",
@@ -71,7 +72,7 @@
 				}
 			},
 			// "required": ["port", "host", "user", "pass", "name"],
-			"required": ["url", "anon_key"],
+			"required": ["tenant_id", "password", "ip", "port", "protocol", "anon_key", "schema"],
 			"additionalProperties": false
 		},
 		"sessions": {

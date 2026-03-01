@@ -47,6 +47,10 @@ declare global {
 			state_report_threshold: number;
 			do_report: boolean;
 		};
+		supabase: {
+			url: string;
+			anon_key: string;
+		}
 	};
 }
 

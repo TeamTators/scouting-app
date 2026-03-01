@@ -35,7 +35,9 @@
 		"backup": "pnpm script backup",
 		"restore": "pnpm script restore",
 		"dev:docs": "vitepress preview docs",
-		"prepare": "husky install"
+		"prepare": "husky install",
+		"sb:gen": "pnpm sb:init && pnpm script supabase-gen",
+		"sb:init": "pnpm script supabase-init"
 	},
 	"packageManager": "pnpm@10.30.0",
 	"engines": {
@@ -172,6 +174,7 @@
 		"proper-lockfile": "^4.1.2",
 		"redis": "^5.7.0",
 		"redis-utils": "github:tsaxking/redis#v3.0.0",
+		"supabase": "^2.76.15",
 		"svelte-filepond": "^0.2.2",
 		"svelte-portal": "^2.2.1",
 		"ts-utils": "github:tsaxking/global-ts-utilities#v1.0.9",
@@ -193,6 +196,7 @@
 			"html-constructor",
 			"math",
 			"redis-service",
+			"supabase",
 			"svelte-preprocess",
 			"ts-utils"
 		],

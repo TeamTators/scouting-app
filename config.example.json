@@ -7,13 +7,13 @@
 		"protocol": "http"
 	},
 	"supabase": {
-		// "port": 5432,
-		// "host": "localhost",
-		// "user": "username",
-		// "pass": "password",
-		// "name": "db"
-		"url": "http://localhost:5432/db",
-		"anon_key": "database_anon_key"
+		"schema": "your_schema_name",
+		"tenant_id": "your-tenant-id",
+		"password": "your-supabase-password",
+		"ip": "127.0.0.1",
+		"port": 8000,
+		"protocol": "http",
+		"anon_key": "your-anon-key"
 	},
 	"sessions": {
 		"auto_sign_in": "username",

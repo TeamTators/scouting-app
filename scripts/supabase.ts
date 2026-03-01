@@ -7,4 +7,7 @@ export default async () => {
         config.supabase.anon_key
     );
     console.log(client);
+
+    const { data, error } = await client.from('todos').select('*');
+    console.log(data, error);
 };
