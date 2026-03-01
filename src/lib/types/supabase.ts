@@ -11,22 +11,16 @@ export type Database = {
     Tables: {
       test: {
         Row: {
-          age: number | null
           created_at: string
-          id: number
-          name: string
+          id: string
         }
         Insert: {
-          age?: number | null
           created_at?: string
-          id?: number
-          name: string
+          id?: string
         }
         Update: {
-          age?: number | null
           created_at?: string
-          id?: number
-          name?: string
+          id?: string
         }
         Relationships: []
       }
@@ -168,4 +162,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-

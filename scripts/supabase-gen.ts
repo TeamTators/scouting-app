@@ -1,18 +1,159 @@
 import { runTask } from '../src/lib/server/utils/task';
 import { config } from '../src/lib/server/utils/env';
+import fs from 'fs';
+import ts from "typescript";
+
+/**
+ * Generates a Zod schema string for a given schema property in a TypeScript file.
+ */
+export function generateZodSchemaString(tsCode: string, schemaName: string): string {
+  const sourceFile = ts.createSourceFile(
+    "db.ts",
+    tsCode,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS
+  );
+
+  let schemaNode: ts.TypeLiteralNode | undefined;
+
+  function visit(node: ts.Node) {
+    if (
+      ts.isTypeAliasDeclaration(node) &&
+      node.name.text === "Database" &&
+      ts.isTypeLiteralNode(node.type)
+    ) {
+      for (const member of node.type.members) {
+        if (
+          ts.isPropertySignature(member) &&
+          member.name.getText() === schemaName &&
+          member.type &&
+          ts.isTypeLiteralNode(member.type)
+        ) {
+          schemaNode = member.type;
+          return;
+        }
+      }
+    }
+    ts.forEachChild(node, visit);
+  }
+
+  ts.forEachChild(sourceFile, visit);
+
+  if (!schemaNode) throw new Error(`Schema "${schemaName}" not found in Database type.`);
+
+  // Extract 'Tables' property
+  const tablesProp = schemaNode.members.find(
+    (m) => ts.isPropertySignature(m) && m.name.getText() === "Tables"
+  ) as ts.PropertySignature | undefined;
+
+  if (!tablesProp || !tablesProp.type || !ts.isTypeLiteralNode(tablesProp.type)) {
+    throw new Error(`Tables property not found or invalid in schema "${schemaName}"`);
+  }
+
+  const zodTables: Record<string, Record<string, string>> = {};
+
+  function parseTypeLiteralToZod(obj: ts.TypeNode): Record<string, string> {
+    if (!ts.isTypeLiteralNode(obj)) return {};
+
+    const result: Record<string, string> = {};
+
+    obj.members.forEach((member) => {
+      if (!ts.isPropertySignature(member) || !member.type) return;
+
+      const key = member.name.getText();
+      const typeText = member.type.getText();
+      let zodType = "z.any()";
+
+      if (typeText.includes("number")) zodType = "z.number()";
+      else if (typeText.includes("string")) zodType = "z.string()";
+      else if (typeText.includes("boolean")) zodType = "z.boolean()";
+      else if (typeText.includes("null")) zodType = "z.null()";
+
+    // Use .nullable() instead of .optional() for null types
+    if (typeText.includes("| null")) {
+      zodType += ".nullable()";
+    }
+
+    // If it has ?, it’s optional (may be undefined)
+    if (member.questionToken) {
+      zodType += ".optional()";
+    }
+
+      result[key] = zodType;
+    });
+
+    return result;
+  }
+
+  tablesProp.type.members.forEach((table) => {
+    if (!ts.isPropertySignature(table) || !table.type || !ts.isTypeLiteralNode(table.type)) return;
+
+    const tableName = table.name.getText();
+    const tableObj: Record<string, string> = {};
+
+    ["Row", "Insert", "Update"].forEach((section) => {
+      const sectionProp = (table.type as ts.TypeLiteralNode).members.find(
+        (m) => ts.isPropertySignature(m) && m.name.getText() === section
+      ) as ts.PropertySignature | undefined;
+
+      if (sectionProp && sectionProp.type && ts.isTypeLiteralNode(sectionProp.type)) {
+        const fields = parseTypeLiteralToZod(sectionProp.type);
+        const fieldsStr = Object.entries(fields)
+          .map(([k, v]) => `${k}: ${v}`)
+          .join(", ");
+        tableObj[section] = `z.object({ ${fieldsStr} })`;
+      }
+    });
+
+    zodTables[tableName] = tableObj;
+  });
+
+  // Convert tables object to a string
+  const tableStrings = Object.entries(zodTables)
+    .map(
+      ([tableName, sections]) =>
+        `  ${tableName}: {\n` +
+        Object.entries(sections)
+          .map(([sec, val]) => `    ${sec}: ${val},`)
+          .join("\n") +
+        "\n  }"
+    )
+    .join(",\n");
+
+  return `import { z } from "zod";
+
+export const schemas = {
+${tableStrings}
+} as const;`;
+}
 
 export default async () => {
-    await runTask(
-        'npx', 'supabase', 'gen', 'types', 'typescript', 
-        '--db-url', `postgres://postgres.${config.supabase.tenant_id}:${config.supabase.password}@${config.supabase.ip}:5432/postgres`,
-        '--schema', config.supabase.schema,
-        '>', 'src/lib/types/supabase.ts'
-    ).unwrap();
+  // Generate the supabase types
+  const contents = await runTask(
+    'npx', 'supabase', 'gen', 'types', 'typescript', 
+    '--db-url', `postgres://postgres.${config.supabase.tenant_id}:${config.supabase.password}@${config.supabase.ip}:5432/postgres`,
+    '--schema', config.supabase.schema,
+  ).unwrap();
 
-    // pull db schema and rls
-    await runTask(
-        'npx', 'supabase', 'pull',
-        '--db-url', `postgres://postgres.${config.supabase.tenant_id}:${config.supabase.password}@${config.supabase.ip}:5432/postgres`,
-        '--schema', config.supabase.schema,
-    );
+  // Save raw supabase types
+  fs.writeFileSync('src/lib/types/supabase.ts', contents);
+
+  // Generate Zod schema string
+  const zodSchemaString = generateZodSchemaString(contents, config.supabase.schema);
+
+  // Save Zod schema
+  fs.writeFileSync('src/lib/types/supabase-zod.ts', `/* 
+This file is generated by the supabase-gen script. Do not edit this file directly.
+*/
+
+${zodSchemaString}
+`);
+
+  // Pull db schema and RLS
+  await runTask(
+    'npx', 'supabase', 'db', 'pull',
+    '--db-url', `postgres://postgres.${config.supabase.tenant_id}:${config.supabase.password}@${config.supabase.ip}:5432/postgres`,
+    '--schema', config.supabase.schema,
+  ).unwrap();
 };

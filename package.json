@@ -177,6 +177,7 @@
 		"supabase": "^2.76.15",
 		"svelte-filepond": "^0.2.2",
 		"svelte-portal": "^2.2.1",
+		"ts-to-zod": "^5.1.0",
 		"ts-utils": "github:tsaxking/global-ts-utilities#v1.0.9",
 		"uuid": "^11.1.0",
 		"vite-node": "^3.2.4",

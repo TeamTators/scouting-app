@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import supabase from "$lib/services/supabase";
 import { type Database } from "$lib/types/supabase";
-import { attempt, type Result } from "ts-utils";
+import { attempt, attemptAsync, type Result } from "ts-utils";
 import { WritableArray, WritableBase } from "./writables";
 import { type SchemaName, schemaName } from '$lib/types/supabase-schema';
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { schemas } from "$lib/types/supabase-zod";
 
 type Table<Name extends keyof Database[SchemaName]['Tables']> = Database[SchemaName]['Tables'][Name];
 type Names = keyof Database[SchemaName]['Tables'];
@@ -11,13 +13,17 @@ type Row<Name extends Names> = Table<Name>['Row'];
 type Insert<Name extends Names> = Table<Name>['Insert'];
 type Update<Name extends Names> = Table<Name>['Update'];
 
-// type ReadConfig<Name extends Names> = {
-//     paginated: true;
-//     page: number;
-//     limit: number;
-// } | {
-//     paginated?: false;
-// };
+export class SupaStatus<T> extends WritableBase<{
+    pending: boolean;
+    error?: Error;
+    result?: T;
+}> {
+    constructor() {
+        super({
+            pending: true,
+        })
+    }
+}
 
 export class SupaStruct<Name extends Names> {
     private readonly channel: RealtimeChannel;
@@ -111,7 +117,15 @@ export class SupaStruct<Name extends Names> {
     }
 
     Generator(row: unknown) {
-        return new SupaStructData(this, row);
+        const schema = schemas[this.name];
+        if (!schema) {
+            throw new Error(`No schema found for table ${this.name}`);
+        }
+        const parseResult = schema.Row.safeParse(row);
+        if (!parseResult.success) {
+            throw new Error(`Failed to parse row for table ${this.name}: ` + parseResult.error.message);
+        }
+        return new SupaStructData(this, parseResult.data);
     }
 
     all() {
@@ -128,10 +142,46 @@ export class SupaStruct<Name extends Names> {
         };
         const arr = new SupaStructArray<Name>([])
         get().then(data => {
-            arr.set(data);
+            arr.set(data.map(item => this.Generator(item)));
         });
         this.registerArray(arr, () => true);
         return arr;
+    }
+
+    new(...data: Insert<Name>[]) {
+        const status = new SupaStatus<Row<Name>[]>();
+        supabase.from(this.name).insert(data as any).select('*').then(res => {
+            const transactionResult = this.runTransaction({
+                data: res.data as any,
+                error: res.error,
+            }, 'array');
+            if (transactionResult.isErr()) {
+                status.set({
+                    pending: false,
+                    error: new Error(`Failed to insert row into table ${this.name}: ` + transactionResult.error.message)
+                });
+            } else {
+                status.set({
+                    pending: false,
+                    result: transactionResult.value,
+                });
+            }
+        });
+        return status;
+    }
+
+    fromId(id: Row<Name>['id']) {
+        return attemptAsync(async () => {
+            const res = await supabase.from(this.name).select('*').eq('id', id as any).single();
+            const transactionResult = this.runTransaction({
+                data: res.data as any,
+                error: res.error,
+            }, 'single');
+            if (transactionResult.isErr()) {
+                throw new Error(`Failed to fetch row with id ${id} from table ${this.name}: ` + transactionResult.error.message);
+            }
+            return this.Generator(transactionResult.value);
+        });
     }
 }
 
@@ -142,5 +192,55 @@ export class SupaStructData<Name extends Names> extends WritableBase<Row<Name>> 
         super(data);
     }
 
+    update(fn: (data: Row<Name>) => Update<Name>) {
+        const status = new SupaStatus<Row<Name>>();
+        try {
+            const updateData = fn(this.data);
+            supabase.from(this.struct.name).update(updateData as any).eq('id', this.data.id as any).select('*').then(res => {
+                const transactionResult = this.struct.runTransaction({
+                    data: res.data ? res.data[0] : null as any,
+                    error: res.error,
+                }, 'single');
+                if (transactionResult.isErr()) {
+                    status.set({
+                        pending: false,
+                        error: new Error(`Failed to update row in table ${this.struct.name}: ` + transactionResult.error.message)
+                    });
+                } else {
+                    status.set({
+                        pending: false,
+                        result: transactionResult.value,
+                    });
+                }
+            });
+        } catch (error) {
+            status.set({
+                pending: false,
+                error: error instanceof Error ? error : new Error(String(error)),
+            });
+        }
+        return status;
+    }
 
+    delete() {
+        const status = new SupaStatus<null>();
+        supabase.from(this.struct.name).delete().eq('id', this.data.id as any).then(res => {
+            const transactionResult = this.struct.runTransaction({
+                data: null,
+                error: res.error,
+            }, 'null');
+            if (transactionResult.isErr()) {
+                status.set({
+                    pending: false,
+                    error: new Error(`Failed to delete row in table ${this.struct.name}: ` + transactionResult.error.message)
+                });
+            } else {
+                status.set({
+                    pending: false,
+                    result: null,
+                });
+            }
+        });
+        return status;
+    }
 }
