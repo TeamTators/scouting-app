@@ -50,10 +50,9 @@
 					"type": "string",
 					"description": "Supabase password (for self-hosted instances)"
 				},
-				"ip": {
+				"domain": {
 					"type": "string",
-					"format": "ipv4",
-					"description": "Supabase IP address (for self-hosted instances)"
+					"description": "Supabase domain (for self-hosted instances)"
 				},
 				"port": {
 					"type": "integer",
@@ -71,8 +70,7 @@
 					"description": "Supabase anon key (for client-side use)"
 				}
 			},
-			// "required": ["port", "host", "user", "pass", "name"],
-			"required": ["tenant_id", "password", "ip", "port", "protocol", "anon_key", "schema"],
+			"required": ["tenant_id", "password", "domain", "port", "protocol", "anon_key", "schema"],
 			"additionalProperties": false
 		},
 		"sessions": {

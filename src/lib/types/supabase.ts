@@ -11,16 +11,25 @@ export type Database = {
     Tables: {
       test: {
         Row: {
+          age: number
+          archived: boolean | null
           created_at: string
           id: string
+          name: string
         }
         Insert: {
+          age: number
+          archived?: boolean | null
           created_at?: string
           id?: string
+          name: string
         }
         Update: {
+          age?: number
+          archived?: boolean | null
           created_at?: string
           id?: string
+          name?: string
         }
         Relationships: []
       }

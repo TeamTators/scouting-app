@@ -37,7 +37,7 @@ export default defineConfig({
 			struct_batching: config.struct_batching,
 			sse: config.sse,
 			supabase: {
-				url: `${config.supabase.protocol}://${config.supabase.ip}:${config.supabase.port}`,
+				url: `${config.supabase.protocol}://${config.supabase.domain}:${config.supabase.port}`,
 				anon_key: config.supabase.anon_key
 			}
 		})

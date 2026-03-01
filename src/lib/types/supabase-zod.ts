@@ -6,8 +6,8 @@ import { z } from "zod";
 
 export const schemas = {
   test: {
-    Row: z.object({ created_at: z.string(), id: z.string() }),
-    Insert: z.object({ created_at: z.string().optional(), id: z.string().optional() }),
-    Update: z.object({ created_at: z.string().optional(), id: z.string().optional() }),
+    Row: z.object({ age: z.number(), archived: z.boolean().nullable(), created_at: z.string(), id: z.string(), name: z.string() }),
+    Insert: z.object({ age: z.number(), archived: z.boolean().nullable().optional(), created_at: z.string().optional(), id: z.string().optional(), name: z.string() }),
+    Update: z.object({ age: z.number().optional(), archived: z.boolean().nullable().optional(), created_at: z.string().optional(), id: z.string().optional(), name: z.string().optional() }),
   }
 } as const;
