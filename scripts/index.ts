@@ -51,14 +51,14 @@ const main = async () => {
 	const server = await createServer({
 		configFile: path.join(process.cwd(), 'vite.config.ts'),
 		server: {
-			middlewareMode: true,
+			middlewareMode: true
 		}
 	});
 	const mod = await server.ssrLoadModule(path.join(process.cwd(), 'scripts', file));
 	if (!mod.default) {
 		throw new Error(`Script ${file} does not have a default export`);
 	}
-	const res = await mod.default(...args);
+	await mod.default(...args);
 	server.close();
 	process.exit(0);
 };

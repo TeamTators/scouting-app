@@ -21,36 +21,36 @@ Notifications offcanvas panel with unread count binding.
 
 	interface Props {
 		notifs: number;
+		account: Account;
 	}
 
 	let _limit = $state(10);
 	let _page = $state(0);
-	let { notifs = $bindable() }: Props = $props();
+	let { notifs = $bindable(), account }: Props = $props();
 
-	let notifications = $state(
-		Account.AccountNotification.arr([
-			// Account.AccountNotification.Generator({
-			// 	accountId: 'string',
-			// 	title: 'string',
-			// 	severity: 'danger',
-			// 	message: 'string',
-			// 	icon: 'string',
-			// 	link: 'string',
-			// 	read: false,
-			//     id: 'string',
-			//     created: 'string',
-			//     updated: 'string',
-			//     archived: false,
-			//     universes: 'string',
-			//     attributes: 'string',
-			//     lifetime: 0,
-			// })
-		])
+	const notifications = $derived(
+		account.getNotifications()
+		// Account.AccountNotification.arr([
+		// 	// Account.AccountNotification.Generator({
+		// 	// 	accountId: 'string',
+		// 	// 	title: 'string',
+		// 	// 	severity: 'danger',
+		// 	// 	message: 'string',
+		// 	// 	icon: 'string',
+		// 	// 	link: 'string',
+		// 	// 	read: false,
+		// 	//     id: 'string',
+		// 	//     created: 'string',
+		// 	//     updated: 'string',
+		// 	//     archived: false,
+		// 	//     universes: 'string',
+		// 	//     attributes: 'string',
+		// 	//     lifetime: 0,
+		// 	// })
+		// ])
 	);
 
 	onMount(() => {
-		notifications = Account.getNotifs(/*limit, page*/);
-
 		const unsub = notifications.subscribe((d) => {
 			notifs = d.filter((n) => !n.data.read).length;
 		});

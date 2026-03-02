@@ -1,8 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 import { config } from '../utils/env';
-import type { Database } from '$lib/types/supabase';
+import { schemaName } from '$lib/types/supabase-schema';
+import { type DB } from '$lib/services/supabase/supastruct';
 
-export default createClient<Database>(
+export default createClient<DB>(
 	`${config.supabase.protocol}://${config.supabase.domain}:${config.supabase.port}`,
-	config.supabase.anon_key,
-)
+	config.supabase.service_role_key,
+	{
+		db: {
+			schema: schemaName
+		}
+	}
+);

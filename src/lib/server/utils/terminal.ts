@@ -106,5 +106,18 @@ export default {
 	log,
 	error,
 	warn
+	// debug: (...args: unknown[]) => {
+	// 	if (config.logs.debug) {
+	// 		const callsite = getCallsite();
+	// 		if (doLog)
+	// 			console.debug(
+	// 				new Date().toISOString(),
+	// 				chalk.gray(`[${callsite}]`),
+	// 				'(DEBUG)',
+	// 				...args
+	// 			);
+	// 		return save(callsite, 'debug', ...args);
+	// 	}
+	// }
 	// clear: console.clear
 };

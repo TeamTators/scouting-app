@@ -11,7 +11,7 @@ Row of minimized dashboard cards for quick restore.
 ```
 -->
 <script lang="ts">
-	import { Dashboard } from '$lib/model/dashboard';
+	import { Dashboard } from '$lib/utils/dashboard';
 
 	interface Props {
 		dashboard: Dashboard.Dashboard;

@@ -10,17 +10,9 @@ Sign-up page at `/account/sign-up`.
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
 
-	let { form }: { form?: ActionData } = $props();
-
 	let password = $state('');
 	let confirmPassword = $state('');
 	const passwordResult = $derived(passwordStrength(password));
-
-	$effect(() => {
-		if (form?.redirect && browser) {
-			goto(form.redirect);
-		}
-	});
 </script>
 
 <main>
@@ -35,15 +27,6 @@ Sign-up page at `/account/sign-up`.
 		</div>
 		<div class="row mb-3">
 			<form action="?/register" method="post">
-				<div id="formMessage" class:d-none={!form?.message}>
-					{#if form?.message}
-						{#if form.message === 'Account created'}
-							<p class="text-success">Account created successfully</p>
-						{:else}
-							<p class="text-danger">{form.message}</p>
-						{/if}
-					{/if}
-				</div>
 				<div class="container">
 					<div class="row">
 						<div class="col-md-6">

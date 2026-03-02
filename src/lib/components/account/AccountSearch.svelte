@@ -3,13 +3,13 @@
 Account search input with debounced query results.
 
 **Props**
-- `onselect`: `(account: Account.AccountData) => void` — Called when an account is chosen.
-- `onsearch`?: `(accounts: Account.AccountData[]) => void` — Called with search results.
-- `filter`?: `(account: Account.AccountData) => boolean` — Optional filter.
+- `onselect`: `(account: Account) => void` — Called when an account is chosen.
+- `onsearch`?: `(accounts: Account[]) => void` — Called with search results.
+- `filter`?: `(account: Account) => boolean` — Optional filter.
 
 **Exports**
 - `search(query: string)`: run a debounced search.
-- `select(account: Account.AccountData)`: select an account programmatically.
+- `select(account: Account)`: select an account programmatically.
 
 **Example**
 ```svelte
@@ -17,12 +17,15 @@ Account search input with debounced query results.
 ```
 -->
 <script lang="ts">
-	import { Account } from '$lib/model/account';
+	import { Account, getAccountFactory } from '$lib/model/account';
+	import supabase from '$lib/services/supabase';
+
+	const factory = getAccountFactory(supabase);
 
 	interface Props {
-		onselect: (account: Account.AccountData) => void;
-		onsearch?: (account: Account.AccountData[]) => void;
-		filter?: (account: Account.AccountData) => boolean;
+		onselect: (account: Account) => void;
+		onsearch?: (account: Account[]) => void;
+		filter?: (account: Account) => boolean;
 	}
 
 	const { onselect, onsearch, filter }: Props = $props();
@@ -31,18 +34,22 @@ Account search input with debounced query results.
 
 	let timeout: ReturnType<typeof setTimeout>;
 
-	let results = $state(Account.Account.arr());
+	let results = $state(factory.arr());
 
-	export const search = (query: string) => {
+	export const search = (username: string) => {
 		if (timeout) clearTimeout(timeout);
 		timeout = setTimeout(() => {
-			results = Account.search(query);
+			results = factory.search({
+				field: 'username',
+				operator: 'ilike',
+				value: `%${username}%`
+			});
 			if (filter) results.filter(filter);
 			if (onsearch) onsearch(results.data);
 		}, 300);
 	};
 
-	export const select = (account: Account.AccountData) => {
+	export const select = (account: Account) => {
 		onselect(account);
 		query = '';
 	};
@@ -59,11 +66,11 @@ Account search input with debounced query results.
 	{#if query}
 		<div class="search-results card mt-1">
 			<ul class="list-group list-group-flush">
-				{#each $results as account (account.data.id)}
+				{#each $results as account (account.id)}
 					<li class="list-group-item list-group-item-action">
 						<button type="button" class="btn" onclick={() => select(account)}>
-							{account.data.username} - {account.data.firstName}
-							{account.data.lastName}
+							{account.username} - {account.firstName}
+							{account.lastName}
 						</button>
 					</li>
 				{/each}

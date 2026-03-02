@@ -1,18 +1,23 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 
-import type { Connection } from '$lib/server/services/sse';
-import type { Account } from '$lib/server/structs/account';
-import type { Session } from '$lib/server/structs/session';
+import type { Account } from '$lib/model/account';
+import type { createServerClient } from '@supabase/ssr';
+import type { Session } from '@supabase/supabase-js';
+import type { ResultPromise } from 'ts-utils';
+import type { DB } from '$lib/services/supabase/supastruct';
 
 // for information about these interfaces
 declare global {
 	namespace App {
 		// interface Error {}
 		interface Locals {
-			account?: Account.AccountData | undefined;
-			session: Session.SessionData;
 			start: number;
-			sse?: Connection;
+			supabase: ReturnType<typeof createServerClient<DB>>;
+			getSession: () => ResultPromise<{
+				user: Session['user'] | null;
+				session: Session | null;
+				account: Account | null;
+			}>;
 		}
 		// interface PageData {}
 		// interface PageState {}
@@ -50,7 +55,7 @@ declare global {
 		supabase: {
 			url: string;
 			anon_key: string;
-		}
+		};
 	};
 }
 

@@ -1,4 +1,4 @@
-import { Navbar } from '$lib/model/navbar';
+import { Navbar } from '$lib/nav';
 import * as remote from '$lib/remotes/features.remote';
 
 export default async () => {

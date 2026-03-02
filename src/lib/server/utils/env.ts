@@ -76,7 +76,6 @@ type EnvConfig<T> = {
 	type?: string;
 };
 
-
 const filepath = path.join(process.cwd(), '.env.example');
 let current = '';
 try {

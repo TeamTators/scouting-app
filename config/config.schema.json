@@ -68,9 +68,28 @@
 				"anon_key": {
 					"type": "string",
 					"description": "Supabase anon key (for client-side use)"
+				},
+				"service_role_key": {
+					"type": "string",
+					"description": "Supabase service role key (for server-side use)"
+				},
+				"local_ip": {
+					"type": "string",
+					"description": "Local IP address for connecting to Supabase (for self-hosted instances)",
+					"format": "ipv4"
 				}
 			},
-			"required": ["tenant_id", "password", "domain", "port", "protocol", "anon_key", "schema"],
+			"required": [
+				"tenant_id",
+				"password",
+				"domain",
+				"port",
+				"protocol",
+				"anon_key",
+				"service_role_key",
+				"schema",
+				"local_ip"
+			],
 			"additionalProperties": false
 		},
 		"sessions": {

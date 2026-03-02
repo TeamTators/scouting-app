@@ -91,7 +91,9 @@ export default z.object({
 		port: z.number().min(1).max(65535),
 		protocol: z.enum(['http', 'https']),
 		anon_key: z.string().min(1),
-		schema: z.string().min(1)
+		schema: z.string().min(1),
+		service_role_key: z.string().min(1),
+		local_ip: z.string().ip()
 	}),
 	sessions: z.object({
 		auto_sign_in: z.string().optional(),

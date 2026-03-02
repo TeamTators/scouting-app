@@ -14,7 +14,7 @@ Profile display shell for an account.
 	import type { Account } from '$lib/model/account';
 
 	interface Props {
-		account: Account.AccountData;
+		account: Account;
 	}
 
 	const { account: _account }: Props = $props();

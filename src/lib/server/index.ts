@@ -8,11 +8,7 @@
  * import '$lib/server';
  */
 
-import { Struct } from 'drizzle-struct';
-import terminal from './utils/terminal';
 import testSchema from '../../../scripts/test-schema';
-import { config } from './utils/env';
-import { makeFeatureNotifications } from './utils/features';
 
 testSchema('false');
 
@@ -22,6 +18,4 @@ testSchema('false');
  * - Starts the lifetime cleanup loop.
  * - Ensures the configured admin account exists and is verified.
  */
-export const postBuild = async () => {
-};
-
+export const postBuild = async () => {};
