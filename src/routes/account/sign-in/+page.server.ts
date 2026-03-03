@@ -1,9 +1,6 @@
 /**
  * @fileoverview Server load/actions for `/account/sign-in`.
  */
-/**
- * @fileoverview Server load/actions for `/account/sign-in`.
- */
 import { fail, redirect } from '@sveltejs/kit';
 import { getAccountFactory } from '$lib/model/account.js';
 import { ServerCode } from 'ts-utils/status';
@@ -60,10 +57,19 @@ export const actions = {
 			}
 		}
 
+		let url = '/'
+
+		const session = await event.locals.getSession();
+		if (session.isErr()) {
+			terminal.error(session.error);
+		} else if (session.value) {
+			url = session.value.prevUrl || '/';
+		}
+
 		return {
 			message: 'Logged in',
 			user: res.data.username,
-			redirect: event.locals.session.data.prevUrl || '/',
+			redirect: url,
 			success: true
 		};
 	},
@@ -97,42 +103,42 @@ export const actions = {
 
 		throw redirect(ServerCode.temporaryRedirect, authorizeUrl);
 	},
-	'request-password-reset': async (event) => {
-		const formdata = await event.request.formData();
-		const user = z.string().safeParse(formdata.get('user'));
-		terminal.log(user);
-		const exit = () => ({
-			redirect: '/account/password-reset'
-		});
-		if (!user.success) {
-			terminal.error(user.error);
-			return exit();
-		}
+	// 'request-password-reset': async (event) => {
+	// 	const formdata = await event.request.formData();
+	// 	const user = z.string().safeParse(formdata.get('user'));
+	// 	terminal.log(user);
+	// 	const exit = () => ({
+	// 		redirect: '/account/password-reset'
+	// 	});
+	// 	if (!user.success) {
+	// 		terminal.error(user.error);
+	// 		return exit();
+	// 	}
 
-		let account = await Account.Account.get({ username: user.data }, { type: 'single' });
-		if (account.isErr()) {
-			terminal.error(account.error);
-			return exit();
-		}
+	// 	let account = await Account.Account.get({ username: user.data }, { type: 'single' });
+	// 	if (account.isErr()) {
+	// 		terminal.error(account.error);
+	// 		return exit();
+	// 	}
 
-		if (!account.value) {
-			account = await Account.Account.get({ email: user.data }, { type: 'single' });
-			if (account.isErr()) {
-				terminal.error(account.error);
-				return exit();
-			}
-		}
+	// 	if (!account.value) {
+	// 		account = await Account.Account.get({ email: user.data }, { type: 'single' });
+	// 		if (account.isErr()) {
+	// 			terminal.error(account.error);
+	// 			return exit();
+	// 		}
+	// 	}
 
-		if (!account.value) {
-			return exit();
-		}
+	// 	if (!account.value) {
+	// 		return exit();
+	// 	}
 
-		const reset = await Account.requestPasswordReset(account.value);
+	// 	const reset = await Account.requestPasswordReset(account.value);
 
-		if (reset.isErr()) {
-			terminal.error(reset.error);
-		}
+	// 	if (reset.isErr()) {
+	// 		terminal.error(reset.error);
+	// 	}
 
-		return exit();
-	}
+	// 	return exit();
+	// }
 };

@@ -8,9 +8,8 @@ import createTree from '../scripts/create-route-tree';
 import { config } from '$lib/server/utils/env';
 import { createServerClient } from '@supabase/ssr';
 import { attemptAsync } from 'ts-utils';
-import type { Session } from '@supabase/supabase-js';
-import { Account, getAccountFactory } from '$lib/model/account';
 import { type DB } from '$lib/services/supabase/supastruct';
+import { getSessionFactory, Session } from '$lib/server/model/session';
 
 (async () => {
 	await createTree();
@@ -34,31 +33,23 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	);
 
-	const accountFactory = getAccountFactory(event.locals.supabase, {
+	const sessionFactory = getSessionFactory(event.locals.supabase, {
 		debug: true,
 	});
 
-	let user: Session['user'] | null = null;
 	let session: Session | null = null;
-	let account: Account | null = null;
 	event.locals.getSession = () => {
 		return attemptAsync(async () => {
-			if (user && session) {
-				return { user, session, account };
+			if (session) {
+				return session;
 			}
-			const userData = await event.locals.supabase.auth.getUser();
-			const sessionData = await event.locals.supabase.auth.getSession();
-			if (userData.error) throw userData.error;
-			if (sessionData.error) throw sessionData.error;
-			user = userData.data.user;
-			session = sessionData.data.session;
-			const accountRes = await accountFactory.getSelf();
-			if (accountRes.isErr()) {
-				terminal.log('Error fetching account:', accountRes.error);
-			} else {
-				account = accountRes.value;
+			const res = await sessionFactory.getSelf();
+			if (res.isErr()) {
+				terminal.error('Error getting session:', res.error);
+				return null;
 			}
-			return { user: userData.data.user, session: sessionData.data.session, account };
+			session = res.value;
+			return session;
 		});
 	};
 	try {

@@ -8,7 +8,7 @@ import {
 	type SearchQuery
 } from '$lib/services/supabase/supastruct';
 import { WritableArray, WritableBase } from '$lib/services/writables';
-import { TempMap } from '$lib/utils/temp-map';
+// import { TempMap } from '$lib/utils/temp-map';
 import type { Session } from '@supabase/supabase-js';
 import { attemptAsync } from 'ts-utils';
 
@@ -150,12 +150,12 @@ class AccountFactory {
 
 // browser only instance of the factory, to avoid creating multiple instances in the client
 // if we are on the server, this will always be null and a new instance will be created for each request, which is fine since the server is stateless
-const factories = new TempMap<Client, AccountFactory>();
+// const factories = new TempMap<Client, AccountFactory>();
 export const getAccountFactory = (client: Client, config: {
 	debug?: boolean;
 } = {}) => {
-	const has = factories.get(client);
-	if (has) return has;
+	// const has = factories.get(client);
+	// if (has) return has;
 	const profile = SupaStruct.get({
 		name: 'profile',
 		client,
@@ -185,6 +185,6 @@ export const getAccountFactory = (client: Client, config: {
 		notifications,
 		...config,
 	});
-	factories.set(client, a);
+	// factories.set(client, a);
 	return a;
 };

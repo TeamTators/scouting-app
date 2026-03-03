@@ -1,10 +1,9 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 
-import type { Account } from '$lib/model/account';
 import type { createServerClient } from '@supabase/ssr';
-import type { Session } from '@supabase/supabase-js';
 import type { ResultPromise } from 'ts-utils';
 import type { DB } from '$lib/services/supabase/supastruct';
+import { Session } from '$lib/server/model/session';
 
 // for information about these interfaces
 declare global {
@@ -13,11 +12,7 @@ declare global {
 		interface Locals {
 			start: number;
 			supabase: ReturnType<typeof createServerClient<DB>>;
-			getSession: () => ResultPromise<{
-				user: Session['user'] | null;
-				session: Session | null;
-				account: Account | null;
-			}>;
+			getSession: () => ResultPromise<Session | null>;
 		}
 		// interface PageData {}
 		// interface PageState {}

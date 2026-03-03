@@ -8,21 +8,17 @@ import { domain, str } from '$lib/server/utils/env';
 import { getAccountFactory } from '$lib/model/account';
 import serverSB from '$lib/server/services/supabase';
 
-export const load = async (event) => {
-	const res = await event.locals.getSession();
+// export const load = async (event) => {
+// 	const res = await event.locals.getSession();
 
-	if (res.isErr()) {
-		return {
-			session: null
-		};
-	}
+// 	if (res.isErr()) {
+// 		return {
+// 			session: null
+// 		};
+// 	}
 
-	if (res.value.session) {
-		redirect(ServerCode.seeOther, '/account');
-	}
-
-	return { url: event.url.origin };
-};
+// 	return { url: event.url.origin };
+// };
 
 export const actions = {
 	register: async (event) => {
@@ -37,11 +33,39 @@ export const actions = {
 		const username = String(formData.get('username'));
 		const firstName = String(formData.get('firstName'));
 		const lastName = String(formData.get('lastName'));
-    
+
 		if (!validEmail) {
-			return fail(400, { errors: { email: "Please enter a valid email address" }, email })
+			return {
+				success: false,
+				message: 'Please enter a valid email address.'
+			}
 		}
 
+    
+		const accountFactory = getAccountFactory(serverSB, {
+			debug: true,
+		});
+
+		const exists = await accountFactory.profile.getOR({
+			username,
+			email,
+		}, {
+			type: 'single',
+		});
+
+		if (exists.isErr()) {
+			return {
+				success: false,
+				message: 'An error occurred while checking your information. Please try again later.'
+			}
+		}
+
+		if (exists.value) {
+			return {
+				success: false,
+				message: 'An account with that email or username already exists.'
+			}
+		}
 		const { data, error } = await supabase.auth.signUp({
 			email,
 			password,
@@ -58,9 +82,6 @@ export const actions = {
 		}
 
 		if (data.user) {
-			const accountFactory = getAccountFactory(serverSB, {
-				debug: true,
-			});
 			const res = await accountFactory.profile.new({
 				username,
 				first_name: firstName,
