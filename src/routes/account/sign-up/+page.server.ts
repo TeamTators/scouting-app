@@ -87,6 +87,7 @@ export const actions = {
 				first_name: firstName,
 				last_name: lastName,
 				id: data.user.id,
+				email,
 			}).await();
 
 			if (res.isErr()) {

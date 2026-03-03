@@ -107,6 +107,7 @@ export class WritableBase<T> implements Writable<T> {
 	subscribe(run: Subscriber<T>): Unsubscriber {
 		run(this.data);
 		this.subscribers.add(run);
+		this.emit('subscribe', run);
 		return () => {
 			this.subscribers.delete(run);
 			this.unsub();

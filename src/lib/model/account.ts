@@ -83,9 +83,9 @@ class AccountFactory {
 	}
 
 	log(...args: unknown[]) {
-		if (this.config.debug) {
+		// if (this.config.debug) {
 			console.log('[AccountFactory]', ...args);
-		}
+		// }
 	}
 
 	get supabase() {
@@ -106,8 +106,10 @@ class AccountFactory {
 			const { data, error } = await this.supabase.auth.getUser();
 			if (error) throw error;
 			const { user } = data;
+			this.log('getSelf() user:', user);
 			if (!user) return null;
 			const profile = await this.profile.fromId(user.id).unwrap();
+			this.log('getSelf() profile:', profile);
 			if (!profile) return null;
 			return new Account(profile, this, user);
 		});

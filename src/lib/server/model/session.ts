@@ -51,9 +51,19 @@ export class Session {
 
     getAccount() {
         return attemptAsync(async () => {
-            const accountFactory = getAccountFactory(this.config.client);
+            const accountFactory = getAccountFactory(this.config.client, {
+                debug: this.config.debug,
+            });
             const self = await accountFactory.getSelf().unwrap();
             return self;
+        });
+    }
+
+    getUser() {
+        return attemptAsync(async () => {
+            const { data, error } = await this.config.client.auth.getUser();
+            if (error) throw error;
+            return data.user;
         });
     }
 
@@ -127,13 +137,14 @@ export class Session {
 
 class SessionFactory {
     constructor(public readonly config: {
+        client: Client;
         debug?: boolean;
         session: SupaStruct<'session'>;
     }) {
     }
 
     get session() {
-        return this.config.session.supabase;
+        return this.config.client;
     }
 
     log(...args: unknown[]) {
@@ -164,19 +175,24 @@ class SessionFactory {
             ));
 
             const sessionId = payload.session_id;
-            let session = await this.config.session.fromId(sessionId).unwrap();
-            if (!session) {
-                const created = await this.config.session.new({
-                    id: sessionId,
-                    account_id: data.session.user.id,
-                }).await().unwrap();
-                if ('result' in created) {
-                    session = created.result[0];
-                }
+            let session: SupaStructData<'session'>;
+            const res = await this.config.session.upsert({
+                id: sessionId,
+                account_id: data.session.user.id,
+                prev_url: null,
+            }).await().unwrap();
+            if ('error' in res) {
+                throw res.error;
+            } else if ('result' in res) {
+                session = res.result[0];
+            } else {
+                throw new Error('Unexpected response from session upsert');
             }
+
             if (!session) {
-                    throw new Error('Failed to create session');
+                throw new Error('Failed to create or retrieve session');
             }
+
             return this.Generator(data.session, session);
         });
     }
@@ -191,9 +207,10 @@ export const getSessionFactory = (client: Client, config?: {
     //     return existing;
     // }
     const factory = new SessionFactory({
+        client,
         session: SupaStruct.get({
             name: 'session',
-            client,
+            client: supabase,
             ...config,
         }),
     });

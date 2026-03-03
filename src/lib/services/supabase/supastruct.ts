@@ -4,7 +4,7 @@ import { type Database } from '$lib/types/supabase';
 import { attempt, attemptAsync, ComplexEventEmitter, ResultPromise, type Result } from 'ts-utils';
 import { WritableArray, WritableBase } from '../writables';
 import { type SchemaName, schemaName } from '$lib/types/supabase-schema';
-import type { createClient, RealtimeChannel } from '@supabase/supabase-js';
+import { RealtimeChannel, type createClient } from '@supabase/supabase-js';
 import { schemas } from '$lib/types/supabase-zod';
 import z from 'zod';
 import { browser } from '$app/environment';
@@ -102,12 +102,16 @@ export class SupaStruct<Name extends Names> {
 	}
 
 	private log(...args: unknown[]) {
-		if (this.config.debug) {
+		// if (this.config.debug) {
 			console.log(`[SupaStruct ${this.name}]`, ...args);
-		}
+		// }
 	}
 
-	public setupListeners() {
+	private listening = false;
+
+	private setupListeners() {
+		if (this.listening) return false;
+		this.listening = true;
 		this.channel.on(
 			'postgres_changes',
 			{
@@ -189,9 +193,7 @@ export class SupaStruct<Name extends Names> {
 				}
 			}
 		);
-		this.channel.subscribe((status) => {
-			this.log('Subscription status:', status);
-		});
+		return true;
 	}
 
 	runTransaction(
@@ -261,16 +263,43 @@ export class SupaStruct<Name extends Names> {
 		}
 	>();
 
+	private unsub(timeout?: number) {
+		return attempt(() => this.channel.unsubscribe(timeout));
+	}
+
+	private sub(fn?: (status: string) => void) {
+		return attempt(() => this.channel.subscribe(fn));
+	}
+
 	registerArray(
 		name: string,
 		array: SupaStructArray<Name>,
 		satisfies: (data: PartialRow<Name>) => boolean
 	) {
-		if (browser)
+		if (browser){
 			this.registeredArrays.set(name, {
 				array,
 				satisfies
 			});
+			array.once('subscribe', () => {
+				const listened = this.setupListeners();
+				if (listened) {
+					const res = this.sub((status) => {
+						this.log(`Subscription status for array ${name}:`, status);
+					});
+					if (res.isErr()) {
+						this.log(`Error subscribing to channel for array ${name}:`, res.error);
+					}
+				}
+			});
+			array.once('all-unsubscribe', () => {
+				for (const item of this.registeredArrays.values()) {
+					// if any array is still subscribe, don't unsubscribe from the channel
+					if (item.array.subscribers.size > 0) return;
+				}
+				this.unsub();
+			});
+		}
 	}
 
 	Generator(row: unknown) {
@@ -376,6 +405,80 @@ export class SupaStruct<Name extends Names> {
 			});
 		return status;
 	}
+
+	upsert(...data: Insert<Name>[]) {
+		this.log('Upserting data with input:', data);
+		const status = new SupaStatus<SupaStructData<Name>[]>();
+		const parsed = z.array(schemas[this.name].Insert).safeParse(data);
+		if (!parsed.success) {
+			this.log(`Error validating upsert data for table ${this.name}:`, parsed.error);
+			status.set({
+				pending: false,
+				error: new Error(`Invalid data for table ${this.name}: ` + parsed.error.message),
+			});
+			return status;
+		}
+
+		this.log('Validated upsert data:', parsed.data);
+		this.supabase.schema(schemaName).from(this.name).upsert(data as any).select('*').then((res) => {
+			this.log('Received response for upsert data:', res);
+			const transactionResult = this.runTransaction({
+				data: res.data as any,
+				error: res.error,
+			}, 'array');
+			if (transactionResult.isErr()) {
+				status.set({
+					pending: false,
+					error: new Error(`Failed to upsert row into table ${this.name}: ` + transactionResult.error.message),
+				});
+			} else {
+				status.set({
+					pending: false,
+					result: transactionResult.value.map((item) => this.Generator(item)),
+				});
+			}
+		});
+
+
+		return status;
+	}
+
+	// getsert(...data: Insert<Name>[]) {
+	// 	this.log('Getserting data with input:', data);
+	// 	const status = new SupaStatus<SupaStructData<Name>[]>();
+	// 	const parsed = z.array(schemas[this.name].Insert).safeParse(data);
+	// 	if (!parsed.success) {
+	// 		this.log(`Error validating getsert data for table ${this.name}:`, parsed.error);
+	// 		status.set({
+	// 			pending: false,
+	// 			error: new Error(`Invalid data for table ${this.name}: ` + parsed.error.message),
+	// 		});
+	// 		return status;
+	// 	}
+
+	// 	this.log('Validated getsert data:', parsed.data);
+	// 	const upsertData = parsed.data as any;
+	// 	this.supabase.schema(schemaName).from(this.name).upsert(upsertData, { onConflict: 'id' }).select('*').then((res) => {
+	// 		this.log('Received response for getsert data:', res);
+	// 		const transactionResult = this.runTransaction({
+	// 			data: res.data as any,
+	// 			error: res.error,
+	// 		}, 'array');
+	// 		if (transactionResult.isErr()) {
+	// 			status.set({
+	// 				pending: false,
+	// 				error: new Error(`Failed to getsert row into table ${this.name}: ` + transactionResult.error.message),
+	// 			});
+	// 		} else {
+	// 			status.set({
+	// 				pending: false,
+	// 				result: transactionResult.value.map((item) => this.Generator(item)),
+	// 			});
+	// 		}
+	// 	});
+
+	// 	return status;
+	// }
 
 	fromId(id: Row<Name>['id']) {
 		return attemptAsync(async () => {
@@ -513,6 +616,15 @@ export class SupaStruct<Name extends Names> {
 		get().then(data => {
 			this.log(`Fetched with getOR query ${JSON.stringify(data)} from ${this.name}:`, data);
 			arr.set(data.map((item) => this.Generator(item)));
+		});
+
+		this.registerArray(cacheKey, arr, (row) => {
+			for (const [key, value] of Object.entries(data)) {
+				if ((row as any)[key] === value) {
+					return true;
+				}
+			}
+			return false;
 		});
 
 		return arr;

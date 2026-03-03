@@ -6,8 +6,6 @@ Sign-in page at `/account/sign-in`.
 	import '$lib/styles/gsi.css';
 	import type { ActionData } from './$types';
 	import Password from '$lib/components/forms/Password.svelte';
-	import { goto } from '$app/navigation';
-	import { browser } from '$app/environment';
 	import { Form } from '$lib/utils/form';
 
 	let { form }: { form?: ActionData } = $props();
@@ -77,6 +75,15 @@ Sign-in page at `/account/sign-in`.
 				<button type="submit" class="btn btn-primary" id="signInButton"> Sign In </button>
 			</form>
 		</div>
+		{#if form?.message}
+			<div class="row mb-3">
+				<div class="col">
+					<div class="alert alert-info" role="alert">
+						{form.message}
+					</div>
+				</div>
+			</div>
+		{/if}
 		<div class="row mb-3">
 			<div class="col">
 				<form action="?/OAuth2" method="POST">

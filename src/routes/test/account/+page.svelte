@@ -6,6 +6,9 @@ Test account page at `/test/account`.
 	const { data } = $props();
 
 	const account = $derived(data.account);
+	const success = $derived(data.success);
+	const error = $derived(data.error);
+	const message = $derived(data.message);
 </script>
 
 {#if account}
@@ -14,4 +17,12 @@ Test account page at `/test/account`.
 	</h1>
 {:else}
 	<h1 id="accountInfo" data-success={false}>You are not signed in.</h1>
+{/if}
+<small>{message}</small>
+
+{#if success}
+	<p id="success" data-success={true}>Success: {success}</p>
+{/if}
+{#if error}
+	<p id="error" data-success={false}>Error: {error}</p>
 {/if}
