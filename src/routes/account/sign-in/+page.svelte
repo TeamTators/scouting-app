@@ -12,14 +12,6 @@ Sign-in page at `/account/sign-in`.
 
 	let { form }: { form?: ActionData } = $props();
 
-	// let user = $state(form?.user || '');
-
-	$effect(() => {
-		if (form?.redirect && browser) {
-			goto(form.redirect);
-		}
-	});
-
 	const requestPasswordReset = () => {
 		new Form()
 			// '/account/sign-in?/request-password-reset',
@@ -82,15 +74,6 @@ Sign-in page at `/account/sign-in`.
 				</div>
 
 				<hr />
-				{#if form?.message}
-					{#if form.message === 'Logged in'}
-						<p class="text-success">Logged in successfully</p>
-					{:else}
-						<p class="text-danger">
-							{form.message}
-						</p>
-					{/if}
-				{/if}
 				<button type="submit" class="btn btn-primary" id="signInButton"> Sign In </button>
 			</form>
 		</div>

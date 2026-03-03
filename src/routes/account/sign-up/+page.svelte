@@ -5,14 +5,17 @@ Sign-up page at `/account/sign-up`.
 <script lang="ts">
 	import '$lib/styles/gsi.css';
 	import { passwordStrength } from 'check-password-strength';
-	import type { ActionData } from './$types';
+	// import type { ActionData } from './$types';
 	import Password from '$lib/components/forms/Password.svelte';
-	import { browser } from '$app/environment';
-	import { goto } from '$app/navigation';
+	// import { browser } from '$app/environment';
+	// import { goto } from '$app/navigation';
+
+	const { form } = $props();
 
 	let password = $state('');
 	let confirmPassword = $state('');
 	const passwordResult = $derived(passwordStrength(password));
+
 </script>
 
 <main>

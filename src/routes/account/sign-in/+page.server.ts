@@ -5,13 +5,13 @@
  * @fileoverview Server load/actions for `/account/sign-in`.
  */
 import { fail, redirect } from '@sveltejs/kit';
-import { Account } from '$lib/server/structs/account.js';
-import { Session } from '$lib/server/structs/session.js';
+import { getAccountFactory } from '$lib/model/account.js';
 import { ServerCode } from 'ts-utils/status';
 import { z } from 'zod';
 import { OAuth2Client } from 'google-auth-library';
 import terminal from '$lib/server/utils/terminal';
 import { domain, str } from '$lib/server/utils/env';
+import serverSB from '$lib/server/services/supabase';
 
 export const actions = {
 	login: async (event) => {
@@ -33,61 +33,31 @@ export const actions = {
 			});
 		}
 
-		let account: Account.AccountData | undefined;
-
-		ACCOUNT: {
-			const user = await Account.Account.get(
-				{ username: res.data.username },
-				{
-					type: 'single'
-				}
-			);
-			if (user.isErr()) {
-				return fail(ServerCode.internalServerError, {
-					user: res.data.username,
-					message: 'Failed to get user'
+		let email = res.data.username;
+		// is a username
+		if (!email.includes('@')) {
+			const factory = getAccountFactory(serverSB);
+			const profile = await factory.profile.get({
+				username: email,
+			}, {
+				type: 'single',
+			});
+			if (profile.isErr()) {
+				terminal.error(profile.error);
+				throw fail(ServerCode.internalServerError, {
+					message: 'An error occurred while logging in',
+					user: res.data.username
 				});
-			}
-			account = user.value;
-			if (account) break ACCOUNT;
-
-			const email = await Account.Account.get(
-				{ email: res.data.username },
-				{
-					type: 'single'
+			} else {
+				if (profile.value && profile.value.data.email) {
+					email = profile.value.data.email;
+				} else {
+					return fail(ServerCode.unauthorized, {
+						message: 'Invalid username/email or password',
+						user: res.data.username
+					});
 				}
-			);
-			if (email.isErr()) {
-				return fail(ServerCode.internalServerError, {
-					user: res.data.username,
-					message: 'Failed to get user'
-				});
 			}
-			account = email.value;
-			if (account) break ACCOUNT;
-
-			return fail(ServerCode.badRequest, {
-				user: res.data.username,
-				message: 'Invalid username or email'
-			});
-		}
-
-		const pass = Account.hash(res.data.password, account.data.salt);
-		if (pass.isErr()) {
-			terminal.error(pass.error);
-			return fail(ServerCode.internalServerError, {
-				user: res.data.username,
-				message: 'Failed to hash password'
-			});
-		}
-
-		const sessionRes = await Session.signIn(account, event.locals.session);
-		if (sessionRes.isErr()) {
-			terminal.error(sessionRes.error);
-			return fail(ServerCode.internalServerError, {
-				user: res.data.username,
-				message: 'Failed to sign in'
-			});
 		}
 
 		return {

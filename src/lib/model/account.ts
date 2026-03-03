@@ -8,6 +8,7 @@ import {
 	type SearchQuery
 } from '$lib/services/supabase/supastruct';
 import { WritableArray, WritableBase } from '$lib/services/writables';
+import { TempMap } from '$lib/utils/temp-map';
 import type { Session } from '@supabase/supabase-js';
 import { attemptAsync } from 'ts-utils';
 
@@ -56,6 +57,8 @@ export class Account extends WritableBase<{
 	getNotifications() {
 		return this.factory.config.notifications.get({
 			account_id: this.id
+		}, {
+			type: 'all',
 		});
 	}
 }
@@ -73,8 +76,17 @@ class AccountFactory {
 			role: SupaStruct<'role'>;
 			roleAccount: SupaLinkingStruct<'role_account', 'profile', 'role'>;
 			notifications: SupaStruct<'account_notification'>;
+			debug?: boolean;
 		}
-	) {}
+	) {
+		this.log('AccountFactory initialized');
+	}
+
+	log(...args: unknown[]) {
+		if (this.config.debug) {
+			console.log('[AccountFactory]', ...args);
+		}
+	}
 
 	get supabase() {
 		return this.config.profile.supabase;
@@ -90,10 +102,11 @@ class AccountFactory {
 
 	getSelf() {
 		return attemptAsync(async () => {
+			this.log('Fetching self account');
 			const { data, error } = await this.supabase.auth.getUser();
 			if (error) throw error;
 			const { user } = data;
-			if (!user) throw new Error('No user found');
+			if (!user) return null;
 			const profile = await this.profile.fromId(user.id).unwrap();
 			if (!profile) return null;
 			return new Account(profile, this, user);
@@ -137,33 +150,41 @@ class AccountFactory {
 
 // browser only instance of the factory, to avoid creating multiple instances in the client
 // if we are on the server, this will always be null and a new instance will be created for each request, which is fine since the server is stateless
-let AccountFactoryInstance: AccountFactory | null = null;
-export const getAccountFactory = (client: Client) => {
-	if (AccountFactoryInstance && browser) return AccountFactoryInstance;
+const factories = new TempMap<Client, AccountFactory>();
+export const getAccountFactory = (client: Client, config: {
+	debug?: boolean;
+} = {}) => {
+	const has = factories.get(client);
+	if (has) return has;
 	const profile = SupaStruct.get({
 		name: 'profile',
-		client
+		client,
+		...config
 	});
 	const role = SupaStruct.get({
 		name: 'role',
-		client
+		client,
+		...config,
 	});
 	const admin = SupaStruct.get({
 		name: 'admin',
-		client
+		client,
+		...config,
 	});
-	const roleAccount = SupaLinkingStruct.get('role_account', profile, role);
+	const roleAccount = SupaLinkingStruct.get('role_account', profile, role, config);
 	const notifications = SupaStruct.get({
 		name: 'account_notification',
-		client
+		client,
+		...config,
 	});
 	const a = new AccountFactory({
 		profile,
 		admin,
 		role,
 		roleAccount,
-		notifications
+		notifications,
+		...config,
 	});
-	if (browser) AccountFactoryInstance = a;
+	factories.set(client, a);
 	return a;
 };

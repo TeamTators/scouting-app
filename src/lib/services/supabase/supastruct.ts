@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // import supabase from "$lib/services/supabase";
 import { type Database } from '$lib/types/supabase';
-import { attempt, attemptAsync, ComplexEventEmitter, type Result } from 'ts-utils';
+import { attempt, attemptAsync, ComplexEventEmitter, ResultPromise, type Result } from 'ts-utils';
 import { WritableArray, WritableBase } from '../writables';
 import { type SchemaName, schemaName } from '$lib/types/supabase-schema';
 import type { createClient, RealtimeChannel } from '@supabase/supabase-js';
@@ -46,14 +46,32 @@ export type SupaConfig<Name> = {
 	client: Client;
 	versionHistory?: boolean;
 	debug?: boolean;
+	subscribe?: boolean;
 };
+
+export type ReadType = 'paginated' | 'all' | 'single' | 'count';
+
+export type ReadReturnType<Name extends Names> = SupaStructArray<Name> | SupaPagination<Name> | ResultPromise<SupaStructData<Name> | null> | ResultPromise<number>;
+
+export type ReadConfig<T extends ReadType> = {
+	type: T;
+} & (T extends 'all' ? {
+
+} : T extends 'paginated' ? {
+	limit: number;
+	page: number;
+} : T extends 'single' ? {
+
+} : T extends 'count' ? {
+	
+} : never);
 
 export class SupaStruct<Name extends Names> {
 	public static readonly structs = new Map<string, SupaStruct<Names>>();
 
 	public static get<Name extends Names>(config: SupaConfig<Name>): SupaStruct<Name> {
-		const existing = SupaStruct.structs.get(config.name);
-		if (existing) return existing as unknown as SupaStruct<Name>;
+		// const existing = SupaStruct.structs.get(config.name);
+		// if (existing) return existing as unknown as SupaStruct<Name>;
 		return new SupaStruct(config);
 	}
 
@@ -69,9 +87,10 @@ export class SupaStruct<Name extends Names> {
 	private readonly channel: RealtimeChannel;
 
 	constructor(public readonly config: SupaConfig<Name>) {
+		console.log(`${this.name} Debug:`, config.debug);
 		this.channel = this.supabase.channel(`struct-${schemaName}.${config.name}`);
-		this.setupListeners();
-		SupaStruct.structs.set(this.config.name, this as any);
+		// SupaStruct.structs.set(this.config.name, this as any);
+		this.log(`Initialized struct for table ${this.name}`);
 	}
 
 	get name() {
@@ -88,7 +107,7 @@ export class SupaStruct<Name extends Names> {
 		}
 	}
 
-	private setupListeners() {
+	public setupListeners() {
 		this.channel.on(
 			'postgres_changes',
 			{
@@ -277,7 +296,12 @@ export class SupaStruct<Name extends Names> {
 		return parseResult.data;
 	}
 
-	all() {
+	// TODO: Integrate pagination and count into
+	all(config: ReadConfig<'all'>): SupaStructArray<Name>;
+	// all(config: ReadConfig<'paginated'>): SupaPagination<Name>;
+	all(config: ReadConfig<'single'>): ResultPromise<SupaStructData<Name> | null>;
+	// all(config: ReadConfig<'count'>): ResultPromise<number>;
+	all(config: ReadConfig<ReadType>): ReadReturnType<Name> {
 		const has = this.registeredArrays.get('all');
 		if (has) return has.array;
 
@@ -292,6 +316,15 @@ export class SupaStruct<Name extends Names> {
 			}
 			return res.value;
 		};
+
+		if (config.type === 'single') {
+			return attemptAsync(async () => {
+				const [res] = await get();
+				if (res) return this.Generator(res);
+				return null;
+			});
+		}
+
 		const arr = this.arr();
 		get().then((data) => {
 			arr.set(data.map((item) => this.Generator(item)));
@@ -301,21 +334,25 @@ export class SupaStruct<Name extends Names> {
 	}
 
 	new(...data: Insert<Name>[]) {
+		this.log('Creating new data with input:', data);
 		const status = new SupaStatus<SupaStructData<Name>[]>();
 		const parsed = z.array(schemas[this.name].Insert).safeParse(data);
 		if (parsed.success === false) {
+			this.log(`Error validating new data for table ${this.name}:`, parsed.error);
 			status.set({
 				pending: false,
 				error: new Error(`Invalid data for table ${this.name}: ` + parsed.error.message)
 			});
 			return status;
 		}
+		this.log('Validated new data:', parsed.data);
 		this.supabase
 			.schema(schemaName)
 			.from(this.name)
 			.insert(data as any)
 			.select('*')
 			.then((res) => {
+				this.log('Received response for new data:', res);
 				const transactionResult = this.runTransaction(
 					{
 						data: res.data as any,
@@ -359,12 +396,17 @@ export class SupaStruct<Name extends Names> {
 				this.log(`Error fetching fromId ${id} from ${this.name}:`, transactionResult.error);
 				return undefined;
 			}
+			this.log(`Fetched fromId ${id} from ${this.name}:`, transactionResult.value);
 			return this.Generator(transactionResult.value);
 		});
 	}
 
 	// AND query
-	get(data: Partial<Row<Name>>) {
+	get(data: Partial<Row<Name>>, config: ReadConfig<'all'>): SupaStructArray<Name>;
+	get(data: Partial<Row<Name>>, config: ReadConfig<'single'>): ResultPromise<SupaStructData<Name> | null>;
+	// get(data: Partial<Row<Name>>, config: ReadConfig<'count'>): ResultPromise<number>;
+	// get(data: Partial<Row<Name>>, config: ReadConfig<'paginated'>): SupaPagination<Name>;
+	get(data: Partial<Row<Name>>, config: ReadConfig<ReadType>): ReadReturnType<Name> {
 		const cacheKey = JSON.stringify(`get:${JSON.stringify(data)}`);
 		const has = this.registeredArrays.get(cacheKey);
 		if (has) return has.array;
@@ -394,7 +436,19 @@ export class SupaStruct<Name extends Names> {
 			return transactionResult.value;
 		};
 
+		if (config.type === 'single') {
+			return attemptAsync(async () => {
+				const [res] = await get();
+				if (res) {
+					this.log(`Fetched with get query ${JSON.stringify(data)} from ${this.name}:`, res);
+					return this.Generator(res);
+				}
+				return null;
+			});
+		}
+
 		get().then((data) => {
+			this.log(`Fetched with get query ${JSON.stringify(data)} from ${this.name}:`, data);
 			arr.set(data.map((item) => this.Generator(item)));
 		});
 
@@ -405,6 +459,60 @@ export class SupaStruct<Name extends Names> {
 				}
 			}
 			return true;
+		});
+
+		return arr;
+	}
+
+	getOR(data: Partial<Row<Name>>, config: ReadConfig<'all'>): SupaStructArray<Name>;
+	getOR(data: Partial<Row<Name>>, config: ReadConfig<'single'>): ResultPromise<SupaStructData<Name> | null>;
+	// getOR(data: Partial<Row<Name>>, config: ReadConfig<'count'>): ResultPromise<number>;
+	// getOR(data: Partial<Row<Name>>, config: ReadConfig<'paginated'>): SupaPagination<Name>;
+	getOR(data: Partial<Row<Name>>, config: ReadConfig<ReadType>): ReadReturnType<Name> {
+		const cacheKey = JSON.stringify(`getOR:${JSON.stringify(data)}`);
+		const has = this.registeredArrays.get(cacheKey);
+		if (has) return has.array;
+
+		const get = async () => {
+			let query = this.supabase.schema(schemaName).from(this.name).select('*');
+			const keys = Object.keys(data);
+			for (const key of keys) {
+				query = query.or(`${key}.eq.${(data as any)[key]}`);
+			}
+
+			const res = await query;
+			const transactionResult = this.runTransaction(
+				{
+					data: res.data as any,
+					error: res.error
+				},
+				'array'
+			);
+			if (transactionResult.isErr()) {
+				this.log(
+					`Error fetching with getOR query ${JSON.stringify(data)} from ${this.name}:`,
+					transactionResult.error
+				);
+				return [];
+			}
+			return transactionResult.value;
+		}
+
+		if (config.type === 'single') {
+			return attemptAsync(async () => {
+				const [res] = await get();
+				if (res) {
+					this.log(`Fetched with getOR query ${JSON.stringify(data)} from ${this.name}:`, res);
+					return this.Generator(res);
+				}
+				return null;
+			});
+		}
+
+		const arr = this.arr();
+		get().then(data => {
+			this.log(`Fetched with getOR query ${JSON.stringify(data)} from ${this.name}:`, data);
+			arr.set(data.map((item) => this.Generator(item)));
 		});
 
 		return arr;
@@ -689,7 +797,8 @@ export class SupaStructData<Name extends Names> extends WritableBase<PartialRow<
 	derivedProperty(name: keyof Row<Name>) {
 		const state = new WritableBase<Row<Name>[keyof Row<Name>] | undefined>(this.data[name]);
 		let currentValue = this.data[name];
-		state.onAllUnsubscribe(
+		state.on(
+			'all-unsubscribe',
 			this.subscribe((data) => {
 				if (data[name] !== currentValue) {
 					currentValue = data[name];
@@ -801,24 +910,36 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 	public static get<Link extends Names, TableA extends Names, TableB extends Names>(
 		linkingTable: Link,
 		structA: SupaStruct<TableA>,
-		structB: SupaStruct<TableB>
+		structB: SupaStruct<TableB>,
+		config?: {
+			debug?: boolean;
+		}
 	): SupaLinkingStruct<Link, TableA, TableB> {
-		const key = `${linkingTable}-${structA.name}-${structB.name}`;
-		const existing = SupaLinkingStruct.linkingStructs.get(key);
-		if (existing) return existing as unknown as SupaLinkingStruct<Link, TableA, TableB>;
-		const newStruct = new SupaLinkingStruct(linkingTable, structA, structB);
-		if (browser) SupaLinkingStruct.linkingStructs.set(key, newStruct as any);
+		// const key = `${linkingTable}-${structA.name}-${structB.name}`;
+		// const existing = SupaLinkingStruct.linkingStructs.get(key);
+		// if (existing) return existing as unknown as SupaLinkingStruct<Link, TableA, TableB>;
+		const newStruct = new SupaLinkingStruct(linkingTable, structA, structB, config);
+		// if (browser) SupaLinkingStruct.linkingStructs.set(key, newStruct as any);
 		return newStruct;
 	}
 
 	constructor(
 		public readonly linkingTable: Link,
 		public readonly structA: SupaStruct<TableA>,
-		public readonly structB: SupaStruct<TableB>
+		public readonly structB: SupaStruct<TableB>,
+		public readonly config: {
+			debug?: boolean;
+		} = {}
 	) {}
 
 	get supabase() {
 		return this.structA.supabase;
+	}
+
+	log(...args: unknown[]) {
+		if (this.config.debug) {
+			console.log(`[SupaLinkingStruct ${this.linkingTable}]`, ...args);
+		}
 	}
 
 	link(a: SupaStructData<TableA>, b: SupaStructData<TableB>) {

@@ -34,7 +34,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	);
 
-	const accountFactory = getAccountFactory(event.locals.supabase);
+	const accountFactory = getAccountFactory(event.locals.supabase, {
+		debug: true,
+	});
 
 	let user: Session['user'] | null = null;
 	let session: Session | null = null;
