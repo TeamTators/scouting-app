@@ -31,12 +31,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: v22.12.0
+          node-version: v24.13.1
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10.16.0
+          version: 10.30.0
 
       - name: Install Dependencies
         run: pnpm i

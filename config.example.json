@@ -72,6 +72,18 @@
 		"debug": true,
 		"debounce_interval_ms": 16
 	},
+	"app_config": {
+		"servers": [
+			{
+				"domain": "http://localhost:2122",
+				"api_key": "some_api_key",
+				"data_pull": true,
+				"images": true,
+				"primary": true
+			}
+		],
+		"remote": true
+	},
 	"sse": {
 		"debug": false,
 		"ping_interval_ms": 30000,

@@ -10,7 +10,8 @@
 	import Comments from '$lib/components/app/Comments.svelte';
 	import AppView from '$lib/components/app/App.svelte';
 	import { goto } from '$app/navigation';
-	import { build as createApp } from '$lib/model/app/apps/all.js';
+	import create2025App from '$lib/model/app/apps/2025.js';
+	import create2026App from '$lib/model/app/apps/2026.js';
 	import PostApp from '$lib/components/app/PostApp.svelte';
 	import { getAlliance, MatchData } from '$lib/model/app/match-data.js';
 	import { fullscreen, isFullscreen } from '$lib/utils/fullscreen.js';
@@ -18,6 +19,8 @@
 	import ScoutInput from '$lib/components/app/ScoutInput.svelte';
 	import Slider from '$lib/components/app/Slider.svelte';
 	import ScoreContribution from '$lib/components/app/Contribution.svelte';
+	import Review from '$lib/components/app/Review.svelte';
+	import Settings from '$lib/components/app/Settings.svelte';
 
 	const { data } = $props();
 	const eventKey = $derived(data.eventKey);
@@ -141,13 +144,36 @@
 		// deinit = app.init(target);
 		// app.start();
 		// app.clickPoints(3);
-		app = createApp(_year as 2025 | 2026)({
-			eventKey,
-			match,
-			team,
-			compLevel,
-			alliance
-		});
+		// app = createApp({
+		// 	eventKey,
+		// 	match,
+		// 	team,
+		// 	compLevel,
+		// 	alliance
+		// });
+
+		switch (_year) {
+			case 2025:
+				app = create2025App({
+					eventKey,
+					match,
+					team,
+					compLevel,
+					alliance
+				});
+				break;
+			case 2026:
+				app = create2026App({
+					eventKey,
+					match,
+					team,
+					compLevel,
+					alliance
+				});
+				break;
+			default:
+				throw new Error(`Unsupported year ${_year}`);
+		}
 
 		matchData = app.matchData;
 
@@ -217,6 +243,7 @@
 						exitFullscreen();
 						if (app) postApp?.render(app);
 						app?.contribution.render();
+						app?.runProcessors();
 					}}
 				>
 					Post Match
@@ -248,10 +275,12 @@
 						<div class="col-md-4 col-sm-12">
 							<ScoutInput {accounts} />
 						</div>
-
 						<div class="col-md-8 col-sm-12">
 							<ScoreContribution {app} />
 						</div>
+					</div>
+					<div class="row mb-3">
+						<Review {app} />
 					</div>
 					<div class="row mb-3">
 						<div class="btn-group w-100" role="group">
@@ -449,9 +478,11 @@
 					Upload Matches</button
 				>
 			</div>
+			{#if app}
+				<Settings {app} />
+			{:else}
+				<p>App not generated yet, no app settings available.</p>
+			{/if}
 		</div>
-
-		<!-- TODO: Flip x and y -->
 	{/snippet}
-	{#snippet buttons()}{/snippet}
 </Modal>

@@ -1,9 +1,25 @@
+/**
+ * @fileoverview 2026 game-specific app builder scaffold.
+ */
+
 import type { CompLevel } from 'tatorscout/tba';
 import { App } from '../app';
 import type { Point2D } from 'math/point';
 import { AppObject } from '../app-object';
 import YearInfo2026 from 'tatorscout/years/2025.js';
 
+/**
+ * Builds a 2026 scouting app instance.
+ *
+ * @param {{
+ * 	eventKey: string;
+ * 	match: number;
+ * 	team: number;
+ * 	compLevel: CompLevel;
+ * 	alliance: 'red' | 'blue' | null;
+ * }} config - Match/team configuration.
+ * @returns {App} Configured app instance.
+ */
 export default (config: {
 	eventKey: string;
 	match: number;

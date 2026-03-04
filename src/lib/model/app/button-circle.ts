@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Legacy button-circle prototype (currently commented out / unused).
+ */
+
 // import type { Action } from 'tatorscout/trace';
 // import type { App } from './app';
 // import { Color } from 'colors/color';
