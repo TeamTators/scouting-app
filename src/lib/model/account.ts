@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { browser } from '$app/environment';
 import {
 	SupaLinkingStruct,
@@ -9,10 +10,9 @@ import {
 	type ReadType,
 	type SearchQuery,
 	type ReadReturnType,
-	SupaStructArray,
+	SupaStructArray
 } from '$lib/services/supabase/supastruct';
 import { WritableArray, WritableBase } from '$lib/services/writables';
-import type { Icon } from '$lib/types/icons';
 // import { TempMap } from '$lib/utils/temp-map';
 import type { Session } from '@supabase/supabase-js';
 import { attemptAsync, ResultPromise } from 'ts-utils';
@@ -147,13 +147,16 @@ class AccountFactory {
 	getAccountByUsername(username: string) {
 		return attemptAsync(async () => {
 			const profile = await this.profile
-				.search({
-					field: 'username',
-					operator: 'eq',
-					value: username,
-				}, {
-					type: 'single',
-				})
+				.search(
+					{
+						field: 'username',
+						operator: 'eq',
+						value: username
+					},
+					{
+						type: 'single'
+					}
+				)
 				.unwrap();
 			if (!profile) throw new Error('No profile found');
 			return this.Generator(profile);
@@ -163,13 +166,16 @@ class AccountFactory {
 	getAccountByEmail(email: string) {
 		return attemptAsync(async () => {
 			const profile = await this.profile
-				.search({
-					field: 'email',
-					operator: 'eq',
-					value: email,
-				}, {
-					type: 'single',
-				})
+				.search(
+					{
+						field: 'email',
+						operator: 'eq',
+						value: email
+					},
+					{
+						type: 'single'
+					}
+				)
 				.unwrap();
 			if (!profile) return null;
 			return this.Generator(profile);
@@ -186,10 +192,14 @@ class AccountFactory {
 	}
 
 	search(query: SearchQuery<'profile'>, config: ReadConfig<'all'>): SupaStructArray<'profile'>;
-	search(query: SearchQuery<'profile'>, config: ReadConfig<'single'>): ResultPromise<SupaStructData<'profile'> | null>;
+	search(
+		query: SearchQuery<'profile'>,
+		config: ReadConfig<'single'>
+	): ResultPromise<SupaStructData<'profile'> | null>;
 	search(query: SearchQuery<'profile'>, config: ReadConfig<ReadType>): ReadReturnType<'profile'> {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		return this.profile.search(query, config as any).map((profile) => this.Generator(profile)) as any;
+		return this.profile
+			.search(query, config as any)
+			.map((profile) => this.Generator(profile)) as any;
 	}
 }
 

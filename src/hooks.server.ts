@@ -38,7 +38,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 		event.locals.sse = sse.getConnection(connectionKey);
 	}
 
-
 	// TODO: only save pages
 	const sessionFactory = getSessionFactory(event.locals.supabase, {
 		debug: true

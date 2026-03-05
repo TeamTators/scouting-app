@@ -15,6 +15,6 @@ export const load = async (event) => {
 	}
 
 	return {
-		account: account.value?.profile.data,
+		account: account.value?.profile.data
 	};
 };

@@ -1,7 +1,7 @@
 import { SupaStruct, SupaStructData, type Client } from '$lib/services/supabase/supastruct';
 import { type Provider, type Session as S } from '@supabase/supabase-js';
 import { attemptAsync } from 'ts-utils';
-import { getAccountFactory, Account } from '$lib/model/account';
+import { getAccountFactory } from '$lib/model/account';
 import supabase from '../services/supabase';
 // import { TempMap } from "$lib/utils/temp-map";
 import { domain } from '../utils/env';

@@ -105,7 +105,7 @@ export const actions = {
 			return {
 				success: true,
 				message: 'Registration successful! Please check your email to confirm your account.',
-				redirect: '/account/sign-in',
+				redirect: '/account/sign-in'
 			};
 		}
 

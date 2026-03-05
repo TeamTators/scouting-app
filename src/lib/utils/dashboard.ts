@@ -140,7 +140,7 @@ export namespace Dashboard {
 					card.hide();
 				}
 				this.listeners.add(
-					card.on('show', (show) => {
+					card.localOn('show', (show) => {
 						this.hiddenCards.update((cards) => {
 							if (show) {
 								cards.delete(card);
@@ -176,7 +176,8 @@ export namespace Dashboard {
 				[...this.config.cards].sort((a, b) => a.getOrder() - b.getOrder())
 			);
 
-			a.onAllUnsubscribe(
+			a.on(
+				'all-unsubscribe',
 				this.subscribe(() => {
 					a.set([...this.config.cards].sort((a, b) => a.getOrder() - b.getOrder()));
 				})
@@ -231,15 +232,15 @@ export namespace Dashboard {
 
 		public state: CardData;
 
-		private readonly em = new EventEmitter<{
+		private readonly localEm = new EventEmitter<{
 			show: boolean;
 			maximized: boolean;
 		}>();
 
-		public readonly on = this.em.on.bind(this.em);
-		public readonly off = this.em.off.bind(this.em);
-		public readonly once = this.em.once.bind(this.em);
-		public readonly emit = this.em.emit.bind(this.em);
+		public readonly localOn = this.localEm.on.bind(this.localEm);
+		public readonly localOff = this.localEm.off.bind(this.localEm);
+		public readonly localOnce = this.localEm.once.bind(this.localEm);
+		public readonly localEmit = this.localEm.emit.bind(this.localEm);
 
 		/**
 		 * Creates a dashboard card.
@@ -325,7 +326,7 @@ export namespace Dashboard {
 				show: true,
 				maximized: false
 			}));
-			this.emit('show', true);
+			this.localEmit('show', true);
 		}
 
 		/** Hides the card and emits a `show` event. */
@@ -335,19 +336,19 @@ export namespace Dashboard {
 				show: false,
 				maximized: false
 			}));
-			this.emit('show', false);
+			this.localEmit('show', false);
 		}
 
 		/** Clears the maximized state and emits `maximized`. */
 		minimize() {
 			this.update((state) => ({ ...state, maximized: false }));
-			this.emit('maximized', false);
+			this.localEmit('maximized', false);
 		}
 
 		/** Sets the maximized state and emits `maximized`. */
 		maximize() {
 			this.update((state) => ({ ...state, maximized: true }));
-			this.emit('maximized', true);
+			this.localEmit('maximized', true);
 		}
 
 		/** Recomputes size based on the current breakpoint. */

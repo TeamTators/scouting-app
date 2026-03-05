@@ -168,7 +168,6 @@ export const Errors = {
 		);
 	},
 
-
 	/**
 	 * Returns a 404 when a version history id is missing.
 	 *

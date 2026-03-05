@@ -2,10 +2,8 @@ import { attemptAsync } from 'ts-utils/check';
 import fs from 'fs';
 import path from 'path';
 import z from 'zod';
-import { getAccountFactory } from '$lib/model/account';
 import type { Icon } from '$lib/types/icons';
 import { type Feature } from '../../types/features';
-import supabase from '../services/supabase';
 import { globalNotification } from '../model/notifications';
 
 export const getCachedList = () => {
@@ -41,7 +39,7 @@ export const makeFeatureNotifications = () => {
 					severity: 'info',
 					icon: f.icon,
 					link: `/features/${f.id}`
-				}),
+				})
 			)
 		);
 

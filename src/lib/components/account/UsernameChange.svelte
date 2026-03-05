@@ -28,13 +28,16 @@ Username change input with availability checks.
 
 		testTimeout = setTimeout(() => {
 			account.factory
-				.search({
-					field: 'username',
-					operator: 'eq',
-					value: username
-				}, {
-					type: 'single',
-				})
+				.search(
+					{
+						field: 'username',
+						operator: 'eq',
+						value: username
+					},
+					{
+						type: 'single'
+					}
+				)
 				.unwrap()
 				.then((result) => {
 					if (result) {

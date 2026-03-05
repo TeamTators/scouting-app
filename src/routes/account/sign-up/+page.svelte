@@ -18,8 +18,6 @@ Sign-up page at `/account/sign-up`.
 		}
 	});
 
-	
-
 	let password = $state('');
 	let confirmPassword = $state('');
 	const passwordResult = $derived(passwordStrength(password));

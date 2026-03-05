@@ -17,7 +17,7 @@ Account search input with debounced query results.
 ```
 -->
 <script lang="ts">
-	import { Account, getAccountFactory } from '$lib/model/account';
+	import { getAccountFactory } from '$lib/model/account';
 	import supabase from '$lib/services/supabase';
 	import type { SupaStructData } from '$lib/services/supabase/supastruct';
 
@@ -40,13 +40,16 @@ Account search input with debounced query results.
 	export const search = (username: string) => {
 		if (timeout) clearTimeout(timeout);
 		timeout = setTimeout(() => {
-			results = factory.search({
-				field: 'username',
-				operator: 'ilike',
-				value: `%${username}%`
-			}, {
-				type: 'all',
-			});
+			results = factory.search(
+				{
+					field: 'username',
+					operator: 'ilike',
+					value: `%${username}%`
+				},
+				{
+					type: 'all'
+				}
+			);
 			if (filter) results.filter(filter);
 			if (onsearch) onsearch(results.data);
 		}, 300);
