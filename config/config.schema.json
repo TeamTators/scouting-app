@@ -46,7 +46,7 @@
 					"type": "string",
 					"description": "Supabase tenant ID (for self-hosted instances)"
 				},
-				"password": {
+				"pg_pass": {
 					"type": "string",
 					"description": "Supabase password (for self-hosted instances)"
 				},
@@ -77,18 +77,30 @@
 					"type": "string",
 					"description": "Local IP address for connecting to Supabase (for self-hosted instances)",
 					"format": "ipv4"
+				},
+				"db_port": {
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 65535,
+					"description": "Database port for connecting to Supabase (for self-hosted instances)"
+				},
+				"sb_pass": {
+					"type": "string",
+					"description": "Supabase password for connecting to the database (for self-hosted instances)"
 				}
 			},
 			"required": [
 				"tenant_id",
-				"password",
+				"pg_pass",
 				"domain",
 				"port",
 				"protocol",
 				"anon_key",
 				"service_role_key",
 				"schema",
-				"local_ip"
+				"local_ip",
+				"db_port",
+				"sb_pass"
 			],
 			"additionalProperties": false
 		},

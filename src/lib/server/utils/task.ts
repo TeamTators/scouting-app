@@ -17,7 +17,7 @@ import url from 'url';
  * @param {...string[]} args
  * @returns {*}
  */
-export const runTask = (...args: string[]) => {
+export const runTask = (...args: (string | number | boolean)[]) => {
 	return attemptAsync(
 		async () =>
 			new Promise<string>((res, rej) =>

@@ -137,7 +137,7 @@ export default async () => {
 		'types',
 		'typescript',
 		'--db-url',
-		`postgres://postgres.${config.supabase.tenant_id}:${config.supabase.password}@${config.supabase.local_ip}:5432/postgres`,
+		`postgres://postgres.${config.supabase.tenant_id}:${config.supabase.pg_pass}@${config.supabase.local_ip}:5432/postgres`,
 		'--schema',
 		config.supabase.schema + ',public'
 	).unwrap();

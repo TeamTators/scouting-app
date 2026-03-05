@@ -2,10 +2,10 @@
 -- PostgreSQL database dump
 --
 
-\restrict 1RORkFGkFNggcaxdUdIf7XVSYrHbJ6BrXVDd0FVlu5t98FK00mOfd0rE005n0X2
+\restrict DQhW95zCjFIbq6593cw4h3K4uI0IJ3sLKcQKC7M30wDcJOkPaUCBimVGRFA2ThN
 
 -- Dumped from database version 15.8
--- Dumped by pg_dump version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
+-- Dumped by pg_dump version 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -470,5 +470,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA sveltekit_template GR
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 1RORkFGkFNggcaxdUdIf7XVSYrHbJ6BrXVDd0FVlu5t98FK00mOfd0rE005n0X2
+\unrestrict DQhW95zCjFIbq6593cw4h3K4uI0IJ3sLKcQKC7M30wDcJOkPaUCBimVGRFA2ThN
 

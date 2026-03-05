@@ -35,10 +35,11 @@
 		"sb:init": "pnpm script sb-init",
 		"sb:dump-schema": "pnpm script sb-dump-schema",
 		"sb:dump-roles": "pnpm script sb-dump-roles",
-		"sb:dump": "pnpm sb:gen && pnpm sb:dump-schema && pnpm sb:dump-roles",
+		"sb:dump": "pnpm script sb-dump",
+		"sb:pull": "pnpm script sb-dump",
 		"sb:push-schema": "pnpm script sb-push-schema",
 		"sb:push-roles": "pnpm script sb-push-roles",
-		"sb:push": "pnpm sb:push-schema && pnpm sb:push-roles"
+		"sb:push": "pnpm script sb-push"
 	},
 	"packageManager": "pnpm@10.30.0",
 	"engines": {
