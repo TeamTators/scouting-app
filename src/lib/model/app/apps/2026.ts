@@ -7,6 +7,7 @@ import { App } from '../app';
 import type { Point2D } from 'math/point';
 import { AppObject } from '../app-object';
 import YearInfo2026 from 'tatorscout/years/2026.js';
+import { isInside } from 'math/polygon';
 
 /**
  * Builds a 2026 scouting app instance.
@@ -160,9 +161,9 @@ export default (config: {
 		hub1: createLargeButton(blueObjects.hub1, 'blue'),
 		hub5: createLargeButton(blueObjects.hub5, 'blue'),
 		hub10: createLargeButton(blueObjects.hub10, 'blue'),
-		// lob1: createButton(blueObjects.lob1, 'blue'),
-		// lob5: createButton(blueObjects.lob5, 'blue'),
-		// lob10: createButton(blueObjects.lob10, 'blue'),
+		lob1: createButton(blueObjects.lob1, 'blue'),
+		lob5: createButton(blueObjects.lob5, 'blue'),
+		lob10: createButton(blueObjects.lob10, 'blue'),
 		out: createButton(blueObjects.out, 'blue')
 	};
 
@@ -170,9 +171,9 @@ export default (config: {
 		hub1: createLargeButton(redObjects.hub1, 'red'),
 		hub5: createLargeButton(redObjects.hub5, 'red'),
 		hub10: createLargeButton(redObjects.hub10, 'red'),
-		// lob1: createButton(redObjects.lob1, 'red'),
-		// lob5: createButton(redObjects.lob5, 'red'),
-		// lob10: createButton(redObjects.lob10, 'red'),
+		lob1: createButton(redObjects.lob1, 'red'),
+		lob5: createButton(redObjects.lob5, 'red'),
+		lob10: createButton(redObjects.lob10, 'red'),
 		out: createButton(redObjects.out, 'red')
 	};
 
@@ -247,6 +248,46 @@ export default (config: {
 		staticX: false,
 		staticY: true
 		// viewCondition: () => app.matchData.alliance === 'red',
+	});
+
+
+
+	// sophie here's how you do the changing button:
+	app.addAppObject({
+		point: [0.025, 0.2],
+		object: blueObjects.lob1,
+		button: blueButtons.lob1,
+		alliance: 'blue',
+		staticX: false,
+		staticY: true,
+		viewCondition: (tick) => tick.point ? isInside(tick.point, _middle) : false,
+	});
+
+
+	app.settings.add({
+		default: 'left',
+		type: 'string',
+		name: 'Which side is the coral station on?',
+		description: 'Select which side the coral station is on for this match.',
+		options: [
+			{
+				name: 'Left',
+				value: 'left',
+			},
+			{
+				name: 'Right',
+				value: 'right',
+			}
+		],
+	}, (state) => {
+		switch (state) {
+			case 'left':
+				// move button positions to left
+			break;
+			case 'right':
+				// move button positions to right
+			break;
+		}
 	});
 
 	return app;
