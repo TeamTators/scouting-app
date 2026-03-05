@@ -34,6 +34,7 @@ jobs:
           PORT=3000
           OAUTH2_CLIENT_ID=1234567890
           OAUTH2_CLIENT_SECRET=1234567890
+          echo "CONFIG_PATH=./config.json" >> .env
           EOF
 
           cp config.example.json config.json
