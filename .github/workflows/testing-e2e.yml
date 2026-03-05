@@ -38,7 +38,7 @@ jobs:
       - name: Install dependencies
         run: |
           echo "Installing dependencies..."
-          npm i -g typescript
+          pnpm add -D typescript
           pnpm install --frozen-lockfile
           pnpm exec playwright install
 

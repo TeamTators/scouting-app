@@ -83,7 +83,9 @@ jobs:
           node-version: v24.13.1
 
       - name: Install dependencies
-        run: pnpm i
+        run: |
+          pnpm add -D typescript
+          pnpm install --frozen-lockfile
 
       - name: Load .env variables
         run: |
