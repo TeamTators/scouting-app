@@ -1,6 +1,7 @@
 name: Format & Lint
 
 on:
+  workflow_call:
   push:
     branches-ignore:
       - 'deploy'

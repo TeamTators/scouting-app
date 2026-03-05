@@ -20,24 +20,6 @@ jobs:
     # this has a chance of infinite loop if we write a test wrong, timeout should catch it eventually.
     timeout-minutes: 5
     runs-on: [self-hosted, Linux, X64]
-    services:
-      redis:
-        image: redis:latest
-        ports:
-          - 6379:6379
-      postgres:
-        image: postgres:latest
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_USER: username
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: db
-        options: >-
-          --health-cmd "pg_isready -U username"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     steps:
       - name: Checkout repository
