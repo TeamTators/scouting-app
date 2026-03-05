@@ -50,7 +50,7 @@ jobs:
           export $(cat .env | xargs)
 
       - name: Init supabase types
-        run: pnpm sb:init
+        run: pnpm run sb:init
 
       - name: Run
         run: |

@@ -82,7 +82,7 @@ jobs:
           exit 1
 
       - name: Init supabase types
-        run: pnpm sb:init
+        run: pnpm run sb:init
 
       - name: Build app
         run: pnpm build
