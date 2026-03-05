@@ -20,16 +20,6 @@ jobs:
           submodules: 'true'
           # token: ${{ secrets.GH_TOKEN }}Do i rea
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.30.0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: v24.13.1
-
       - name: Install dependencies
         run: |
           echo "Installing dependencies..."
