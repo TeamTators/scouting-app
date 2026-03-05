@@ -1,19 +1,11 @@
 export const load = async (event) => {
-	const res = await event.locals.getSession();
-	if (res.isErr()) {
-		return {
-			session: null,
-			user: null,
-			cookies: event.cookies.getAll()
-		};
-	}
-	const session = res.value;
+	const session = event.locals.session;
 	if (!session) {
 		return {
 			session: null,
 			user: null,
 			cookies: event.cookies.getAll()
-		}
+		};
 	}
 	const user = await session.getUser();
 	if (user.isErr()) {
@@ -21,7 +13,7 @@ export const load = async (event) => {
 			session: session.config.session,
 			user: null,
 			cookies: event.cookies.getAll()
-		}
+		};
 	}
 	return {
 		session: session.config.session,

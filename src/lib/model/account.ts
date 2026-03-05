@@ -5,12 +5,17 @@ import {
 	SupaStructData,
 	type Client,
 	type PartialRow,
-	type SearchQuery
+	type ReadConfig,
+	type ReadType,
+	type SearchQuery,
+	type ReadReturnType,
+	SupaStructArray,
 } from '$lib/services/supabase/supastruct';
 import { WritableArray, WritableBase } from '$lib/services/writables';
+import type { Icon } from '$lib/types/icons';
 // import { TempMap } from '$lib/utils/temp-map';
 import type { Session } from '@supabase/supabase-js';
-import { attemptAsync } from 'ts-utils';
+import { attemptAsync, ResultPromise } from 'ts-utils';
 
 export class Account extends WritableBase<{
 	profile: PartialRow<'profile'>;
@@ -55,11 +60,14 @@ export class Account extends WritableBase<{
 	}
 
 	getNotifications() {
-		return this.factory.config.notifications.get({
-			account_id: this.id
-		}, {
-			type: 'all',
-		});
+		return this.factory.config.notifications.get(
+			{
+				account_id: this.id
+			},
+			{
+				type: 'all'
+			}
+		);
 	}
 }
 
@@ -84,7 +92,7 @@ class AccountFactory {
 
 	log(...args: unknown[]) {
 		// if (this.config.debug) {
-			console.log('[AccountFactory]', ...args);
+		console.log('[AccountFactory]', ...args);
 		// }
 	}
 
@@ -136,6 +144,38 @@ class AccountFactory {
 		});
 	}
 
+	getAccountByUsername(username: string) {
+		return attemptAsync(async () => {
+			const profile = await this.profile
+				.search({
+					field: 'username',
+					operator: 'eq',
+					value: username,
+				}, {
+					type: 'single',
+				})
+				.unwrap();
+			if (!profile) throw new Error('No profile found');
+			return this.Generator(profile);
+		});
+	}
+
+	getAccountByEmail(email: string) {
+		return attemptAsync(async () => {
+			const profile = await this.profile
+				.search({
+					field: 'email',
+					operator: 'eq',
+					value: email,
+				}, {
+					type: 'single',
+				})
+				.unwrap();
+			if (!profile) return null;
+			return this.Generator(profile);
+		});
+	}
+
 	getAccounts(...ids: string[]) {
 		const accounts = this.profile.fromIds(ids);
 		return accounts.map((profile) => this.Generator(profile));
@@ -145,17 +185,23 @@ class AccountFactory {
 		return new AccountArr([]);
 	}
 
-	search(query: SearchQuery<'profile'>) {
-		return this.profile.search(query).map((profile) => this.Generator(profile));
+	search(query: SearchQuery<'profile'>, config: ReadConfig<'all'>): SupaStructArray<'profile'>;
+	search(query: SearchQuery<'profile'>, config: ReadConfig<'single'>): ResultPromise<SupaStructData<'profile'> | null>;
+	search(query: SearchQuery<'profile'>, config: ReadConfig<ReadType>): ReadReturnType<'profile'> {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		return this.profile.search(query, config as any).map((profile) => this.Generator(profile)) as any;
 	}
 }
 
 // browser only instance of the factory, to avoid creating multiple instances in the client
 // if we are on the server, this will always be null and a new instance will be created for each request, which is fine since the server is stateless
 // const factories = new TempMap<Client, AccountFactory>();
-export const getAccountFactory = (client: Client, config: {
-	debug?: boolean;
-} = {}) => {
+export const getAccountFactory = (
+	client: Client,
+	config: {
+		debug?: boolean;
+	} = {}
+) => {
 	// const has = factories.get(client);
 	// if (has) return has;
 	const profile = SupaStruct.get({
@@ -166,18 +212,18 @@ export const getAccountFactory = (client: Client, config: {
 	const role = SupaStruct.get({
 		name: 'role',
 		client,
-		...config,
+		...config
 	});
 	const admin = SupaStruct.get({
 		name: 'admin',
 		client,
-		...config,
+		...config
 	});
 	const roleAccount = SupaLinkingStruct.get('role_account', profile, role, config);
 	const notifications = SupaStruct.get({
 		name: 'account_notification',
 		client,
-		...config,
+		...config
 	});
 	const a = new AccountFactory({
 		profile,
@@ -185,7 +231,7 @@ export const getAccountFactory = (client: Client, config: {
 		role,
 		roleAccount,
 		notifications,
-		...config,
+		...config
 	});
 	// factories.set(client, a);
 	return a;

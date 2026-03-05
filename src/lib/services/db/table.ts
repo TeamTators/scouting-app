@@ -237,7 +237,7 @@ export class Table<Name extends string, Type extends SchemaDefinition> {
 				const offUpdate = this.on('update', () => {
 					arr.inform();
 				});
-				arr.onAllUnsubscribe(() => {
+				arr.on('all-unsubscribe', () => {
 					offNew();
 					offDelete();
 					offUpdate();
@@ -261,7 +261,7 @@ export class Table<Name extends string, Type extends SchemaDefinition> {
 			const offUpdate = this.on('update', () => {
 				w.inform();
 			});
-			w.onAllUnsubscribe(() => {
+			w.on('all-unsubscribe', () => {
 				offNew();
 				offDelete();
 				offUpdate();
@@ -399,7 +399,7 @@ export class Table<Name extends string, Type extends SchemaDefinition> {
 			const offDelete = this.on('delete', onDelete);
 			const offUpdate = this.on('update', onUpdate);
 
-			arr.onAllUnsubscribe(() => {
+			arr.on('all-unsubscribe', () => {
 				offNew();
 				offDelete();
 				offUpdate();
@@ -535,19 +535,19 @@ export class TableDataArr<Name extends string, Type extends SchemaDefinition> ex
 	 * @readonly
 	 * @type {ComplexEventEmitter}
 	 */
-	private readonly em = new ComplexEventEmitter<{
+	private readonly localEm = new ComplexEventEmitter<{
 		add: [TableData<Name, Type>];
 		remove: [TableData<Name, Type>];
 	}>();
 
 	/** Event listener for 'add' and 'remove' events */
-	public on = this.em.on.bind(this.em);
+	public localOn = this.localEm.on.bind(this.localEm);
 	/** Remove event listener */
-	public off = this.em.off.bind(this.em);
+	public localOff = this.localEm.off.bind(this.localEm);
 	/** Listen once for event */
-	public once = this.em.once.bind(this.em);
+	public localOnce = this.localEm.once.bind(this.localEm);
 	/** Emit array events */
-	public emit = this.em.emit.bind(this.em);
+	public localEmit = this.localEm.emit.bind(this.localEm);
 
 	/**
 	 * Creates an instance of TableDataArr.
@@ -612,7 +612,7 @@ export class TableDataArr<Name extends string, Type extends SchemaDefinition> ex
 		this.data.push(item);
 		this.data = this.data.filter((v, i, a) => a.findIndex((dd) => dd.data.id === v.data.id) === i);
 		if (this.data.length !== len) {
-			this.emit('add', item);
+			this.localEmit('add', item);
 		}
 		this.inform(); // Debounced for event-driven updates
 	}
@@ -643,7 +643,7 @@ export class TableDataArr<Name extends string, Type extends SchemaDefinition> ex
 			this.data = this.data.filter((d) => !predicate(d));
 			if (this.data.length !== len && removed.length > 0) {
 				for (const item of removed) {
-					this.emit('remove', item);
+					this.localEmit('remove', item);
 				}
 			}
 		} else {
@@ -653,7 +653,7 @@ export class TableDataArr<Name extends string, Type extends SchemaDefinition> ex
 			this.data = this.data.filter((d) => !idsToRemove.has(d.data.id));
 			if (this.data.length !== len) {
 				for (const item of itemsToRemove) {
-					this.emit('remove', item);
+					this.localEmit('remove', item);
 				}
 			}
 		}
@@ -729,7 +729,7 @@ export class PaginatedTableData<
 		});
 
 		// Refresh data when items are added
-		this.on('add', async () => {
+		this.localOn('add', async () => {
 			const current = get(this.info);
 			const newData = await getter(current.page, current.pageSize);
 			this.data = newData;
@@ -738,7 +738,7 @@ export class PaginatedTableData<
 		});
 
 		// Refresh data when items are removed
-		this.on('remove', async () => {
+		this.localOn('remove', async () => {
 			const current = get(this.info);
 			const newData = await getter(current.page, current.pageSize);
 			this.data = newData;

@@ -13,7 +13,7 @@
  * manager.init();
  */
 import { EventEmitter } from 'ts-utils';
-import { Session } from '../structs/session';
+import { Session } from '../model/session';
 import { Connection, sse } from './sse';
 
 /**
@@ -112,7 +112,7 @@ export class SessionManager {
 	 *
 	 * @param {Session.SessionData} session - Session to add.
 	 */
-	addSession(session: Session.SessionData) {
+	addSession(session: Session) {
 		this.sessions.push(session.id);
 		this.emit('session-added', session.id);
 	}
@@ -188,13 +188,5 @@ sse.on('state-change', (connection) => {
 			sessionId: connection.sessionId,
 			state: connection.state
 		});
-	}
-});
-
-Session.Session.on('delete', (session) => {
-	for (const m of SessionManager.managers.values()) {
-		if (m.sessions.find((s) => s === session.data.id)) {
-			m.removeSession(session.data.id);
-		}
 	}
 });

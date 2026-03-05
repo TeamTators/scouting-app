@@ -8,21 +8,22 @@
 		debug: true
 	});
 	const data = struct.all({
-		type: 'all',
+		type: 'all'
 	});
 </script>
 
 <div class="container layer-1">
-<div class="row mb-3">
-	<div class="d-flex">
-		<h1>
-			SupaStruct Test
-		</h1>
-		<button class="btn btn-primary ms-3" onclick={() => struct.new({ name: 'New Item', age: Math.floor(Math.random() * 100) })}>
-			<i class="material-icons"> add </i>
-		</button>
+	<div class="row mb-3">
+		<div class="d-flex">
+			<h1>SupaStruct Test</h1>
+			<button
+				class="btn btn-primary ms-3"
+				onclick={() => struct.new({ name: 'New Item', age: Math.floor(Math.random() * 100) })}
+			>
+				<i class="material-icons"> add </i>
+			</button>
+		</div>
 	</div>
-</div>
 	<div class="row mb-3">
 		{#each $data as item (item.data.id)}
 			<div class="col-md-4">

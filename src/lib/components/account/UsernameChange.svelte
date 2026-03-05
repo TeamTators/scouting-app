@@ -32,11 +32,12 @@ Username change input with availability checks.
 					field: 'username',
 					operator: 'eq',
 					value: username
+				}, {
+					type: 'single',
 				})
-				.await()
 				.unwrap()
 				.then((result) => {
-					if (result.length > 0 && result[0].id !== account.id) {
+					if (result) {
 						usernameState = 'exists';
 					} else if (username === account.username) {
 						usernameState = 'yours';

@@ -16,12 +16,14 @@ import terminal from '$lib/server/utils/terminal';
  */
 export const isAdmin = query(async () => {
 	const event = getRequestEvent();
-	const data = await event.locals.getSession();
+	const session = event.locals.session;
+	if (!session) return false;
+	const data = await session.getAccount();
 	if (data.isErr()) {
-		terminal.error('Error fetching session in isAdmin remote:', data.error);
+		terminal.error('Error fetching account in isAdmin remote:', data.error);
 		return false;
 	}
-	return (await data.value.account?.isAdmin().unwrapOr(false)) ?? false;
+	return (await data.value?.isAdmin().unwrapOr(false)) ?? false;
 });
 
 /**
@@ -29,12 +31,14 @@ export const isAdmin = query(async () => {
  */
 export const isLoggedIn = query(async () => {
 	const event = getRequestEvent();
-	const data = await event.locals.getSession();
+	const session = event.locals.session;
+	if (!session) return false;
+	const data = await session.getAccount();
 	if (data.isErr()) {
-		terminal.error('Error fetching session in isLoggedIn remote:', data.error);
+		terminal.error('Error fetching account in isLoggedIn remote:', data.error);
 		return false;
 	}
-	return !!data.value.account;
+	return !!data.value;
 });
 
 /**
@@ -42,27 +46,15 @@ export const isLoggedIn = query(async () => {
  */
 export const getAccount = query(async () => {
 	const event = getRequestEvent();
-	const data = await event.locals.getSession();
+	const session = event.locals.session;
+	if (!session) return null;
+	const data = await session.getAccount();
 	if (data.isErr()) {
-		terminal.error('Error fetching session in getAccount remote:', data.error);
+		terminal.error('Error fetching account in getAccount remote:', data.error);
 		return null;
 	}
-	return data.value.account || null;
+	return data.value || null;
 });
-
-/**
- * Returns the current session data.
- */
-export const getSession = query(async () => {
-	const event = getRequestEvent();
-	const data = await event.locals.getSession();
-	if (data.isErr()) {
-		terminal.error('Error fetching session in getSession remote:', data.error);
-		return null;
-	}
-	return data.value.session;
-});
-
 // /**
 //  * Returns the current SSE connection if available.
 //  */

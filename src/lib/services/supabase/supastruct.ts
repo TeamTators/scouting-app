@@ -51,20 +51,26 @@ export type SupaConfig<Name> = {
 
 export type ReadType = 'paginated' | 'all' | 'single' | 'count';
 
-export type ReadReturnType<Name extends Names> = SupaStructArray<Name> | SupaPagination<Name> | ResultPromise<SupaStructData<Name> | null> | ResultPromise<number>;
+export type ReadReturnType<Name extends Names> =
+	| SupaStructArray<Name>
+	| SupaPagination<Name>
+	| ResultPromise<SupaStructData<Name> | null>
+	| ResultPromise<number>;
 
 export type ReadConfig<T extends ReadType> = {
 	type: T;
-} & (T extends 'all' ? {
-
-} : T extends 'paginated' ? {
-	limit: number;
-	page: number;
-} : T extends 'single' ? {
-
-} : T extends 'count' ? {
-	
-} : never);
+} & (T extends 'all'
+	? {}
+	: T extends 'paginated'
+		? {
+				limit: number;
+				page: number;
+			}
+		: T extends 'single'
+			? {}
+			: T extends 'count'
+				? {}
+				: never);
 
 export class SupaStruct<Name extends Names> {
 	public static readonly structs = new Map<string, SupaStruct<Names>>();
@@ -103,7 +109,7 @@ export class SupaStruct<Name extends Names> {
 
 	private log(...args: unknown[]) {
 		// if (this.config.debug) {
-			console.log(`[SupaStruct ${this.name}]`, ...args);
+		console.log(`[SupaStruct ${this.name}]`, ...args);
 		// }
 	}
 
@@ -276,7 +282,7 @@ export class SupaStruct<Name extends Names> {
 		array: SupaStructArray<Name>,
 		satisfies: (data: PartialRow<Name>) => boolean
 	) {
-		if (browser){
+		if (browser) {
 			this.registeredArrays.set(name, {
 				array,
 				satisfies
@@ -414,31 +420,40 @@ export class SupaStruct<Name extends Names> {
 			this.log(`Error validating upsert data for table ${this.name}:`, parsed.error);
 			status.set({
 				pending: false,
-				error: new Error(`Invalid data for table ${this.name}: ` + parsed.error.message),
+				error: new Error(`Invalid data for table ${this.name}: ` + parsed.error.message)
 			});
 			return status;
 		}
 
 		this.log('Validated upsert data:', parsed.data);
-		this.supabase.schema(schemaName).from(this.name).upsert(data as any).select('*').then((res) => {
-			this.log('Received response for upsert data:', res);
-			const transactionResult = this.runTransaction({
-				data: res.data as any,
-				error: res.error,
-			}, 'array');
-			if (transactionResult.isErr()) {
-				status.set({
-					pending: false,
-					error: new Error(`Failed to upsert row into table ${this.name}: ` + transactionResult.error.message),
-				});
-			} else {
-				status.set({
-					pending: false,
-					result: transactionResult.value.map((item) => this.Generator(item)),
-				});
-			}
-		});
-
+		this.supabase
+			.schema(schemaName)
+			.from(this.name)
+			.upsert(data as any)
+			.select('*')
+			.then((res) => {
+				this.log('Received response for upsert data:', res);
+				const transactionResult = this.runTransaction(
+					{
+						data: res.data as any,
+						error: res.error
+					},
+					'array'
+				);
+				if (transactionResult.isErr()) {
+					status.set({
+						pending: false,
+						error: new Error(
+							`Failed to upsert row into table ${this.name}: ` + transactionResult.error.message
+						)
+					});
+				} else {
+					status.set({
+						pending: false,
+						result: transactionResult.value.map((item) => this.Generator(item))
+					});
+				}
+			});
 
 		return status;
 	}
@@ -506,7 +521,10 @@ export class SupaStruct<Name extends Names> {
 
 	// AND query
 	get(data: Partial<Row<Name>>, config: ReadConfig<'all'>): SupaStructArray<Name>;
-	get(data: Partial<Row<Name>>, config: ReadConfig<'single'>): ResultPromise<SupaStructData<Name> | null>;
+	get(
+		data: Partial<Row<Name>>,
+		config: ReadConfig<'single'>
+	): ResultPromise<SupaStructData<Name> | null>;
 	// get(data: Partial<Row<Name>>, config: ReadConfig<'count'>): ResultPromise<number>;
 	// get(data: Partial<Row<Name>>, config: ReadConfig<'paginated'>): SupaPagination<Name>;
 	get(data: Partial<Row<Name>>, config: ReadConfig<ReadType>): ReadReturnType<Name> {
@@ -568,7 +586,10 @@ export class SupaStruct<Name extends Names> {
 	}
 
 	getOR(data: Partial<Row<Name>>, config: ReadConfig<'all'>): SupaStructArray<Name>;
-	getOR(data: Partial<Row<Name>>, config: ReadConfig<'single'>): ResultPromise<SupaStructData<Name> | null>;
+	getOR(
+		data: Partial<Row<Name>>,
+		config: ReadConfig<'single'>
+	): ResultPromise<SupaStructData<Name> | null>;
 	// getOR(data: Partial<Row<Name>>, config: ReadConfig<'count'>): ResultPromise<number>;
 	// getOR(data: Partial<Row<Name>>, config: ReadConfig<'paginated'>): SupaPagination<Name>;
 	getOR(data: Partial<Row<Name>>, config: ReadConfig<ReadType>): ReadReturnType<Name> {
@@ -599,7 +620,7 @@ export class SupaStruct<Name extends Names> {
 				return [];
 			}
 			return transactionResult.value;
-		}
+		};
 
 		if (config.type === 'single') {
 			return attemptAsync(async () => {
@@ -613,7 +634,7 @@ export class SupaStruct<Name extends Names> {
 		}
 
 		const arr = this.arr();
-		get().then(data => {
+		get().then((data) => {
 			this.log(`Fetched with getOR query ${JSON.stringify(data)} from ${this.name}:`, data);
 			arr.set(data.map((item) => this.Generator(item)));
 		});
@@ -634,7 +655,14 @@ export class SupaStruct<Name extends Names> {
 		return new SupaStructArray<Name>([]);
 	}
 
-	search(query: SearchQuery<Name>) {
+	search(query: SearchQuery<Name>, config: ReadConfig<'all'>): SupaStructArray<Name>;
+	search(
+		query: SearchQuery<Name>,
+		config: ReadConfig<'single'>
+	): ResultPromise<SupaStructData<Name> | null>;
+	// search(query: SearchQuery<Name>, config: ReadConfig<'count'>): ResultPromise<number>;
+	// search(query: SearchQuery<Name>, config: ReadConfig<'paginated'>): SupaPagination<Name>;
+	search(query: SearchQuery<Name>, config: ReadConfig<ReadType>): ReadReturnType<Name> {
 		const cacheKey = JSON.stringify(`search:${JSON.stringify(query)}`);
 		const has = this.registeredArrays.get(cacheKey);
 		if (has) return has.array;
@@ -688,6 +716,17 @@ export class SupaStruct<Name extends Names> {
 			}
 			return transactionResult.value;
 		};
+
+		if (config.type === 'single') {
+			return attemptAsync(async () => {
+				const [res] = await get();
+				if (res) {
+					this.log(`Fetched with search query ${JSON.stringify(query)} from ${this.name}:`, res);
+					return this.Generator(res);
+				}
+				return null;
+			});
+		}
 
 		get().then((data) => {
 			arr.set(data.map((item) => this.Generator(item)));

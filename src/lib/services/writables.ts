@@ -22,9 +22,7 @@ import deepEqual from 'fast-deep-equal';
 export class WritableBase<T> implements Writable<T> {
 	private readonly em = new ComplexEventEmitter<{
 		'all-unsubscribe': void;
-		subscribe: [
-			Subscriber<T>
-		];
+		subscribe: [Subscriber<T>];
 		destroy: void;
 	}>();
 
@@ -225,7 +223,10 @@ export class WritableBase<T> implements Writable<T> {
 	 * @param {Writable<unknown>} target - The writable store to pipe from
 	 */
 	pipe(target: Writable<unknown>): void {
-		this.on('all-unsubscribe', target.subscribe(() => this.inform()));
+		this.on(
+			'all-unsubscribe',
+			target.subscribe(() => this.inform())
+		);
 	}
 
 	/**

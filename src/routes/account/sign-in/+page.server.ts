@@ -34,11 +34,14 @@ export const actions = {
 		// is a username
 		if (!email.includes('@')) {
 			const factory = getAccountFactory(serverSB);
-			const profile = await factory.profile.get({
-				username: email,
-			}, {
-				type: 'single',
-			});
+			const profile = await factory.profile.get(
+				{
+					username: email
+				},
+				{
+					type: 'single'
+				}
+			);
 			if (profile.isErr()) {
 				terminal.error(profile.error);
 				throw fail(ServerCode.internalServerError, {
@@ -57,19 +60,10 @@ export const actions = {
 			}
 		}
 
-		let url = '/'
-
-		const session = await event.locals.getSession();
-		if (session.isErr()) {
-			terminal.error(session.error);
-		} else if (session.value) {
-			url = session.value.prevUrl || '/';
-		}
-
 		return {
 			message: 'Logged in',
 			user: res.data.username,
-			redirect: url,
+			redirect: event.locals.session?.prevUrl,
 			success: true
 		};
 	},
@@ -102,7 +96,7 @@ export const actions = {
 		// log(authorizeUrl);
 
 		throw redirect(ServerCode.temporaryRedirect, authorizeUrl);
-	},
+	}
 	// 'request-password-reset': async (event) => {
 	// 	const formdata = await event.request.formData();
 	// 	const user = z.string().safeParse(formdata.get('user'));

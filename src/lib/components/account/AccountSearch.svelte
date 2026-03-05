@@ -19,13 +19,14 @@ Account search input with debounced query results.
 <script lang="ts">
 	import { Account, getAccountFactory } from '$lib/model/account';
 	import supabase from '$lib/services/supabase';
+	import type { SupaStructData } from '$lib/services/supabase/supastruct';
 
 	const factory = getAccountFactory(supabase);
 
 	interface Props {
-		onselect: (account: Account) => void;
-		onsearch?: (account: Account[]) => void;
-		filter?: (account: Account) => boolean;
+		onselect: (account: SupaStructData<'profile'>) => void;
+		onsearch?: (account: SupaStructData<'profile'>[]) => void;
+		filter?: (account: SupaStructData<'profile'>) => boolean;
 	}
 
 	const { onselect, onsearch, filter }: Props = $props();
@@ -34,7 +35,7 @@ Account search input with debounced query results.
 
 	let timeout: ReturnType<typeof setTimeout>;
 
-	let results = $state(factory.arr());
+	let results = $state(factory.profile.arr());
 
 	export const search = (username: string) => {
 		if (timeout) clearTimeout(timeout);
@@ -43,13 +44,15 @@ Account search input with debounced query results.
 				field: 'username',
 				operator: 'ilike',
 				value: `%${username}%`
+			}, {
+				type: 'all',
 			});
 			if (filter) results.filter(filter);
 			if (onsearch) onsearch(results.data);
 		}, 300);
 	};
 
-	export const select = (account: Account) => {
+	export const select = (account: SupaStructData<'profile'>) => {
 		onselect(account);
 		query = '';
 	};
@@ -66,11 +69,11 @@ Account search input with debounced query results.
 	{#if query}
 		<div class="search-results card mt-1">
 			<ul class="list-group list-group-flush">
-				{#each $results as account (account.id)}
+				{#each $results as account (account.data.id)}
 					<li class="list-group-item list-group-item-action">
 						<button type="button" class="btn" onclick={() => select(account)}>
-							{account.username} - {account.firstName}
-							{account.lastName}
+							{account.data.username} - {account.data.first_name}
+							{account.data.last_name}
 						</button>
 					</li>
 				{/each}

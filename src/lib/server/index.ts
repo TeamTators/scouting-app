@@ -8,10 +8,6 @@
  * import '$lib/server';
  */
 
-import testSchema from '../../../scripts/test-schema';
-
-testSchema('false');
-
 /**
  * Executes tasks that should run after all structs have been built.
  *

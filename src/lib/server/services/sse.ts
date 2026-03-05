@@ -9,7 +9,7 @@
  */
 import { attempt, attemptAsync } from 'ts-utils/check';
 import type { RequestEvent as ConnectRequestEvent } from '../../../routes/api/sse/init/[uuid]/$types';
-import { Session } from '../structs/session';
+import { getSessionFactory } from '../model/session';
 import { encode } from 'ts-utils/text';
 import { EventEmitter } from 'ts-utils/event-emitter';
 import type { Notification } from '../../types/notification';
@@ -17,6 +17,7 @@ import { toByteString } from 'ts-utils/text';
 import { getManifestoInstance } from '../utils/manifesto';
 import { config } from '../utils/env';
 import { type ConnectionState } from '../../types/sse';
+import supabase from './supabase';
 
 /** Maximum number of cached messages per connection */
 const CACHE_LIMIT = 50;
@@ -32,6 +33,8 @@ const log = (...args: unknown[]) => {
 		console.log('[SSE]', ...args);
 	}
 };
+
+const sessionFactory = getSessionFactory(supabase);
 
 /**
  * Represents a single Server-Sent Events (SSE) connection to a client.
@@ -192,7 +195,7 @@ export class Connection {
 	 * @returns Promise resolving to the session object
 	 */
 	getSession() {
-		return Session.Session.fromId(this.sessionId);
+		return sessionFactory.fromId(this.sessionId);
 	}
 
 	/**
@@ -387,7 +390,8 @@ export class SSE {
 		return attemptAsync(async () => {
 			log('New SSE connection request:', event.params.uuid);
 			const session = event.locals.session;
-			session.update({ tabs: session.data.tabs + 1 });
+			if (!session) throw new Error('No session found for SSE connection.');
+			// session.update({ tabs: session.data.tabs + 1 });
 			const uuid = event.params.uuid;
 			const url = event.url.searchParams.get('url') || '';
 
@@ -431,19 +435,19 @@ export class SSE {
 			this.connections.delete(connection.uuid);
 			this.emitter.emit('disconnect', connection);
 
-			connection
-				.getSession()
-				.then((sessionResult) => {
-					if (sessionResult.isOk()) {
-						const session = sessionResult.value;
-						if (session) {
-							session.update({ tabs: Math.max(0, session.data.tabs - 1) });
-						}
-					}
-				})
-				.catch((err) => {
-					console.warn('Failed to update session tab count on disconnect:', err);
-				});
+			// connection
+			// 	.getSession()
+			// 	.then((sessionResult) => {
+			// 		if (sessionResult.isOk()) {
+			// 			const session = sessionResult.value;
+			// 			if (session) {
+			// 				session.update({ tabs: Math.max(0, session.data.tabs - 1) });
+			// 			}
+			// 		}
+			// 	})
+			// 	.catch((err) => {
+			// 		console.warn('Failed to update session tab count on disconnect:', err);
+			// 	});
 		}
 	}
 
@@ -512,7 +516,7 @@ export class SSE {
 	 * @returns Connection instance or undefined if not found
 	 */
 	getConnection(uuid: string) {
-		return this.connections.get(uuid);
+		return this.connections.get(uuid) || null;
 	}
 
 	/**

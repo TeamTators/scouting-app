@@ -7,9 +7,9 @@ import createTree from '../scripts/create-route-tree';
 // import { createClient } from '@supabase/supabase-js';
 import { config } from '$lib/server/utils/env';
 import { createServerClient } from '@supabase/ssr';
-import { attemptAsync } from 'ts-utils';
 import { type DB } from '$lib/services/supabase/supastruct';
-import { getSessionFactory, Session } from '$lib/server/model/session';
+import { getSessionFactory } from '$lib/server/model/session';
+import { sse } from '$lib/server/services/sse';
 
 (async () => {
 	await createTree();
@@ -33,25 +33,24 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	);
 
+	const connectionKey = event.request.headers.get('x-sse');
+	if (connectionKey) {
+		event.locals.sse = sse.getConnection(connectionKey);
+	}
+
+
+	// TODO: only save pages
 	const sessionFactory = getSessionFactory(event.locals.supabase, {
-		debug: true,
+		debug: true
 	});
 
-	let session: Session | null = null;
-	event.locals.getSession = () => {
-		return attemptAsync(async () => {
-			if (session) {
-				return session;
-			}
-			const res = await sessionFactory.getSelf();
-			if (res.isErr()) {
-				terminal.error('Error getting session:', res.error);
-				return null;
-			}
-			session = res.value;
-			return session;
-		});
-	};
+	const res = await sessionFactory.getSelf(event.url.pathname);
+	if (res.isErr()) {
+		terminal.error('Error getting session:', res.error);
+		event.locals.session = null;
+	} else {
+		event.locals.session = res.value;
+	}
 	try {
 		const res = await resolve(event);
 		return res;

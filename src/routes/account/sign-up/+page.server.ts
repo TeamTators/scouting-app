@@ -24,7 +24,7 @@ export const actions = {
 	register: async (event) => {
 		const {
 			request,
-			locals: { supabase },
+			locals: { supabase }
 		} = event;
 		const formData = await request.formData();
 		const email = String(formData.get('email'));
@@ -38,33 +38,35 @@ export const actions = {
 			return {
 				success: false,
 				message: 'Please enter a valid email address.'
-			}
+			};
 		}
 
-    
 		const accountFactory = getAccountFactory(serverSB, {
-			debug: true,
+			debug: true
 		});
 
-		const exists = await accountFactory.profile.getOR({
-			username,
-			email,
-		}, {
-			type: 'single',
-		});
+		const exists = await accountFactory.profile.getOR(
+			{
+				username,
+				email
+			},
+			{
+				type: 'single'
+			}
+		);
 
 		if (exists.isErr()) {
 			return {
 				success: false,
 				message: 'An error occurred while checking your information. Please try again later.'
-			}
+			};
 		}
 
 		if (exists.value) {
 			return {
 				success: false,
 				message: 'An account with that email or username already exists.'
-			}
+			};
 		}
 		const { data, error } = await supabase.auth.signUp({
 			email,
@@ -72,8 +74,8 @@ export const actions = {
 			options: {
 				emailRedirectTo: domain({
 					protocol: true,
-					port: false,
-				}),
+					port: false
+				})
 			}
 		});
 
@@ -82,35 +84,35 @@ export const actions = {
 		}
 
 		if (data.user) {
-			const res = await accountFactory.profile.new({
-				username,
-				first_name: firstName,
-				last_name: lastName,
-				id: data.user.id,
-				email,
-			}).await();
+			const res = await accountFactory.profile
+				.new({
+					username,
+					first_name: firstName,
+					last_name: lastName,
+					id: data.user.id,
+					email
+				})
+				.await();
 
 			if (res.isErr()) {
-				throw fail(
-					500,
-					{
-						errors: {
-							profile: 'An error occurred while creating your profile. Please try again later.'
-						}
+				throw fail(500, {
+					errors: {
+						profile: 'An error occurred while creating your profile. Please try again later.'
 					}
-				);
+				});
 			}
 
 			return {
 				success: true,
-				message: 'Registration successful! Please check your email to confirm your account.'
-			}
+				message: 'Registration successful! Please check your email to confirm your account.',
+				redirect: '/account/sign-in',
+			};
 		}
 
 		return {
 			success: false,
 			message: 'An unexpected error occurred. Please try again later.'
-		}
+		};
 	},
 	OAuth2: async () => {
 		// const domain = String(process.env.PUBLIC_DOMAIN).includes('localhost')

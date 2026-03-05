@@ -11,13 +11,13 @@ Profile display shell for an account.
 ```
 -->
 <script lang="ts">
-	import type { Account } from '$lib/model/account';
+	import type { SupaStructData } from '$lib/services/supabase/supastruct';
 
 	interface Props {
-		account: Account;
+		profile: SupaStructData<'profile'>;
 	}
 
-	const { account: _account }: Props = $props();
+	const { profile: _profile }: Props = $props();
 </script>
 
 <!-- <img src={$account.picture} alt="{$account.username}'s Profile Picture" srcset="" /> -->

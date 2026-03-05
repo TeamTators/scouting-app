@@ -1,13 +1,13 @@
 /**
  * @fileoverview OAuth sign-in endpoint at `/api/oauth/sign-in`.
  */
-import { Account } from '$lib/server/structs/account.js';
-import { Session } from '$lib/server/structs/session.js';
+import { getAccountFactory } from '$lib/model/account.js';
 import { redirect } from '@sveltejs/kit';
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 import { ServerCode } from 'ts-utils/status';
 import { domain, str } from '$lib/server/utils/env.js';
+import supabase from '$lib/server/services/supabase.js';
 
 // const log = (...args: unknown[]) => console.log('[oauth/sign-in]', ...args);
 
@@ -32,6 +32,8 @@ export const GET = async (event) => {
 	});
 	// log('CLIENT:', client);
 
+	const accountFactory = getAccountFactory(supabase);
+
 	const r = await client.getToken(code);
 	client.setCredentials(r.tokens);
 	// log('TOKENS:', r.tokens);
@@ -41,21 +43,14 @@ export const GET = async (event) => {
 			version: 'v2'
 		})
 		.userinfo.get();
-	// token exists, check if account exists
-	const account = await Account.Account.get(
-		{ email: info.data.email || 'nothing should never happen' },
-		{
-			type: 'single'
-		}
-	);
-	// log('ACCOUNT:', account);
-	if (account.isErr()) return new Response('Error checking if account exists', { status: 500 });
 
-	if (account.value) {
-		await Session.signIn(account.value, event.locals.session);
 
-		throw redirect(ServerCode.permanentRedirect, event.locals.session.data.prevUrl || '/');
+	if (event.locals.session) {
+		event.locals.session.signInOAuth2({
+			provider: 'google',
+		});
 	}
+
 	// } catch (err) {
 	//     // throw new Error(error);
 	//     console.log('Error logging in with google', err);

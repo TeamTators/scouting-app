@@ -8,14 +8,21 @@ Sign-up page at `/account/sign-up`.
 	// import type { ActionData } from './$types';
 	import Password from '$lib/components/forms/Password.svelte';
 	// import { browser } from '$app/environment';
-	// import { goto } from '$app/navigation';
+	import { goto } from '$app/navigation';
 
 	const { form } = $props();
+
+	$effect(() => {
+		if (form?.redirect) {
+			goto(form.redirect);
+		}
+	});
+
+	
 
 	let password = $state('');
 	let confirmPassword = $state('');
 	const passwordResult = $derived(passwordStrength(password));
-
 </script>
 
 <main>

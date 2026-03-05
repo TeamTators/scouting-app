@@ -2,7 +2,7 @@
 @component
 Account profile management page at `/account/manage-profile`.
 -->
-<script lang="ts">
+<!-- <script lang="ts">
 	/* eslint-disable @typescript-eslint/no-explicit-any */
 	import UsernameChange from '$lib/components/account/UsernameChange.svelte';
 	import { Account } from '$lib/model/account.js';
@@ -69,4 +69,4 @@ Account profile management page at `/account/manage-profile`.
 			</div>
 		</div>
 	{/if}
-</div>
+</div> -->

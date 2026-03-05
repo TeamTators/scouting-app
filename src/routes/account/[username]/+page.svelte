@@ -7,12 +7,15 @@ Designed as a top-level page route and does not export component props.
 -->
 <script lang="ts">
 	import Profile from '$lib/components/account/Profile.svelte';
-	import { Account } from '$lib/model/account.js';
+	import supabase from '$lib/services/supabase';
+	import { SupaStruct } from '$lib/services/supabase/supastruct';
 
-	const { data } = $props();
-
-	const account = $derived(Account.Account.Generator(data.account));
-	const _info = $derived(Account.AccountInfo.Generator(data.info));
+	const { account } = $props();
+	const struct = SupaStruct.get({
+		name: 'profile',
+		client: supabase,
+	});
+	const profile = $derived(struct.Generator(account));
 </script>
 
 <div class="container layer-1">
@@ -20,6 +23,6 @@ Designed as a top-level page route and does not export component props.
 		<h1>{$account.username}'s Profile</h1>
 	</div>
 	<div class="row mb-3">
-		<Profile {account} />
+		<Profile {profile} />
 	</div>
 </div>

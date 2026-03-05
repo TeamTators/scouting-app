@@ -7,8 +7,15 @@ Sign-in page at `/account/sign-in`.
 	import type { ActionData } from './$types';
 	import Password from '$lib/components/forms/Password.svelte';
 	import { Form } from '$lib/utils/form';
+	import { goto } from '$app/navigation';
 
 	let { form }: { form?: ActionData } = $props();
+
+	$effect(() => {
+		if (form?.redirect) {
+			goto(form.redirect);
+		}
+	});
 
 	const requestPasswordReset = () => {
 		new Form()
