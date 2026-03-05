@@ -20,15 +20,6 @@ jobs:
           submodules: 'true'
           # token: ${{ secrets.GH_TOKEN }}Do i rea
 
-
-      - name: View PATH and versions
-        run: |
-          echo $PATH
-          which node
-          which pnpm
-          node -v
-          pnpm -v
-
       - name: Install dependencies
         run: |
           echo "Installing dependencies..."
