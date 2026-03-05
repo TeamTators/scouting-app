@@ -34,7 +34,7 @@ jobs:
           PORT=3000
           OAUTH2_CLIENT_ID=1234567890
           OAUTH2_CLIENT_SECRET=1234567890
-          echo "CONFIG_PATH=./config.json" >> .env
+          CONFIG_PATH=./config.json
           EOF
 
           cp config.example.json config.json
@@ -43,6 +43,7 @@ jobs:
           PORT=3000
           OAUTH2_CLIENT_ID=1234567890
           OAUTH2_CLIENT_SECRET=1234567890
+          CONFIG_PATH=./config.json
           EOF
 
       - name: Setup Node.js
@@ -80,13 +81,8 @@ jobs:
           echo "Redis did not become ready in time" >&2
           exit 1
 
-      - name: Setup Database Roles
-        run: |
-          docker exec db psql -U admin -c "CREATE ROLE username WITH LOGIN PASSWORD 'password';"
-          docker exec db psql -U admin -c "CREATE DATABASE db WITH OWNER username;"
-          docker exec db psql -U admin -c "GRANT admin TO username;"
-          pnpm db:migrate
-          pnpm db:push --force
+      - name: Init supabase types
+        run: pnpm sb:init
 
       - name: Build app
         run: pnpm build

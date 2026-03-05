@@ -2,6 +2,7 @@ import { select } from '../cli/utils';
 import { sleep } from 'ts-utils/sleep';
 import fs from 'fs/promises';
 import path from 'path';
+import { config } from '../src/lib/server/utils/env';
 
 export default async (...args: string[]) => {
 	if (!args.includes('--force')) {
@@ -75,10 +76,20 @@ export default async (...args: string[]) => {
 	console.log('Owner:', owner);
 	console.log('Repository Name:', repoName);
 	console.log('Slug:', slug);
+	if (!domain || !owner || !repoName) {
+		console.error('Failed to extract necessary information from the target repository URL.');
+		return;
+	}
 
 	let readme = await fs.readFile(path.resolve(process.cwd(), 'README.md'), 'utf-8');
 	readme = readme
 		.replaceAll('tsaxking/sveltekit-template', slug)
 		.replaceAll('/sveltekit-template', `/${repoName}`);
 	await fs.writeFile(path.resolve(process.cwd(), 'README.md'), readme);
+
+	config.supabase.schema = repoName;
+	await fs.writeFile(
+		path.resolve(process.cwd(), 'config.example.json'),
+		JSON.stringify(config, null, 4)
+	);
 };

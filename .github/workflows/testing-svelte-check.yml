@@ -49,6 +49,9 @@ jobs:
           echo "CONFIG_PATH=./config.json" >> .env
           export $(cat .env | xargs)
 
+      - name: Init supabase types
+        run: pnpm sb:init
+
       - name: Run
         run: |
           echo "Testing..."

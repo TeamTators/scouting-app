@@ -68,10 +68,8 @@ jobs:
           echo "CONFIG_PATH=./config.json" >> .env
           export $(cat .env | xargs)
 
-      - name: Run migrations
-        run: |
-          pnpm run db:migrate
-          pnpm run db:push --strict --verbose --force
+      - name: Init supabase types
+        run: pnpm sb:init
 
       - name: Run
         run: |
