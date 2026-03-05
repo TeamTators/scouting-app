@@ -58,7 +58,8 @@ const main = async () => {
 	if (!mod.default) {
 		throw new Error(`Script ${file} does not have a default export`);
 	}
-	await mod.default(...args);
+	const res = await mod.default(...args);
+	console.log('Result:', res);
 	server.close();
 	process.exit(0);
 };

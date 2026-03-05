@@ -10,10 +10,12 @@
 		"schema": "your_schema_name",
 		"tenant_id": "your-tenant-id",
 		"password": "your-supabase-password",
-		"ip": "127.0.0.1",
 		"port": 8000,
 		"protocol": "http",
-		"anon_key": "your-anon-key"
+		"anon_key": "your-anon-key",
+		"domain": "localhost",
+		"local_ip": "127.0.0.1",
+		"service_role_key": "service_role_key"
 	},
 	"sessions": {
 		"auto_sign_in": "username",
