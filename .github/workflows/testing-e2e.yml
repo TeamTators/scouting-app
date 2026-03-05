@@ -19,7 +19,7 @@ jobs:
   e2e-tests:
     # this has a chance of infinite loop if we write a test wrong, timeout should catch it eventually.
     timeout-minutes: 5
-    runs-on: [self-hosted, Linux, x64]
+    runs-on: [self-hosted, Linux, X64]
     services:
       redis:
         image: redis:latest

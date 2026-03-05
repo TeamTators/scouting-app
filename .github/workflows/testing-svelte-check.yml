@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   tsc:
-    runs-on: [self-hosted, Linux, x64]
+    runs-on: [self-hosted, Linux, X64]
     steps:
       - name: Retrieve git dependencies
         uses: actions/checkout@v3

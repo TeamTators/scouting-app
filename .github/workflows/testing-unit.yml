@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   unit-tests:
-    runs-on: [self-hosted, Linux, x64]
+    runs-on: [self-hosted, Linux, X64]
     services:
       redis:
         image: redis:latest

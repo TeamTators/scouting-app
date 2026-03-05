@@ -6,7 +6,7 @@ on:
 
 jobs:
   pre-check:
-    runs-on: [self-hosted, Linux, x64]
+    runs-on: [self-hosted, Linux, X64]
     outputs:
       run_pipeline: ${{ steps.check.outputs.run_pipeline }}
     steps:
@@ -39,7 +39,7 @@ jobs:
     uses: ./.github/workflows/docker-compose-test.yml
 
   push-docker-image:
-    runs-on: [self-hosted, Linux, x64]
+    runs-on: [self-hosted, Linux, X64]
     needs: [format, unit-tests, E2E, check, docker-compose]
     steps:
       - name: Log in to Gitea Registry
