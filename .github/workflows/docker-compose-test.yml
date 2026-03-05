@@ -57,7 +57,9 @@ jobs:
           version: 10.30.0
 
       - name: Install Dependencies
-        run: pnpm i
+        run: |
+          npm i -g typescript
+          pnpm install --frozen-lockfile
 
       - name: Start Postgres and Redis in background
         run: |
