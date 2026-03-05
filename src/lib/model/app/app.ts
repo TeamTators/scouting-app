@@ -270,7 +270,7 @@ export class App {
 	 * @type {Comments}
 	 */
 	public readonly comments: Comments;
-	
+
 	/**
 	 * Year-specific settings for this app
 	 *

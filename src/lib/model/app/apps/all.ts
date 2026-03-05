@@ -13,7 +13,7 @@ import build2026 from './2026';
  * @example
  * const build = buildForYear(2025);
  */
-export const build = (year: 2024 | 2025) => {
+export const build = (year: 2024 | 2025 | 2026) => {
 	switch (year) {
 		case 2025:
 			return build2025;

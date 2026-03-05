@@ -250,8 +250,6 @@ export default (config: {
 		// viewCondition: () => app.matchData.alliance === 'red',
 	});
 
-
-
 	// sophie here's how you do the changing button:
 	app.addAppObject({
 		point: [0.025, 0.2],
@@ -260,35 +258,37 @@ export default (config: {
 		alliance: 'blue',
 		staticX: false,
 		staticY: true,
-		viewCondition: (tick) => tick.point ? isInside(tick.point, _middle) : false,
+		viewCondition: (tick) => (tick.point ? isInside(tick.point, _middle) : false)
 	});
 
-
-	app.settings.add({
-		default: 'left',
-		type: 'string',
-		name: 'Which side is the coral station on?',
-		description: 'Select which side the coral station is on for this match.',
-		options: [
-			{
-				name: 'Left',
-				value: 'left',
-			},
-			{
-				name: 'Right',
-				value: 'right',
+	app.settings.add(
+		{
+			default: 'left',
+			type: 'string',
+			name: 'Which side is the coral station on?',
+			description: 'Select which side the coral station is on for this match.',
+			options: [
+				{
+					name: 'Left',
+					value: 'left'
+				},
+				{
+					name: 'Right',
+					value: 'right'
+				}
+			]
+		},
+		(state) => {
+			switch (state) {
+				case 'left':
+					// move button positions to left
+					break;
+				case 'right':
+					// move button positions to right
+					break;
 			}
-		],
-	}, (state) => {
-		switch (state) {
-			case 'left':
-				// move button positions to left
-			break;
-			case 'right':
-				// move button positions to right
-			break;
 		}
-	});
+	);
 
 	return app;
 };
