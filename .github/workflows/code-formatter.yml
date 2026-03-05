@@ -1,16 +1,10 @@
 name: Format & Lint
 
 on:
-  workflow_call:
-    # secrets:
-    #   GH_TOKEN:
-    #     description: 'GitHub Token'
-    #     required: true
   push:
-    branches:
-      - '*'
-      - '!deploy'
-      - '!gh-pages'
+    branches-ignore:
+      - 'deploy'
+      - 'gh-pages'
 
 permissions:
   contents: read
