@@ -176,7 +176,7 @@
 		"redis-utils": "github:tsaxking/redis#v3.0.0",
 		"svelte-filepond": "^0.2.2",
 		"svelte-portal": "^2.2.1",
-		"tatorscout": "github:TeamTators/tatorscout-utils#v1.0.0",
+		"tatorscout": "github:TeamTators/tatorscout-utils#main",
 		"ts-utils": "github:tsaxking/global-ts-utilities#v1.0.9",
 		"typescript": "^5.7.3",
 		"uuid": "^11.1.0",

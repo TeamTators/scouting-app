@@ -6,7 +6,7 @@ import type { CompLevel } from 'tatorscout/tba';
 import { App } from '../app';
 import type { Point2D } from 'math/point';
 import { AppObject } from '../app-object';
-import YearInfo2026 from 'tatorscout/years/2025.js';
+import YearInfo2026 from 'tatorscout/years/2026.js';
 
 /**
  * Builds a 2026 scouting app instance.
