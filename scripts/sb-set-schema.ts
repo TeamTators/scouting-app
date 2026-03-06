@@ -29,9 +29,9 @@ export default async (schema: string) => {
 
     const currentSchema = config.supabase.schema;
     const filesToEdit = [
-        './src/lib/server/supabase.ts',
-        './src/lib/server/supabase-zod.ts',
-        './src/lib/server/supabase-schema.ts',
+        './src/lib/types/supabase.ts',
+        './src/lib/types/supabase-zod.ts',
+        './src/lib/types/supabase-schema.ts',
         './supabase/roles.sql',
         './supabase/schema.sql',
         './config.json',
@@ -42,8 +42,7 @@ export default async (schema: string) => {
     for (const file of filesToEdit) {
         const filePath = path.resolve(process.cwd(), file);
         const name = path.basename(filePath);
-        const ext = path.extname(filePath);
-        const backupPath = path.join(process.cwd(), 'private', 'backups', `${date}_${name}.${ext}.backup`);
+        const backupPath = path.join(process.cwd(), 'private', 'backups', path.dirname(file), `${date}_${name}.backup`);
         await fs.mkdir(path.dirname(backupPath), { recursive: true });
         await fs.copyFile(filePath, backupPath);
         console.log(`Backed up ${file} to ${backupPath}`);
