@@ -42,7 +42,9 @@ jobs:
           export $(cat .env | xargs)
 
       - name: Init supabase types
-        run: pnpm run sb:init
+        run: |
+          pnpm run sb:init
+          pnpm run sb:set-schema +=e2e_testing
 
       - name: Run
         run: |

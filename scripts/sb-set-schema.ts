@@ -3,9 +3,15 @@ import path from 'path';
 import { config } from '../src/lib/server/utils/env';
 
 export default async (schema: string) => {
-    const validChars = /[a-z_]+$/;
+    let tackOn = false;
+    if (schema.startsWith('+=')) {
+        tackOn = true;
+        schema = schema.slice(2);
+    }
+
+    const validChars = /[a-z0-9_]+$/;
     if (!validChars.test(schema)) {
-        throw new Error('Invalid schema name. Only lowercase letters and underscores are allowed.');
+        throw new Error('Invalid schema name. Only lowercase letters, numbers, and underscores are allowed.');
     }
 
     const notAllowed = [
@@ -28,9 +34,13 @@ export default async (schema: string) => {
 
 
     const currentSchema = config.supabase.schema;
+    console.log(`Current schema: ${currentSchema}`);
+    if (tackOn) {
+        schema = currentSchema + '_' + schema;
+    }
+    console.log(`New schema: ${schema}`);
     const filesToEdit = [
         './src/lib/types/supabase.ts',
-        './src/lib/types/supabase-zod.ts',
         './src/lib/types/supabase-schema.ts',
         './supabase/roles.sql',
         './supabase/schema.sql',

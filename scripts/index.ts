@@ -36,7 +36,7 @@ const main = async () => {
 				?.split(' ') ?? [];
 	}
 
-	terminal.log('Running file:', file);
+	terminal.log('Running file:', file, 'with args:', args);
 
 	// const res = await runTs(path.join('scripts', file), 'default', ...args);
 
