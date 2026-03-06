@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict DQhW95zCjFIbq6593cw4h3K4uI0IJ3sLKcQKC7M30wDcJOkPaUCBimVGRFA2ThN
+\restrict 50Amh92Tqgpa4zXUlWiD4qw65sr4hyyyLhBnmeIRSuASdPU5531DIMJa0eKR6DY
 
 -- Dumped from database version 15.8
 -- Dumped by pg_dump version 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
@@ -470,5 +470,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA sveltekit_template GR
 -- PostgreSQL database dump complete
 --
 
-\unrestrict DQhW95zCjFIbq6593cw4h3K4uI0IJ3sLKcQKC7M30wDcJOkPaUCBimVGRFA2ThN
+\unrestrict 50Amh92Tqgpa4zXUlWiD4qw65sr4hyyyLhBnmeIRSuASdPU5531DIMJa0eKR6DY
 

@@ -39,7 +39,8 @@
 		"sb:pull": "pnpm script sb-dump",
 		"sb:push-schema": "pnpm script sb-push-schema",
 		"sb:push-roles": "pnpm script sb-push-roles",
-		"sb:push": "pnpm script sb-push"
+		"sb:push": "pnpm script sb-push",
+		"sb:set-schema": "pnpm script sb-set-schema"
 	},
 	"packageManager": "pnpm@10.30.0",
 	"engines": {
