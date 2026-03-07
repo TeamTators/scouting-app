@@ -4,7 +4,11 @@ import { type Database } from '$lib/types/supabase';
 import { attempt, attemptAsync, ComplexEventEmitter, ResultPromise, type Result } from 'ts-utils';
 import { WritableArray, WritableBase } from '../writables';
 import { type SchemaName, schemaName } from '$lib/types/supabase-schema';
-import { RealtimeChannel, type createClient } from '@supabase/supabase-js';
+import {
+	REALTIME_SUBSCRIBE_STATES,
+	RealtimeChannel,
+	type createClient
+} from '@supabase/supabase-js';
 import { schemas } from '$lib/types/supabase-zod';
 import z from 'zod';
 import { browser } from '$app/environment';
@@ -88,7 +92,13 @@ export class SupaStruct<Name extends Names> {
 		delete: [SupaStructData<Name>];
 		archive: [SupaStructData<Name>];
 		restore: [SupaStructData<Name>];
+		realtime: [REALTIME_SUBSCRIBE_STATES];
 	}>();
+
+	public readonly on = this.em.on.bind(this.em);
+	public readonly off = this.em.off.bind(this.em);
+	public readonly once = this.em.once.bind(this.em);
+	private readonly emit = this.em.emit.bind(this.em);
 
 	private readonly channel: RealtimeChannel;
 
@@ -118,47 +128,42 @@ export class SupaStruct<Name extends Names> {
 	private setupListeners() {
 		if (this.listening) return false;
 		this.listening = true;
+
 		this.channel.on(
 			'postgres_changes',
 			{
-				event: 'INSERT',
+				event: '*',
 				schema: schemaName,
 				table: this.name
 			},
 			(payload) => {
-				this.log('Received new data payload:', payload);
-				const data = this.Generator(payload.new);
-				this.log('Received new data:', data);
-				this.em.emit('new', data);
-
-				for (const { array, satisfies } of this.registeredArrays.values()) {
-					if (satisfies(data.data) && !array.data.includes(data)) {
-						array.push(data);
-					}
+				this.log('Received event payload:', payload);
+				let data = this.Generator({});
+				switch (payload.eventType) {
+					case 'INSERT':
+						data = this.Generator(payload.new);
+						this.log('Received new data:', data);
+						this.emit('new', data);
+						break;
+					case 'UPDATE':
+						data = this.Generator(payload.new);
+						this.log('Received updated data:', data);
+						this.emit('update', data);
+						break;
+					case 'DELETE':
+						data = this.Generator(payload.old);
+						this.log('Received deleted data:', data);
+						this.emit('delete', data);
+						break;
 				}
-			}
-		);
 
-		this.channel.on(
-			'postgres_changes',
-			{
-				event: 'UPDATE',
-				schema: schemaName,
-				table: this.name
-			},
-			(payload) => {
-				this.log('Received updated data payload:', payload);
-				const data = this.Generator(payload.new);
-				this.log('Received updated data:', data);
-				this.em.emit('update', data);
-
-				if ('archived' in payload.new) {
+				if ('archived' in payload.new && 'archived' in payload.old) {
 					if (payload.new.archived && !payload.old.archived) {
 						this.log('Received archived data:', data);
-						this.em.emit('archive', data);
+						this.emit('archive', data);
 					} else if (!payload.new.archived && payload.old.archived) {
 						this.log('Received restored data:', data);
-						this.em.emit('restore', data);
+						this.emit('restore', data);
 					}
 				}
 
@@ -177,28 +182,6 @@ export class SupaStruct<Name extends Names> {
 			}
 		);
 
-		this.channel.on(
-			'postgres_changes',
-			{
-				event: 'DELETE',
-				schema: schemaName,
-				table: this.name
-			},
-			(payload) => {
-				this.log('Received deleted data payload:', payload);
-				if ('old' in payload) {
-					const cached = this.cache.get(String(payload.old.id));
-					if (cached) {
-						this.log('Received deleted data:', cached);
-						this.em.emit('delete', cached);
-						this.cache.delete(String(cached.data.id));
-						for (const { array } of this.registeredArrays.values()) {
-							array.remove(cached);
-						}
-					}
-				}
-			}
-		);
 		return true;
 	}
 
@@ -274,7 +257,12 @@ export class SupaStruct<Name extends Names> {
 	}
 
 	private sub(fn?: (status: string) => void) {
-		return attempt(() => this.channel.subscribe(fn));
+		return attempt(() =>
+			this.channel.subscribe((status) => {
+				fn?.(status);
+				this.emit('realtime', status);
+			})
+		);
 	}
 
 	registerArray(

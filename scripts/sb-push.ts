@@ -2,6 +2,11 @@ import pushRoles from './sb-push-roles';
 import pushSchema from './sb-push-schema';
 
 export default async () => {
-	await pushSchema();
-	await pushRoles();
+	const schemaResult = await pushSchema().unwrap();
+	const rolesResult = await pushRoles().unwrap();
+
+	return {
+		schema: schemaResult,
+		roles: rolesResult
+	};
 };

@@ -1,41 +1,51 @@
 <script lang="ts">
-	import supabase from '$lib/services/supabase';
-	import { SupaStruct } from '$lib/services/supabase/supastruct';
+	import { runTests } from '$lib/model/testing';
+	import Test from '$lib/components/general/Test.svelte';
 
-	const struct = new SupaStruct({
-		name: 'test',
-		client: supabase,
-		debug: true
-	});
-	const data = struct.all({
-		type: 'all'
-	});
+	const arr = runTests();
+	const success = arr.derived((arr) => arr.filter((test) => test.data.success === true));
+	const failed = arr.derived((arr) => arr.filter((test) => test.data.success === false));
+	const pending = arr.derived((arr) => arr.filter((test) => test.data.pending));
+	const complete = arr.derived((arr) => arr.filter((test) => !test.data.pending).length);
+	const total = arr.length;
 </script>
 
-<div class="container layer-1">
+<div
+	class="container"
+	id="supabase-tests"
+	data-pass={$success.length === total}
+	data-complete={$complete === total}
+>
 	<div class="row mb-3">
-		<div class="d-flex">
-			<h1>SupaStruct Test</h1>
-			<button
-				class="btn btn-primary ms-3"
-				onclick={() => struct.new({ name: 'New Item', age: Math.floor(Math.random() * 100) })}
-			>
-				<i class="material-icons"> add </i>
-			</button>
+		<div class="col">
+			<h1>Supabase Tests</h1>
+			<p class="lead">
+				This page runs a series of tests against the Supabase database and displays the results.
+			</p>
+			<p>Complete: {$complete} / {total}</p>
 		</div>
 	</div>
 	<div class="row mb-3">
-		{#each $data as item (item.data.id)}
-			<div class="col-md-4">
-				<div class="card mb-3">
-					<div class="card-body">
-						<h5 class="card-title">{item.data.id}</h5>
-						<p class="card-text">{item.data.name}</p>
-						<button type="button" class="btn btn-danger" onclick={() => item.delete()}>
-							<i class="material-icons"> delete </i>
-						</button>
-					</div>
-				</div>
+		<h2>Success ({$success.length} / {total})</h2>
+		{#each $success as test}
+			<div class="col-4 mb-3">
+				<Test {test} />
+			</div>
+		{/each}
+	</div>
+	<div class="row mb-3">
+		<h2>Failed ({$failed.length} / {total})</h2>
+		{#each $failed as test}
+			<div class="col-4 mb-3">
+				<Test {test} />
+			</div>
+		{/each}
+	</div>
+	<div class="row mb-3">
+		<h2>Pending ({$pending.length} / {total})</h2>
+		{#each $pending as test}
+			<div class="col-4 mb-3">
+				<Test {test} />
 			</div>
 		{/each}
 	</div>

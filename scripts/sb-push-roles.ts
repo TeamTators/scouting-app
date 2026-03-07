@@ -1,7 +1,7 @@
 import { runTask } from '../src/lib/server/utils/task';
 import { config } from '../src/lib/server/utils/env';
 
-export default async () => {
+export default () => {
 	return runTask(
 		`PGPASSWORD=${config.supabase.pg_pass}`,
 		'psql',

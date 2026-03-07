@@ -31,7 +31,6 @@
 		"restore": "pnpm script restore",
 		"dev:docs": "vitepress preview docs",
 		"prepare": "husky install",
-		"sb:gen": "pnpm sb:init && pnpm script sb-gen",
 		"sb:init": "pnpm script sb-init",
 		"sb:dump-schema": "pnpm script sb-dump-schema",
 		"sb:dump-roles": "pnpm script sb-dump-roles",
