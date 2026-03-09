@@ -323,17 +323,17 @@ export default (config: {
 	});
 
 	const _redZone = app.view.addArea({
-			color: Color.fromName('red').setAlpha(0.5),
-			condition: () => true,
-			points: YearInfo2026.allianceAreas.zones.red as Point2D[],
-			zone: 'RedZone'
-		});
-		const _blueZone = app.view.addArea({
-			color: Color.fromName('blue').setAlpha(0.5),
-			condition: () => true,
-			points: YearInfo2026.allianceAreas.zones.blue as Point2D[],
-			zone: 'BlueZone'
-		});
+		color: Color.fromName('red').setAlpha(0.5),
+		condition: () => true,
+		points: YearInfo2026.allianceAreas.zones.red as Point2D[],
+		zone: 'RedZone'
+	});
+	const _blueZone = app.view.addArea({
+		color: Color.fromName('blue').setAlpha(0.5),
+		condition: () => true,
+		points: YearInfo2026.allianceAreas.zones.blue as Point2D[],
+		zone: 'BlueZone'
+	});
 
 	app.settings.add({
 		default: 'left',

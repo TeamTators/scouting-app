@@ -117,7 +117,10 @@ export class Settings extends WritableArray<SettingsConfig<'string' | 'number' |
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		this.push(data as any);
 
-		data.value.subscribe(onchange);
+		data.value.subscribe((value) => {
+			onchange(value);
+			this.save();
+		});
 		return this;
 	}
 
