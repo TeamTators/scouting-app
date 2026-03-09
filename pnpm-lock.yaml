@@ -256,7 +256,7 @@ importers:
         version: 2.2.1
       tatorscout:
         specifier: github:TeamTators/tatorscout-utils#2026-03-07-SH-betterZones
-        version: https://codeload.github.com/TeamTators/tatorscout-utils/tar.gz/adc6974104f346ee46115d3203dc4428e7c2a513(@types/node@22.19.7)(jsdom@28.1.0)(sass-embedded@1.97.3)(sass@1.97.3)
+        version: https://codeload.github.com/TeamTators/tatorscout-utils/tar.gz/e27fbd38077f749e248cd060085edd2ec68d3ed6(@types/node@22.19.7)(jsdom@28.1.0)(sass-embedded@1.97.3)(sass@1.97.3)
       ts-utils:
         specifier: github:tsaxking/global-ts-utilities#v1.0.9
         version: https://codeload.github.com/tsaxking/global-ts-utilities/tar.gz/e3d13149e420c7b9fe046cbcf9df6eef1b1864e8(@types/node@22.19.7)(jsdom@28.1.0)(sass-embedded@1.97.3)(sass@1.97.3)
@@ -5185,8 +5185,8 @@ packages:
   tabbable@6.4.0:
     resolution: {integrity: sha512-05PUHKSNE8ou2dwIxTngl4EzcnsCDZGJ/iCLtDflR/SHB/ny14rXc+qU5P4mG9JkusiV7EivzY9Mhm55AzAvCg==}
 
-  tatorscout@https://codeload.github.com/TeamTators/tatorscout-utils/tar.gz/adc6974104f346ee46115d3203dc4428e7c2a513:
-    resolution: {tarball: https://codeload.github.com/TeamTators/tatorscout-utils/tar.gz/adc6974104f346ee46115d3203dc4428e7c2a513}
+  tatorscout@https://codeload.github.com/TeamTators/tatorscout-utils/tar.gz/e27fbd38077f749e248cd060085edd2ec68d3ed6:
+    resolution: {tarball: https://codeload.github.com/TeamTators/tatorscout-utils/tar.gz/e27fbd38077f749e248cd060085edd2ec68d3ed6}
     version: 1.0.0
 
   text-table@0.2.0:
@@ -10989,7 +10989,7 @@ snapshots:
 
   tabbable@6.4.0: {}
 
-  tatorscout@https://codeload.github.com/TeamTators/tatorscout-utils/tar.gz/adc6974104f346ee46115d3203dc4428e7c2a513(@types/node@22.19.7)(jsdom@28.1.0)(sass-embedded@1.97.3)(sass@1.97.3):
+  tatorscout@https://codeload.github.com/TeamTators/tatorscout-utils/tar.gz/e27fbd38077f749e248cd060085edd2ec68d3ed6(@types/node@22.19.7)(jsdom@28.1.0)(sass-embedded@1.97.3)(sass@1.97.3):
     dependencies:
       '@eslint/compat': 1.4.1(eslint@9.39.2)
       eslint: 9.39.2

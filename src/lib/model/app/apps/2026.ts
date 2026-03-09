@@ -164,7 +164,7 @@ export default (config: {
 		out: createButton(redObjects.out, 'red')
 	};
 
-	app.addAppObject({
+	const blueHub1 = app.addAppObject({
 		point: [0.025, 0.2],
 		object: blueObjects.hub1,
 		button: blueButtons.hub1,
@@ -173,7 +173,7 @@ export default (config: {
 		staticY: true,
 		//viewCondition: () => app.matchData.alliance === 'blue'
 	});
-	app.addAppObject({
+	const blueHub5 = app.addAppObject({
 		point: [0.025, 0.4],
 		object: blueObjects.hub5,
 		button: blueButtons.hub5,
@@ -182,7 +182,7 @@ export default (config: {
 		staticY: true,
 		//viewCondition: () => app.matchData.alliance === 'blue'
 	});
-	app.addAppObject({
+	const blueHub10 = app.addAppObject({
 		point: [0.025, 0.6],
 		object: blueObjects.hub10,
 		button: blueButtons.hub10,
@@ -192,7 +192,7 @@ export default (config: {
 		//viewCondition: () => app.matchData.alliance === 'blue'
 	});
 
-	app.addAppObject({
+	const blueLob1 = app.addAppObject({
 		point: [0.025, 0.2],
 		object: blueObjects.lob1,
 		button: blueButtons.lob1,
@@ -206,7 +206,7 @@ export default (config: {
 			return !inside;
 		}});
 
-	app.addAppObject({
+	const blueLob5 = app.addAppObject({
 		point: [0.025, 0.4],
 		object: blueObjects.lob5,
 		button: blueButtons.lob5,
@@ -220,7 +220,7 @@ export default (config: {
 			return !inside;
 		}});
 
-	app.addAppObject({
+	const blueLob10 = app.addAppObject({
 		point: [0.025, 0.6],
 		object: blueObjects.lob10,
 		button: blueButtons.lob10,
@@ -243,7 +243,7 @@ export default (config: {
 		staticY: false,
 		//viewCondition: () => app.matchData.alliance === 'blue'
 	});
-	app.addAppObject({
+	const redHub1 = app.addAppObject({
 		point: [0.025, 0.2],
 		object: redObjects.hub1,
 		button: redButtons.hub1,
@@ -252,7 +252,7 @@ export default (config: {
 		staticY: true,
 		//viewCondition: (tick) => (tick.point ? isInside(tick.point, YearInfo2026.allianceAreas.zones.red as Point2D[]) : false)
 	});
-	app.addAppObject({
+	const redHub5 = app.addAppObject({
 		point: [0.025, 0.4],
 		object: redObjects.hub5,
 		button: redButtons.hub5,
@@ -261,7 +261,7 @@ export default (config: {
 		staticY: true,
 		//viewCondition: (tick) => (tick.point ? isInside(tick.point, YearInfo2026.allianceAreas.zones.red as Point2D[]) : false)
 	});
-	app.addAppObject({
+	const redHub10 = app.addAppObject({
 		point: [0.025, 0.6],
 		object: redObjects.hub10,
 		button: redButtons.hub10,
@@ -271,8 +271,8 @@ export default (config: {
 		//viewCondition: (tick) => (tick.point ? isInside(tick.point, YearInfo2026.allianceAreas.zones.red as Point2D[]) : false)
 	});
 
-	app.addAppObject({
-		point: [0.025, 0.2],
+	const redLob1 = app.addAppObject({
+		point: [0.025, 0.6],
 		object: redObjects.lob1,
 		button: redButtons.lob1,
 		alliance: 'red',
@@ -285,7 +285,7 @@ export default (config: {
 			return !inside;
 		}});
 
-	app.addAppObject({
+	const redLob5 = app.addAppObject({
 		point: [0.025, 0.4],
 		object: redObjects.lob5,
 		button: redButtons.lob5,
@@ -300,7 +300,7 @@ export default (config: {
 		}});
 
 	const redLob10 = app.addAppObject({
-		point: [0.025, 0.6],
+		point: [0.025, 0.2],
 		object: redObjects.lob10,
 		button: redButtons.lob10,
 		alliance: 'red',
@@ -312,6 +312,7 @@ export default (config: {
 			const inside = isInside(p, YearInfo2026.allianceAreas.zones.red as Point2D[]);
 			return !inside;
 		}});
+
 	app.addAppObject({
 		point: [0.967, 0.124],
 		object: redObjects.out,
@@ -349,9 +350,31 @@ export default (config: {
 		description: 'Choose which side of the screen you want the lob/shot buttons on. This does not affect the outpost button.'
 	}, (value) => {
 		if (value === 'left') {
-			redLob10.point = [0.025, 0.6]; // or something
+			redLob10.point = [0.025, 0.2];
+			redHub10.point = [0.025, 0.2];
+			redLob5.point = [0.025, 0.4];
+			redHub5.point = [0.025, 0.4];
+			redLob1.point = [0.025, 0.6];
+			redHub1.point = [0.025, 0.6];
+			blueLob10.point = [0.025, 0.2];
+			blueHub10.point = [0.025, 0.2];
+			blueLob5.point = [0.025, 0.4];
+			blueHub5.point = [0.025, 0.4];
+			blueLob1.point = [0.025, 0.6];
+			blueHub1.point = [0.025, 0.6];
 		} else {
-
+			redLob10.point = [0.975, 0.2];
+			redHub10.point = [0.975, 0.2];
+			redLob5.point = [0.975, 0.4];
+			redHub5.point = [0.975, 0.4];
+			redLob1.point = [0.975, 0.6];
+			redHub1.point = [0.975, 0.6];
+			blueLob10.point = [0.975, 0.2];
+			blueHub10.point = [0.975, 0.2];
+			blueLob5.point = [0.975, 0.4];
+			blueHub5.point = [0.975, 0.4];
+			blueLob1.point = [0.975, 0.6];
+			blueHub1.point = [0.975, 0.6];
 		}
 	});
 
