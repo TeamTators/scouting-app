@@ -299,7 +299,7 @@ export default (config: {
 			return !inside;
 		}});
 
-	app.addAppObject({
+	const redLob10 = app.addAppObject({
 		point: [0.025, 0.6],
 		object: redObjects.lob10,
 		button: redButtons.lob10,
@@ -334,6 +334,26 @@ export default (config: {
 			points: YearInfo2026.allianceAreas.zones.blue as Point2D[],
 			zone: 'BlueZone'
 		});
+
+	app.settings.add({
+		default: 'left',
+		type: 'string',
+		name: 'Which side do you want the lob/shot buttons on?',
+		options: [{
+			name: 'Left',
+			value: 'left'
+		}, {
+			name: 'Right',
+			value: 'right'
+		}],
+		description: 'Choose which side of the screen you want the lob/shot buttons on. This does not affect the outpost button.'
+	}, (value) => {
+		if (value === 'left') {
+			redLob10.point = [0.025, 0.6]; // or something
+		} else {
+
+		}
+	});
 
 	return app;
 };

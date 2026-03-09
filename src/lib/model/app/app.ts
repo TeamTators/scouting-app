@@ -670,7 +670,7 @@ export class App {
 		staticX: boolean;
 		staticY: boolean;
 	}) {
-		this.gameObjects.push({
+		const obj = {
 			point: config.point,
 			object: config.object as AppObject<unknown>,
 			element: config.button,
@@ -678,7 +678,8 @@ export class App {
 			viewCondition: config.viewCondition,
 			staticX: config.staticX,
 			staticY: config.staticY
-		});
+		};
+		this.gameObjects.push(obj);
 
 		if (!config.button.innerHTML) config.button.innerText = config.object.config.name;
 		const defaultHTML = config.button.innerHTML;
@@ -729,6 +730,8 @@ export class App {
 		config.button.addEventListener('touchcancel', end);
 		config.button.addEventListener('mouseleave', end);
 		config.button.addEventListener('touchleave', end);
+
+		return obj;
 	}
 	/**
 	 * Enables an overlay utility for collecting normalized click points.
