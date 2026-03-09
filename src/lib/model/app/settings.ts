@@ -121,6 +121,7 @@ export class Settings extends WritableArray<SettingsConfig<'string' | 'number' |
 			onchange(value);
 			this.save();
 		});
+		this.pullSaved();
 		return this;
 	}
 
