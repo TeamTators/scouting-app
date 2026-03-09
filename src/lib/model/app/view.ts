@@ -343,7 +343,7 @@ export class AppView {
 			coverContainer.addEventListener('touchmove', transferMove);
 			coverContainer.addEventListener('touchend', transferEnd);
 
-			this.container.appendChild(coverContainer);
+			this.container?.appendChild(coverContainer);
 		}
 
 		setCover();
@@ -603,7 +603,11 @@ export class AppView {
 		color: Color;
 		condition: (shape: Point2D[]) => boolean;
 	}) {
-		this.once('init', () => {
+		let added = false;
+		this.on('init', () => {
+			if (added) return;
+			added = true;
+			console.log('Adding area', config.zone);
 			const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
 			polygon.style.zIndex = '0';
 			polygon.setAttribute('fill', config.color.setAlpha(0).toString('rgba'));
