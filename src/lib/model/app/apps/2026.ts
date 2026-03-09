@@ -5,6 +5,7 @@
 import type { CompLevel } from 'tatorscout/tba';
 import { App } from '../app';
 import type { Point2D } from 'math/point';
+import { Color } from 'colors/color';
 import { AppObject } from '../app-object';
 import YearInfo2026 from 'tatorscout/years/2026.js';
 import { isInside } from 'math/polygon';
@@ -28,33 +29,19 @@ export default (config: {
 	compLevel: CompLevel;
 	alliance: 'red' | 'blue' | null;
 }) => {
-	type Zone = {
-		red: Point2D[];
-		blue: Point2D[];
-	};
+
+	const middle: Point2D[] = [
+		[0.434, 0.064],
+		[0.567, 0.062],
+		[0.564, 0.934],
+		[0.434, 0.934]
+	];
 
 	const app = new App({
 		...config,
 		year: 2026,
 		yearInfo: YearInfo2026
 	});
-
-	const _alliances: Zone = {
-		red: [],
-		blue: []
-	};
-
-	const _coralStation: Zone = {
-		red: [],
-		blue: []
-	};
-
-	const _endZone: Zone = {
-		red: [],
-		blue: []
-	};
-
-	const _middle: Point2D[] = [];
 
 	const blueObjects = {
 		hub1: new AppObject({
@@ -161,9 +148,9 @@ export default (config: {
 		hub1: createLargeButton(blueObjects.hub1, 'blue'),
 		hub5: createLargeButton(blueObjects.hub5, 'blue'),
 		hub10: createLargeButton(blueObjects.hub10, 'blue'),
-		lob1: createButton(blueObjects.lob1, 'blue'),
-		lob5: createButton(blueObjects.lob5, 'blue'),
-		lob10: createButton(blueObjects.lob10, 'blue'),
+		lob1: createLargeButton(blueObjects.lob1, 'blue'),
+		lob5: createLargeButton(blueObjects.lob5, 'blue'),
+		lob10: createLargeButton(blueObjects.lob10, 'blue'),
 		out: createButton(blueObjects.out, 'blue')
 	};
 
@@ -171,9 +158,9 @@ export default (config: {
 		hub1: createLargeButton(redObjects.hub1, 'red'),
 		hub5: createLargeButton(redObjects.hub5, 'red'),
 		hub10: createLargeButton(redObjects.hub10, 'red'),
-		lob1: createButton(redObjects.lob1, 'red'),
-		lob5: createButton(redObjects.lob5, 'red'),
-		lob10: createButton(redObjects.lob10, 'red'),
+		lob1: createLargeButton(redObjects.lob1, 'red'),
+		lob5: createLargeButton(redObjects.lob5, 'red'),
+		lob10: createLargeButton(redObjects.lob10, 'red'),
 		out: createButton(redObjects.out, 'red')
 	};
 
@@ -182,113 +169,171 @@ export default (config: {
 		object: blueObjects.hub1,
 		button: blueButtons.hub1,
 		alliance: 'blue',
-		staticX: false,
-		staticY: true
-		// viewCondition: () => app.matchData.alliance === 'blue',
+		staticX: true,
+		staticY: true,
+		//viewCondition: () => app.matchData.alliance === 'blue'
 	});
 	app.addAppObject({
 		point: [0.025, 0.4],
 		object: blueObjects.hub5,
 		button: blueButtons.hub5,
 		alliance: 'blue',
-		staticX: false,
-		staticY: true
-		// viewCondition: () => app.matchData.alliance === 'blue',
+		staticX: true,
+		staticY: true,
+		//viewCondition: () => app.matchData.alliance === 'blue'
 	});
 	app.addAppObject({
 		point: [0.025, 0.6],
 		object: blueObjects.hub10,
 		button: blueButtons.hub10,
 		alliance: 'blue',
-		staticX: false,
-		staticY: true
-		// viewCondition: () => app.matchData.alliance === 'blue',
+		staticX: true,
+		staticY: true,
+		//viewCondition: () => app.matchData.alliance === 'blue'
 	});
+
+	app.addAppObject({
+		point: [0.025, 0.2],
+		object: blueObjects.lob1,
+		button: blueButtons.lob1,
+		alliance: 'blue',
+		staticX: true,
+		staticY: true,
+		viewCondition: (tick) => {
+			const p = tick.prev()?.point;
+			if (p == null || undefined) return false;
+			const inside = isInside(p, YearInfo2026.allianceAreas.zones.blue as Point2D[]);
+			return !inside;
+		}});
+
+	app.addAppObject({
+		point: [0.025, 0.4],
+		object: blueObjects.lob5,
+		button: blueButtons.lob5,
+		alliance: 'blue',
+		staticX: true,
+		staticY: true,
+		viewCondition: (tick) => {
+			const p = tick.prev()?.point;
+			if (p == null || undefined) return false;
+			const inside = isInside(p, YearInfo2026.allianceAreas.zones.blue as Point2D[]);
+			return !inside;
+		}});
+
+	app.addAppObject({
+		point: [0.025, 0.6],
+		object: blueObjects.lob10,
+		button: blueButtons.lob10,
+		alliance: 'blue',
+		staticX: true,
+		staticY: true,
+		viewCondition: (tick) => {
+			const p = tick.prev()?.point;
+			if (p == null || undefined) return false;
+			const inside = isInside(p, YearInfo2026.allianceAreas.zones.blue as Point2D[]);
+			return !inside;
+		}});
+
 	app.addAppObject({
 		point: [0.033, 0.869],
 		object: blueObjects.out,
 		button: blueButtons.out,
 		alliance: 'blue',
 		staticX: false,
-		staticY: true
-		// viewCondition: () => app.matchData.alliance === 'blue',
+		staticY: false,
+		//viewCondition: () => app.matchData.alliance === 'blue'
 	});
 	app.addAppObject({
 		point: [0.025, 0.2],
 		object: redObjects.hub1,
 		button: redButtons.hub1,
 		alliance: 'red',
-		staticX: false,
-		staticY: true
-		// viewCondition: () => app.matchData.alliance === 'red',
+		staticX: true,
+		staticY: true,
+		//viewCondition: (tick) => (tick.point ? isInside(tick.point, YearInfo2026.allianceAreas.zones.red as Point2D[]) : false)
 	});
 	app.addAppObject({
 		point: [0.025, 0.4],
 		object: redObjects.hub5,
 		button: redButtons.hub5,
 		alliance: 'red',
-		staticX: false,
-		staticY: true
-		// viewCondition: () => app.matchData.alliance === 'red',
+		staticX: true,
+		staticY: true,
+		//viewCondition: (tick) => (tick.point ? isInside(tick.point, YearInfo2026.allianceAreas.zones.red as Point2D[]) : false)
 	});
 	app.addAppObject({
 		point: [0.025, 0.6],
 		object: redObjects.hub10,
 		button: redButtons.hub10,
 		alliance: 'red',
-		staticX: false,
-		staticY: true
-		// viewCondition: () => app.matchData.alliance === 'red',
+		staticX: true,
+		staticY: true,
+		//viewCondition: (tick) => (tick.point ? isInside(tick.point, YearInfo2026.allianceAreas.zones.red as Point2D[]) : false)
 	});
+
+	app.addAppObject({
+		point: [0.025, 0.2],
+		object: redObjects.lob1,
+		button: redButtons.lob1,
+		alliance: 'red',
+		staticX: true,
+		staticY: true,
+		viewCondition: (tick) => {
+			const p = tick.prev()?.point;
+			if (p == null || undefined) return false;
+			const inside = isInside(p, YearInfo2026.allianceAreas.zones.red as Point2D[]);
+			return !inside;
+		}});
+
+	app.addAppObject({
+		point: [0.025, 0.4],
+		object: redObjects.lob5,
+		button: redButtons.lob5,
+		alliance: 'red',
+		staticX: true,
+		staticY: true,
+		viewCondition: (tick) => {
+			const p = tick.prev()?.point;
+			if (p == null || undefined) return false;
+			const inside = isInside(p, YearInfo2026.allianceAreas.zones.red as Point2D[]);
+			return !inside;
+		}});
+
+	app.addAppObject({
+		point: [0.025, 0.6],
+		object: redObjects.lob10,
+		button: redButtons.lob10,
+		alliance: 'red',
+		staticX: true,
+		staticY: true,
+		viewCondition: (tick) => {
+			const p = tick.prev()?.point;
+			if (p == null || undefined) return false;
+			const inside = isInside(p, YearInfo2026.allianceAreas.zones.red as Point2D[]);
+			return !inside;
+		}});
 	app.addAppObject({
 		point: [0.967, 0.124],
 		object: redObjects.out,
 		button: redButtons.out,
 		alliance: 'red',
 		staticX: false,
-		staticY: true
-		// viewCondition: () => app.matchData.alliance === 'red',
+		staticY: false,
+		//viewCondition: () => app.matchData.alliance === 'red'
 	});
 
-	// sophie here's how you do the changing button:
-	app.addAppObject({
-		point: [0.025, 0.2],
-		object: blueObjects.lob1,
-		button: blueButtons.lob1,
-		alliance: 'blue',
-		staticX: false,
-		staticY: true,
-		viewCondition: (tick) => (tick.point ? isInside(tick.point, _middle) : false)
-	});
-
-	app.settings.add(
-		{
-			default: 'left',
-			type: 'string',
-			name: 'Which side is the coral station on?',
-			description: 'Select which side the coral station is on for this match.',
-			options: [
-				{
-					name: 'Left',
-					value: 'left'
-				},
-				{
-					name: 'Right',
-					value: 'right'
-				}
-			]
-		},
-		(state) => {
-			switch (state) {
-				case 'left':
-					// move button positions to left
-					break;
-				case 'right':
-					// move button positions to right
-					break;
-			}
-		}
-	);
+	const _redZone = app.view.addArea({
+			color: Color.fromName('red').setAlpha(0.5),
+			condition: () => true,
+			points: YearInfo2026.allianceAreas.zones.red as Point2D[],
+			zone: 'RedZone'
+		});
+		const _blueZone = app.view.addArea({
+			color: Color.fromName('blue').setAlpha(0.5),
+			condition: () => true,
+			points: YearInfo2026.allianceAreas.zones.blue as Point2D[],
+			zone: 'BlueZone'
+		});
 
 	return app;
 };
