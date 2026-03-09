@@ -267,7 +267,8 @@ export class AppView {
 		this.svg.appendChild(this.border);
 
 		// Cover screen until first interaction
-		{
+		const setCover = () => {
+			console.log('setting cover...');
 			const coverContainer = document.createElement('div');
 			const cover = mount(Cover, {
 				target: coverContainer,
@@ -344,6 +345,9 @@ export class AppView {
 
 			this.container.appendChild(coverContainer);
 		}
+
+		setCover();
+		this.app.on('reset', setCover);
 
 		for (const object of this.app.gameObjects) {
 			target.appendChild(object.element);

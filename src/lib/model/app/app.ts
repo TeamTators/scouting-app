@@ -453,6 +453,7 @@ export class App {
 		this.checks.reset();
 		this.view.reset();
 		this.reviewFlag.reset();
+		this.emit('reset', undefined);
 	}
 
 	/**
