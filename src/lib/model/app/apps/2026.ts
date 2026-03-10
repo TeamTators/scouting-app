@@ -29,13 +29,6 @@ export default (config: {
 	compLevel: CompLevel;
 	alliance: 'red' | 'blue' | null;
 }) => {
-	const _middle: Point2D[] = [
-		[0.434, 0.064],
-		[0.567, 0.062],
-		[0.564, 0.934],
-		[0.434, 0.934]
-	];
-
 	const app = new App({
 		...config,
 		year: 2026,
@@ -169,26 +162,43 @@ export default (config: {
 		button: blueButtons.hub1,
 		alliance: 'blue',
 		staticX: true,
-		staticY: true
-		//viewCondition: () => app.matchData.alliance === 'blue'
+		staticY: true,
+		viewCondition: (tick) => {
+			const p = tick.prev()?.point;
+			if (p == null || undefined) return false;
+			const inside = isInside(p, YearInfo2026.allianceAreas.zones.blue as Point2D[]);
+			return inside;
+		}
 	});
+
 	const blueHub5 = app.addAppObject({
 		point: [0.025, 0.4],
 		object: blueObjects.hub5,
 		button: blueButtons.hub5,
 		alliance: 'blue',
 		staticX: true,
-		staticY: true
-		//viewCondition: () => app.matchData.alliance === 'blue'
+		staticY: true,
+		viewCondition: (tick) => {
+			const p = tick.prev()?.point;
+			if (p == null || undefined) return false;
+			const inside = isInside(p, YearInfo2026.allianceAreas.zones.blue as Point2D[]);
+			return inside;
+		}
 	});
+
 	const blueHub10 = app.addAppObject({
 		point: [0.025, 0.6],
 		object: blueObjects.hub10,
 		button: blueButtons.hub10,
 		alliance: 'blue',
 		staticX: true,
-		staticY: true
-		//viewCondition: () => app.matchData.alliance === 'blue'
+		staticY: true,
+		viewCondition: (tick) => {
+			const p = tick.prev()?.point;
+			if (p == null || undefined) return false;
+			const inside = isInside(p, YearInfo2026.allianceAreas.zones.blue as Point2D[]);
+			return inside;
+		}
 	});
 
 	const blueLob1 = app.addAppObject({
@@ -251,26 +261,43 @@ export default (config: {
 		button: redButtons.hub1,
 		alliance: 'red',
 		staticX: true,
-		staticY: true
-		//viewCondition: (tick) => (tick.point ? isInside(tick.point, YearInfo2026.allianceAreas.zones.red as Point2D[]) : false)
+		staticY: true,
+		viewCondition: (tick) => {
+			const p = tick.prev()?.point;
+			if (p == null || undefined) return false;
+			const inside = isInside(p, YearInfo2026.allianceAreas.zones.red as Point2D[]);
+			return inside;
+		}
 	});
+
 	const redHub5 = app.addAppObject({
 		point: [0.025, 0.4],
 		object: redObjects.hub5,
 		button: redButtons.hub5,
 		alliance: 'red',
 		staticX: true,
-		staticY: true
-		//viewCondition: (tick) => (tick.point ? isInside(tick.point, YearInfo2026.allianceAreas.zones.red as Point2D[]) : false)
+		staticY: true,
+		viewCondition: (tick) => {
+			const p = tick.prev()?.point;
+			if (p == null || undefined) return false;
+			const inside = isInside(p, YearInfo2026.allianceAreas.zones.red as Point2D[]);
+			return inside;
+		}
 	});
+
 	const redHub10 = app.addAppObject({
 		point: [0.025, 0.6],
 		object: redObjects.hub10,
 		button: redButtons.hub10,
 		alliance: 'red',
 		staticX: true,
-		staticY: true
-		//viewCondition: (tick) => (tick.point ? isInside(tick.point, YearInfo2026.allianceAreas.zones.red as Point2D[]) : false)
+		staticY: true,
+		viewCondition: (tick) => {
+			const p = tick.prev()?.point;
+			if (p == null || undefined) return false;
+			const inside = isInside(p, YearInfo2026.allianceAreas.zones.red as Point2D[]);
+			return inside;
+		}
 	});
 
 	const redLob1 = app.addAppObject({

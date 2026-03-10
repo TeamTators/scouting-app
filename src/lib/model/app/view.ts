@@ -268,7 +268,7 @@ export class AppView {
 
 		// Cover screen until first interaction
 		const setCover = () => {
-			console.log('setting cover...');
+			// console.log('setting cover...');
 			const coverContainer = document.createElement('div');
 			const cover = mount(Cover, {
 				target: coverContainer,
