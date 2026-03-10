@@ -166,7 +166,8 @@ export default z.object({
 				const primaryCount = servers.filter((s) => s.primary).length;
 				return primaryCount <= 1;
 			}),
-		remote: z.boolean()
+		remote: z.boolean(),
+		do_scout_groups: z.boolean(),
 	}),
 	sse: z.object({
 		debug: z.boolean(),
