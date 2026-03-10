@@ -167,7 +167,7 @@ export default z.object({
 				return primaryCount <= 1;
 			}),
 		remote: z.boolean(),
-		do_scout_groups: z.boolean(),
+		do_scout_groups: z.boolean()
 	}),
 	sse: z.object({
 		debug: z.boolean(),

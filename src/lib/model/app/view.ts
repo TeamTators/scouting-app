@@ -344,7 +344,7 @@ export class AppView {
 			coverContainer.addEventListener('touchend', transferEnd);
 
 			this.container?.appendChild(coverContainer);
-		}
+		};
 
 		setCover();
 		this.app.on('reset', setCover);

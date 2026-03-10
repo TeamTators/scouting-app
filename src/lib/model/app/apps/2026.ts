@@ -29,8 +29,7 @@ export default (config: {
 	compLevel: CompLevel;
 	alliance: 'red' | 'blue' | null;
 }) => {
-
-	const middle: Point2D[] = [
+	const _middle: Point2D[] = [
 		[0.434, 0.064],
 		[0.567, 0.062],
 		[0.564, 0.934],
@@ -170,7 +169,7 @@ export default (config: {
 		button: blueButtons.hub1,
 		alliance: 'blue',
 		staticX: true,
-		staticY: true,
+		staticY: true
 		//viewCondition: () => app.matchData.alliance === 'blue'
 	});
 	const blueHub5 = app.addAppObject({
@@ -179,7 +178,7 @@ export default (config: {
 		button: blueButtons.hub5,
 		alliance: 'blue',
 		staticX: true,
-		staticY: true,
+		staticY: true
 		//viewCondition: () => app.matchData.alliance === 'blue'
 	});
 	const blueHub10 = app.addAppObject({
@@ -188,7 +187,7 @@ export default (config: {
 		button: blueButtons.hub10,
 		alliance: 'blue',
 		staticX: true,
-		staticY: true,
+		staticY: true
 		//viewCondition: () => app.matchData.alliance === 'blue'
 	});
 
@@ -204,7 +203,8 @@ export default (config: {
 			if (p == null || undefined) return false;
 			const inside = isInside(p, YearInfo2026.allianceAreas.zones.blue as Point2D[]);
 			return !inside;
-		}});
+		}
+	});
 
 	const blueLob5 = app.addAppObject({
 		point: [0.025, 0.4],
@@ -218,7 +218,8 @@ export default (config: {
 			if (p == null || undefined) return false;
 			const inside = isInside(p, YearInfo2026.allianceAreas.zones.blue as Point2D[]);
 			return !inside;
-		}});
+		}
+	});
 
 	const blueLob10 = app.addAppObject({
 		point: [0.025, 0.6],
@@ -232,7 +233,8 @@ export default (config: {
 			if (p == null || undefined) return false;
 			const inside = isInside(p, YearInfo2026.allianceAreas.zones.blue as Point2D[]);
 			return !inside;
-		}});
+		}
+	});
 
 	app.addAppObject({
 		point: [0.033, 0.869],
@@ -240,7 +242,7 @@ export default (config: {
 		button: blueButtons.out,
 		alliance: 'blue',
 		staticX: false,
-		staticY: false,
+		staticY: false
 		//viewCondition: () => app.matchData.alliance === 'blue'
 	});
 	const redHub1 = app.addAppObject({
@@ -249,7 +251,7 @@ export default (config: {
 		button: redButtons.hub1,
 		alliance: 'red',
 		staticX: true,
-		staticY: true,
+		staticY: true
 		//viewCondition: (tick) => (tick.point ? isInside(tick.point, YearInfo2026.allianceAreas.zones.red as Point2D[]) : false)
 	});
 	const redHub5 = app.addAppObject({
@@ -258,7 +260,7 @@ export default (config: {
 		button: redButtons.hub5,
 		alliance: 'red',
 		staticX: true,
-		staticY: true,
+		staticY: true
 		//viewCondition: (tick) => (tick.point ? isInside(tick.point, YearInfo2026.allianceAreas.zones.red as Point2D[]) : false)
 	});
 	const redHub10 = app.addAppObject({
@@ -267,7 +269,7 @@ export default (config: {
 		button: redButtons.hub10,
 		alliance: 'red',
 		staticX: true,
-		staticY: true,
+		staticY: true
 		//viewCondition: (tick) => (tick.point ? isInside(tick.point, YearInfo2026.allianceAreas.zones.red as Point2D[]) : false)
 	});
 
@@ -283,7 +285,8 @@ export default (config: {
 			if (p == null || undefined) return false;
 			const inside = isInside(p, YearInfo2026.allianceAreas.zones.red as Point2D[]);
 			return !inside;
-		}});
+		}
+	});
 
 	const redLob5 = app.addAppObject({
 		point: [0.025, 0.4],
@@ -297,7 +300,8 @@ export default (config: {
 			if (p == null || undefined) return false;
 			const inside = isInside(p, YearInfo2026.allianceAreas.zones.red as Point2D[]);
 			return !inside;
-		}});
+		}
+	});
 
 	const redLob10 = app.addAppObject({
 		point: [0.025, 0.2],
@@ -311,7 +315,8 @@ export default (config: {
 			if (p == null || undefined) return false;
 			const inside = isInside(p, YearInfo2026.allianceAreas.zones.red as Point2D[]);
 			return !inside;
-		}});
+		}
+	});
 
 	app.addAppObject({
 		point: [0.967, 0.124],
@@ -319,7 +324,7 @@ export default (config: {
 		button: redButtons.out,
 		alliance: 'red',
 		staticX: false,
-		staticY: false,
+		staticY: false
 		//viewCondition: () => app.matchData.alliance === 'red'
 	});
 
@@ -336,47 +341,54 @@ export default (config: {
 		zone: 'BlueZone'
 	});
 
-	app.settings.add({
-		default: 'left',
-		type: 'string',
-		name: 'Which side do you want the lob/shot buttons on?',
-		options: [{
-			name: 'Left',
-			value: 'left'
-		}, {
-			name: 'Right',
-			value: 'right'
-		}],
-		description: 'Choose which side of the screen you want the lob/shot buttons on. This does not affect the outpost button.'
-	}, (value) => {
-		if (value === 'left') {
-			redLob10.point = [0.025, 0.2];
-			redHub10.point = [0.025, 0.2];
-			redLob5.point = [0.025, 0.4];
-			redHub5.point = [0.025, 0.4];
-			redLob1.point = [0.025, 0.6];
-			redHub1.point = [0.025, 0.6];
-			blueLob10.point = [0.025, 0.2];
-			blueHub10.point = [0.025, 0.2];
-			blueLob5.point = [0.025, 0.4];
-			blueHub5.point = [0.025, 0.4];
-			blueLob1.point = [0.025, 0.6];
-			blueHub1.point = [0.025, 0.6];
-		} else {
-			redLob10.point = [0.975, 0.2];
-			redHub10.point = [0.975, 0.2];
-			redLob5.point = [0.975, 0.4];
-			redHub5.point = [0.975, 0.4];
-			redLob1.point = [0.975, 0.6];
-			redHub1.point = [0.975, 0.6];
-			blueLob10.point = [0.975, 0.2];
-			blueHub10.point = [0.975, 0.2];
-			blueLob5.point = [0.975, 0.4];
-			blueHub5.point = [0.975, 0.4];
-			blueLob1.point = [0.975, 0.6];
-			blueHub1.point = [0.975, 0.6];
+	app.settings.add(
+		{
+			default: 'left',
+			type: 'string',
+			name: 'Which side do you want the lob/shot buttons on?',
+			options: [
+				{
+					name: 'Left',
+					value: 'left'
+				},
+				{
+					name: 'Right',
+					value: 'right'
+				}
+			],
+			description:
+				'Choose which side of the screen you want the lob/shot buttons on. This does not affect the outpost button.'
+		},
+		(value) => {
+			if (value === 'left') {
+				redLob10.point = [0.025, 0.2];
+				redHub10.point = [0.025, 0.2];
+				redLob5.point = [0.025, 0.4];
+				redHub5.point = [0.025, 0.4];
+				redLob1.point = [0.025, 0.6];
+				redHub1.point = [0.025, 0.6];
+				blueLob10.point = [0.025, 0.2];
+				blueHub10.point = [0.025, 0.2];
+				blueLob5.point = [0.025, 0.4];
+				blueHub5.point = [0.025, 0.4];
+				blueLob1.point = [0.025, 0.6];
+				blueHub1.point = [0.025, 0.6];
+			} else {
+				redLob10.point = [0.975, 0.2];
+				redHub10.point = [0.975, 0.2];
+				redLob5.point = [0.975, 0.4];
+				redHub5.point = [0.975, 0.4];
+				redLob1.point = [0.975, 0.6];
+				redHub1.point = [0.975, 0.6];
+				blueLob10.point = [0.975, 0.2];
+				blueHub10.point = [0.975, 0.2];
+				blueLob5.point = [0.975, 0.4];
+				blueHub5.point = [0.975, 0.4];
+				blueLob1.point = [0.975, 0.6];
+				blueHub1.point = [0.975, 0.6];
+			}
 		}
-	});
+	);
 
 	return app;
 };

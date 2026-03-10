@@ -20,20 +20,19 @@ export const GET = async (event) => {
 
 		const assignment: Assignment = {
 			matchAssignments: [
-				tbaEvent.value.matches.map(m => teamsFromMatch(m)[0]),
-				tbaEvent.value.matches.map(m => teamsFromMatch(m)[1]),
-				tbaEvent.value.matches.map(m => teamsFromMatch(m)[2]),
-				tbaEvent.value.matches.map(m => teamsFromMatch(m)[3]),
-				tbaEvent.value.matches.map(m => teamsFromMatch(m)[4]),
-				tbaEvent.value.matches.map(m => teamsFromMatch(m)[5]),
+				tbaEvent.value.matches.map((m) => teamsFromMatch(m)[0]),
+				tbaEvent.value.matches.map((m) => teamsFromMatch(m)[1]),
+				tbaEvent.value.matches.map((m) => teamsFromMatch(m)[2]),
+				tbaEvent.value.matches.map((m) => teamsFromMatch(m)[3]),
+				tbaEvent.value.matches.map((m) => teamsFromMatch(m)[4]),
+				tbaEvent.value.matches.map((m) => teamsFromMatch(m)[5])
 			],
-			groups: tbaEvent.value.matches.map(m => teamsFromMatch(m)),
-			interferences: 0,
+			groups: tbaEvent.value.matches.map((m) => teamsFromMatch(m)),
+			interferences: 0
 		};
 
 		return json(assignment);
 	}
-
 
 	const groups = await Requests.getScoutGroups(event.params.eventKey);
 	if (groups.isErr()) {
