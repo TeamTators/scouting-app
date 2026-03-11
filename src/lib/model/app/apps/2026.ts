@@ -417,5 +417,38 @@ export default (config: {
 		}
 	);
 
+	app.checks
+		.addCheck('success', 'lostCountOfFuel')
+		.addCheck('success', 'bulldozesBalls')
+		.addCheck('success', 'shootWhileMoving')
+		.addCheck('success', 'crossesTrench')
+		.addCheck('success', 'crossesBump')
+		.addCheck('success', 'clankClimb (fast L1)')
+		.addCheck('primary', {
+			name: 'defenseQuality',
+			slider: [
+				'Not effective at all',
+				'Not very effective',
+				'A little effective',
+				'Effective',
+				'Very effective'
+			],
+			color: ['red', 'orange', 'yellow', 'green', 'blue'],
+			alert: false,
+			doComment: true
+		})
+		.addCheck('primary', 'couldPlayDefense')
+		.addCheck('warning', 'droppedLotsOfFuel')
+		.addCheck('warning', 'slow')
+		.addCheck('warning', 'stuckOnBump')
+		.addCheck('warning', 'surfedOnFuel')
+		.addCheck('warning', 'doesntShootFuelInAuto')
+		.addCheck('warning', 'stronglyAffectedByDefense')
+		.addCheck('warning', 'disabledInAuto')
+		.addCheck('danger', 'doesntShootFuel')
+		.addCheck('danger', 'robotDied')
+		.addCheck('danger', 'problemsDriving')
+		.addCheck('danger', 'spectator')
+
 	return app;
 };
