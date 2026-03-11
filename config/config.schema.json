@@ -355,9 +355,13 @@
 				"remote": {
 					"description": "Whether this app is a remote app",
 					"type": "boolean"
+				},
+				"do_scout_groups": {
+					"description": "Whether to create scout groups for each team",
+					"type": "boolean"
 				}
 			},
-			"required": ["servers", "remote"]
+			"required": ["servers", "remote", "do_scout_groups"]
 		},
 		"sse": {
 			"description": "Server-Sent Events configuration",

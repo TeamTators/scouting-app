@@ -82,7 +82,8 @@
 				"primary": true
 			}
 		],
-		"remote": true
+		"remote": true,
+		"do_scout_groups": true
 	},
 	"sse": {
 		"debug": false,

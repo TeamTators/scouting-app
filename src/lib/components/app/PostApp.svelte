@@ -22,7 +22,8 @@
 			adjust positions, add/remove/change actions here if there are any mistakes. Changes made here
 			will be reflected in the robot's data.
 			<br />
-			Focus primarily on the actions if you feel they need to be changed or moved. The non-action positions are less important.
+			Focus primarily on the actions if you feel they need to be changed or moved. The non-action positions
+			are less important.
 			<br />
 			<span class="text-danger">
 				Do not spend too much time here, you have a match coming up!

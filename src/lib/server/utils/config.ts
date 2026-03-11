@@ -151,19 +151,23 @@ export default z.object({
 		debounce_interval_ms: z.number().min(0)
 	}),
 	app_config: z.object({
-		servers: z.array(
-			z.object({
-				domain: z.string().url(),
-				api_key: z.string(),
-				data_pull: z.boolean(),
-				images: z.boolean(),
-				primary: z.boolean()
-		})).refine((servers) => {
-			// Ensure only one primary server
-			const primaryCount = servers.filter((s) => s.primary).length;
-			return primaryCount <= 1;
-		}),
-		remote: z.boolean()
+		servers: z
+			.array(
+				z.object({
+					domain: z.string().url(),
+					api_key: z.string(),
+					data_pull: z.boolean(),
+					images: z.boolean(),
+					primary: z.boolean()
+				})
+			)
+			.refine((servers) => {
+				// Ensure only one primary server
+				const primaryCount = servers.filter((s) => s.primary).length;
+				return primaryCount <= 1;
+			}),
+		remote: z.boolean(),
+		do_scout_groups: z.boolean()
 	}),
 	sse: z.object({
 		debug: z.boolean(),
