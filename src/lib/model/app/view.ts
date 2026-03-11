@@ -266,11 +266,13 @@ export class AppView {
 		this.border.setAttribute('stroke-width', '2');
 		this.svg.appendChild(this.border);
 
+		let cover: Cover;
 		// Cover screen until first interaction
 		const setCover = () => {
 			// console.log('setting cover...');
 			const coverContainer = document.createElement('div');
-			const cover = mount(Cover, {
+			if (cover) unmount(cover);
+			cover = mount(Cover, {
 				target: coverContainer,
 				props: {
 					app: this.app,
