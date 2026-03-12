@@ -478,6 +478,40 @@
 					Upload Matches</button
 				>
 			</div>
+			{#if matchData}
+				{#if matchData?.match}
+					<div class="row mb-3">
+						<div class="col-md-6">
+							<button type="button" class="btn"
+								class:btn-danger={matchData.alliance === 'red'}
+								class:btn-outline-danger={matchData.alliance !== 'red'}
+								onclick={() => {
+									matchData?.update(data => ({
+										...data,
+										alliance: 'red',
+									}));
+								}}
+							>
+								Red Alliance
+							</button>
+						</div>
+						<div class="col-md-6">
+							<button type="button" class="btn"
+								class:btn-primary={matchData.alliance === 'blue'}
+								class:btn-outline-primary={matchData.alliance !== 'blue'}
+								onclick={() => {
+									matchData?.update(data => ({
+										...data,
+										alliance: 'blue',
+									}));
+								}}
+							>
+								Blue Alliance
+							</button>
+						</div>
+					</div>
+				{/if}
+			{/if}
 			{#if app}
 				<Settings {app} />
 			{:else}
