@@ -21,25 +21,37 @@
 	import ScoreContribution from '$lib/components/app/Contribution.svelte';
 	import Review from '$lib/components/app/Review.svelte';
 	import Settings from '$lib/components/app/Settings.svelte';
+	import YearInfo2026 from 'tatorscout/years/2026.js';
 
 	const { data } = $props();
 	const eventKey = $derived(data.eventKey);
 	const match = $derived(parseInt(data.match));
 	const team = $derived(parseInt(data.team));
 	const compLevel = $derived(data.compLevel) as CompLevel;
-	const _year = $derived(data.year);
+	const year = $derived(data.year);
 
 	let alliance: 'red' | 'blue' | null = $state(null);
 	let page: 'app' | 'post' = $state('app');
 	let accounts: string[] = $state([]);
-	let app: App | undefined = $state(undefined);
+	let app: App = $derived(
+		new App({
+			year,
+			yearInfo: YearInfo2026,
+			eventKey,
+			match,
+			team,
+			compLevel,
+			alliance
+		})
+	);
 	let matches: Modal;
 	let settings: Modal;
 	let _upload: Modal;
 	let postApp: PostApp | undefined = $state(undefined);
 	let group = $state(-1);
-	let matchData: MatchData | undefined = $state(undefined);
+	const matchData: MatchData | undefined = $derived(app.matchData);
 	let disableSubmit = $state(false);
+	let foundMatch = $derived(false);
 
 	$effect(() => {
 		if (!browser) return;
@@ -49,7 +61,6 @@
 		localStorage.setItem('flipX', globalData.flipX ? 'true' : 'false');
 		localStorage.setItem('flipY', globalData.flipY ? 'true' : 'false');
 	});
-
 	$effect(() => {
 		if (page === 'post') app?.pause();
 	});
@@ -68,6 +79,7 @@
 			eventKey,
 			match,
 			team,
+
 			compLevel
 		}).then((res) => {
 			if (!res.isOk()) return console.error(res.error);
@@ -152,7 +164,7 @@
 		// 	alliance
 		// });
 
-		switch (_year) {
+		switch (year) {
 			case 2025:
 				app = create2025App({
 					eventKey,
@@ -172,14 +184,14 @@
 				});
 				break;
 			default:
-				throw new Error(`Unsupported year ${_year}`);
+				throw new Error(`Unsupported year ${year}`);
 		}
 
-		matchData = app.matchData;
-
 		app.matchData.getScoutGroup().then((d) => {
+			foundMatch = false;
 			if (d.isErr()) return console.error(d.error);
 			if (d.value === null) return;
+			foundMatch = true;
 			group = d.value;
 		});
 
@@ -478,6 +490,42 @@
 					Upload Matches</button
 				>
 			</div>
+			{#if !foundMatch}
+				<div class="row mb-3">
+					<div class="col-md-6">
+						<button
+							type="button"
+							class="btn"
+							class:btn-danger={$matchData.alliance === 'red'}
+							class:btn-outline-danger={matchData.alliance !== 'red'}
+							onclick={() => {
+								matchData?.update((data) => ({
+									...data,
+									alliance: 'red'
+								}));
+							}}
+						>
+							Red Alliance
+						</button>
+					</div>
+					<div class="col-md-6">
+						<button
+							type="button"
+							class="btn"
+							class:btn-primary={$matchData.alliance === 'blue'}
+							class:btn-outline-primary={$matchData.alliance !== 'blue'}
+							onclick={() => {
+								matchData?.update((data) => ({
+									...data,
+									alliance: 'blue'
+								}));
+							}}
+						>
+							Blue Alliance
+						</button>
+					</div>
+				</div>
+			{/if}
 			{#if app}
 				<Settings {app} />
 			{:else}
