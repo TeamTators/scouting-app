@@ -9,6 +9,7 @@ import { Color } from 'colors/color';
 import { AppObject } from '../app-object';
 import YearInfo2026 from 'tatorscout/years/2026.js';
 import { isInside } from 'math/polygon';
+import { globalData } from '$lib/model/app/global-data.svelte.ts';
 
 /**
  * Builds a 2026 scouting app instance.
@@ -164,8 +165,10 @@ export default (config: {
 		staticX: true,
 		staticY: true,
 		viewCondition: (tick) => {
-			const p = tick.prev()?.point;
+			const p = tick.prev()?.point?.slice() as Point2D;
 			if (p == null || undefined) return false;
+			p[0] = globalData.flipX ? 1 - p[0] : p[0];
+			p[1] = globalData.flipY ? 1 - p[1] : p[1];
 			const inside = isInside(p, YearInfo2026.allianceAreas.zones.blue as Point2D[]);
 			return inside;
 		}
@@ -179,8 +182,10 @@ export default (config: {
 		staticX: true,
 		staticY: true,
 		viewCondition: (tick) => {
-			const p = tick.prev()?.point;
+			const p = tick.prev()?.point?.slice() as Point2D;
 			if (p == null || undefined) return false;
+			p[0] = globalData.flipX ? 1 - p[0] : p[0];
+			p[1] = globalData.flipY ? 1 - p[1] : p[1];
 			const inside = isInside(p, YearInfo2026.allianceAreas.zones.blue as Point2D[]);
 			return inside;
 		}
@@ -194,8 +199,10 @@ export default (config: {
 		staticX: true,
 		staticY: true,
 		viewCondition: (tick) => {
-			const p = tick.prev()?.point;
+			const p = tick.prev()?.point?.slice() as Point2D;
 			if (p == null || undefined) return false;
+			p[0] = globalData.flipX ? 1 - p[0] : p[0];
+			p[1] = globalData.flipY ? 1 - p[1] : p[1];
 			const inside = isInside(p, YearInfo2026.allianceAreas.zones.blue as Point2D[]);
 			return inside;
 		}
@@ -209,8 +216,10 @@ export default (config: {
 		staticX: true,
 		staticY: true,
 		viewCondition: (tick) => {
-			const p = tick.prev()?.point;
+			const p = tick.prev()?.point?.slice() as Point2D;
 			if (p == null || undefined) return false;
+			p[0] = globalData.flipX ? 1 - p[0] : p[0];
+			p[1] = globalData.flipY ? 1 - p[1] : p[1];
 			const inside = isInside(p, YearInfo2026.allianceAreas.zones.blue as Point2D[]);
 			return !inside;
 		}
@@ -224,8 +233,10 @@ export default (config: {
 		staticX: true,
 		staticY: true,
 		viewCondition: (tick) => {
-			const p = tick.prev()?.point;
+			const p = tick.prev()?.point?.slice() as Point2D;
 			if (p == null || undefined) return false;
+			p[0] = globalData.flipX ? 1 - p[0] : p[0];
+			p[1] = globalData.flipY ? 1 - p[1] : p[1];
 			const inside = isInside(p, YearInfo2026.allianceAreas.zones.blue as Point2D[]);
 			return !inside;
 		}
@@ -239,8 +250,10 @@ export default (config: {
 		staticX: true,
 		staticY: true,
 		viewCondition: (tick) => {
-			const p = tick.prev()?.point;
+			const p = tick.prev()?.point?.slice() as Point2D;
 			if (p == null || undefined) return false;
+			p[0] = globalData.flipX ? 1 - p[0] : p[0];
+			p[1] = globalData.flipY ? 1 - p[1] : p[1];
 			const inside = isInside(p, YearInfo2026.allianceAreas.zones.blue as Point2D[]);
 			return !inside;
 		}
@@ -263,8 +276,10 @@ export default (config: {
 		staticX: true,
 		staticY: true,
 		viewCondition: (tick) => {
-			const p = tick.prev()?.point;
+			const p = tick.prev()?.point?.slice() as Point2D;
 			if (p == null || undefined) return false;
+			p[0] = globalData.flipX ? 1 - p[0] : p[0];
+			p[1] = globalData.flipY ? 1 - p[1] : p[1];
 			const inside = isInside(p, YearInfo2026.allianceAreas.zones.red as Point2D[]);
 			return inside;
 		}
@@ -278,8 +293,10 @@ export default (config: {
 		staticX: true,
 		staticY: true,
 		viewCondition: (tick) => {
-			const p = tick.prev()?.point;
+			const p = tick.prev()?.point?.slice() as Point2D;
 			if (p == null || undefined) return false;
+			p[0] = globalData.flipX ? 1 - p[0] : p[0];
+			p[1] = globalData.flipY ? 1 - p[1] : p[1];
 			const inside = isInside(p, YearInfo2026.allianceAreas.zones.red as Point2D[]);
 			return inside;
 		}
@@ -293,8 +310,10 @@ export default (config: {
 		staticX: true,
 		staticY: true,
 		viewCondition: (tick) => {
-			const p = tick.prev()?.point;
+			const p = tick.prev()?.point?.slice() as Point2D;
 			if (p == null || undefined) return false;
+			p[0] = globalData.flipX ? 1 - p[0] : p[0];
+			p[1] = globalData.flipY ? 1 - p[1] : p[1];
 			const inside = isInside(p, YearInfo2026.allianceAreas.zones.red as Point2D[]);
 			return inside;
 		}
@@ -308,8 +327,10 @@ export default (config: {
 		staticX: true,
 		staticY: true,
 		viewCondition: (tick) => {
-			const p = tick.prev()?.point;
+			const p = tick.prev()?.point?.slice() as Point2D;
 			if (p == null || undefined) return false;
+			p[0] = globalData.flipX ? 1 - p[0] : p[0];
+			p[1] = globalData.flipY ? 1 - p[1] : p[1];
 			const inside = isInside(p, YearInfo2026.allianceAreas.zones.red as Point2D[]);
 			return !inside;
 		}
@@ -323,8 +344,10 @@ export default (config: {
 		staticX: true,
 		staticY: true,
 		viewCondition: (tick) => {
-			const p = tick.prev()?.point;
+			const p = tick.prev()?.point?.slice() as Point2D;
 			if (p == null || undefined) return false;
+			p[0] = globalData.flipX ? 1 - p[0] : p[0];
+			p[1] = globalData.flipY ? 1 - p[1] : p[1];
 			const inside = isInside(p, YearInfo2026.allianceAreas.zones.red as Point2D[]);
 			return !inside;
 		}
@@ -338,8 +361,10 @@ export default (config: {
 		staticX: true,
 		staticY: true,
 		viewCondition: (tick) => {
-			const p = tick.prev()?.point;
+			const p = tick.prev()?.point?.slice() as Point2D;
 			if (p == null || undefined) return false;
+			p[0] = globalData.flipX ? 1 - p[0] : p[0];
+			p[1] = globalData.flipY ? 1 - p[1] : p[1];
 			const inside = isInside(p, YearInfo2026.allianceAreas.zones.red as Point2D[]);
 			return !inside;
 		}
