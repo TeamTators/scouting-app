@@ -21,6 +21,7 @@
 	import ScoreContribution from '$lib/components/app/Contribution.svelte';
 	import Review from '$lib/components/app/Review.svelte';
 	import Settings from '$lib/components/app/Settings.svelte';
+	import YearInfo2026 from 'tatorscout/years/2026.js';
 
 	const { data } = $props();
 	const eventKey = $derived(data.eventKey);
@@ -32,14 +33,26 @@
 	let alliance: 'red' | 'blue' | null = $state(null);
 	let page: 'app' | 'post' = $state('app');
 	let accounts: string[] = $state([]);
-	let app: App | undefined = $state(undefined);
+	let app: App = $derived(new App(
+	{
+		year: _year,
+		eventKey,
+		match,
+		team,
+		compLevel,
+		alliance,
+		yearInfo: YearInfo2026
+	}
+	));
 	let matches: Modal;
 	let settings: Modal;
 	let _upload: Modal;
 	let postApp: PostApp | undefined = $state(undefined);
 	let group = $state(-1);
-	let matchData: MatchData | undefined = $state(undefined);
+	const matchData: MatchData = $derived(app.matchData);
 	let disableSubmit = $state(false);
+
+	$inspect(matchData);
 
 	$effect(() => {
 		if (!browser) return;
@@ -49,7 +62,6 @@
 		localStorage.setItem('flipX', globalData.flipX ? 'true' : 'false');
 		localStorage.setItem('flipY', globalData.flipY ? 'true' : 'false');
 	});
-
 	$effect(() => {
 		if (page === 'post') app?.pause();
 	});
@@ -68,6 +80,7 @@
 			eventKey,
 			match,
 			team,
+
 			compLevel
 		}).then((res) => {
 			if (!res.isOk()) return console.error(res.error);
@@ -174,8 +187,6 @@
 			default:
 				throw new Error(`Unsupported year ${_year}`);
 		}
-
-		matchData = app.matchData;
 
 		app.matchData.getScoutGroup().then((d) => {
 			if (d.isErr()) return console.error(d.error);
@@ -479,7 +490,7 @@
 				>
 			</div>
 			{#if matchData}
-				{#if matchData?.match}
+				{#if !matchData?.match}
 					<div class="row mb-3">
 						<div class="col-md-6">
 							<button type="button" class="btn"
