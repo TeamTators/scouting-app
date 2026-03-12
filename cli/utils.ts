@@ -8,7 +8,7 @@ import Table from 'cli-table';
 import { Colors } from './colors';
 import terminal from '../src/lib/server/utils/terminal';
 import chalk from 'chalk';
-import { getPublicIp } from '$lib/server/utils/env';
+import { getPublicIp } from '../src/lib/server/utils/ip';
 
 /**
  * Shared prompt configuration.

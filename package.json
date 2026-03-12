@@ -13,6 +13,7 @@
 		"build": "pnpm route-tree && vite build",
 		"build:docs": "pnpm script build-docs",
 		"build:email": "pnpm script mjml-batch",
+		"build:config": "ts-node ./scripts/config.ts",
 		"check:system": "pnpm format && pnpm lint && pnpm check && pnpm test && pnpm build:docs",
 		"system:check": "pnpm check:system",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
