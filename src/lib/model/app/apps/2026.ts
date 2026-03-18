@@ -475,9 +475,7 @@ export default (config: {
 			p[0] = globalData.flipX ? 1 - p[0] : p[0];
 			p[1] = globalData.flipY ? 1 - p[1] : p[1];
 			const redZone = isInside(p, YearInfo2026.allianceAreas.zones.red as Point2D[]);
-			const trenchL = isInside(p, YearInfo2026.allianceAreas.trenchLeft.red as Point2D[]);
-			const trenchR = isInside(p, YearInfo2026.allianceAreas.trenchRight.red as Point2D[]);
-			return !redZone && !trenchL && !trenchR;
+			return !redZone;
 		}
 	});
 
@@ -494,9 +492,7 @@ export default (config: {
 			p[0] = globalData.flipX ? 1 - p[0] : p[0];
 			p[1] = globalData.flipY ? 1 - p[1] : p[1];
 			const redZone = isInside(p, YearInfo2026.allianceAreas.zones.red as Point2D[]);
-			const trenchL = isInside(p, YearInfo2026.allianceAreas.trenchLeft.red as Point2D[]);
-			const trenchR = isInside(p, YearInfo2026.allianceAreas.trenchRight.red as Point2D[]);
-			return !redZone && !trenchL && !trenchR;
+			return !redZone;
 		}
 	});
 
@@ -513,9 +509,7 @@ export default (config: {
 			p[0] = globalData.flipX ? 1 - p[0] : p[0];
 			p[1] = globalData.flipY ? 1 - p[1] : p[1];
 			const redZone = isInside(p, YearInfo2026.allianceAreas.zones.red as Point2D[]);
-			const trenchL = isInside(p, YearInfo2026.allianceAreas.trenchLeft.red as Point2D[]);
-			const trenchR = isInside(p, YearInfo2026.allianceAreas.trenchRight.red as Point2D[]);
-			return !redZone && !trenchL && !trenchR;
+			return !redZone;
 		}
 	});
 
