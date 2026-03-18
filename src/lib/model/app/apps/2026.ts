@@ -728,7 +728,7 @@ export default (config: {
 		.addCheck('danger', 'doesntShootFuel')
 		.addCheck('danger', 'robotDied')
 		.addCheck('danger', 'problemsDriving')
-		.addCheck('danger', 'spectator');
+		.addCheck('danger', 'spectator')
 
 	return app;
 };
