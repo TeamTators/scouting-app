@@ -30,11 +30,6 @@ export default (config: {
 	compLevel: CompLevel;
 	alliance: 'red' | 'blue' | null;
 }) => {
-	type Zone = {
-		red: Point2D[];
-		blue: Point2D[];
-	};
-
 	const app = new App({
 		...config,
 		year: 2026,
@@ -320,7 +315,7 @@ export default (config: {
 	});
 
 	const blueBul5L = app.addAppObject({
-		point: [0.200, 0.960],
+		point: [0.2, 0.96],
 		object: blueObjects.bul5,
 		button: blueButtons.bul5L,
 		alliance: 'blue',
@@ -328,16 +323,16 @@ export default (config: {
 		staticY: false,
 		viewCondition: () => {
 			if (globalData.flipX) {
-				blueBul5L.point = [0.600, 0.960];
+				blueBul5L.point = [0.6, 0.96];
 			} else {
-				blueBul5L.point = [0.200, 0.960];
+				blueBul5L.point = [0.2, 0.96];
 			}
 			return true;
 		}
 	});
 
 	app.addAppObject({
-		point: [0.300, 0.960],
+		point: [0.3, 0.96],
 		object: blueObjects.bul10,
 		button: blueButtons.bul10L,
 		alliance: 'blue',
@@ -347,7 +342,7 @@ export default (config: {
 	});
 
 	const blueBul25L = app.addAppObject({
-		point: [0.400, 0.960],
+		point: [0.4, 0.96],
 		object: blueObjects.bul25,
 		button: blueButtons.bul25L,
 		alliance: 'blue',
@@ -355,16 +350,16 @@ export default (config: {
 		staticY: false,
 		viewCondition: () => {
 			if (globalData.flipX) {
-				blueBul25L.point = [0.800, 0.960];
+				blueBul25L.point = [0.8, 0.96];
 			} else {
-				blueBul25L.point = [0.400, 0.960];
+				blueBul25L.point = [0.4, 0.96];
 			}
 			return true;
 		}
 	});
 
 	const blueBul5R = app.addAppObject({
-		point: [0.200, 0.040],
+		point: [0.2, 0.04],
 		object: blueObjects.bul5,
 		button: blueButtons.bul5R,
 		alliance: 'blue',
@@ -372,16 +367,16 @@ export default (config: {
 		staticY: false,
 		viewCondition: () => {
 			if (globalData.flipX) {
-				blueBul5R.point = [0.600, 0.040];
+				blueBul5R.point = [0.6, 0.04];
 			} else {
-				blueBul5R.point = [0.200, 0.040];
+				blueBul5R.point = [0.2, 0.04];
 			}
 			return true;
 		}
 	});
 
 	app.addAppObject({
-		point: [0.300, 0.040],
+		point: [0.3, 0.04],
 		object: blueObjects.bul10,
 		button: blueButtons.bul10R,
 		alliance: 'blue',
@@ -391,7 +386,7 @@ export default (config: {
 	});
 
 	const blueBul25R = app.addAppObject({
-		point: [0.400, 0.040],
+		point: [0.4, 0.04],
 		object: blueObjects.bul25,
 		button: blueButtons.bul25R,
 		alliance: 'blue',
@@ -399,9 +394,9 @@ export default (config: {
 		staticY: false,
 		viewCondition: () => {
 			if (globalData.flipX) {
-				blueBul25R.point = [0.800, 0.040];
+				blueBul25R.point = [0.8, 0.04];
 			} else {
-				blueBul25R.point = [0.400, 0.040];
+				blueBul25R.point = [0.4, 0.04];
 			}
 			return true;
 		}
@@ -482,7 +477,7 @@ export default (config: {
 			const redZone = isInside(p, YearInfo2026.allianceAreas.zones.red as Point2D[]);
 			const trenchL = isInside(p, YearInfo2026.allianceAreas.trenchLeft.red as Point2D[]);
 			const trenchR = isInside(p, YearInfo2026.allianceAreas.trenchRight.red as Point2D[]);
-			return (!redZone && !trenchL && !trenchR);
+			return !redZone && !trenchL && !trenchR;
 		}
 	});
 
@@ -501,7 +496,7 @@ export default (config: {
 			const redZone = isInside(p, YearInfo2026.allianceAreas.zones.red as Point2D[]);
 			const trenchL = isInside(p, YearInfo2026.allianceAreas.trenchLeft.red as Point2D[]);
 			const trenchR = isInside(p, YearInfo2026.allianceAreas.trenchRight.red as Point2D[]);
-			return (!redZone && !trenchL && !trenchR);
+			return !redZone && !trenchL && !trenchR;
 		}
 	});
 
@@ -520,12 +515,12 @@ export default (config: {
 			const redZone = isInside(p, YearInfo2026.allianceAreas.zones.red as Point2D[]);
 			const trenchL = isInside(p, YearInfo2026.allianceAreas.trenchLeft.red as Point2D[]);
 			const trenchR = isInside(p, YearInfo2026.allianceAreas.trenchRight.red as Point2D[]);
-			return (!redZone && !trenchL && !trenchR);
+			return !redZone && !trenchL && !trenchR;
 		}
 	});
 
 	const redBul5L = app.addAppObject({
-		point: [0.600, 0.960],
+		point: [0.6, 0.96],
 		object: redObjects.bul5,
 		button: redButtons.bul5L,
 		alliance: 'red',
@@ -533,16 +528,16 @@ export default (config: {
 		staticY: false,
 		viewCondition: () => {
 			if (globalData.flipX) {
-				redBul5L.point = [0.200, 0.960];
+				redBul5L.point = [0.2, 0.96];
 			} else {
-				redBul5L.point = [0.600, 0.960];
+				redBul5L.point = [0.6, 0.96];
 			}
 			return true;
 		}
 	});
 
 	app.addAppObject({
-		point: [0.700, 0.960],
+		point: [0.7, 0.96],
 		object: redObjects.bul10,
 		button: redButtons.bul10L,
 		alliance: 'red',
@@ -552,7 +547,7 @@ export default (config: {
 	});
 
 	const redBul25L = app.addAppObject({
-		point: [0.800, 0.960],
+		point: [0.8, 0.96],
 		object: redObjects.bul25,
 		button: redButtons.bul25L,
 		alliance: 'red',
@@ -560,16 +555,16 @@ export default (config: {
 		staticY: false,
 		viewCondition: () => {
 			if (globalData.flipX) {
-				redBul25L.point = [0.400, 0.960];
+				redBul25L.point = [0.4, 0.96];
 			} else {
-				redBul25L.point = [0.800, 0.960];
+				redBul25L.point = [0.8, 0.96];
 			}
 			return true;
 		}
 	});
 
 	const redBul5R = app.addAppObject({
-		point: [0.600, 0.040],
+		point: [0.6, 0.04],
 		object: redObjects.bul5,
 		button: redButtons.bul5R,
 		alliance: 'red',
@@ -577,16 +572,16 @@ export default (config: {
 		staticY: false,
 		viewCondition: () => {
 			if (globalData.flipX) {
-				redBul5R.point = [0.200, 0.040];
+				redBul5R.point = [0.2, 0.04];
 			} else {
-				redBul5R.point = [0.600, 0.040];
+				redBul5R.point = [0.6, 0.04];
 			}
 			return true;
 		}
 	});
 
 	app.addAppObject({
-		point: [0.700, 0.040],
+		point: [0.7, 0.04],
 		object: redObjects.bul10,
 		button: redButtons.bul10R,
 		alliance: 'red',
@@ -596,7 +591,7 @@ export default (config: {
 	});
 
 	const redBul25R = app.addAppObject({
-		point: [0.800, 0.040],
+		point: [0.8, 0.04],
 		object: redObjects.bul25,
 		button: redButtons.bul25R,
 		alliance: 'red',
@@ -604,13 +599,12 @@ export default (config: {
 		staticY: false,
 		viewCondition: () => {
 			if (globalData.flipX) {
-				redBul25R.point = [0.400, 0.040];
+				redBul25R.point = [0.4, 0.04];
 			} else {
-				redBul25R.point = [0.800, 0.040];
+				redBul25R.point = [0.8, 0.04];
 			}
 			return true;
 		}
-
 	});
 
 	app.addAppObject({
