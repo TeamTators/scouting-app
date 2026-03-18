@@ -3,7 +3,7 @@
  */
 
 import type { Point2D } from 'math/point';
-import { App, TOTAL_TICKS, TICKS_PER_SECOND, SECTIONS, type Section } from './app';
+import { App, TOTAL_TICKS, TICKS_PER_SECOND } from './app';
 import { Tick, Ticks } from './tick';
 import { type TraceArray } from 'tatorscout/trace';
 import { WritableBase } from '$lib/services/writables';
@@ -96,10 +96,10 @@ export class AppState extends WritableBase<{
 	get section() {
 		const tick = this.tick;
 		if (!tick) return null;
-		for (const [section, range] of Object.entries(SECTIONS)) {
-			const [start, end] = range;
+		for (const [section, range] of Object.entries(this.app.config.yearInfo.timer)) {
+			const [start, end] = range as number[];
 			if (tick.second >= start && tick.second <= end) {
-				return section as Section;
+				return section as keyof App['config']['yearInfo']['timer'];
 			}
 		}
 		return null;

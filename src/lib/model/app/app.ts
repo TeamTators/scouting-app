@@ -66,12 +66,12 @@ export const TICKS_PER_SECOND = 4;
  * @example
  * const [autoStart, autoEnd] = SECTIONS.auto; // 0, 15
  */
-export const SECTIONS = {
-	auto: [0, 15],
-	teleop: [16, 135],
-	endgame: [136, 150],
-	end: [151, 160]
-};
+// export const SECTIONS = {
+// 	auto: [0, 15],
+// 	teleop: [16, 135],
+// 	endgame: [136, 150],
+// 	end: [151, 160]
+// };
 /**
  * Named match sections used throughout app timing and UI.
  *
@@ -79,7 +79,7 @@ export const SECTIONS = {
  * @example
  * const section = /** @type {Section} *\/ ('teleop');
  */
-export type Section = 'auto' | 'teleop' | 'endgame' | 'end';
+// export type Section = 'auto' | 'teleop' | 'endgame' | 'end';
 /**
  * Duration of a single tick in milliseconds.
  *
@@ -133,7 +133,7 @@ export class App {
 	 */
 	private readonly emitter = new EventEmitter<{
 		tick: Tick;
-		section: Section;
+		section: keyof App['config']['yearInfo']['timer'];
 		action: {
 			action: string;
 			point: Point2D;
@@ -468,7 +468,7 @@ export class App {
 	 * stop();
 	 */
 	start(cb?: (tick: Tick) => void) {
-		let prevSection: Section | null = null;
+		let prevSection: keyof App['config']['yearInfo']['timer'] | null = null;
 		this.state.currentIndex = 0;
 		this.running.set(true);
 
@@ -596,13 +596,13 @@ export class App {
 	/**
 	 * Seeks playback to the beginning of the given match section.
 	 *
-	 * @param {Section} section - Section to seek to.
+	 * @param {keyof App['config']['yearInfo']['timer']} section - Section to seek to.
 	 * @returns {void}
 	 * @example
 	 * app.goto('endgame');
 	 */
-	goto(section: Section) {
-		const [start] = SECTIONS[section];
+	goto(section: keyof App['config']['yearInfo']['timer']) {
+		const [start] = this.config.yearInfo.timer[section];
 		this.state.currentIndex = start * TICKS_PER_SECOND;
 		const tick = this.state.tick;
 		if (!tick) return;

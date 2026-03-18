@@ -4,6 +4,7 @@
 	import { Timer } from '$lib/model/app/timer';
 	import { confirm } from '$lib/utils/prompts';
 	import { onMount } from 'svelte';
+	import { capitalize, fromCamelCase } from 'ts-utils';
 
 	let doHide = $state(false);
 
@@ -19,6 +20,9 @@
 	}
 
 	const { timer }: Props = $props();
+
+	const sections = $derived(timer.app.config.yearInfo.timer);
+
 	const running = $derived(timer.app.running);
 
 	const matchData = $derived(timer.app.matchData);
@@ -144,7 +148,7 @@
 			</button>
 
 			<div role="group" class="btn-group">
-				<button
+				<!-- <button
 					type="button"
 					class="btn btn-sm"
 					class:btn-outline-success={$timer.section !== 'auto'}
@@ -171,7 +175,16 @@
 					class:btn-outline-danger={$timer.section !== 'end'}
 					class:btn-danger={$timer.section === 'end'}
 					onclick={() => timer.app.goto('end')}>End</button
-				>
+				> -->
+					{#each Object.keys(sections) as section}
+						<button type="button" class="btn btn-sm"
+							class:btn-outline-primary={$timer.section !== section}
+							class:btn-primary={$timer.section === section}
+							onclick={() => timer.app.goto(section)}
+						>
+							{capitalize(fromCamelCase(section))}
+						</button>
+					{/each}
 			</div>
 			<div role="group" class="button-group">
 				{#if $running}

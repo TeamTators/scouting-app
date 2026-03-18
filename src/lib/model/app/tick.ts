@@ -3,7 +3,7 @@
  */
 
 import type { Action } from 'tatorscout/trace';
-import { App, SECTIONS, TICKS_PER_SECOND, type Section } from './app';
+import { App, TICKS_PER_SECOND } from './app';
 import type { Point2D } from 'math/point';
 import { ActionState } from './app-object';
 import { WritableArray, WritableBase } from '$lib/services/writables';
@@ -54,13 +54,13 @@ export class Tick extends WritableBase<ActionState | null> {
 	/**
 	 * Match section for this tick.
 	 *
-	 * @type {Section | null}
+	 * @type {keyof App['config']['yearInfo']['timer'] | null}
 	 */
 	public get section() {
-		for (const [section, range] of Object.entries(SECTIONS)) {
+		for (const [section, range] of Object.entries(this.app.config.yearInfo.timer)) {
 			const [start, end] = range as number[];
 			if (this.second >= start && this.second <= end) {
-				return section as Section;
+				return section as keyof App['config']['yearInfo']['timer'];
 			}
 		}
 
