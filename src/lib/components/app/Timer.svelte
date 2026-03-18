@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { TOTAL_TICKS } from '$lib/model/app/app';
 	import { globalData } from '$lib/model/app/global-data.svelte';
 	import { Timer } from '$lib/model/app/timer';
 	import { confirm } from '$lib/utils/prompts';
@@ -72,12 +71,12 @@
 				aria-label="Progress Bar"
 				aria-valuenow={$timer.index}
 				aria-valuemin="0"
-				aria-valuemax={TOTAL_TICKS}
+				aria-valuemax={timer.app.totalTicks}
 			>
 				<div
 					class="progress-bar"
 					style="
-						width: {($timer.index / TOTAL_TICKS) * 100}%;
+						width: {($timer.index / timer.app.totalTicks) * 100}%;
 						height: 30px;
 					"
 					class:bg-success={$timer.section === 'auto'}
@@ -122,7 +121,7 @@
 					const rect = progressBar.getBoundingClientRect();
 					const offsetX = event.clientX - rect.left;
 					const width = rect.width;
-					const newIndex = Math.floor((offsetX / width) * TOTAL_TICKS);
+					const newIndex = Math.floor((offsetX / width) * timer.app.totalTicks);
 					timer.app.pause();
 					timer.app.gotoTickIndex(newIndex);
 				}}
@@ -133,12 +132,12 @@
 					aria-label="Progress Bar"
 					aria-valuenow={$timer.index}
 					aria-valuemin="0"
-					aria-valuemax={TOTAL_TICKS}
+					aria-valuemax={timer.app.totalTicks}
 					style="height: 10px;"
 				>
 					<div
 						class="progress-bar"
-						style="width: {($timer.index / TOTAL_TICKS) * 100}%;"
+						style="width: {($timer.index / timer.app.totalTicks) * 100}%;"
 						class:bg-success={$timer.section === 'auto'}
 						class:bg-primary={$timer.section === 'teleop'}
 						class:bg-warning={$timer.section === 'endgame'}
@@ -176,15 +175,17 @@
 					class:btn-danger={$timer.section === 'end'}
 					onclick={() => timer.app.goto('end')}>End</button
 				> -->
-					{#each Object.keys(sections) as section}
-						<button type="button" class="btn btn-sm"
-							class:btn-outline-primary={$timer.section !== section}
-							class:btn-primary={$timer.section === section}
-							onclick={() => timer.app.goto(section)}
-						>
-							{capitalize(fromCamelCase(section))}
-						</button>
-					{/each}
+				{#each Object.keys(sections) as section}
+					<button
+						type="button"
+						class="btn btn-sm"
+						class:btn-outline-primary={$timer.section !== section}
+						class:btn-primary={$timer.section === section}
+						onclick={() => timer.app.goto(section)}
+					>
+						{capitalize(fromCamelCase(section))}
+					</button>
+				{/each}
 			</div>
 			<div role="group" class="button-group">
 				{#if $running}

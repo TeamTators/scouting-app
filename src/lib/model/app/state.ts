@@ -3,7 +3,7 @@
  */
 
 import type { Point2D } from 'math/point';
-import { App, TOTAL_TICKS, TICKS_PER_SECOND } from './app';
+import { App, TICKS_PER_SECOND } from './app';
 import { Tick, Ticks } from './tick';
 import { type TraceArray } from 'tatorscout/trace';
 import { WritableBase } from '$lib/services/writables';
@@ -131,7 +131,7 @@ export class AppState extends WritableBase<{
 		this.ticks.set(
 			Array.from(
 				{
-					length: TOTAL_TICKS
+					length: this.app.totalTicks
 				},
 				(_, i) => {
 					const t = new Tick(i / TICKS_PER_SECOND, i, this.app);

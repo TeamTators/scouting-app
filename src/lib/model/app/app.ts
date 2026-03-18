@@ -88,14 +88,6 @@ export const TICKS_PER_SECOND = 4;
  * const msPerTick = TICK_DURATION; // 250
  */
 export const TICK_DURATION = 1000 / TICKS_PER_SECOND;
-/**
- * Total number of ticks in a 160-second match timeline.
- *
- * @type {number}
- * @example
- * const total = TOTAL_TICKS; // 640
- */
-export const TOTAL_TICKS = TICKS_PER_SECOND * 160;
 
 /**
  * Orchestrates scouting runtime behavior for a single team/match context.
@@ -383,6 +375,12 @@ export class App {
 		// this.scoreCorrection = new ScoreCorrection(this);
 	}
 
+	get totalTicks() {
+		return Math.max(
+			...Object.values(this.config.yearInfo.timer).map(([, end]) => end * TICKS_PER_SECOND)
+		);
+	}
+
 	/**
 	 * Serializes the current scout session into the compressed match schema payload.
 	 *
@@ -624,7 +622,7 @@ export class App {
 	 */
 	gotoTickIndex(index: number) {
 		if (index < 0) index = 0;
-		if (index > TOTAL_TICKS) index = TOTAL_TICKS;
+		if (index > this.totalTicks) index = this.totalTicks;
 		this.state.currentIndex = index;
 		const tick = this.state.tick;
 		if (!tick) return;
