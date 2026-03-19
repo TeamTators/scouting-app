@@ -14,7 +14,6 @@ import { attemptAsync, attempt } from 'ts-utils/check';
 import { z } from 'zod';
 import { parse } from 'comment-json';
 
-
 /**
  * Represents a file or directory in a hierarchical tree structure
  *

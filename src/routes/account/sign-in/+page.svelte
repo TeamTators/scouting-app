@@ -31,15 +31,16 @@ Sign-in page at `/account/sign-in`.
 				title: 'Request Password Reset',
 				send: false
 			})
-			.then((val) => {
+			.then(async (val) => {
 				if (val.isErr()) {
 					return console.error(val.error);
 				}
 
-				fetch('/account/sign-in?/request-password-reset', {
-					method: 'POST',
-					body: new FormData(val.value.form)
-				});
+				const { error } = await supabase.auth.resetPasswordForEmail(val.value.value.user);
+
+				if (error) {
+					return console.error(error);
+				}
 			});
 	};
 </script>
@@ -92,7 +93,7 @@ Sign-in page at `/account/sign-in`.
 			</div>
 		{/if}
 		<div class="row mb-3">
-			<div class="col">
+			<!-- <div class="col">
 				<button
 					class="gsi-material-button"
 					onclick={() => {
@@ -137,7 +138,7 @@ Sign-in page at `/account/sign-in`.
 						<span style="display: none;">Sign in with Google</span>
 					</div>
 				</button>
-			</div>
+			</div> -->
 			<div class="col">
 				<button class="btn btn-secondary" onclick={requestPasswordReset}>
 					Request Password Reset

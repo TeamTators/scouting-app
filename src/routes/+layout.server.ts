@@ -17,7 +17,7 @@ export const load = async (event) => {
 	}
 	return {
 		session: session.config.session,
-		user: user.value,
+		user: user.unwrap(),
 		cookies: event.cookies.getAll()
 	};
 };

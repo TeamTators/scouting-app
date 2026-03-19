@@ -1,10 +1,8 @@
 /**
  * @fileoverview Server load/actions for `/account/sign-up`.
  */
-import { fail, redirect } from '@sveltejs/kit';
-import { ServerCode } from 'ts-utils/status';
-import { OAuth2Client } from 'google-auth-library';
-import { domain, str } from '$lib/server/utils/env';
+import { fail } from '@sveltejs/kit';
+import { domain } from '$lib/server/utils/env';
 import { getAccountFactory } from '$lib/model/account';
 import serverSB from '$lib/server/services/supabase';
 
@@ -113,35 +111,5 @@ export const actions = {
 			success: false,
 			message: 'An unexpected error occurred. Please try again later.'
 		};
-	},
-	OAuth2: async () => {
-		// const domain = String(process.env.PUBLIC_DOMAIN).includes('localhost')
-		// 	? `${process.env.PUBLIC_DOMAIN}:${process.env.PORT}`
-		// 	: process.env.PUBLIC_DOMAIN;
-		// const protocol = process.env.HTTPS === 'true' ? 'https://' : 'http://';
-		const url = domain({
-			port: false,
-			protocol: true
-		});
-		const redirectUri = `${url}/api/oauth/sign-up`;
-		const client = new OAuth2Client({
-			clientSecret: str('OAUTH2_CLIENT_SECRET', true),
-			clientId: str('OAUTH2_CLIENT_ID', true),
-			redirectUri
-		});
-		// log(client);
-		const authorizeUrl = client.generateAuthUrl({
-			access_type: 'offline',
-			// scope: 'https://www.googleapis.com/auth/userinfo.profile openid email',
-			scope: [
-				'https://www.googleapis.com/auth/userinfo.profile',
-				'https://www.googleapis.com/auth/userinfo.email',
-				'openid'
-			],
-			prompt: 'consent'
-		});
-		// log(authorizeUrl);
-
-		throw redirect(ServerCode.temporaryRedirect, authorizeUrl);
 	}
 };
