@@ -64,5 +64,5 @@ export const actions = {
 			redirect: event.locals.session?.prevUrl,
 			success: true
 		};
-	},
+	}
 };
