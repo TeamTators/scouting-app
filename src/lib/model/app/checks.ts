@@ -86,98 +86,101 @@ export class Checks extends WritableArray<Check> {
 	 * });
 	 */
 	addCheck(
-		type: 'success' | 'primary' | 'warning' | 'danger',
-		check:
-			| {
-					name: string;
-					slider: [string, string, string, string, string];
-					color: [string, string, string, string, string];
-					alert: false | string;
-					doComment: boolean;
-			  }
-			| {
-					name: string;
-					alert: false | string;
-					doComment: boolean;
-			  }
-			| string
-	) {
-		let c: Check;
-		if (typeof check === 'string') {
-			c = new Check({
-				name: check,
-				doSlider: false,
-				value: false,
-				type,
-				render: true,
-				slider: 0,
-				doComment: false,
-				alert: false
-			});
-		} else {
-			let comment: Comment | undefined;
-			if (check.doComment) {
-				comment = this.app.comments.addComment(check.name, type, false);
-			}
+type: 'success' | 'primary' | 'warning' | 'danger',
+check:{
+name: string;
+slider: [string, string, string, string, string];
+color: [string, string, string, string, string];
+alert: false | string;
+doComment: boolean;
+render?: boolean;
+defaultValue?: boolean;
+}
+| {
+name: string;
+alert: false | string;
+doComment: boolean;
+render?: boolean;
+defaultValue?: boolean;
+}
+| string
+) {
+let c: Check;
+if (typeof check === 'string') {
+c = new Check({
+name: check,
+doSlider: false,
+value: false,
+type,
+render: true,
+slider: 0,
+doComment: false,
+alert: false
+});
+} else {
+let comment: Comment | undefined;
+if (check.doComment) {
+comment = this.app.comments.addComment(check.name, type, false);
+}
 
-			if ('slider' in check) {
-				c = new Check({
-					name: check.name,
-					doSlider: true,
-					value: false,
-					type,
-					render: true,
-					slider: 0,
-					values: check.slider,
-					color: check.color,
-					alert: check.alert,
-					doComment: check.doComment,
-					comment
-				});
-			} else {
-				c = new Check({
-					name: check.name,
-					doSlider: false,
-					value: false,
-					type,
-					render: true,
-					slider: 0,
-					alert: check.alert,
-					doComment: check.doComment,
-					comment
-				});
-			}
-			this.onAllUnsubscribe(
-				c.subscribe((data) => {
-					if (data.value && data.doComment && data.comment) {
-						comment?.update((c) => ({
-							...c,
-							show: true
-						}));
-					} else {
-						comment?.update((c) => ({
-							...c,
-							show: false
-						}));
-					}
-				})
-			);
-		}
+if ('slider' in check) {
+c = new Check({
+name: check.name,
+doSlider: true,
+value: check.defaultValue ?? false,
+type,
+render: check.render ?? true,
+slider: 0,
+values: check.slider,
+color: check.color,
+alert: check.alert,
+doComment: check.doComment,
+comment
+});
+} else {
+c = new Check({
+name: check.name,
+doSlider: false,
+value: check.defaultValue ?? false,
+type,
+render: check.render ?? true,
+slider: 0,
+alert: check.alert,
+doComment: check.doComment,
+comment
+});
+}
+this.onAllUnsubscribe(
+c.subscribe((data) => {
+if (data.value && data.doComment && data.comment) {
+comment?.update((c) => ({
+...c,
+show: true
+}));
+} else {
+comment?.update((c) => ({
+...c,
+show: false
+}));
+}
+})
+);
+}
 
-		this.update((checks) => {
-			checks.push(c);
-			return checks;
-		});
+this.update((checks) => {
+checks.push(c);
+return checks;
+});
 
-		this.writables[type].update((checks) => {
-			checks.push(c);
-			return checks;
-		});
+this.writables[type].update((checks) => {
+checks.push(c);
+return checks;
+});
 
-		this.pipe(c);
+this.pipe(c);
 
-		return this;
-	}
+return this;
+} 
 
 	/**
 	 * Returns a check by display name.
