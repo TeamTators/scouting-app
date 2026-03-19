@@ -463,13 +463,7 @@ export default (config: {
 		})
 		.addCheck('primary', {
 			name: 'drivingQuality',
-			slider: [
-				'Not good at all',
-				'Not very good',
-				'Kind of good',
-				'Good',
-				'Very good'
-			],
+			slider: ['Not good at all', 'Not very good', 'Kind of good', 'Good', 'Very good'],
 			color: ['red', 'orange', 'yellow', 'green', 'blue'],
 			alert: false,
 			doComment: true
@@ -507,10 +501,10 @@ export default (config: {
 		.addCheck('warning', 'doesntShootFuelInAuto')
 		.addCheck('warning', 'stronglyAffectedByDefense')
 		.addCheck('warning', 'disabledInAuto')
-		.addCheck('danger', 'doesn\'tShootFuel')
+		.addCheck('danger', "doesn'tShootFuel")
 		.addCheck('danger', 'robotDied')
 		.addCheck('danger', 'problemsDriving')
-		.addCheck('danger', 'spectator')
+		.addCheck('danger', 'spectator');
 
 	return app;
 };
