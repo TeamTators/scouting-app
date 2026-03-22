@@ -160,8 +160,8 @@ export default (config: {
 		button.style.height = '20%';
 		button.innerHTML = `
             <img src="/icons/${object.config.abbr}.png" alt="${object.config.name}" style="
-                height: 50px;
-                width: 50px;
+                height: 70px;
+                width: 70px;
             " />
         `;
 		return button;
@@ -173,8 +173,8 @@ export default (config: {
 		button.style.width = '10%';
 		button.innerHTML = `
             <img src="/icons/${object.config.abbr}.png" alt="${object.config.name}" style="
-                height: 50px;
-                width: 50px;
+                height: 70px;
+                width: 70px;
             " />
         `;
 		return button;
@@ -728,7 +728,7 @@ export default (config: {
 		.addCheck('danger', 'doesntShootFuel')
 		.addCheck('danger', 'robotDied')
 		.addCheck('danger', 'problemsDriving')
-		.addCheck('danger', 'spectator')
+		.addCheck('danger', 'spectator');
 
 	return app;
 };
