@@ -445,9 +445,20 @@ export default (config: {
 	app.checks
 		.addCheck('success', 'lostCountOfFuel')
 		.addCheck('success', 'shootWhileMoving')
+		.addCheck('success', 'pickWhileShooting')
 		.addCheck('success', 'crossesTrench')
 		.addCheck('success', 'crossesBump')
 		.addCheck('success', 'clankClimb (fast L1)')
+		.addCheck('success', 'stoleFuelFromOpponent\'sZone')
+		.addCheck('primary', {
+			name: 'drivingQuality',
+			slider: ['Not good at all', 'Not very good', 'Kind of good', 'Good', 'Very good'],
+			color: ['red', 'orange', 'yellow', 'green', 'blue'],
+			alert: false,
+			doComment: false,
+			render: false,
+			defaultValue: true
+		})
 		.addCheck('primary', {
 			name: 'playedDefense',
 			slider: [
@@ -459,14 +470,7 @@ export default (config: {
 			],
 			color: ['red', 'orange', 'yellow', 'green', 'blue'],
 			alert: false,
-			doComment: true
-		})
-		.addCheck('primary', {
-			name: 'drivingQuality',
-			slider: ['Not good at all', 'Not very good', 'Kind of good', 'Good', 'Very good'],
-			color: ['red', 'orange', 'yellow', 'green', 'blue'],
-			alert: false,
-			doComment: true
+			doComment: false
 		})
 		.addCheck('primary', {
 			name: 'herdsFuel',
@@ -495,7 +499,6 @@ export default (config: {
 			doComment: false
 		})
 		.addCheck('warning', 'droppedLotsOfFuel')
-		.addCheck('warning', 'slow')
 		.addCheck('warning', 'stuckOnBump')
 		.addCheck('warning', 'surfedOnFuel')
 		.addCheck('warning', 'doesntShootFuelInAuto')
