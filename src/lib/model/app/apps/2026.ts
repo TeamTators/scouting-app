@@ -67,20 +67,20 @@ export default (config: {
 			name: 'Blue Lob 10x',
 			description: 'Blue lobbed 10 fuel'
 		}),
-		bul5: new AppObject({
-			abbr: 'bul5',
-			name: 'Blue Bulldoze 5x',
-			description: 'Blue bulldozed 5 fuel'
+		her5: new AppObject({
+			abbr: 'her5',
+			name: 'Blue herldoze 5x',
+			description: 'Blue herldozed 5 fuel'
 		}),
-		bul10: new AppObject({
-			abbr: 'bul10',
-			name: 'Blue Bulldoze 10x',
-			description: 'Blue bulldozed 10 fuel'
+		her10: new AppObject({
+			abbr: 'her10',
+			name: 'Blue herldoze 10x',
+			description: 'Blue herldozed 10 fuel'
 		}),
-		bul25: new AppObject({
-			abbr: 'bul25',
-			name: 'Blue Bulldoze 25x',
-			description: 'Blue bulldozed 25 fuel'
+		her25: new AppObject({
+			abbr: 'her25',
+			name: 'Blue herldoze 25x',
+			description: 'Blue herldozed 25 fuel'
 		}),
 		out: new AppObject({
 			abbr: 'out',
@@ -120,20 +120,20 @@ export default (config: {
 			name: 'Red Lob 10x',
 			description: 'Red lobbed 10 fuel'
 		}),
-		bul5: new AppObject({
-			abbr: 'bul5',
-			name: 'Red Bulldoze 5x',
-			description: 'Red bulldozed 5 fuel'
+		her5: new AppObject({
+			abbr: 'her5',
+			name: 'Red herldoze 5x',
+			description: 'Red herldozed 5 fuel'
 		}),
-		bul10: new AppObject({
-			abbr: 'bul10',
-			name: 'Red Bulldoze 10x',
-			description: 'Red bulldozed 10 fuel'
+		her10: new AppObject({
+			abbr: 'her10',
+			name: 'Red herldoze 10x',
+			description: 'Red herldozed 10 fuel'
 		}),
-		bul25: new AppObject({
-			abbr: 'bul25',
-			name: 'Red Bulldoze 25x',
-			description: 'Red bulldozed 25 fuel'
+		her25: new AppObject({
+			abbr: 'her25',
+			name: 'Red herldoze 25x',
+			description: 'Red herldozed 25 fuel'
 		}),
 		out: new AppObject({
 			abbr: 'out',
@@ -187,12 +187,12 @@ export default (config: {
 		lob1: createTallButton(blueObjects.lob1, 'blue'),
 		lob5: createTallButton(blueObjects.lob5, 'blue'),
 		lob10: createTallButton(blueObjects.lob10, 'blue'),
-		bul5L: createLongButton(blueObjects.bul5, 'blue'),
-		bul10L: createLongButton(blueObjects.bul10, 'blue'),
-		bul25L: createLongButton(blueObjects.bul25, 'blue'),
-		bul5R: createLongButton(blueObjects.bul5, 'blue'),
-		bul10R: createLongButton(blueObjects.bul10, 'blue'),
-		bul25R: createLongButton(blueObjects.bul25, 'blue'),
+		her5L: createLongButton(blueObjects.her5, 'blue'),
+		her10L: createLongButton(blueObjects.her10, 'blue'),
+		her25L: createLongButton(blueObjects.her25, 'blue'),
+		her5R: createLongButton(blueObjects.her5, 'blue'),
+		her10R: createLongButton(blueObjects.her10, 'blue'),
+		her25R: createLongButton(blueObjects.her25, 'blue'),
 		out: createButton(blueObjects.out, 'blue')
 	};
 
@@ -203,12 +203,12 @@ export default (config: {
 		lob1: createTallButton(redObjects.lob1, 'red'),
 		lob5: createTallButton(redObjects.lob5, 'red'),
 		lob10: createTallButton(redObjects.lob10, 'red'),
-		bul5L: createLongButton(redObjects.bul5, 'red'),
-		bul10L: createLongButton(redObjects.bul10, 'red'),
-		bul25L: createLongButton(redObjects.bul25, 'red'),
-		bul5R: createLongButton(redObjects.bul5, 'red'),
-		bul10R: createLongButton(redObjects.bul10, 'red'),
-		bul25R: createLongButton(redObjects.bul25, 'red'),
+		her5L: createLongButton(redObjects.her5, 'red'),
+		her10L: createLongButton(redObjects.her10, 'red'),
+		her25L: createLongButton(redObjects.her25, 'red'),
+		her5R: createLongButton(redObjects.her5, 'red'),
+		her10R: createLongButton(redObjects.her10, 'red'),
+		her25R: createLongButton(redObjects.her25, 'red'),
 		out: createButton(redObjects.out, 'red')
 	};
 
@@ -314,18 +314,18 @@ export default (config: {
 		}
 	});
 
-	const blueBul5L = app.addAppObject({
+	const blueher5L = app.addAppObject({
 		point: [0.2, 0.96],
-		object: blueObjects.bul5,
-		button: blueButtons.bul5L,
+		object: blueObjects.her5,
+		button: blueButtons.her5L,
 		alliance: 'blue',
 		staticX: true,
 		staticY: false,
 		viewCondition: () => {
 			if (globalData.flipX) {
-				blueBul5L.point = [0.6, 0.96];
+				blueher5L.point = [0.6, 0.96];
 			} else {
-				blueBul5L.point = [0.2, 0.96];
+				blueher5L.point = [0.2, 0.96];
 			}
 			return true;
 		}
@@ -333,43 +333,43 @@ export default (config: {
 
 	app.addAppObject({
 		point: [0.3, 0.96],
-		object: blueObjects.bul10,
-		button: blueButtons.bul10L,
+		object: blueObjects.her10,
+		button: blueButtons.her10L,
 		alliance: 'blue',
 		staticX: false,
 		staticY: false,
 		viewCondition: () => app.matchData.alliance === 'blue'
 	});
 
-	const blueBul25L = app.addAppObject({
+	const blueher25L = app.addAppObject({
 		point: [0.4, 0.96],
-		object: blueObjects.bul25,
-		button: blueButtons.bul25L,
+		object: blueObjects.her25,
+		button: blueButtons.her25L,
 		alliance: 'blue',
 		staticX: true,
 		staticY: false,
 		viewCondition: () => {
 			if (globalData.flipX) {
-				blueBul25L.point = [0.8, 0.96];
+				blueher25L.point = [0.8, 0.96];
 			} else {
-				blueBul25L.point = [0.4, 0.96];
+				blueher25L.point = [0.4, 0.96];
 			}
 			return true;
 		}
 	});
 
-	const blueBul5R = app.addAppObject({
+	const blueher5R = app.addAppObject({
 		point: [0.2, 0.04],
-		object: blueObjects.bul5,
-		button: blueButtons.bul5R,
+		object: blueObjects.her5,
+		button: blueButtons.her5R,
 		alliance: 'blue',
 		staticX: true,
 		staticY: false,
 		viewCondition: () => {
 			if (globalData.flipX) {
-				blueBul5R.point = [0.6, 0.04];
+				blueher5R.point = [0.6, 0.04];
 			} else {
-				blueBul5R.point = [0.2, 0.04];
+				blueher5R.point = [0.2, 0.04];
 			}
 			return true;
 		}
@@ -377,26 +377,26 @@ export default (config: {
 
 	app.addAppObject({
 		point: [0.3, 0.04],
-		object: blueObjects.bul10,
-		button: blueButtons.bul10R,
+		object: blueObjects.her10,
+		button: blueButtons.her10R,
 		alliance: 'blue',
 		staticX: false,
 		staticY: false,
 		viewCondition: () => app.matchData.alliance === 'blue'
 	});
 
-	const blueBul25R = app.addAppObject({
+	const blueher25R = app.addAppObject({
 		point: [0.4, 0.04],
-		object: blueObjects.bul25,
-		button: blueButtons.bul25R,
+		object: blueObjects.her25,
+		button: blueButtons.her25R,
 		alliance: 'blue',
 		staticX: true,
 		staticY: false,
 		viewCondition: () => {
 			if (globalData.flipX) {
-				blueBul25R.point = [0.8, 0.04];
+				blueher25R.point = [0.8, 0.04];
 			} else {
-				blueBul25R.point = [0.4, 0.04];
+				blueher25R.point = [0.4, 0.04];
 			}
 			return true;
 		}
@@ -513,18 +513,18 @@ export default (config: {
 		}
 	});
 
-	const redBul5L = app.addAppObject({
+	const redher5L = app.addAppObject({
 		point: [0.6, 0.96],
-		object: redObjects.bul5,
-		button: redButtons.bul5L,
+		object: redObjects.her5,
+		button: redButtons.her5L,
 		alliance: 'red',
 		staticX: true,
 		staticY: false,
 		viewCondition: () => {
 			if (globalData.flipX) {
-				redBul5L.point = [0.2, 0.96];
+				redher5L.point = [0.2, 0.96];
 			} else {
-				redBul5L.point = [0.6, 0.96];
+				redher5L.point = [0.6, 0.96];
 			}
 			return true;
 		}
@@ -532,43 +532,43 @@ export default (config: {
 
 	app.addAppObject({
 		point: [0.7, 0.96],
-		object: redObjects.bul10,
-		button: redButtons.bul10L,
+		object: redObjects.her10,
+		button: redButtons.her10L,
 		alliance: 'red',
 		staticX: false,
 		staticY: false,
 		viewCondition: () => app.matchData.alliance === 'red'
 	});
 
-	const redBul25L = app.addAppObject({
+	const redher25L = app.addAppObject({
 		point: [0.8, 0.96],
-		object: redObjects.bul25,
-		button: redButtons.bul25L,
+		object: redObjects.her25,
+		button: redButtons.her25L,
 		alliance: 'red',
 		staticX: true,
 		staticY: false,
 		viewCondition: () => {
 			if (globalData.flipX) {
-				redBul25L.point = [0.4, 0.96];
+				redher25L.point = [0.4, 0.96];
 			} else {
-				redBul25L.point = [0.8, 0.96];
+				redher25L.point = [0.8, 0.96];
 			}
 			return true;
 		}
 	});
 
-	const redBul5R = app.addAppObject({
+	const redher5R = app.addAppObject({
 		point: [0.6, 0.04],
-		object: redObjects.bul5,
-		button: redButtons.bul5R,
+		object: redObjects.her5,
+		button: redButtons.her5R,
 		alliance: 'red',
 		staticX: true,
 		staticY: false,
 		viewCondition: () => {
 			if (globalData.flipX) {
-				redBul5R.point = [0.2, 0.04];
+				redher5R.point = [0.2, 0.04];
 			} else {
-				redBul5R.point = [0.6, 0.04];
+				redher5R.point = [0.6, 0.04];
 			}
 			return true;
 		}
@@ -576,26 +576,26 @@ export default (config: {
 
 	app.addAppObject({
 		point: [0.7, 0.04],
-		object: redObjects.bul10,
-		button: redButtons.bul10R,
+		object: redObjects.her10,
+		button: redButtons.her10R,
 		alliance: 'red',
 		staticX: false,
 		staticY: false,
 		viewCondition: () => app.matchData.alliance === 'red'
 	});
 
-	const redBul25R = app.addAppObject({
+	const redher25R = app.addAppObject({
 		point: [0.8, 0.04],
-		object: redObjects.bul25,
-		button: redButtons.bul25R,
+		object: redObjects.her25,
+		button: redButtons.her25R,
 		alliance: 'red',
 		staticX: true,
 		staticY: false,
 		viewCondition: () => {
 			if (globalData.flipX) {
-				redBul25R.point = [0.4, 0.04];
+				redher25R.point = [0.4, 0.04];
 			} else {
-				redBul25R.point = [0.8, 0.04];
+				redher25R.point = [0.8, 0.04];
 			}
 			return true;
 		}
@@ -699,7 +699,6 @@ export default (config: {
 
 	app.checks
 		.addCheck('success', 'lostCountOfFuel')
-		.addCheck('success', 'bulldozesBalls')
 		.addCheck('success', 'shootWhileMoving')
 		.addCheck('success', 'crossesTrench')
 		.addCheck('success', 'crossesBump')
