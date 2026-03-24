@@ -448,8 +448,12 @@ export default (config: {
 		.addCheck('success', 'pickWhileShooting')
 		.addCheck('success', 'crossesTrench')
 		.addCheck('success', 'crossesBump')
-		.addCheck('success', 'clankClimb (fast L1)')
+		//.addCheck('success', 'clankClimb (fast L1)')
 		.addCheck('success', 'stoleFuelFromOpponent\'sZone')
+		.addCheck('success', 'autoClimb')
+		.addCheck('success', 'endClimbL1')
+		.addCheck('success', 'endClimbL2')
+		.addCheck('success', 'endClimbL3')
 		.addCheck('primary', {
 			name: 'drivingQuality',
 			slider: ['Not good at all', 'Not very good', 'Kind of good', 'Good', 'Very good'],
