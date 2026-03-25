@@ -1101,23 +1101,21 @@ export class SummaryView extends WritableBase<{ from: number; to: number }> {
 				};
 			} else {
 				const shape = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-				const px = flipX ? 1 - x : x;
-				const py = flipY ? 1 - y : y;
 				const nextPoint = trace[i + 1];
-				const nx = nextPoint ? (flipX ? 1 - nextPoint[1] : nextPoint[1]) : px;
-				const ny = nextPoint ? (flipY ? 1 - nextPoint[2] : nextPoint[2]) : py;
-				const angle = Math.atan2(ny - py, (nx - px) * 2);
+				const nx = nextPoint ? nextPoint[1] : x;
+				const ny = nextPoint ? nextPoint[2] : y;
+				const angle = Math.atan2(ny - y, (nx - x) * 2);
 				const size = 0.015;
 				// isosceles triangle points to clearly show direction, not equilateral
 				const points = [
-					[px * 2 + Math.cos(angle) * size, py + Math.sin(angle) * size],
+					[x * 2 + Math.cos(angle) * size, y + Math.sin(angle) * size],
 					[
-						px * 2 + Math.cos(angle + 120 * (Math.PI / 180)) * size,
-						py + Math.sin(angle + 120 * (Math.PI / 180)) * size
+						x * 2 + Math.cos(angle + 120 * (Math.PI / 180)) * size,
+						y + Math.sin(angle + 120 * (Math.PI / 180)) * size
 					],
 					[
-						px * 2 + Math.cos(angle + 240 * (Math.PI / 180)) * size,
-						py + Math.sin(angle + 240 * (Math.PI / 180)) * size
+						x * 2 + Math.cos(angle + 240 * (Math.PI / 180)) * size,
+						y + Math.sin(angle + 240 * (Math.PI / 180)) * size
 					]
 				];
 				shape.setAttribute('points', points.map((p) => p.join(' ')).join(', '));
@@ -1127,16 +1125,16 @@ export class SummaryView extends WritableBase<{ from: number; to: number }> {
 					const PERCENT = 0.5;
 					const hoverPoints = [
 						[
-							px * 2 + Math.cos(angle) * size * (1 + PERCENT),
-							py + Math.sin(angle) * size * (1 + PERCENT)
+							x * 2 + Math.cos(angle) * size * (1 + PERCENT),
+							y + Math.sin(angle) * size * (1 + PERCENT)
 						],
 						[
-							px * 2 + Math.cos(angle + 120 * (Math.PI / 180)) * size * (1 + PERCENT),
-							py + Math.sin(angle + 120 * (Math.PI / 180)) * size * (1 + PERCENT)
+							x * 2 + Math.cos(angle + 120 * (Math.PI / 180)) * size * (1 + PERCENT),
+							y + Math.sin(angle + 120 * (Math.PI / 180)) * size * (1 + PERCENT)
 						],
 						[
-							px * 2 + Math.cos(angle + 240 * (Math.PI / 180)) * size * (1 + PERCENT),
-							py + Math.sin(angle + 240 * (Math.PI / 180)) * size * (1 + PERCENT)
+							x * 2 + Math.cos(angle + 240 * (Math.PI / 180)) * size * (1 + PERCENT),
+							y + Math.sin(angle + 240 * (Math.PI / 180)) * size * (1 + PERCENT)
 						]
 					];
 					shape.setAttribute('points', hoverPoints.map((p) => p.join(' ')).join(', '));
