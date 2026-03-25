@@ -505,7 +505,7 @@ export default (config: {
 		.addCheck('warning', 'droppedLotsOfFuel')
 		.addCheck('warning', 'stuckOnBump')
 		.addCheck('warning', 'surfedOnFuel')
-		.addCheck('warning', 'doesntShootFuelInAuto')
+		//.addCheck('warning', 'doesntShootFuelInAuto')
 		.addCheck('warning', 'stronglyAffectedByDefense')
 		.addCheck('warning', 'disabledInAuto')
 		.addCheck('danger', "doesn'tShootFuel")
