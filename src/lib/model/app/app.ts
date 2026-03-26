@@ -66,12 +66,12 @@ export const TICKS_PER_SECOND = 4;
  * @example
  * const [autoStart, autoEnd] = SECTIONS.auto; // 0, 15
  */
-export const SECTIONS = {
-	auto: [0, 15],
-	teleop: [16, 135],
-	endgame: [136, 150],
-	end: [151, 160]
-};
+// export const SECTIONS = {
+// 	auto: [0, 15],
+// 	teleop: [16, 135],
+// 	endgame: [136, 150],
+// 	end: [151, 160]
+// };
 /**
  * Named match sections used throughout app timing and UI.
  *
@@ -79,7 +79,7 @@ export const SECTIONS = {
  * @example
  * const section = /** @type {Section} *\/ ('teleop');
  */
-export type Section = 'auto' | 'teleop' | 'endgame' | 'end';
+// export type Section = 'auto' | 'teleop' | 'endgame' | 'end';
 /**
  * Duration of a single tick in milliseconds.
  *
@@ -88,14 +88,6 @@ export type Section = 'auto' | 'teleop' | 'endgame' | 'end';
  * const msPerTick = TICK_DURATION; // 250
  */
 export const TICK_DURATION = 1000 / TICKS_PER_SECOND;
-/**
- * Total number of ticks in a 160-second match timeline.
- *
- * @type {number}
- * @example
- * const total = TOTAL_TICKS; // 640
- */
-export const TOTAL_TICKS = TICKS_PER_SECOND * 160;
 
 /**
  * Orchestrates scouting runtime behavior for a single team/match context.
@@ -133,7 +125,7 @@ export class App {
 	 */
 	private readonly emitter = new EventEmitter<{
 		tick: Tick;
-		section: Section;
+		section: keyof App['config']['yearInfo']['timer'];
 		action: {
 			action: string;
 			point: Point2D;
@@ -383,6 +375,12 @@ export class App {
 		// this.scoreCorrection = new ScoreCorrection(this);
 	}
 
+	get totalTicks() {
+		return Math.max(
+			...Object.values(this.config.yearInfo.timer).map(([, end]) => end * TICKS_PER_SECOND)
+		);
+	}
+
 	/**
 	 * Serializes the current scout session into the compressed match schema payload.
 	 *
@@ -468,7 +466,7 @@ export class App {
 	 * stop();
 	 */
 	start(cb?: (tick: Tick) => void) {
-		let prevSection: Section | null = null;
+		let prevSection: keyof App['config']['yearInfo']['timer'] | null = null;
 		this.state.currentIndex = 0;
 		this.running.set(true);
 
@@ -596,13 +594,13 @@ export class App {
 	/**
 	 * Seeks playback to the beginning of the given match section.
 	 *
-	 * @param {Section} section - Section to seek to.
+	 * @param {keyof App['config']['yearInfo']['timer']} section - Section to seek to.
 	 * @returns {void}
 	 * @example
 	 * app.goto('endgame');
 	 */
-	goto(section: Section) {
-		const [start] = SECTIONS[section];
+	goto(section: keyof App['config']['yearInfo']['timer']) {
+		const [start] = this.config.yearInfo.timer[section];
 		this.state.currentIndex = start * TICKS_PER_SECOND;
 		const tick = this.state.tick;
 		if (!tick) return;
@@ -624,7 +622,7 @@ export class App {
 	 */
 	gotoTickIndex(index: number) {
 		if (index < 0) index = 0;
-		if (index > TOTAL_TICKS) index = TOTAL_TICKS;
+		if (index > this.totalTicks) index = this.totalTicks;
 		this.state.currentIndex = index;
 		const tick = this.state.tick;
 		if (!tick) return;

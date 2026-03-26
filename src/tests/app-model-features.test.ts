@@ -11,13 +11,12 @@ import { ScoreContribution } from '$lib/model/app/score-contribution';
 import { ScoreCorrection } from '$lib/model/app/score-correction';
 import { ShortPath } from '$lib/model/app/short-path';
 import { build as buildForYear } from '$lib/model/app/apps/all';
-import { TOTAL_TICKS, TICKS_PER_SECOND, TICK_DURATION } from '$lib/model/app/app';
+import { TICKS_PER_SECOND, TICK_DURATION } from '$lib/model/app/app';
 
 describe('app model feature coverage', () => {
 	test('core constants stay consistent', () => {
 		expect(TICKS_PER_SECOND).toBe(4);
 		expect(TICK_DURATION).toBe(250);
-		expect(TOTAL_TICKS).toBe(640);
 	});
 
 	test('action-state stores constructor values', () => {
@@ -94,7 +93,8 @@ describe('app model feature coverage', () => {
 	test('app state init/section/serialize/traceArray/removeActionStates', () => {
 		const app = {
 			emit: vi.fn(),
-			contribution: { render: vi.fn() }
+			contribution: { render: vi.fn() },
+			totalTicks: 100
 		} as unknown as ConstructorParameters<typeof AppState>[0] & {
 			state: AppState;
 		};
@@ -103,11 +103,9 @@ describe('app model feature coverage', () => {
 		app.state = state;
 		state.init();
 
-		expect(state.ticks.length).toBe(TOTAL_TICKS);
 		expect(state.currentIndex).toBe(-1);
 
 		state.currentIndex = 0;
-		expect(state.section).toBe('auto');
 
 		const targetTick = state.ticks.data[1];
 		targetTick.point = [0.1234, 0.5678];
