@@ -26,9 +26,9 @@
 					<label for="comment-{$comment.key}" class="form-label"
 						>{capitalize(fromCamelCase(comment.key))}:
 						<span
-							class:text-muted={chars < 50}
-							class:text-warning={chars < 75}
-							class:text-danger={chars >= 75}>{chars}/100</span
+							class:text-muted={chars < 150}
+							class:text-warning={chars < 175}
+							class:text-danger={chars >= 175}>{chars}/200</span
 						></label
 					>
 					<textarea
@@ -36,8 +36,8 @@
 						class="form-control"
 						bind:value={comment.value}
 						rows="3"
-						maxlength="100"
-						placeholder="Please provide a brief description... (max 100 characters)"
+						maxlength="200"
+						placeholder="Please provide a brief description... (max 200 characters)"
 					></textarea>
 				</div>
 			</div>

@@ -94,11 +94,15 @@ export class Checks extends WritableArray<Check> {
 					color: [string, string, string, string, string];
 					alert: false | string;
 					doComment: boolean;
+					render?: boolean;
+					defaultValue?: boolean;
 			  }
 			| {
 					name: string;
 					alert: false | string;
 					doComment: boolean;
+					render?: boolean;
+					defaultValue?: boolean;
 			  }
 			| string
 	) {
@@ -124,9 +128,9 @@ export class Checks extends WritableArray<Check> {
 				c = new Check({
 					name: check.name,
 					doSlider: true,
-					value: false,
+					value: check.defaultValue ?? false,
 					type,
-					render: true,
+					render: check.render ?? true,
 					slider: 0,
 					values: check.slider,
 					color: check.color,
@@ -138,9 +142,9 @@ export class Checks extends WritableArray<Check> {
 				c = new Check({
 					name: check.name,
 					doSlider: false,
-					value: false,
+					value: check.defaultValue ?? false,
 					type,
-					render: true,
+					render: check.render ?? true,
 					slider: 0,
 					alert: check.alert,
 					doComment: check.doComment,
@@ -229,7 +233,7 @@ export class Checks extends WritableArray<Check> {
 
 		for (const check of this.data) {
 			if (check.data.value && check.data.render) checks.push(check.data.name);
-			if (check.data.doSlider && check.data.value && check.data.render)
+			if (check.data.doSlider && check.data.value)
 				sliders[check.data.name] = {
 					value: check.data.slider,
 					text: check.data.values[check.data.slider],

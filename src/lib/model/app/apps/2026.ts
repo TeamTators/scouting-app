@@ -700,11 +700,26 @@ export default (config: {
 	app.checks
 		.addCheck('success', 'lostCountOfFuel')
 		.addCheck('success', 'shootWhileMoving')
+		.addCheck('success', 'pickWhileShooting')
 		.addCheck('success', 'crossesTrench')
 		.addCheck('success', 'crossesBump')
-		.addCheck('success', 'clankClimb (fast L1)')
+		//.addCheck('success', 'clankClimb (fast L1)')
+		.addCheck('success', 'stoleFuelFromOpponent\'sZone')
+		.addCheck('success', 'autoClimb')
+		.addCheck('success', 'endClimbL1')
+		.addCheck('success', 'endClimbL2')
+		.addCheck('success', 'endClimbL3')
 		.addCheck('primary', {
-			name: 'defenseQuality',
+			name: 'drivingQuality',
+			slider: ['Not good at all', 'Not very good', 'Kind of good', 'Good', 'Very good'],
+			color: ['red', 'orange', 'yellow', 'green', 'blue'],
+			alert: false,
+			doComment: false,
+			render: false,
+			defaultValue: true
+		})
+		.addCheck('primary', {
+			name: 'playedDefense',
 			slider: [
 				'Not effective at all',
 				'Not very effective',
@@ -714,17 +729,41 @@ export default (config: {
 			],
 			color: ['red', 'orange', 'yellow', 'green', 'blue'],
 			alert: false,
-			doComment: true
+			doComment: false
 		})
-		.addCheck('primary', 'couldPlayDefense')
+		.addCheck('primary', {
+			name: 'herdsFuel',
+			slider: [
+				'Not effective at all',
+				'Not very effective',
+				'A little effective',
+				'Effective',
+				'Very effective'
+			],
+			color: ['red', 'orange', 'yellow', 'green', 'blue'],
+			alert: false,
+			doComment: false
+		})
+		.addCheck('primary', {
+			name: 'lobsFuel',
+			slider: [
+				'Not effective at all',
+				'Not very effective',
+				'A little effective',
+				'Effective',
+				'Very effective'
+			],
+			color: ['red', 'orange', 'yellow', 'green', 'blue'],
+			alert: false,
+			doComment: false
+		})
 		.addCheck('warning', 'droppedLotsOfFuel')
-		.addCheck('warning', 'slow')
 		.addCheck('warning', 'stuckOnBump')
 		.addCheck('warning', 'surfedOnFuel')
-		.addCheck('warning', 'doesntShootFuelInAuto')
+		//.addCheck('warning', 'doesntShootFuelInAuto')
 		.addCheck('warning', 'stronglyAffectedByDefense')
 		.addCheck('warning', 'disabledInAuto')
-		.addCheck('danger', 'doesntShootFuel')
+		.addCheck('danger', "doesn'tShootFuel")
 		.addCheck('danger', 'robotDied')
 		.addCheck('danger', 'problemsDriving')
 		.addCheck('danger', 'spectator');
