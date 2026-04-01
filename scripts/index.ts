@@ -1,5 +1,4 @@
 import path from 'path';
-import terminal from '../src/lib/server/utils/terminal';
 import fs from 'fs/promises';
 import { select, prompt } from '../cli/utils';
 import { createServer } from 'vite';

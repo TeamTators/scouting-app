@@ -38,6 +38,7 @@ jobs:
           pnpm add -D typescript
           pnpm install --frozen-lockfile
           pnpm exec playwright install
+
       - name: Set up Supabase Config
         run: |
           echo "Setting up Supabase config..."

@@ -12,7 +12,7 @@ export default (
 	service_role_key: string,
 	sb_pass: string,
 ) => {
-	if (=fs.existsSync(path.join(process.cwd(), process.env.CONFIG_PATH || 'config.json'))) {
+	if (fs.existsSync(path.join(process.cwd(), process.env.CONFIG_PATH || 'config.json'))) {
 		throw new Error('config.json already exists. Please delete it before running this script.');
 	}
 
