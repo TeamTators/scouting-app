@@ -26,7 +26,20 @@ export default defineConfig({
 	server: {
 		port: config.network.port,
 		host: '0.0.0.0',
-		allowedHosts: ['dev.tsaxking.com']
+		allowedHosts: ['dev.tsaxking.com'],
+		watch: {
+			ignored: [
+				'**/node_modules/**',
+				'**/.git/**',
+				'**/dist/**',
+				'**/build/**',
+				'**/out/**',
+				'**/coverage/**',
+				'docs/**',
+				'**/public/**',
+				'**/.svelte-kit/**',
+			]
+		}
 	},
 	define: {
 		__APP_ENV__: JSON.stringify({

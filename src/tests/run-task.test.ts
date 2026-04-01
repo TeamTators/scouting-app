@@ -10,7 +10,7 @@ describe('Run a typescript file', () => {
 
 describe('Run a command', () => {
 	it('Will run git status', async () => {
-		const res = await runTask('echo "hi!"').unwrap();
+		const res = await runTask('echo', '"hi!"').unwrap();
 		expect(res).toBe('hi!');
 	}, 10000);
 });
