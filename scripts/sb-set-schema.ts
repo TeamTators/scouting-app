@@ -51,22 +51,27 @@ export default async (schema: string) => {
 
 	// backup files
 	for (const file of filesToEdit) {
-		const filePath = path.resolve(process.cwd(), file);
-		const name = path.basename(filePath);
-		const backupPath = path.join(
-			process.cwd(),
-			'private',
-			'backups',
-			path.dirname(file),
-			`${date}_${name}.backup`
-		);
-		await fs.mkdir(path.dirname(backupPath), { recursive: true });
-		await fs.copyFile(filePath, backupPath);
-		console.log(`Backed up ${file} to ${backupPath}`);
-
-		const contents = await fs.readFile(filePath, 'utf-8');
-		const updatedContents = contents.replace(new RegExp(currentSchema, 'g'), schema);
-		await fs.writeFile(filePath, updatedContents, 'utf-8');
-		console.log(`Updated ${file} with new schema name: ${schema}`);
+try {
+			const filePath = path.resolve(process.cwd(), file);
+			const name = path.basename(filePath);
+			const backupPath = path.join(
+				process.cwd(),
+				'private',
+				'backups',
+				path.dirname(file),
+				`${date}_${name}.backup`
+			);
+			await fs.mkdir(path.dirname(backupPath), { recursive: true });
+			await fs.copyFile(filePath, backupPath);
+			console.log(`Backed up ${file} to ${backupPath}`);
+	
+			const contents = await fs.readFile(filePath, 'utf-8');
+			const updatedContents = contents.replace(new RegExp(currentSchema, 'g'), schema);
+			await fs.writeFile(filePath, updatedContents, 'utf-8');
+			console.log(`Updated ${file} with new schema name: ${schema}`);
+} catch (error) {
+	console.warn(`Failed to update ${file}:`, error);
+	console.warn(`Please check the file manually to ensure the schema name is updated to ${schema}.`);
+}
 	}
 };

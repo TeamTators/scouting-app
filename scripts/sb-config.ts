@@ -3,9 +3,7 @@ import path from 'path';
 import { config } from 'dotenv';
 config();
 
-export default (
-	...args: string[]
-) => {
+export default (...args: string[]) => {
 	let schema_name = '',
 		tenant_id = '',
 		pg_pass = '',
@@ -45,9 +43,20 @@ export default (
 		}
 	}
 
-	for (const [key, value] of Object.entries({schema_name, tenant_id, pg_pass, anon_key, domain, service_role_key, sb_pass, local_ip})) {
+	for (const [key, value] of Object.entries({
+		schema_name,
+		tenant_id,
+		pg_pass,
+		anon_key,
+		domain,
+		service_role_key,
+		sb_pass,
+		local_ip
+	})) {
 		if (value === '') {
-			throw new Error(`Missing value for ${key}. Please provide a value before running this script.`);
+			throw new Error(
+				`Missing value for ${key}. Please provide a value before running this script.`
+			);
 		}
 	}
 
@@ -69,5 +78,8 @@ export default (
 	json.supabase.sb_pass = sb_pass;
 	json.supabase.local_ip = local_ip;
 
-	fs.writeFileSync(path.join(process.cwd(), process.env.CONFIG_PATH || 'config.json'), JSON.stringify(json, null, 4));
+	fs.writeFileSync(
+		path.join(process.cwd(), process.env.CONFIG_PATH || 'config.json'),
+		JSON.stringify(json, null, 4)
+	);
 };

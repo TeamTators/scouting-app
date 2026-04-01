@@ -154,7 +154,6 @@ export default async () => {
 		config.supabase.schema + ',public'
 	).unwrap();
 
-
 	// Save raw supabase types
 	fs.writeFileSync('src/lib/types/supabase.ts', contents);
 
