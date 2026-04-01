@@ -84,7 +84,7 @@ export type TableStructable<T extends SchemaDefinition> = {
  * @param {T} schema - Schema definition.
  */
 export const _define = <T extends SchemaDefinition>(name: string, schema: T) => {
-	if (initialized) throw new Error(`Can't define table "${name}" after initDB()`);
+	if (initialized) throw new Error(`Can't define table "${name}" after database initialization.`);
 	pendingSchemas[name] = Object.keys({
 		...globals,
 		...schema

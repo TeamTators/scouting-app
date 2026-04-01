@@ -12,19 +12,54 @@ import {
 import { schemas } from '$lib/types/supabase-zod';
 import z from 'zod';
 import { browser } from '$app/environment';
-import { SupaStaging } from './supastaging';
+import { SupaStructData } from './supastruct-data';
+import { SupaPagination } from './supa-pagination';
+import { SupaCache } from './supacache';
 
 export type DB = Omit<Database, 'public'>;
 export type Client = ReturnType<typeof createClient<DB>>;
 
+/**
+ * Table metadata and row contract for a table in the active Supabase schema.
+ *
+ * @template Name - Table name from the generated database type.
+ */
 export type Table<Name extends keyof Database[SchemaName]['Tables']> =
 	Database[SchemaName]['Tables'][Name];
+/**
+ * Union of table names available in the active Supabase schema.
+ */
 export type Names = keyof Database[SchemaName]['Tables'];
+/**
+ * Row type for a table.
+ *
+ * @template Name - Table name from {@link Names}.
+ */
 export type Row<Name extends Names> = Table<Name>['Row'];
+/**
+ * Insert payload type for a table.
+ *
+ * @template Name - Table name from {@link Names}.
+ */
 export type Insert<Name extends Names> = Table<Name>['Insert'];
+/**
+ * Update payload type for a table.
+ *
+ * @template Name - Table name from {@link Names}.
+ */
 export type Update<Name extends Names> = Table<Name>['Update'];
+/**
+ * Partial row shape for patch operations, filters, and loose cache payloads.
+ *
+ * @template Name - Table name from {@link Names}.
+ */
 export type PartialRow<Name extends Names> = Partial<Row<Name>>;
 
+/**
+ * Writable status container for async operations.
+ *
+ * @typeParam T - Success payload type when operation completes.
+ */
 export class SupaStatus<T> extends WritableBase<
 	| {
 			pending: true;
@@ -38,6 +73,13 @@ export class SupaStatus<T> extends WritableBase<
 			error: Error;
 	  }
 > {
+	/**
+	 * Creates a pending async status container.
+	 *
+	 * @example
+	 * const status = new SupaStatus<string[]>();
+	 * status.set({ pending: false, result: ['ok'] });
+	 */
 	constructor() {
 		super({
 			pending: true
@@ -45,6 +87,16 @@ export class SupaStatus<T> extends WritableBase<
 	}
 }
 
+/**
+ * Runtime configuration for a {@link SupaStruct} instance.
+ *
+ * @template Name - Table name handled by the struct.
+ * @property name - Table name in the active schema.
+ * @property client - Typed Supabase client.
+ * @property versionHistory - Reserved flag for historical row tracking.
+ * @property debug - Enables scoped console logging for this struct.
+ * @property subscribe - Reserved flag for opt-in realtime behavior.
+ */
 export type SupaConfig<Name> = {
 	name: Name;
 	client: Client;
@@ -53,16 +105,39 @@ export type SupaConfig<Name> = {
 	subscribe?: boolean;
 };
 
+/**
+ * Read mode discriminator used by `ReadConfig` and overload signatures.
+ */
 export type ReadType = 'paginated' | 'all' | 'single' | 'count';
 
+/**
+ * Union of possible return types for table read operations.
+ *
+ * - `all` returns a live writable array.
+ * - `single` returns an async `ResultPromise`.
+ */
 export type ReadReturnType<Name extends Names> =
 	| SupaStructArray<Name>
 	| SupaPagination<Name>
 	| ResultPromise<SupaStructData<Name> | null>
 	| ResultPromise<number>;
 
+/**
+ * Configuration object for read operations.
+ *
+ * @template T - Read mode discriminator.
+ * @property type - Requested result mode.
+ * @property expires - Absolute expiry used for browser-side cache persistence.
+ *
+ * @example
+ * const config: ReadConfig<'single'> = {
+ *   type: 'single',
+ *   expires: new Date(Date.now() + 5 * 60 * 1000)
+ * };
+ */
 export type ReadConfig<T extends ReadType> = {
 	type: T;
+	expires: Date;
 } & (T extends 'all'
 	? {}
 	: T extends 'paginated'
@@ -76,9 +151,35 @@ export type ReadConfig<T extends ReadType> = {
 				? {}
 				: never);
 
+/**
+ * Typed data access facade for one Supabase table.
+ *
+ * Responsibilities:
+ * - Validate payloads against generated zod schemas.
+ * - Expose reactive arrays for list reads.
+ * - Expose `ResultPromise` APIs for async single reads.
+ * - Keep registered arrays synchronized with realtime updates.
+ * - Persist cached responses in browser storage through `SupaCache`.
+ *
+ * @template Name - Table name this struct instance represents.
+ */
 export class SupaStruct<Name extends Names> {
 	public static readonly structs = new Map<string, SupaStruct<Names>>();
 
+	/**
+	 * Creates a struct instance for a table.
+	 *
+	 * @template Name - Target table name.
+	 * @param config - Struct runtime configuration.
+	 * @returns A new typed `SupaStruct` instance.
+	 *
+	 * @example
+	 * const users = SupaStruct.get({
+	 *   name: 'users',
+	 *   client: supabaseClient,
+	 *   debug: true
+	 * });
+	 */
 	public static get<Name extends Names>(config: SupaConfig<Name>): SupaStruct<Name> {
 		// const existing = SupaStruct.structs.get(config.name);
 		// if (existing) return existing as unknown as SupaStruct<Name>;
@@ -95,13 +196,34 @@ export class SupaStruct<Name extends Names> {
 		realtime: [REALTIME_SUBSCRIBE_STATES];
 	}>();
 
+	/**
+	 * Subscribes to struct-level events.
+	 *
+	 * @example
+	 * users.on('new', (row) => {
+	 *   console.log('new row', row.data.id);
+	 * });
+	 */
 	public readonly on = this.em.on.bind(this.em);
+	/**
+	 * Unsubscribes a previously registered event handler.
+	 */
 	public readonly off = this.em.off.bind(this.em);
+	/**
+	 * Subscribes to an event once, then auto-unsubscribes.
+	 */
 	public readonly once = this.em.once.bind(this.em);
+	/** Internal emitter entrypoint used by this class only. */
 	private readonly emit = this.em.emit.bind(this.em);
 
+	/** Realtime channel dedicated to this table instance. */
 	private readonly channel: RealtimeChannel;
 
+	/**
+	 * Creates a table helper bound to a single table name.
+	 *
+	 * @param config - Table and client configuration.
+	 */
 	constructor(public readonly config: SupaConfig<Name>) {
 		console.log(`${this.name} Debug:`, config.debug);
 		this.channel = this.supabase.channel(`struct-${schemaName}.${config.name}`);
@@ -109,10 +231,20 @@ export class SupaStruct<Name extends Names> {
 		this.log(`Initialized struct for table ${this.name}`);
 	}
 
+	/**
+	 * Table name this struct is bound to.
+	 *
+	 * @returns Table name from generated DB types.
+	 */
 	get name() {
 		return this.config.name;
 	}
 
+	/**
+	 * Typed Supabase client used by this struct.
+	 *
+	 * @returns Shared client from config.
+	 */
 	get supabase() {
 		return this.config.client;
 	}
@@ -123,8 +255,16 @@ export class SupaStruct<Name extends Names> {
 		}
 	}
 
+	/** Guards realtime listener setup from duplicate initialization. */
 	private listening = false;
 
+	/**
+	 * Sets up realtime table listeners once per instance.
+	 *
+	 * On incoming changes, registered arrays are updated in-place to keep UI state fresh.
+	 *
+	 * @returns `true` when listeners were created; `false` when listeners already existed.
+	 */
 	setupListeners() {
 		if (this.listening) return false;
 		this.listening = true;
@@ -190,12 +330,19 @@ export class SupaStruct<Name extends Names> {
 		return true;
 	}
 
+	/**
+	 * Validates a raw Supabase transaction payload against an expected cardinality.
+	 *
+	 * @param transaction - Response payload containing `data` and `error`.
+	 * @param expect - Expected result shape (`array`, `single`, or `null`).
+	 * @returns A `Result` wrapping typed data or an error.
+	 */
 	runTransaction(
 		transaction: {
 			data: Row<Name>[] | Row<Name> | null;
 			error: Error | null;
 		},
-		expect: 'array'
+		expect: 'array',
 	): Result<Row<Name>[]>;
 	runTransaction(
 		transaction: {
@@ -245,6 +392,11 @@ export class SupaStruct<Name extends Names> {
 		});
 	}
 
+	/**
+	 * Type-only sample accessor used to infer `SupaStructData<Name>` in generic contexts.
+	 *
+	 * @throws Always throws at runtime.
+	 */
 	get sample(): SupaStructData<Name> {
 		throw new Error('Sample should never be used at runtime');
 	}
@@ -257,10 +409,22 @@ export class SupaStruct<Name extends Names> {
 		}
 	>();
 
+	/**
+	 * Unsubscribes the table realtime channel.
+	 *
+	 * @param timeout - Optional unsubscribe timeout.
+	 * @returns `Result` wrapping unsubscribe status.
+	 */
 	private unsub(timeout?: number) {
 		return attempt(() => this.channel.unsubscribe(timeout));
 	}
 
+	/**
+	 * Subscribes the table realtime channel.
+	 *
+	 * @param fn - Optional callback receiving subscribe status updates.
+	 * @returns `Result` wrapping subscribe status.
+	 */
 	private sub(fn?: (status: string) => void) {
 		return attempt(() =>
 			this.channel.subscribe((status) => {
@@ -270,6 +434,13 @@ export class SupaStruct<Name extends Names> {
 		);
 	}
 
+	/**
+	 * Registers a reactive array so realtime events can keep it synchronized.
+	 *
+	 * @param name - Unique registration key.
+	 * @param array - Reactive destination array.
+	 * @param satisfies - Predicate to determine whether an incoming row belongs in the array.
+	 */
 	registerArray(
 		name: string,
 		array: SupaStructArray<Name>,
@@ -301,6 +472,14 @@ export class SupaStruct<Name extends Names> {
 		}
 	}
 
+	/**
+	 * Converts unknown input into a typed `SupaStructData` wrapper.
+	 *
+	 * Uses schema validation and browser-side instance memoization to keep object identity stable.
+	 *
+	 * @param row - Raw row-like object.
+	 * @returns Typed row wrapper instance.
+	 */
 	Generator(row: unknown) {
 		const validated = this.validate(row);
 		const has = this.cache.get(String(validated.id));
@@ -310,6 +489,13 @@ export class SupaStruct<Name extends Names> {
 		return data;
 	}
 
+	/**
+	 * Validates input against the generated zod row schema for this table.
+	 *
+	 * @param data - Unknown payload to validate.
+	 * @returns Parsed row-like object (`Row.partial()`).
+	 * @throws If the table schema is missing or parsing fails.
+	 */
 	validate(data: unknown) {
 		const schema = schemas[this.name];
 		if (!schema) {
@@ -325,15 +511,55 @@ export class SupaStruct<Name extends Names> {
 	}
 
 	// TODO: Integrate pagination and count into
+	/**
+	 * Reads all rows and returns a reactive array.
+	 *
+	 * @param config - Read configuration with cache expiry.
+	 * @returns Writable array that is hydrated asynchronously.
+	 *
+	 * @example
+	 * const users = usersStruct.all({
+	 *   type: 'all',
+	 *   expires: new Date(Date.now() + 60000)
+	 * });
+	 */
 	all(config: ReadConfig<'all'>): SupaStructArray<Name>;
 	// all(config: ReadConfig<'paginated'>): SupaPagination<Name>;
+	/**
+	 * Reads first available row as a `ResultPromise`.
+	 *
+	 * @param config - Read configuration with cache expiry.
+	 * @returns Async result resolving to first row or `null`.
+	 */
 	all(config: ReadConfig<'single'>): ResultPromise<SupaStructData<Name> | null>;
 	// all(config: ReadConfig<'count'>): ResultPromise<number>;
+	/**
+	 * Reads rows using cache-first behavior in the browser.
+	 *
+	 * @param config - Read mode and cache metadata.
+	 * @returns Overloaded by `config.type`.
+	 */
 	all(config: ReadConfig<ReadType>): ReadReturnType<Name> {
 		const has = this.registeredArrays.get('all');
 		if (has) return has.array;
 
 		const get = async () => {
+			if (browser) {const cache = await SupaCache.get({ table: this.name, key: 'all', }, {
+				pagination: false,
+			});
+
+			if (cache.isOk()) {
+				const [cached] = cache.value.data;
+				if (cached) {
+					if (new Date() >= cached.data.expires) {
+						cached.delete();
+					} else {
+						this.log('Using cached data for all query:', cached.data.value);
+						return cached.data.value.map(i => this.Generator(i));
+					}
+				}
+			}}
+
 			const res = this.runTransaction(
 				await this.supabase.schema(schemaName).from(this.name).select('*'),
 				'array'
@@ -342,6 +568,14 @@ export class SupaStruct<Name extends Names> {
 				this.log('Error fetching all data:', res.error);
 				return [];
 			}
+
+			if (browser) {SupaCache.new({
+				table: this.name,
+				key: 'all',
+				value: res.value,
+				expires: config.expires,
+			});}
+
 			return res.value;
 		};
 
@@ -361,6 +595,15 @@ export class SupaStruct<Name extends Names> {
 		return arr;
 	}
 
+	/**
+	 * Inserts one or more rows.
+	 *
+	 * @param data - Insert payloads.
+	 * @returns Async status writable containing inserted row wrappers on success.
+	 *
+	 * @example
+	 * const status = usersStruct.new({ email: 'a@b.com' } as Insert<'users'>);
+	 */
 	new(...data: Insert<Name>[]) {
 		this.log('Creating new data with input:', data);
 		const status = new SupaStatus<SupaStructData<Name>[]>();
@@ -405,6 +648,12 @@ export class SupaStruct<Name extends Names> {
 		return status;
 	}
 
+	/**
+	 * Upserts one or more rows.
+	 *
+	 * @param data - Upsert payloads.
+	 * @returns Async status writable containing upserted row wrappers on success.
+	 */
 	upsert(...data: Insert<Name>[]) {
 		this.log('Upserting data with input:', data);
 		const status = new SupaStatus<SupaStructData<Name>[]>();
@@ -488,8 +737,38 @@ export class SupaStruct<Name extends Names> {
 	// 	return status;
 	// }
 
+	/**
+	 * Fetches one row by primary id.
+	 *
+	 * @param id - Row id value.
+	 * @returns ResultPromise resolving to row wrapper or `undefined` on failure.
+	 *
+	 * @example
+	 * const result = await usersStruct.fromId('abc123');
+	 */
 	fromId(id: Row<Name>['id']) {
 		return attemptAsync(async () => {
+			if (browser) {
+				const cache = await SupaCache.get({ table: this.name, key: `id:${id}` }, {	pagination: false});
+				if (cache.isOk()) {
+					const [cached] = cache.value.data;
+					if (cached) {
+						if (new Date() >= cached.data.expires) {
+							cached.delete();
+						} else {
+							const [data] = cached.data.value;
+							if (data) {
+								this.log(`Using cached data for id ${id}:`, data);
+								return this.Generator(data);
+							} else {
+								cached.delete();
+							}
+						}
+					}
+				}
+			}
+
+
 			const res = await this.supabase
 				.schema(schemaName)
 				.from(this.name)
@@ -508,18 +787,61 @@ export class SupaStruct<Name extends Names> {
 				return undefined;
 			}
 			this.log(`Fetched fromId ${id} from ${this.name}:`, transactionResult.value);
+
+			if (browser) {
+				SupaCache.new({
+					table: this.name,
+					key: `id:${id}`,
+					value: [transactionResult.value],
+					expires: new Date(Date.now() + 5 * 60 * 1000) // Cache for 5 minutes
+				});
+			}
+
 			return this.Generator(transactionResult.value);
 		});
 	}
 
 	// AND query
+	/**
+	 * Finds rows where all provided fields are equal.
+	 *
+	 * @param data - AND filter object.
+	 * @param config - Read configuration.
+	 * @returns Reactive array of matches.
+	 */
 	get(data: Partial<Row<Name>>, config: ReadConfig<'all'>): SupaStructArray<Name>;
+	/**
+	 * Finds the first row where all provided fields are equal.
+	 *
+	 * @param data - AND filter object.
+	 * @param config - Read configuration.
+	 * @returns Async result with first match or `null`.
+	 */
 	get(
 		data: Partial<Row<Name>>,
 		config: ReadConfig<'single'>
 	): ResultPromise<SupaStructData<Name> | null>;
 	// get(data: Partial<Row<Name>>, config: ReadConfig<'count'>): ResultPromise<number>;
 	// get(data: Partial<Row<Name>>, config: ReadConfig<'paginated'>): SupaPagination<Name>;
+	/**
+	 * AND filter read helper with cache and overload-based return types.
+	 *
+	 * @param data - AND filter object.
+	 * @param config - Read configuration.
+	 * @returns Overloaded by `config.type`.
+	 *
+	 * @example
+	 * const active = usersStruct.get(
+	 *   { archived: false } as Partial<Row<'users'>>,
+	 *   { type: 'all', expires: new Date(Date.now() + 60000) }
+	 * );
+	 *
+	 * @example
+	 * const firstAdmin = usersStruct.get(
+	 *   { role: 'admin' } as Partial<Row<'users'>>,
+	 *   { type: 'single', expires: new Date(Date.now() + 60000) }
+	 * );
+	 */
 	get(data: Partial<Row<Name>>, config: ReadConfig<ReadType>): ReadReturnType<Name> {
 		const cacheKey = JSON.stringify(`get:${JSON.stringify(data)}`);
 		const has = this.registeredArrays.get(cacheKey);
@@ -527,6 +849,31 @@ export class SupaStruct<Name extends Names> {
 		const arr = this.arr();
 
 		const get = async () => {
+			if (browser) {
+				const cache = await SupaCache.get({ table: this.name, key: cacheKey }, { pagination: false });
+				if (cache.isOk()) {
+					const [cached] = cache.value.data;
+					if (cached) {
+						if (new Date() >= cached.data.expires) {
+							cached.delete();
+						} else {
+							if (config.type === 'single') {
+								const [data] = cached.data.value;
+								if (data) {
+									this.log(`Using cached data for get query ${JSON.stringify(data)}:`, data);
+									return [this.Generator(data)];
+								} else {
+									return [];
+								}
+							} else {
+								this.log(`Using cached data for get query ${JSON.stringify(data)}:`, cached.data.value);
+								return cached.data.value.map(i => this.Generator(i));
+							}
+						}
+					}
+				}
+			}
+
 			let query = this.supabase.schema(schemaName).from(this.name).select('*');
 			for (const [key, value] of Object.entries(data)) {
 				query = query.eq(key, value as any);
@@ -547,6 +894,16 @@ export class SupaStruct<Name extends Names> {
 				);
 				return [];
 			}
+
+			if (browser) {
+				SupaCache.new({
+					table: this.name,
+					key: cacheKey,
+					value: transactionResult.value,
+					expires: config.expires,
+				});
+			}
+
 			return transactionResult.value;
 		};
 
@@ -578,19 +935,72 @@ export class SupaStruct<Name extends Names> {
 		return arr;
 	}
 
+	/**
+	 * Finds rows where at least one provided field matches.
+	 *
+	 * @param data - OR filter object.
+	 * @param config - Read configuration.
+	 * @returns Reactive array of matches.
+	 */
 	getOR(data: Partial<Row<Name>>, config: ReadConfig<'all'>): SupaStructArray<Name>;
+	/**
+	 * Finds first row where at least one provided field matches.
+	 *
+	 * @param data - OR filter object.
+	 * @param config - Read configuration.
+	 * @returns Async result with first match or `null`.
+	 */
 	getOR(
 		data: Partial<Row<Name>>,
 		config: ReadConfig<'single'>
 	): ResultPromise<SupaStructData<Name> | null>;
 	// getOR(data: Partial<Row<Name>>, config: ReadConfig<'count'>): ResultPromise<number>;
 	// getOR(data: Partial<Row<Name>>, config: ReadConfig<'paginated'>): SupaPagination<Name>;
+	/**
+	 * OR filter read helper with cache and overload-based return types.
+	 *
+	 * @param data - OR filter object.
+	 * @param config - Read configuration.
+	 * @returns Overloaded by `config.type`.
+	 *
+	 * @example
+	 * const rows = usersStruct.getOR(
+	 *   { role: 'admin', archived: false } as Partial<Row<'users'>>,
+	 *   { type: 'all', expires: new Date(Date.now() + 60000) }
+	 * );
+	 */
 	getOR(data: Partial<Row<Name>>, config: ReadConfig<ReadType>): ReadReturnType<Name> {
 		const cacheKey = JSON.stringify(`getOR:${JSON.stringify(data)}`);
 		const has = this.registeredArrays.get(cacheKey);
 		if (has) return has.array;
 
 		const get = async () => {
+			if (browser) {
+				const cache = await SupaCache.get({ table: this.name, key: cacheKey }, { pagination: false });
+				if (cache.isOk()) {
+					const [cached] = cache.value.data;
+					if (cached) {
+						if (new Date() >= cached.data.expires) {
+							cached.delete();
+						} else {
+							if (config.type === 'single') {
+								const [data] = cached.data.value;
+								if (data) {
+									this.log(`Using cached data for getOR query ${JSON.stringify(data)}:`, data);
+									return [this.Generator(data)];
+								} else {
+									return [];
+								}
+							} else {
+								this.log(`Using cached data for getOR query ${JSON.stringify(data)}:`, cached.data.value);
+								return cached.data.value.map(i => this.Generator(i));
+							}
+						}
+					}
+				}
+			}
+
+
 			let query = this.supabase.schema(schemaName).from(this.name).select('*');
 			const keys = Object.keys(data);
 			for (const key of keys) {
@@ -612,6 +1022,16 @@ export class SupaStruct<Name extends Names> {
 				);
 				return [];
 			}
+
+			if (browser) {
+				SupaCache.new({
+					table: this.name,
+					key: cacheKey,
+					value: transactionResult.value,
+					expires: config.expires,
+				});
+			}
+
 			return transactionResult.value;
 		};
 
@@ -644,17 +1064,58 @@ export class SupaStruct<Name extends Names> {
 		return arr;
 	}
 
+	/**
+	 * Creates an empty typed array container for this struct.
+	 *
+	 * @returns Empty `SupaStructArray`.
+	 */
 	arr() {
 		return new SupaStructArray<Name>([]);
 	}
 
+	/**
+	 * Runs a structured search query and returns all matches.
+	 *
+	 * @param query - Recursive query descriptor.
+	 * @param config - Read configuration.
+	 * @returns Reactive array of matches.
+	 */
 	search(query: SearchQuery<Name>, config: ReadConfig<'all'>): SupaStructArray<Name>;
+	/**
+	 * Runs a structured search query and returns first match.
+	 *
+	 * @param query - Recursive query descriptor.
+	 * @param config - Read configuration.
+	 * @returns Async result with first match or `null`.
+	 */
 	search(
 		query: SearchQuery<Name>,
 		config: ReadConfig<'single'>
 	): ResultPromise<SupaStructData<Name> | null>;
 	// search(query: SearchQuery<Name>, config: ReadConfig<'count'>): ResultPromise<number>;
 	// search(query: SearchQuery<Name>, config: ReadConfig<'paginated'>): SupaPagination<Name>;
+	/**
+	 * Executes structured search with cache-first browser behavior.
+	 *
+	 * Supports atomic field operations plus nested `and`/`or` conditions.
+	 *
+	 * @param query - Recursive query descriptor.
+	 * @param config - Read configuration.
+	 * @returns Overloaded by `config.type`.
+	 *
+	 * @example
+	 * const q: SearchQuery<'users'> = {
+	 *   type: 'and',
+	 *   conditions: [
+	 *     { field: 'archived', operator: 'eq', value: false },
+	 *     { field: 'email', operator: 'ilike', value: '%@company.com' }
+	 *   ]
+	 * };
+	 * const staff = usersStruct.search(q, {
+	 *   type: 'all',
+	 *   expires: new Date(Date.now() + 60000)
+	 * });
+	 */
 	search(query: SearchQuery<Name>, config: ReadConfig<ReadType>): ReadReturnType<Name> {
 		const cacheKey = JSON.stringify(`search:${JSON.stringify(query)}`);
 		const has = this.registeredArrays.get(cacheKey);
@@ -691,6 +1152,31 @@ export class SupaStruct<Name extends Names> {
 		};
 
 		const get = async () => {
+			if (browser) {
+				const cache = await SupaCache.get({ table: this.name, key: cacheKey }, { pagination: false });
+				if (cache.isOk()) {
+					const [cached] = cache.value.data;
+					if (cached) {
+						if (new Date() >= cached.data.expires) {
+							cached.delete();
+						} else {
+							if (config.type === 'single') {
+								const [data] = cached.data.value;
+								if (data) {
+									this.log(`Using cached data for search query ${JSON.stringify(query)}:`, data);
+									return [this.Generator(data)];
+								} else {
+									return [];
+								}
+							} else {
+								this.log(`Using cached data for search query ${JSON.stringify(query)}:`, cached.data.value);
+								return cached.data.value.map(i => this.Generator(i));
+							}
+						}
+					}
+				}
+			}
+
 			const queryBuilder = buildQuery(main, query);
 			const res = await queryBuilder;
 			const transactionResult = this.runTransaction(
@@ -707,6 +1193,16 @@ export class SupaStruct<Name extends Names> {
 				);
 				return [];
 			}
+
+			if (browser) {
+				SupaCache.new({
+					table: this.name,
+					key: cacheKey,
+					value: transactionResult.value,
+					expires: config.expires,
+				});
+			}
+
 			return transactionResult.value;
 		};
 
@@ -767,12 +1263,32 @@ export class SupaStruct<Name extends Names> {
 		return arr;
 	}
 
+	/**
+	 * Reads archived rows (`archived = true`).
+	 *
+	 * @returns Reactive array of archived rows.
+	 */
 	archived() {
 		const cacheKey = 'archived';
 		const has = this.registeredArrays.get(cacheKey);
 		if (has) return has.array;
 		const arr = this.arr();
 		const get = async () => {
+			if (browser) {
+				const cache = await SupaCache.get({ table: this.name, key: cacheKey }, { pagination: false });
+				if (cache.isOk()) {
+					const [cached] = cache.value.data;
+					if (cached) {
+						if (new Date() >= cached.data.expires) {
+							cached.delete();
+						} else {
+							this.log('Using cached data for archived query:', cached.data.value);
+							return cached.data.value.map(i => this.Generator(i));
+						}
+					}
+				}
+			}
+
 			const res = await this.supabase
 				.schema(schemaName)
 				.from(this.name)
@@ -789,6 +1305,16 @@ export class SupaStruct<Name extends Names> {
 				this.log(`Error fetching archived from ${this.name}:`, transactionResult.error);
 				return [];
 			}
+
+			if (browser) {
+				SupaCache.new({
+					table: this.name,
+					key: cacheKey,
+					value: transactionResult.value,
+					expires: new Date(Date.now() + 5 * 60 * 1000) // Cache for 5 minutes
+				});
+			}
+
 			return transactionResult.value;
 		};
 		get().then((data) => {
@@ -798,12 +1324,33 @@ export class SupaStruct<Name extends Names> {
 		return arr;
 	}
 
+	/**
+	 * Reads rows by a set of ids.
+	 *
+	 * @param ids - List of row ids.
+	 * @returns Reactive array populated with matching rows.
+	 */
 	fromIds(ids: Row<Name>['id'][]) {
 		const cacheKey = JSON.stringify(`fromIds:${JSON.stringify(ids)}`);
 		const has = this.registeredArrays.get(cacheKey);
 		if (has) return has.array;
 		const arr = this.arr();
 		const get = async () => {
+			if (browser) {
+				const cache = await SupaCache.get({ table: this.name, key: cacheKey }, { pagination: false });
+				if (cache.isOk()) {
+					const [cached] = cache.value.data;
+					if (cached) {
+						if (new Date() >= cached.data.expires) {
+							cached.delete();
+						} else {
+							this.log(`Using cached data for fromIds query ${ids}:`, cached.data.value);
+							return cached.data.value.map(i => this.Generator(i));
+						}
+					}
+				}
+			}
+
 			const res = await this.supabase
 				.schema(schemaName)
 				.from(this.name)
@@ -820,6 +1367,16 @@ export class SupaStruct<Name extends Names> {
 				this.log(`Error fetching fromIds from ${this.name}:`, transactionResult.error);
 				return [];
 			}
+
+			if (browser) {
+				SupaCache.new({
+					table: this.name,
+					key: cacheKey,
+					value: transactionResult.value,
+					expires: new Date(Date.now() + 5 * 60 * 1000) // Cache for 5 minutes
+				});
+			}
+
 			return transactionResult.value;
 		};
 		get().then((data) => {
@@ -830,6 +1387,24 @@ export class SupaStruct<Name extends Names> {
 	}
 }
 
+/**
+ * Recursive search descriptor used by `search`.
+ *
+ * Supports:
+ * - Atomic predicates (`field`, `operator`, `value`).
+ * - Composite predicates (`type: 'and' | 'or'`) with nested `conditions`.
+ *
+ * @template Name - Table name used to infer valid field keys and values.
+ *
+ * @example
+ * const q: SearchQuery<'users'> = {
+ *   type: 'or',
+ *   conditions: [
+ *     { field: 'email', operator: 'ilike', value: '%@example.com' },
+ *     { field: 'role', operator: 'eq', value: 'admin' }
+ *   ]
+ * };
+ */
 export type SearchQuery<Name extends Names> =
 	| {
 			field: keyof Row<Name>;
@@ -841,224 +1416,40 @@ export type SearchQuery<Name extends Names> =
 			conditions: SearchQuery<Name>[];
 	  };
 
+/**
+ * Typed writable array for `SupaStructData` items.
+ *
+ * @template Name - Table name represented by each array item.
+ */
 export class SupaStructArray<Name extends Names> extends WritableArray<SupaStructData<Name>> {}
 
-export class SupaStructData<Name extends Names> extends WritableBase<PartialRow<Name>> {
-	constructor(
-		public readonly struct: SupaStruct<Name>,
-		data: PartialRow<Name>
-	) {
-		super(data);
-	}
 
-	get id() {
-		return this.data.id;
-	}
 
-	get archived() {
-		return this.data.archived;
-	}
-
-	private _log(...args: unknown[]) {
-		this.struct['log'](`Data with id ${this.data.id}:`, ...args);
-	}
-
-	get supabase() {
-		return this.struct.supabase;
-	}
-
-	update(fn: (data: PartialRow<Name>) => PartialRow<Name>) {
-		const status = new SupaStatus<PartialRow<Name>>();
-		try {
-			const updateData = fn(this.data);
-			this.supabase
-				.from(this.struct.name)
-				.update(updateData as any)
-				.eq('id', this.data.id as any)
-				.select('*')
-				.then((res) => {
-					const transactionResult = this.struct.runTransaction(
-						{
-							data: res.data ? res.data[0] : (null as any),
-							error: res.error
-						},
-						'single'
-					);
-					if (transactionResult.isErr()) {
-						this._log('Error updating data:', transactionResult.error);
-						status.set({
-							pending: false,
-							error: new Error(
-								`Failed to update row in table ${this.struct.name}: ` +
-									transactionResult.error.message
-							)
-						});
-					} else {
-						status.set({
-							pending: false,
-							result: transactionResult.value
-						});
-					}
-				});
-		} catch (error) {
-			status.set({
-				pending: false,
-				error: error instanceof Error ? error : new Error(String(error))
-			});
-		}
-		return status;
-	}
-
-	delete() {
-		const status = new SupaStatus<null>();
-		this.supabase
-			.from(this.struct.name)
-			.delete()
-			.eq('id', this.data.id as any)
-			.then((res) => {
-				const transactionResult = this.struct.runTransaction(
-					{
-						data: null,
-						error: res.error
-					},
-					'null'
-				);
-				if (transactionResult.isErr()) {
-					this._log('Error deleting data:', transactionResult.error);
-					status.set({
-						pending: false,
-						error: new Error(
-							`Failed to delete row in table ${this.struct.name}: ` +
-								transactionResult.error.message
-						)
-					});
-				} else {
-					status.set({
-						pending: false,
-						result: null
-					});
-				}
-			});
-		return status;
-	}
-
-	staging() {
-		return new SupaStaging(this);
-	}
-
-	derivedProperty(name: keyof Row<Name>) {
-		const state = new WritableBase<Row<Name>[keyof Row<Name>] | undefined>(this.data[name]);
-		let currentValue = this.data[name];
-		state.on(
-			'all-unsubscribe',
-			this.subscribe((data) => {
-				if (data[name] !== currentValue) {
-					currentValue = data[name];
-					state.set(data[name]);
-				}
-			})
-		);
-		return state;
-	}
-}
-
-export class SupaPagination<Name extends Names> extends WritableBase<{
-	rows: SupaStructData<Name>[];
-	total: number;
-	page: number;
-	pageSize: number;
-	hasNextPage: boolean;
-	hasPreviousPage: boolean;
-}> {
-	constructor(
-		public readonly struct: SupaStruct<Name>,
-		private readonly getter: (
-			page: number,
-			pageSize: number
-		) => Promise<{
-			rows: Row<Name>[];
-			total: number;
-			page: number;
-			pageSize: number;
-			hasNextPage: boolean;
-			hasPreviousPage: boolean;
-		}>
-	) {
-		super({
-			rows: [],
-			total: 0,
-			page: 1,
-			pageSize: 10,
-			hasNextPage: false,
-			hasPreviousPage: false
-		});
-	}
-
-	private fetch(page: number, pageSize: number) {
-		this.getter(page, pageSize)
-			.then((result) => {
-				this.set({
-					rows: result.rows.map((item) => this.struct.Generator(item)),
-					total: result.total,
-					page: result.page,
-					pageSize: result.pageSize,
-					hasNextPage: result.hasNextPage,
-					hasPreviousPage: result.hasPreviousPage
-				});
-			})
-			.catch((error) => {
-				console.error(
-					`Failed to fetch page ${page} with page size ${pageSize} from table ${this.struct.name}:`,
-					error
-				);
-			});
-	}
-
-	next() {
-		if (!this.data.hasNextPage) return;
-		this.fetch(this.data.page + 1, this.data.pageSize);
-	}
-
-	prev() {
-		if (!this.data.hasPreviousPage) return;
-		this.fetch(this.data.page - 1, this.data.pageSize);
-	}
-
-	setPageSize(pageSize: number) {
-		this.fetch(1, pageSize);
-	}
-
-	get pageSize() {
-		return this.derived((data) => data.pageSize);
-	}
-
-	get page() {
-		return this.derived((data) => data.page);
-	}
-
-	get total() {
-		return this.derived((data) => data.total);
-	}
-
-	get hasNextPage() {
-		return this.derived((data) => data.hasNextPage);
-	}
-
-	get hasPreviousPage() {
-		return this.derived((data) => data.hasPreviousPage);
-	}
-
-	get rows() {
-		return this.derived((data) => data.rows);
-	}
-}
-
+/**
+ * Helper for many-to-many style linking tables between two structs.
+ *
+ * @template Link - Linking table name.
+ * @template TableA - Left table name.
+ * @template TableB - Right table name.
+ */
 export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB extends Names> {
 	private static readonly linkingStructs = new Map<
 		string,
 		SupaLinkingStruct<Names, Names, Names>
 	>();
 
+	/**
+	 * Creates a linking helper between two table structs.
+	 *
+	 * @template Link - Linking table name.
+	 * @template TableA - Left table name.
+	 * @template TableB - Right table name.
+	 * @param linkingTable - Join table that stores A/B ids.
+	 * @param structA - Left table struct.
+	 * @param structB - Right table struct.
+	 * @param config - Optional debug config.
+	 * @returns Linking helper instance.
+	 */
 	public static get<Link extends Names, TableA extends Names, TableB extends Names>(
 		linkingTable: Link,
 		structA: SupaStruct<TableA>,
@@ -1075,6 +1466,14 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 		return newStruct;
 	}
 
+	/**
+	 * Creates a linking helper instance.
+	 *
+	 * @param linkingTable - Join table name.
+	 * @param structA - Left table struct.
+	 * @param structB - Right table struct.
+	 * @param config - Optional debug configuration.
+	 */
 	constructor(
 		public readonly linkingTable: Link,
 		public readonly structA: SupaStruct<TableA>,
@@ -1084,16 +1483,33 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 		} = {}
 	) {}
 
+	/**
+	 * Shared Supabase client, sourced from `structA`.
+	 *
+	 * @returns Typed client instance.
+	 */
 	get supabase() {
 		return this.structA.supabase;
 	}
 
+	/**
+	 * Scoped debug logger for linking operations.
+	 *
+	 * @param args - Values forwarded to `console.log` when debug is enabled.
+	 */
 	log(...args: unknown[]) {
 		if (this.config.debug) {
 			console.log(`[SupaLinkingStruct ${this.linkingTable}]`, ...args);
 		}
 	}
 
+	/**
+	 * Creates a join row linking one A record to one B record.
+	 *
+	 * @param a - Left-side row wrapper.
+	 * @param b - Right-side row wrapper.
+	 * @returns Async status writable with `null` on success.
+	 */
 	link(a: SupaStructData<TableA>, b: SupaStructData<TableB>) {
 		const status = new SupaStatus<null>();
 		this.supabase
@@ -1120,6 +1536,13 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 		return status;
 	}
 
+	/**
+	 * Removes a join row linking one A record to one B record.
+	 *
+	 * @param a - Left-side row wrapper.
+	 * @param b - Right-side row wrapper.
+	 * @returns Async status writable with `null` on success.
+	 */
 	unlink(a: SupaStructData<TableA>, b: SupaStructData<TableB>) {
 		const status = new SupaStatus<null>();
 		this.supabase
@@ -1145,45 +1568,197 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 		return status;
 	}
 
-	getLinkedA(b: SupaStructData<TableB>) {
-		const arr = this.structA.arr();
-		this.supabase
-			.from(this.linkingTable)
-			.select(`*, ${this.structA.name}.*`)
-			.eq(`${this.structB.name}_id`, b.data.id as any)
-			.then((res) => {
-				if (res.error) {
-					console.error(
-						`Failed to fetch linked ${this.structA.name} for ${this.structB.name} with id ${b.data.id}:`,
-						res.error
-					);
-				} else {
-					arr.set(
-						res.data?.map((item) => this.structA.Generator((item as any)[this.structA.name])) || []
-					);
+	/**
+	 * Reads all A records linked to a B record.
+	 *
+	 * @param b - Right-side source record.
+	 * @param config - Read configuration (`type: 'all'`).
+	 * @returns Writable array of linked A records.
+	 */
+	getLinkedA(b: SupaStructData<TableB>, config: ReadConfig<'all'>): WritableArray<SupaStructData<TableA>>;
+	/**
+	 * Reads the first A record linked to a B record.
+	 *
+	 * @param b - Right-side source record.
+	 * @param config - Read configuration (`type: 'single'`).
+	 * @returns Async result with first linked A record or `null`.
+	 */
+	getLinkedA(
+		b: SupaStructData<TableB>,
+		config: ReadConfig<'single'>
+	): ResultPromise<SupaStructData<TableA> | null>;
+	/**
+	 * Fetches A-side links with browser cache persistence.
+	 *
+	 * @param b - Right-side source record.
+	 * @param config - Read mode and cache expiry.
+	 * @returns Overloaded by `config.type`.
+	 *
+	 * @example
+	 * const roles = userRoleLinks.getLinkedA(role, {
+	 *   type: 'all',
+	 *   expires: new Date(Date.now() + 60000)
+	 * });
+	 */
+	getLinkedA(
+		b: SupaStructData<TableB>,
+		config: ReadConfig<'all'> | ReadConfig<'single'>
+	): WritableArray<SupaStructData<TableA>> | ResultPromise<SupaStructData<TableA> | null> {
+		const cacheKey = `getLinkedA:${b.data.id}`;
+
+		const get = async (): Promise<SupaStructData<TableA>[]> => {
+			if (browser) {
+				const cache = await SupaCache.get(
+					{ table: String(this.linkingTable), key: cacheKey },
+					{ pagination: false }
+				);
+				if (cache.isOk()) {
+					const [cached] = cache.value.data;
+					if (cached) {
+						if (new Date() >= cached.data.expires) {
+							cached.delete();
+						} else {
+							this.log(`Using cached data for getLinkedA ${b.data.id}:`, cached.data.value);
+							return (cached.data.value as PartialRow<TableA>[]).map((i) => this.structA.Generator(i));
+						}
+					}
 				}
+			}
+
+			const res = await this.supabase
+				.from(this.linkingTable)
+				.select(`*, ${this.structA.name}.*`)
+				.eq(`${this.structB.name}_id`, b.data.id as any);
+
+			if (res.error) {
+				console.error(
+					`Failed to fetch linked ${this.structA.name} for ${this.structB.name} with id ${b.data.id}:`,
+					res.error
+				);
+				return [];
+			}
+
+			const rows: PartialRow<TableA>[] =
+				res.data?.map((item) => (item as any)[this.structA.name] as PartialRow<TableA>) || [];
+
+			if (browser) {
+				SupaCache.new({
+					table: String(this.linkingTable),
+					key: cacheKey,
+					value: rows,
+					expires: config.expires
+				});
+			}
+
+			return rows.map((i) => this.structA.Generator(i));
+		};
+
+		if (config.type === 'single') {
+			return attemptAsync(async () => {
+				const [data] = await get();
+				return data || null;
 			});
+		}
+
+		const arr: WritableArray<SupaStructData<TableA>> = this.structA.arr();
+		get().then((data) => arr.set(data));
 		return arr;
 	}
 
-	getLinkedB(a: SupaStructData<TableA>) {
-		const arr = this.structB.arr();
-		this.supabase
-			.from(this.linkingTable)
-			.select(`*, ${this.structB.name}.*`)
-			.eq(`${this.structA.name}_id`, a.data.id as any)
-			.then((res) => {
-				if (res.error) {
-					console.error(
-						`Failed to fetch linked ${this.structB.name} for ${this.structA.name} with id ${a.data.id}:`,
-						res.error
-					);
-				} else {
-					arr.set(
-						res.data?.map((item) => this.structB.Generator((item as any)[this.structB.name])) || []
-					);
+	/**
+	 * Reads all B records linked to an A record.
+	 *
+	 * @param b - Left-side source record.
+	 * @param config - Read configuration (`type: 'all'`).
+	 * @returns Writable array of linked B records.
+	 */
+	getLinkedB(b: SupaStructData<TableA>, config: ReadConfig<'all'>): WritableArray<SupaStructData<TableB>>;
+	/**
+	 * Reads the first B record linked to an A record.
+	 *
+	 * @param b - Left-side source record.
+	 * @param config - Read configuration (`type: 'single'`).
+	 * @returns Async result with first linked B record or `null`.
+	 */
+	getLinkedB(
+		b: SupaStructData<TableA>,
+		config: ReadConfig<'single'>
+	): ResultPromise<SupaStructData<TableB> | null>;
+	/**
+	 * Fetches B-side links with browser cache persistence.
+	 *
+	 * @param b - Left-side source record.
+	 * @param config - Read mode and cache expiry.
+	 * @returns Overloaded by `config.type`.
+	 *
+	 * @example
+	 * const firstRole = userRoleLinks.getLinkedB(user, {
+	 *   type: 'single',
+	 *   expires: new Date(Date.now() + 60000)
+	 * });
+	 */
+	getLinkedB(
+		b: SupaStructData<TableA>,
+		config: ReadConfig<'all'> | ReadConfig<'single'>
+	): WritableArray<SupaStructData<TableB>> | ResultPromise<SupaStructData<TableB> | null> {
+		const cacheKey = `getLinkedB:${b.data.id}`;
+
+		const get = async (): Promise<SupaStructData<TableB>[]> => {
+			if (browser) {
+				const cache = await SupaCache.get(
+					{ table: String(this.linkingTable), key: cacheKey },
+					{ pagination: false }
+				);
+				if (cache.isOk()) {
+					const [cached] = cache.value.data;
+					if (cached) {
+						if (new Date() >= cached.data.expires) {
+							cached.delete();
+						} else {
+							this.log(`Using cached data for getLinkedB ${b.data.id}:`, cached.data.value);
+							return (cached.data.value as PartialRow<TableB>[]).map((i) => this.structB.Generator(i));
+						}
+					}
 				}
+			}
+
+			const res = await this.supabase
+				.from(this.linkingTable)
+				.select(`*, ${this.structB.name}.*`)
+				.eq(`${this.structA.name}_id`, b.data.id as any);
+
+			if (res.error) {
+				console.error(
+					`Failed to fetch linked ${this.structB.name} for ${this.structA.name} with id ${b.data.id}:`,
+					res.error
+				);
+				return [];
+			}
+
+			const rows: PartialRow<TableB>[] =
+				res.data?.map((item) => (item as any)[this.structB.name] as PartialRow<TableB>) || [];
+
+			if (browser) {
+				SupaCache.new({
+					table: String(this.linkingTable),
+					key: cacheKey,
+					value: rows,
+					expires: config.expires
+				});
+			}
+
+			return rows.map((i) => this.structB.Generator(i));
+		};
+
+		if (config.type === 'single') {
+			return attemptAsync(async () => {
+				const [data] = await get();
+				return data || null;
 			});
+		}
+
+		const arr: WritableArray<SupaStructData<TableB>> = this.structB.arr();
+		get().then((data) => arr.set(data));
 		return arr;
 	}
 }
