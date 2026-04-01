@@ -7,13 +7,13 @@
 		"protocol": "http"
 	},
 	"supabase": {
-		"schema": "sveltekit_template",
+		"schema": "schema_name",
 		"tenant_id": "your-tenant-id",
 		"pg_pass": "your-supabase-password",
 		"port": 8000,
 		"protocol": "http",
-		"anon_key": "your-anon-key",
-		"domain": "localhost",
+		"anon_key": "your_anon_key",
+		"domain": "supabase_domain",
 		"local_ip": "127.0.0.1",
 		"service_role_key": "service_role_key",
 		"db_port": 5432,

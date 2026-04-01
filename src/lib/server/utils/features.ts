@@ -107,7 +107,7 @@ export const getFeatureList = () => {
 		return fs.promises
 			.readdir(path.resolve(process.cwd(), 'static', 'features'))
 			.then((features) =>
-				Promise.all(features.map((f) => getFeatureMetadata(path.basename(f)).unwrap()))
+				Promise.all(features.reverse().map((f) => getFeatureMetadata(path.basename(f)).unwrap()))
 			);
 	});
 };

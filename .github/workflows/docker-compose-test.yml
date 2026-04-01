@@ -51,27 +51,11 @@ jobs:
           pnpm add -D typescript
           pnpm install --frozen-lockfile
 
-      - name: Start Postgres and Redis in background
+      - name: Set up Supabase Config
         run: |
-          docker compose --project-name test up -d db redis
-
-      - name: Wait for Postgres
-        run: |
-          for i in $(seq 1 15); do
-            docker exec db pg_isready -U admin && exit 0
-            sleep 1
-          done
-          echo "Postgres did not become ready in time" >&2
-          exit 1
-
-      - name: Wait for Redis
-        run: |
-          for i in $(seq 1 15); do
-            docker exec redis redis-cli ping && exit 0
-            sleep 1
-          done
-          echo "Redis did not become ready in time" >&2
-          exit 1
+          echo "Setting up Supabase config..."
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          pnpm run sb:config ${COMMIT_HASH} ${{ secrets.SB_TENANT_ID }} ${{ secrets.SB_PG_PASS }} ${{ secrets.SB_ANON_KEY }} ${{ secrets.SB_DOMAIN }} ${{ secrets.SB_SERVICE_ROLE_KEY }} ${{ secrets.SB_DB_PORT }} ${{ secrets.SB_SB_PASS }}
 
       - name: Init supabase types
         run: pnpm run sb:init
@@ -126,3 +110,11 @@ jobs:
       - name: Scan Docker image with Trivy
         run: |
           docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image my-app:latest
+
+      - name: Clean up Supabase config
+        if: always()
+        run: rm -f config.json .env
+      
+      - name: Drop Supabase schema
+        if: always()
+        run: pnpm run sb:drop-schema

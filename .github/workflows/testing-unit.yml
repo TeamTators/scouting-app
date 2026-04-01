@@ -29,6 +29,12 @@ jobs:
           pnpm add -D typescript
           pnpm install --frozen-lockfile
 
+      - name: Set up Supabase Config
+        run: |
+          echo "Setting up Supabase config..."
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          pnpm run sb:config ${COMMIT_HASH} ${{ secrets.SB_TENANT_ID }} ${{ secrets.SB_PG_PASS }} ${{ secrets.SB_ANON_KEY }} ${{ secrets.SB_DOMAIN }} ${{ secrets.SB_SERVICE_ROLE_KEY }} ${{ secrets.SB_DB_PORT }} ${{ secrets.SB_SB_PASS }}
+
       - name: Load .env variables
         run: |
           cp config.example.json config.json
@@ -43,3 +49,11 @@ jobs:
 
       - name: Run Vitest tests
         run: npm run test:unit
+
+      - name: Clean up Supabase config
+        if: always()
+        run: rm -f config.json .env
+      
+      - name: Drop Supabase schema
+        if: always()
+        run: pnpm run sb:drop-schema

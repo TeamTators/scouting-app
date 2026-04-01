@@ -88,7 +88,7 @@ export class SupaStruct<Name extends Names> {
 	private readonly cache = new Map<string, SupaStructData<Name>>();
 	private readonly em = new ComplexEventEmitter<{
 		new: [SupaStructData<Name>];
-		update: [SupaStructData<Name>];
+		update: [SupaStructData<Name>, SupaStructData<Name>['_data']];
 		delete: [SupaStructData<Name>];
 		archive: [SupaStructData<Name>];
 		restore: [SupaStructData<Name>];
@@ -118,16 +118,18 @@ export class SupaStruct<Name extends Names> {
 	}
 
 	private log(...args: unknown[]) {
-		// if (this.config.debug) {
+		if (this.config.debug) {
 		console.log(`[SupaStruct ${this.name}]`, ...args);
-		// }
+		}
 	}
 
 	private listening = false;
 
-	private setupListeners() {
+	setupListeners() {
 		if (this.listening) return false;
 		this.listening = true;
+
+		this.log('Setting up listeners for realtime updates');
 
 		this.channel.on(
 			'postgres_changes',
@@ -148,7 +150,7 @@ export class SupaStruct<Name extends Names> {
 					case 'UPDATE':
 						data = this.Generator(payload.new);
 						this.log('Received updated data:', data);
-						this.emit('update', data);
+						this.emit('update', data, payload.old as any);
 						break;
 					case 'DELETE':
 						data = this.Generator(payload.old);
@@ -180,7 +182,10 @@ export class SupaStruct<Name extends Names> {
 					}
 				}
 			}
-		);
+		)
+		.subscribe((status) => {
+			this.log(`Subscription status for channel ${this.name}:`, status);
+		});
 
 		return true;
 	}
@@ -844,6 +849,14 @@ export class SupaStructData<Name extends Names> extends WritableBase<PartialRow<
 		data: PartialRow<Name>
 	) {
 		super(data);
+	}
+
+	get id() {
+		return this.data.id;
+	}
+
+	get archived() {
+		return this.data.archived;
 	}
 
 	private _log(...args: unknown[]) {
