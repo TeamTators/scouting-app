@@ -4,15 +4,46 @@ import { config } from 'dotenv';
 config();
 
 export default (
-	schema_name: string,
-	tenant_id: string,
-	pg_pass: string,
-	anon_key: string,
-	domain: string,
-	service_role_key: string,
-	sb_pass: string,
+	...args: string[]
 ) => {
-	if (fs.existsSync(path.join(process.cwd(), process.env.CONFIG_PATH || 'config.json'))) {
+	let schema_name = '',
+		tenant_id = '',
+		pg_pass = '',
+		anon_key = '',
+		domain = '',
+		service_role_key = '',
+		sb_pass = '';
+
+	for (const arg of args) {
+		const [key, value] = arg.split('=');
+		switch (key) {
+			case 'schema_name':
+				schema_name = value;
+				break;
+			case 'tenant_id':
+				tenant_id = value;
+				break;
+			case 'pg_pass':
+				pg_pass = value;
+				break;
+			case 'anon_key':
+				anon_key = value;
+				break;
+			case 'domain':
+				domain = value;
+				break;
+			case 'service_role_key':
+				service_role_key = value;
+				break;
+			case 'sb_pass':
+				sb_pass = value;
+				break;
+		}
+	}
+
+
+	const force = args.includes('--force') || args.includes('-f');
+	if (!force && fs.existsSync(path.join(process.cwd(), process.env.CONFIG_PATH || 'config.json'))) {
 		throw new Error('config.json already exists. Please delete it before running this script.');
 	}
 
