@@ -12,7 +12,8 @@ export default (
 		anon_key = '',
 		domain = '',
 		service_role_key = '',
-		sb_pass = '';
+		sb_pass = '',
+		local_ip = '';
 
 	for (const arg of args) {
 		const [key, value] = arg.split('=');
@@ -38,10 +39,13 @@ export default (
 			case 'sb_pass':
 				sb_pass = value;
 				break;
+			case 'local_ip':
+				local_ip = value;
+				break;
 		}
 	}
 
-	for (const [key, value] of Object.entries({schema_name, tenant_id, pg_pass, anon_key, domain, service_role_key, sb_pass})) {
+	for (const [key, value] of Object.entries({schema_name, tenant_id, pg_pass, anon_key, domain, service_role_key, sb_pass, local_ip})) {
 		if (value === '') {
 			throw new Error(`Missing value for ${key}. Please provide a value before running this script.`);
 		}
