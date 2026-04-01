@@ -3,7 +3,6 @@ import { browser } from '$app/environment';
 import {
 	SupaLinkingStruct,
 	SupaStruct,
-	SupaStructData,
 	type Client,
 	type PartialRow,
 	type ReadConfig,
@@ -12,6 +11,7 @@ import {
 	type ReadReturnType,
 	SupaStructArray
 } from '$lib/services/supabase/supastruct';
+import { SupaStructData } from '$lib/services/supabase/supastruct-data';
 import { WritableArray, WritableBase } from '$lib/services/writables';
 // import { TempMap } from '$lib/utils/temp-map';
 import type { Session } from '@supabase/supabase-js';
@@ -55,17 +55,21 @@ export class Account extends WritableBase<{
 		});
 	}
 
-	getRoles() {
-		return this.factory.config.roleAccount.getLinkedB(this.profile);
+	getRoles(config: { expires: Date }) {
+		return this.factory.config.roleAccount.getLinkedB(this.profile, {
+			type: 'all',
+			expires: config.expires
+		});
 	}
 
-	getNotifications() {
+	getNotifications(config: { expires: Date }) {
 		return this.factory.config.notifications.get(
 			{
 				account_id: this.id
 			},
 			{
-				type: 'all'
+				type: 'all',
+				expires: config.expires
 			}
 		);
 	}
@@ -144,7 +148,12 @@ class AccountFactory {
 		});
 	}
 
-	getAccountByUsername(username: string) {
+	getAccountByUsername(
+		username: string,
+		config: {
+			expires: Date;
+		}
+	) {
 		return attemptAsync(async () => {
 			const profile = await this.profile
 				.search(
@@ -154,7 +163,8 @@ class AccountFactory {
 						value: username
 					},
 					{
-						type: 'single'
+						type: 'single',
+						expires: config.expires
 					}
 				)
 				.unwrap();
@@ -163,7 +173,12 @@ class AccountFactory {
 		});
 	}
 
-	getAccountByEmail(email: string) {
+	getAccountByEmail(
+		email: string,
+		config: {
+			expires: Date;
+		}
+	) {
 		return attemptAsync(async () => {
 			const profile = await this.profile
 				.search(
@@ -173,7 +188,8 @@ class AccountFactory {
 						value: email
 					},
 					{
-						type: 'single'
+						type: 'single',
+						expires: config.expires
 					}
 				)
 				.unwrap();

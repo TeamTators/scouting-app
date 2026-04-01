@@ -13,5 +13,5 @@ export default async () => {
 		`postgres.${config.supabase.tenant_id}`,
 		'-c',
 		`DROP SCHEMA IF EXISTS ${config.supabase.schema} CASCADE;`
-	)
+	);
 };

@@ -7,7 +7,7 @@ import { type SchemaName, schemaName } from '$lib/types/supabase-schema';
 import {
 	REALTIME_SUBSCRIBE_STATES,
 	RealtimeChannel,
-	type createClient
+	type SupabaseClient
 } from '@supabase/supabase-js';
 import { schemas } from '$lib/types/supabase-zod';
 import z from 'zod';
@@ -17,19 +17,18 @@ import { SupaPagination } from './supa-pagination';
 import { SupaCache } from './supacache';
 
 export type DB = Omit<Database, 'public'>;
-export type Client = ReturnType<typeof createClient<DB>>;
+export type Client = SupabaseClient<DB, SchemaName>;
 
 /**
  * Table metadata and row contract for a table in the active Supabase schema.
  *
  * @template Name - Table name from the generated database type.
  */
-export type Table<Name extends keyof Database[SchemaName]['Tables']> =
-	Database[SchemaName]['Tables'][Name];
+export type Table<Name extends keyof DB[SchemaName]['Tables']> = DB[SchemaName]['Tables'][Name];
 /**
  * Union of table names available in the active Supabase schema.
  */
-export type Names = keyof Database[SchemaName]['Tables'];
+export type Names = keyof DB[SchemaName]['Tables'];
 /**
  * Row type for a table.
  *
@@ -137,7 +136,7 @@ export type ReadReturnType<Name extends Names> =
  */
 export type ReadConfig<T extends ReadType> = {
 	type: T;
-	expires: Date;
+	expires?: Date;
 } & (T extends 'all'
 	? {}
 	: T extends 'paginated'
@@ -225,7 +224,6 @@ export class SupaStruct<Name extends Names> {
 	 * @param config - Table and client configuration.
 	 */
 	constructor(public readonly config: SupaConfig<Name>) {
-		console.log(`${this.name} Debug:`, config.debug);
 		this.channel = this.supabase.channel(`struct-${schemaName}.${config.name}`);
 		// SupaStruct.structs.set(this.config.name, this as any);
 		this.log(`Initialized struct for table ${this.name}`);
@@ -251,7 +249,7 @@ export class SupaStruct<Name extends Names> {
 
 	private log(...args: unknown[]) {
 		if (this.config.debug) {
-		console.log(`[SupaStruct ${this.name}]`, ...args);
+			console.log(`[SupaStruct ${this.name}]`, ...args);
 		}
 	}
 
@@ -271,62 +269,63 @@ export class SupaStruct<Name extends Names> {
 
 		this.log('Setting up listeners for realtime updates');
 
-		this.channel.on(
-			'postgres_changes',
-			{
-				event: '*',
-				schema: schemaName,
-				table: this.name
-			},
-			(payload) => {
-				this.log('Received event payload:', payload);
-				let data = this.Generator({});
-				switch (payload.eventType) {
-					case 'INSERT':
-						data = this.Generator(payload.new);
-						this.log('Received new data:', data);
-						this.emit('new', data);
-						break;
-					case 'UPDATE':
-						data = this.Generator(payload.new);
-						this.log('Received updated data:', data);
-						this.emit('update', data, payload.old as any);
-						break;
-					case 'DELETE':
-						data = this.Generator(payload.old);
-						this.log('Received deleted data:', data);
-						this.emit('delete', data);
-						break;
-				}
-
-				if ('archived' in payload.new && 'archived' in payload.old) {
-					if (payload.new.archived && !payload.old.archived) {
-						this.log('Received archived data:', data);
-						this.emit('archive', data);
-					} else if (!payload.new.archived && payload.old.archived) {
-						this.log('Received restored data:', data);
-						this.emit('restore', data);
+		this.channel
+			.on(
+				'postgres_changes',
+				{
+					event: '*',
+					schema: schemaName,
+					table: this.name
+				},
+				(payload) => {
+					this.log('Received event payload:', payload);
+					let data = this.Generator({});
+					switch (payload.eventType) {
+						case 'INSERT':
+							data = this.Generator(payload.new);
+							this.log('Received new data:', data);
+							this.emit('new', data);
+							break;
+						case 'UPDATE':
+							data = this.Generator(payload.new);
+							this.log('Received updated data:', data);
+							this.emit('update', data, payload.old as any);
+							break;
+						case 'DELETE':
+							data = this.Generator(payload.old);
+							this.log('Received deleted data:', data);
+							this.emit('delete', data);
+							break;
 					}
-				}
 
-				for (const { array, satisfies } of this.registeredArrays.values()) {
-					const has = array.data.find((item) => String(item.data.id) === String(data.data.id));
-					if (satisfies(data.data)) {
-						if (!has) {
-							array.push(data);
-						}
-					} else {
-						if (has) {
-							array.splice(array.data.indexOf(has), 1);
+					if ('archived' in payload.new && 'archived' in payload.old) {
+						if (payload.new.archived && !payload.old.archived) {
+							this.log('Received archived data:', data);
+							this.emit('archive', data);
+						} else if (!payload.new.archived && payload.old.archived) {
+							this.log('Received restored data:', data);
+							this.emit('restore', data);
 						}
 					}
-				}
-			}
-		)
-		.subscribe((status) => {
-			this.log(`Subscription status for channel ${this.name}:`, status);
-		});
 
+					for (const { array, satisfies } of this.registeredArrays.values()) {
+						const has = array.data.find((item) => String(item.data.id) === String(data.data.id));
+						if (satisfies(data.data)) {
+							if (!has) {
+								array.push(data);
+							}
+						} else {
+							if (has) {
+								array.splice(array.data.indexOf(has), 1);
+							}
+						}
+					}
+				}
+			)
+			.subscribe((status) => {
+				this.log(`Subscription status for channel ${this.name}:`, status);
+				this.emit('realtime', status);
+			});
 		return true;
 	}
 
@@ -342,7 +341,7 @@ export class SupaStruct<Name extends Names> {
 			data: Row<Name>[] | Row<Name> | null;
 			error: Error | null;
 		},
-		expect: 'array',
+		expect: 'array'
 	): Result<Row<Name>[]>;
 	runTransaction(
 		transaction: {
@@ -447,6 +446,7 @@ export class SupaStruct<Name extends Names> {
 		satisfies: (data: PartialRow<Name>) => boolean
 	) {
 		if (browser) {
+			this.log(`Registering array ${name} with realtime listeners`);
 			this.registeredArrays.set(name, {
 				array,
 				satisfies
@@ -482,8 +482,16 @@ export class SupaStruct<Name extends Names> {
 	 */
 	Generator(row: unknown) {
 		const validated = this.validate(row);
-		const has = this.cache.get(String(validated.id));
-		if (has) return has;
+		if (browser) {
+			const has = this.cache.get(String(validated.id));
+			if (has) {
+				has['_data'] = {
+					...has.data,
+					...validated
+				};
+				return has;
+			}
+		}
 		const data = new SupaStructData(this, validated as PartialRow<Name>);
 		if (browser) this.cache.set(String(validated.id), data);
 		return data;
@@ -544,21 +552,26 @@ export class SupaStruct<Name extends Names> {
 		if (has) return has.array;
 
 		const get = async () => {
-			if (browser) {const cache = await SupaCache.get({ table: this.name, key: 'all', }, {
-				pagination: false,
-			});
+			if (browser) {
+				const cache = await SupaCache.get(
+					{ table: this.name, key: 'all' },
+					{
+						pagination: false
+					}
+				);
 
-			if (cache.isOk()) {
-				const [cached] = cache.value.data;
-				if (cached) {
-					if (new Date() >= cached.data.expires) {
-						cached.delete();
-					} else {
-						this.log('Using cached data for all query:', cached.data.value);
-						return cached.data.value.map(i => this.Generator(i));
+				if (cache.isOk()) {
+					const [cached] = cache.value.data;
+					if (cached) {
+						if (new Date() >= cached.data.expires) {
+							cached.delete();
+						} else {
+							this.log('Using cached data for all query:', cached.data.value);
+							return cached.data.value.map((i) => this.Generator(i));
+						}
 					}
 				}
-			}}
+			}
 
 			const res = this.runTransaction(
 				await this.supabase.schema(schemaName).from(this.name).select('*'),
@@ -569,12 +582,14 @@ export class SupaStruct<Name extends Names> {
 				return [];
 			}
 
-			if (browser) {SupaCache.new({
-				table: this.name,
-				key: 'all',
-				value: res.value,
-				expires: config.expires,
-			});}
+			if (browser && config.expires && res.value.length) {
+				SupaCache.new({
+					table: this.name,
+					key: 'all',
+					value: res.value,
+					expires: config.expires
+				});
+			}
 
 			return res.value;
 		};
@@ -746,10 +761,13 @@ export class SupaStruct<Name extends Names> {
 	 * @example
 	 * const result = await usersStruct.fromId('abc123');
 	 */
-	fromId(id: Row<Name>['id']) {
+	fromId(id: Row<Name>['id'], config?: { expires?: Date }) {
 		return attemptAsync(async () => {
 			if (browser) {
-				const cache = await SupaCache.get({ table: this.name, key: `id:${id}` }, {	pagination: false});
+				const cache = await SupaCache.get(
+					{ table: this.name, key: `id:${id}` },
+					{ pagination: false }
+				);
 				if (cache.isOk()) {
 					const [cached] = cache.value.data;
 					if (cached) {
@@ -768,12 +786,11 @@ export class SupaStruct<Name extends Names> {
 				}
 			}
 
-
 			const res = await this.supabase
 				.schema(schemaName)
 				.from(this.name)
 				.select('*')
-				.eq('id', id as any)
+				.filter('id', 'eq', id as any)
 				.single();
 			const transactionResult = this.runTransaction(
 				{
@@ -788,12 +805,12 @@ export class SupaStruct<Name extends Names> {
 			}
 			this.log(`Fetched fromId ${id} from ${this.name}:`, transactionResult.value);
 
-			if (browser) {
+			if (browser && transactionResult.value && config?.expires) {
 				SupaCache.new({
 					table: this.name,
 					key: `id:${id}`,
 					value: [transactionResult.value],
-					expires: new Date(Date.now() + 5 * 60 * 1000) // Cache for 5 minutes
+					expires: config?.expires || new Date(Date.now() + 5 * 60 * 1000) // Cache for 5 minutes
 				});
 			}
 
@@ -850,7 +867,10 @@ export class SupaStruct<Name extends Names> {
 
 		const get = async () => {
 			if (browser) {
-				const cache = await SupaCache.get({ table: this.name, key: cacheKey }, { pagination: false });
+				const cache = await SupaCache.get(
+					{ table: this.name, key: cacheKey },
+					{ pagination: false }
+				);
 				if (cache.isOk()) {
 					const [cached] = cache.value.data;
 					if (cached) {
@@ -866,8 +886,11 @@ export class SupaStruct<Name extends Names> {
 									return [];
 								}
 							} else {
-								this.log(`Using cached data for get query ${JSON.stringify(data)}:`, cached.data.value);
-								return cached.data.value.map(i => this.Generator(i));
+								this.log(
+									`Using cached data for get query ${JSON.stringify(data)}:`,
+									cached.data.value
+								);
+								return cached.data.value.map((i) => this.Generator(i));
 							}
 						}
 					}
@@ -876,7 +899,7 @@ export class SupaStruct<Name extends Names> {
 
 			let query = this.supabase.schema(schemaName).from(this.name).select('*');
 			for (const [key, value] of Object.entries(data)) {
-				query = query.eq(key, value as any);
+				query = query.filter(key, 'eq', value as any);
 			}
 
 			const res = await query;
@@ -895,12 +918,12 @@ export class SupaStruct<Name extends Names> {
 				return [];
 			}
 
-			if (browser) {
+			if (browser && config.expires && res.data?.length) {
 				SupaCache.new({
 					table: this.name,
 					key: cacheKey,
 					value: transactionResult.value,
-					expires: config.expires,
+					expires: config.expires
 				});
 			}
 
@@ -976,7 +999,10 @@ export class SupaStruct<Name extends Names> {
 
 		const get = async () => {
 			if (browser) {
-				const cache = await SupaCache.get({ table: this.name, key: cacheKey }, { pagination: false });
+				const cache = await SupaCache.get(
+					{ table: this.name, key: cacheKey },
+					{ pagination: false }
+				);
 				if (cache.isOk()) {
 					const [cached] = cache.value.data;
 					if (cached) {
@@ -992,14 +1018,16 @@ export class SupaStruct<Name extends Names> {
 									return [];
 								}
 							} else {
-								this.log(`Using cached data for getOR query ${JSON.stringify(data)}:`, cached.data.value);
-								return cached.data.value.map(i => this.Generator(i));
+								this.log(
+									`Using cached data for getOR query ${JSON.stringify(data)}:`,
+									cached.data.value
+								);
+								return cached.data.value.map((i) => this.Generator(i));
 							}
 						}
 					}
 				}
 			}
-
 
 			let query = this.supabase.schema(schemaName).from(this.name).select('*');
 			const keys = Object.keys(data);
@@ -1023,12 +1051,12 @@ export class SupaStruct<Name extends Names> {
 				return [];
 			}
 
-			if (browser) {
+			if (browser && config.expires && res.data?.length) {
 				SupaCache.new({
 					table: this.name,
 					key: cacheKey,
 					value: transactionResult.value,
-					expires: config.expires,
+					expires: config.expires
 				});
 			}
 
@@ -1153,7 +1181,10 @@ export class SupaStruct<Name extends Names> {
 
 		const get = async () => {
 			if (browser) {
-				const cache = await SupaCache.get({ table: this.name, key: cacheKey }, { pagination: false });
+				const cache = await SupaCache.get(
+					{ table: this.name, key: cacheKey },
+					{ pagination: false }
+				);
 				if (cache.isOk()) {
 					const [cached] = cache.value.data;
 					if (cached) {
@@ -1169,8 +1200,11 @@ export class SupaStruct<Name extends Names> {
 									return [];
 								}
 							} else {
-								this.log(`Using cached data for search query ${JSON.stringify(query)}:`, cached.data.value);
-								return cached.data.value.map(i => this.Generator(i));
+								this.log(
+									`Using cached data for search query ${JSON.stringify(query)}:`,
+									cached.data.value
+								);
+								return cached.data.value.map((i) => this.Generator(i));
 							}
 						}
 					}
@@ -1194,12 +1228,12 @@ export class SupaStruct<Name extends Names> {
 				return [];
 			}
 
-			if (browser) {
+			if (browser && config.expires && res.data?.length) {
 				SupaCache.new({
 					table: this.name,
 					key: cacheKey,
 					value: transactionResult.value,
-					expires: config.expires,
+					expires: config.expires
 				});
 			}
 
@@ -1275,7 +1309,10 @@ export class SupaStruct<Name extends Names> {
 		const arr = this.arr();
 		const get = async () => {
 			if (browser) {
-				const cache = await SupaCache.get({ table: this.name, key: cacheKey }, { pagination: false });
+				const cache = await SupaCache.get(
+					{ table: this.name, key: cacheKey },
+					{ pagination: false }
+				);
 				if (cache.isOk()) {
 					const [cached] = cache.value.data;
 					if (cached) {
@@ -1283,7 +1320,7 @@ export class SupaStruct<Name extends Names> {
 							cached.delete();
 						} else {
 							this.log('Using cached data for archived query:', cached.data.value);
-							return cached.data.value.map(i => this.Generator(i));
+							return cached.data.value.map((i) => this.Generator(i));
 						}
 					}
 				}
@@ -1293,7 +1330,7 @@ export class SupaStruct<Name extends Names> {
 				.schema(schemaName)
 				.from(this.name)
 				.select('*')
-				.eq('archived', true as any);
+				.filter('archived', 'eq', true as any);
 			const transactionResult = this.runTransaction(
 				{
 					data: res.data as any,
@@ -1307,12 +1344,14 @@ export class SupaStruct<Name extends Names> {
 			}
 
 			if (browser) {
-				SupaCache.new({
-					table: this.name,
-					key: cacheKey,
-					value: transactionResult.value,
-					expires: new Date(Date.now() + 5 * 60 * 1000) // Cache for 5 minutes
-				});
+				if (res.data?.length) {
+					SupaCache.new({
+						table: this.name,
+						key: cacheKey,
+						value: transactionResult.value,
+						expires: new Date(Date.now() + 5 * 60 * 1000) // Cache for 5 minutes
+					});
+				}
 			}
 
 			return transactionResult.value;
@@ -1337,7 +1376,10 @@ export class SupaStruct<Name extends Names> {
 		const arr = this.arr();
 		const get = async () => {
 			if (browser) {
-				const cache = await SupaCache.get({ table: this.name, key: cacheKey }, { pagination: false });
+				const cache = await SupaCache.get(
+					{ table: this.name, key: cacheKey },
+					{ pagination: false }
+				);
 				if (cache.isOk()) {
 					const [cached] = cache.value.data;
 					if (cached) {
@@ -1345,7 +1387,7 @@ export class SupaStruct<Name extends Names> {
 							cached.delete();
 						} else {
 							this.log(`Using cached data for fromIds query ${ids}:`, cached.data.value);
-							return cached.data.value.map(i => this.Generator(i));
+							return cached.data.value.map((i) => this.Generator(i));
 						}
 					}
 				}
@@ -1369,12 +1411,14 @@ export class SupaStruct<Name extends Names> {
 			}
 
 			if (browser) {
-				SupaCache.new({
-					table: this.name,
-					key: cacheKey,
-					value: transactionResult.value,
-					expires: new Date(Date.now() + 5 * 60 * 1000) // Cache for 5 minutes
-				});
+				if (res.data?.length) {
+					SupaCache.new({
+						table: this.name,
+						key: cacheKey,
+						value: transactionResult.value,
+						expires: new Date(Date.now() + 5 * 60 * 1000) // Cache for 5 minutes
+					});
+				}
 			}
 
 			return transactionResult.value;
@@ -1422,8 +1466,6 @@ export type SearchQuery<Name extends Names> =
  * @template Name - Table name represented by each array item.
  */
 export class SupaStructArray<Name extends Names> extends WritableArray<SupaStructData<Name>> {}
-
-
 
 /**
  * Helper for many-to-many style linking tables between two structs.
@@ -1548,8 +1590,8 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 		this.supabase
 			.from(this.linkingTable)
 			.delete()
-			.eq(`${this.structA.name}_id`, a.data.id as any)
-			.eq(`${this.structB.name}_id`, b.data.id as any)
+			.filter(`${this.structA.name}_id`, 'eq', a.data.id as any)
+			.filter(`${this.structB.name}_id`, 'eq', b.data.id as any)
 			.then((res) => {
 				if (res.error) {
 					status.set({
@@ -1575,7 +1617,10 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 	 * @param config - Read configuration (`type: 'all'`).
 	 * @returns Writable array of linked A records.
 	 */
-	getLinkedA(b: SupaStructData<TableB>, config: ReadConfig<'all'>): WritableArray<SupaStructData<TableA>>;
+	getLinkedA(
+		b: SupaStructData<TableB>,
+		config: ReadConfig<'all'>
+	): WritableArray<SupaStructData<TableA>>;
 	/**
 	 * Reads the first A record linked to a B record.
 	 *
@@ -1619,7 +1664,9 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 							cached.delete();
 						} else {
 							this.log(`Using cached data for getLinkedA ${b.data.id}:`, cached.data.value);
-							return (cached.data.value as PartialRow<TableA>[]).map((i) => this.structA.Generator(i));
+							return (cached.data.value as PartialRow<TableA>[]).map((i) =>
+								this.structA.Generator(i)
+							);
 						}
 					}
 				}
@@ -1628,7 +1675,7 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 			const res = await this.supabase
 				.from(this.linkingTable)
 				.select(`*, ${this.structA.name}.*`)
-				.eq(`${this.structB.name}_id`, b.data.id as any);
+				.filter(`${this.structB.name}_id`, 'eq', b.data.id as any);
 
 			if (res.error) {
 				console.error(
@@ -1641,7 +1688,7 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 			const rows: PartialRow<TableA>[] =
 				res.data?.map((item) => (item as any)[this.structA.name] as PartialRow<TableA>) || [];
 
-			if (browser) {
+			if (browser && config.expires && rows.length) {
 				SupaCache.new({
 					table: String(this.linkingTable),
 					key: cacheKey,
@@ -1672,7 +1719,10 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 	 * @param config - Read configuration (`type: 'all'`).
 	 * @returns Writable array of linked B records.
 	 */
-	getLinkedB(b: SupaStructData<TableA>, config: ReadConfig<'all'>): WritableArray<SupaStructData<TableB>>;
+	getLinkedB(
+		b: SupaStructData<TableA>,
+		config: ReadConfig<'all'>
+	): WritableArray<SupaStructData<TableB>>;
 	/**
 	 * Reads the first B record linked to an A record.
 	 *
@@ -1716,7 +1766,9 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 							cached.delete();
 						} else {
 							this.log(`Using cached data for getLinkedB ${b.data.id}:`, cached.data.value);
-							return (cached.data.value as PartialRow<TableB>[]).map((i) => this.structB.Generator(i));
+							return (cached.data.value as PartialRow<TableB>[]).map((i) =>
+								this.structB.Generator(i)
+							);
 						}
 					}
 				}
@@ -1725,7 +1777,7 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 			const res = await this.supabase
 				.from(this.linkingTable)
 				.select(`*, ${this.structB.name}.*`)
-				.eq(`${this.structA.name}_id`, b.data.id as any);
+				.filter(`${this.structA.name}_id`, 'eq', b.data.id as any);
 
 			if (res.error) {
 				console.error(
@@ -1738,7 +1790,7 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 			const rows: PartialRow<TableB>[] =
 				res.data?.map((item) => (item as any)[this.structB.name] as PartialRow<TableB>) || [];
 
-			if (browser) {
+			if (browser && config.expires && rows.length) {
 				SupaCache.new({
 					table: String(this.linkingTable),
 					key: cacheKey,

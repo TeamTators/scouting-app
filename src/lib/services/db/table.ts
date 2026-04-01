@@ -133,9 +133,18 @@ export class Table<Name extends string, Type extends SchemaDefinition> {
 	 */
 	constructor(
 		public name: Name,
-		public schema: Type
+		public schema: Type,
+		public config?: {
+			debug?: boolean;
+		}
 	) {
 		this.table = _define<Type>(name, schema);
+	}
+
+	private log(...args: unknown[]) {
+		if (this.config?.debug) {
+			console.log(`IndexDB: [${this.name}]`, ...args);
+		}
 	}
 
 	/**
@@ -149,6 +158,7 @@ export class Table<Name extends string, Type extends SchemaDefinition> {
 	}) {
 		return attemptAsync(async () => {
 			_init();
+			this.log('Creating new record with data:', data);
 			const newData = {
 				...data,
 				id: Math.random().toString(36).substring(2, 10) + Date.now().toString(36),
@@ -171,6 +181,7 @@ export class Table<Name extends string, Type extends SchemaDefinition> {
 	fromId(id: string) {
 		return attemptAsync(async () => {
 			_init();
+			this.log(`Fetching record with id: ${id}`);
 			const has = this.cache.get(id);
 			if (has) return has;
 			const data = await this.table().get(id);
@@ -204,6 +215,7 @@ export class Table<Name extends string, Type extends SchemaDefinition> {
 	all(config: ReadConfig<boolean>) {
 		return attemptAsync(async () => {
 			_init();
+			this.log(`Fetching all records with config:`, config);
 			if (config.pagination) {
 				const total = await this.table().count();
 				const datas = await this.table()
@@ -306,6 +318,7 @@ export class Table<Name extends string, Type extends SchemaDefinition> {
 	 */
 	clear() {
 		return attemptAsync(async () => {
+			this.log('Clearing all records from the table');
 			_init();
 			await this.table().clear();
 		});
@@ -328,7 +341,7 @@ export class Table<Name extends string, Type extends SchemaDefinition> {
 	): ResultPromise<TableDataArr<Name, Type> | PaginatedTableData<Name, Type>> {
 		return attemptAsync(async () => {
 			_init();
-
+			this.log(`Fetching records with filter:`, data, `and config:`, config);
 			if (config.pagination) {
 				const total = await this.table().where(data).count();
 				const datas = await this.table()
@@ -389,6 +402,85 @@ export class Table<Name extends string, Type extends SchemaDefinition> {
 					}
 				}
 				if (match) {
+					arr.add(d);
+				} else {
+					arr.remove(d);
+				}
+			};
+
+			const offNew = this.on('new', onNew);
+			const offDelete = this.on('delete', onDelete);
+			const offUpdate = this.on('update', onUpdate);
+
+			arr.on('all-unsubscribe', () => {
+				offNew();
+				offDelete();
+				offUpdate();
+			});
+
+			return arr;
+		});
+	}
+
+	where<K extends keyof Type>(
+		col: Extract<K, string>,
+		op: 'eq' | 'ne' | 'gt' | 'lt' | 'gte' | 'lte',
+		value: SchemaFieldReturnType<Type[K]>,
+		config: ReadConfig<false>
+	): ResultPromise<TableDataArr<Name, Type>> {
+		return attemptAsync(async () => {
+			_init();
+			this.log(`Fetching records where ${col} ${op} ${value} with config:`, config);
+			void config;
+
+			const toComparable = (v: unknown): number | string | null => {
+				if (v instanceof Date) return v.getTime();
+				if (typeof v === 'number' || typeof v === 'string') return v;
+				return null;
+			};
+
+			const matches = (item: TableData<Name, Type>) => {
+				const current = item.data[col] as SchemaFieldReturnType<Type[K]>;
+				const left = toComparable(current);
+				const right = toComparable(value);
+				switch (op) {
+					case 'eq':
+						return current === value;
+					case 'ne':
+						return current !== value;
+					case 'gt':
+						return left !== null && right !== null && left > right;
+					case 'lt':
+						return left !== null && right !== null && left < right;
+					case 'gte':
+						return left !== null && right !== null && left >= right;
+					case 'lte':
+						return left !== null && right !== null && left <= right;
+				}
+			};
+
+			const datas = await this.table()
+				.filter((item) => matches(this.Generator(item)))
+				.toArray();
+			const arr = new TableDataArr(
+				this,
+				datas.map((data) => this.Generator(data))
+			);
+
+			const onNew = (d: TableData<Name, Type>) => {
+				if (matches(d)) {
+					arr.add(d);
+				}
+			};
+
+			const onDelete = (d: TableData<Name, Type>) => {
+				if (matches(d)) {
+					arr.remove(d);
+				}
+			};
+
+			const onUpdate = (d: TableData<Name, Type>) => {
+				if (matches(d)) {
 					arr.add(d);
 				} else {
 					arr.remove(d);

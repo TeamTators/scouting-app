@@ -11,7 +11,7 @@ Profile display shell for an account.
 ```
 -->
 <script lang="ts">
-	import type { SupaStructData } from '$lib/services/supabase/supastruct';
+	import type { SupaStructData } from '$lib/services/supabase/supastruct-data';
 
 	interface Props {
 		profile: SupaStructData<'profile'>;

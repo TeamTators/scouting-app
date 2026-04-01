@@ -12,6 +12,7 @@ Username change input with availability checks.
 -->
 <script lang="ts">
 	import { Account } from '$lib/model/account';
+	import { after } from 'ts-utils';
 
 	interface Props {
 		account: Account;
@@ -35,7 +36,8 @@ Username change input with availability checks.
 						value: username
 					},
 					{
-						type: 'single'
+						type: 'single',
+						expires: after(5 * 60 * 1000)
 					}
 				)
 				.unwrap()

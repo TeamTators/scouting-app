@@ -1,4 +1,5 @@
-import { SupaStruct, SupaStructData, type Client } from '$lib/services/supabase/supastruct';
+import { SupaStruct, type Client } from '$lib/services/supabase/supastruct';
+import { SupaStructData } from '$lib/services/supabase/supastruct-data';
 import { type Provider, type Session as S } from '@supabase/supabase-js';
 import { attemptAsync } from 'ts-utils';
 import { getAccountFactory } from '$lib/model/account';

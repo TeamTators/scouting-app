@@ -19,7 +19,8 @@ Account search input with debounced query results.
 <script lang="ts">
 	import { getAccountFactory } from '$lib/model/account';
 	import supabase from '$lib/services/supabase';
-	import type { SupaStructData } from '$lib/services/supabase/supastruct';
+	import type { SupaStructData } from '$lib/services/supabase/supastruct-data';
+	import { after } from 'ts-utils';
 
 	const factory = getAccountFactory(supabase);
 
@@ -47,7 +48,8 @@ Account search input with debounced query results.
 					value: `%${username}%`
 				},
 				{
-					type: 'all'
+					type: 'all',
+					expires: after(5 * 60 * 1000)
 				}
 			);
 			if (filter) results.filter(filter);

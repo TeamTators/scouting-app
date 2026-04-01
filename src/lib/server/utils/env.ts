@@ -54,7 +54,10 @@ export const config = (() => {
 		throw new EnvironmentError(`Config file does not exist at path: ${configPath}`);
 	}
 
-	const example = openJSONSync(path.resolve(process.cwd(), './config.example.json'), configSchema).unwrap();
+	const example = openJSONSync(
+		path.resolve(process.cwd(), './config.example.json'),
+		configSchema
+	).unwrap();
 	const envConfig = openJSONSync(configPath, z.unknown()).unwrap();
 
 	const deepMerge = (base: unknown, override: unknown): unknown => {

@@ -16,6 +16,7 @@ Notifications offcanvas panel with unread count binding.
 	import Notification from '../account/Notification.svelte';
 	import { rawModal } from '$lib/utils/prompts';
 	import NotificationHistory from '../account/NotificationHistory.svelte';
+	import { after } from 'ts-utils';
 
 	const id = 'notifications';
 
@@ -29,7 +30,9 @@ Notifications offcanvas panel with unread count binding.
 	let { notifs = $bindable(), account }: Props = $props();
 
 	const notifications = $derived(
-		account.getNotifications()
+		account.getNotifications({
+			expires: after(60 * 1000)
+		})
 		// Account.AccountNotification.arr([
 		// 	// Account.AccountNotification.Generator({
 		// 	// 	accountId: 'string',
