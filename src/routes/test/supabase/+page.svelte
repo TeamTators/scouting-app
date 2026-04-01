@@ -15,6 +15,7 @@
 	id="supabase-tests"
 	data-pass={$success.length === total}
 	data-complete={$complete === total}
+	data-total={total}
 >
 	<div class="row mb-3">
 		<div class="col">

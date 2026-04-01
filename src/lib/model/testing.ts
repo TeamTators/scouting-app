@@ -354,6 +354,13 @@ export const runTests = () => {
 	);
 	for (const test of arr.data) {
 		arr.pipe(test);
+		const unsub = test.subscribe((data) => {
+			if (data.success === false) {
+				console.error(`Test "${data.name}" failed: ${data.message}`);
+			}
+		});
+
+		arr.on('all-unsubscribe', unsub);
 	}
 
 	return arr;
