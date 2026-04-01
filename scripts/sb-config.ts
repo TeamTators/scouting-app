@@ -4,8 +4,7 @@ import { config } from 'dotenv';
 config();
 
 export default (...args: string[]) => {
-	let schema_name = '',
-		tenant_id = '',
+	let tenant_id = '',
 		pg_pass = '',
 		anon_key = '',
 		domain = '',
@@ -16,9 +15,6 @@ export default (...args: string[]) => {
 	for (const arg of args) {
 		const [key, value] = arg.split('=');
 		switch (key) {
-			case 'schema_name':
-				schema_name = value;
-				break;
 			case 'tenant_id':
 				tenant_id = value;
 				break;
@@ -44,7 +40,6 @@ export default (...args: string[]) => {
 	}
 
 	for (const [key, value] of Object.entries({
-		schema_name,
 		tenant_id,
 		pg_pass,
 		anon_key,
@@ -69,7 +64,6 @@ export default (...args: string[]) => {
 		fs.readFileSync(path.join(process.cwd(), 'config.example.json'), 'utf-8')
 	);
 
-	json.supabase.schema = schema_name;
 	json.supabase.tenant_id = tenant_id;
 	json.supabase.pg_pass = pg_pass;
 	json.supabase.anon_key = anon_key;

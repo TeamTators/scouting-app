@@ -19,23 +19,23 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: test_schema; Type: SCHEMA; Schema: -; Owner: postgres
+-- Name: sveltekit_template; Type: SCHEMA; Schema: -; Owner: postgres
 --
 
-CREATE SCHEMA test_schema;
+CREATE SCHEMA sveltekit_template;
 
 
-ALTER SCHEMA test_schema OWNER TO postgres;
+ALTER SCHEMA sveltekit_template OWNER TO postgres;
 
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
 --
--- Name: account_notification; Type: TABLE; Schema: test_schema; Owner: postgres
+-- Name: account_notification; Type: TABLE; Schema: sveltekit_template; Owner: postgres
 --
 
-CREATE TABLE test_schema.account_notification (
+CREATE TABLE sveltekit_template.account_notification (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     title text NOT NULL,
@@ -50,26 +50,26 @@ CREATE TABLE test_schema.account_notification (
 );
 
 
-ALTER TABLE test_schema.account_notification OWNER TO postgres;
+ALTER TABLE sveltekit_template.account_notification OWNER TO postgres;
 
 --
--- Name: admin; Type: TABLE; Schema: test_schema; Owner: postgres
+-- Name: admin; Type: TABLE; Schema: sveltekit_template; Owner: postgres
 --
 
-CREATE TABLE test_schema.admin (
+CREATE TABLE sveltekit_template.admin (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     archived boolean DEFAULT false NOT NULL
 );
 
 
-ALTER TABLE test_schema.admin OWNER TO postgres;
+ALTER TABLE sveltekit_template.admin OWNER TO postgres;
 
 --
--- Name: profile; Type: TABLE; Schema: test_schema; Owner: postgres
+-- Name: profile; Type: TABLE; Schema: sveltekit_template; Owner: postgres
 --
 
-CREATE TABLE test_schema.profile (
+CREATE TABLE sveltekit_template.profile (
     id uuid DEFAULT auth.uid() NOT NULL,
     username text NOT NULL,
     archived boolean DEFAULT false NOT NULL,
@@ -79,13 +79,13 @@ CREATE TABLE test_schema.profile (
 );
 
 
-ALTER TABLE test_schema.profile OWNER TO postgres;
+ALTER TABLE sveltekit_template.profile OWNER TO postgres;
 
 --
--- Name: role; Type: TABLE; Schema: test_schema; Owner: postgres
+-- Name: role; Type: TABLE; Schema: sveltekit_template; Owner: postgres
 --
 
-CREATE TABLE test_schema.role (
+CREATE TABLE sveltekit_template.role (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     archived boolean DEFAULT false NOT NULL,
@@ -96,13 +96,13 @@ CREATE TABLE test_schema.role (
 );
 
 
-ALTER TABLE test_schema.role OWNER TO postgres;
+ALTER TABLE sveltekit_template.role OWNER TO postgres;
 
 --
--- Name: role_account; Type: TABLE; Schema: test_schema; Owner: postgres
+-- Name: role_account; Type: TABLE; Schema: sveltekit_template; Owner: postgres
 --
 
-CREATE TABLE test_schema.role_account (
+CREATE TABLE sveltekit_template.role_account (
     account_id uuid NOT NULL,
     role_id bigint NOT NULL,
     id uuid DEFAULT gen_random_uuid() NOT NULL,
@@ -110,13 +110,13 @@ CREATE TABLE test_schema.role_account (
 );
 
 
-ALTER TABLE test_schema.role_account OWNER TO postgres;
+ALTER TABLE sveltekit_template.role_account OWNER TO postgres;
 
 --
--- Name: session; Type: TABLE; Schema: test_schema; Owner: postgres
+-- Name: session; Type: TABLE; Schema: sveltekit_template; Owner: postgres
 --
 
-CREATE TABLE test_schema.session (
+CREATE TABLE sveltekit_template.session (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     account_id uuid,
@@ -125,13 +125,13 @@ CREATE TABLE test_schema.session (
 );
 
 
-ALTER TABLE test_schema.session OWNER TO postgres;
+ALTER TABLE sveltekit_template.session OWNER TO postgres;
 
 --
--- Name: test; Type: TABLE; Schema: test_schema; Owner: postgres
+-- Name: test; Type: TABLE; Schema: sveltekit_template; Owner: postgres
 --
 
-CREATE TABLE test_schema.test (
+CREATE TABLE sveltekit_template.test (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     archived boolean DEFAULT false,
@@ -140,303 +140,303 @@ CREATE TABLE test_schema.test (
 );
 
 
-ALTER TABLE test_schema.test OWNER TO postgres;
+ALTER TABLE sveltekit_template.test OWNER TO postgres;
 
 --
--- Name: account_notification account_notification_pkey; Type: CONSTRAINT; Schema: test_schema; Owner: postgres
+-- Name: account_notification account_notification_pkey; Type: CONSTRAINT; Schema: sveltekit_template; Owner: postgres
 --
 
-ALTER TABLE ONLY test_schema.account_notification
+ALTER TABLE ONLY sveltekit_template.account_notification
     ADD CONSTRAINT account_notification_pkey PRIMARY KEY (id);
 
 
 --
--- Name: admin admins_pkey; Type: CONSTRAINT; Schema: test_schema; Owner: postgres
+-- Name: admin admins_pkey; Type: CONSTRAINT; Schema: sveltekit_template; Owner: postgres
 --
 
-ALTER TABLE ONLY test_schema.admin
+ALTER TABLE ONLY sveltekit_template.admin
     ADD CONSTRAINT admins_pkey PRIMARY KEY (id);
 
 
 --
--- Name: profile profile_pkey; Type: CONSTRAINT; Schema: test_schema; Owner: postgres
+-- Name: profile profile_pkey; Type: CONSTRAINT; Schema: sveltekit_template; Owner: postgres
 --
 
-ALTER TABLE ONLY test_schema.profile
+ALTER TABLE ONLY sveltekit_template.profile
     ADD CONSTRAINT profile_pkey PRIMARY KEY (id);
 
 
 --
--- Name: profile profiles_username_key; Type: CONSTRAINT; Schema: test_schema; Owner: postgres
+-- Name: profile profiles_username_key; Type: CONSTRAINT; Schema: sveltekit_template; Owner: postgres
 --
 
-ALTER TABLE ONLY test_schema.profile
+ALTER TABLE ONLY sveltekit_template.profile
     ADD CONSTRAINT profiles_username_key UNIQUE (username);
 
 
 --
--- Name: role_account role_account_pkey; Type: CONSTRAINT; Schema: test_schema; Owner: postgres
+-- Name: role_account role_account_pkey; Type: CONSTRAINT; Schema: sveltekit_template; Owner: postgres
 --
 
-ALTER TABLE ONLY test_schema.role_account
+ALTER TABLE ONLY sveltekit_template.role_account
     ADD CONSTRAINT role_account_pkey PRIMARY KEY (id);
 
 
 --
--- Name: role roles_pkey; Type: CONSTRAINT; Schema: test_schema; Owner: postgres
+-- Name: role roles_pkey; Type: CONSTRAINT; Schema: sveltekit_template; Owner: postgres
 --
 
-ALTER TABLE ONLY test_schema.role
+ALTER TABLE ONLY sveltekit_template.role
     ADD CONSTRAINT roles_pkey PRIMARY KEY (id);
 
 
 --
--- Name: session session_pkey; Type: CONSTRAINT; Schema: test_schema; Owner: postgres
+-- Name: session session_pkey; Type: CONSTRAINT; Schema: sveltekit_template; Owner: postgres
 --
 
-ALTER TABLE ONLY test_schema.session
+ALTER TABLE ONLY sveltekit_template.session
     ADD CONSTRAINT session_pkey PRIMARY KEY (id);
 
 
 --
--- Name: test test_pkey; Type: CONSTRAINT; Schema: test_schema; Owner: postgres
+-- Name: test test_pkey; Type: CONSTRAINT; Schema: sveltekit_template; Owner: postgres
 --
 
-ALTER TABLE ONLY test_schema.test
+ALTER TABLE ONLY sveltekit_template.test
     ADD CONSTRAINT test_pkey PRIMARY KEY (id);
 
 
 --
--- Name: account_notification account_notification_account_id_fkey; Type: FK CONSTRAINT; Schema: test_schema; Owner: postgres
+-- Name: account_notification account_notification_account_id_fkey; Type: FK CONSTRAINT; Schema: sveltekit_template; Owner: postgres
 --
 
-ALTER TABLE ONLY test_schema.account_notification
+ALTER TABLE ONLY sveltekit_template.account_notification
     ADD CONSTRAINT account_notification_account_id_fkey FOREIGN KEY (account_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 
 
 --
--- Name: admin admin_id_fkey; Type: FK CONSTRAINT; Schema: test_schema; Owner: postgres
+-- Name: admin admin_id_fkey; Type: FK CONSTRAINT; Schema: sveltekit_template; Owner: postgres
 --
 
-ALTER TABLE ONLY test_schema.admin
+ALTER TABLE ONLY sveltekit_template.admin
     ADD CONSTRAINT admin_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE;
 
 
 --
--- Name: profile profile_id_fkey; Type: FK CONSTRAINT; Schema: test_schema; Owner: postgres
+-- Name: profile profile_id_fkey; Type: FK CONSTRAINT; Schema: sveltekit_template; Owner: postgres
 --
 
-ALTER TABLE ONLY test_schema.profile
+ALTER TABLE ONLY sveltekit_template.profile
     ADD CONSTRAINT profile_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE;
 
 
 --
--- Name: role_account role_account_account_id_fkey; Type: FK CONSTRAINT; Schema: test_schema; Owner: postgres
+-- Name: role_account role_account_account_id_fkey; Type: FK CONSTRAINT; Schema: sveltekit_template; Owner: postgres
 --
 
-ALTER TABLE ONLY test_schema.role_account
+ALTER TABLE ONLY sveltekit_template.role_account
     ADD CONSTRAINT role_account_account_id_fkey FOREIGN KEY (account_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 
 
 --
--- Name: role roles_parent_fkey; Type: FK CONSTRAINT; Schema: test_schema; Owner: postgres
+-- Name: role roles_parent_fkey; Type: FK CONSTRAINT; Schema: sveltekit_template; Owner: postgres
 --
 
-ALTER TABLE ONLY test_schema.role
-    ADD CONSTRAINT roles_parent_fkey FOREIGN KEY (parent) REFERENCES test_schema.role(id) ON DELETE CASCADE;
+ALTER TABLE ONLY sveltekit_template.role
+    ADD CONSTRAINT roles_parent_fkey FOREIGN KEY (parent) REFERENCES sveltekit_template.role(id) ON DELETE CASCADE;
 
 
 --
--- Name: session session_account_id_fkey; Type: FK CONSTRAINT; Schema: test_schema; Owner: postgres
+-- Name: session session_account_id_fkey; Type: FK CONSTRAINT; Schema: sveltekit_template; Owner: postgres
 --
 
-ALTER TABLE ONLY test_schema.session
+ALTER TABLE ONLY sveltekit_template.session
     ADD CONSTRAINT session_account_id_fkey FOREIGN KEY (account_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 
 
 --
--- Name: session session_id_fkey; Type: FK CONSTRAINT; Schema: test_schema; Owner: postgres
+-- Name: session session_id_fkey; Type: FK CONSTRAINT; Schema: sveltekit_template; Owner: postgres
 --
 
-ALTER TABLE ONLY test_schema.session
+ALTER TABLE ONLY sveltekit_template.session
     ADD CONSTRAINT session_id_fkey FOREIGN KEY (id) REFERENCES auth.sessions(id) ON DELETE CASCADE;
 
 
 --
--- Name: test Allow update; Type: POLICY; Schema: test_schema; Owner: postgres
+-- Name: test Allow update; Type: POLICY; Schema: sveltekit_template; Owner: postgres
 --
 
-CREATE POLICY "Allow update" ON test_schema.test FOR UPDATE TO test_schema USING (true);
-
-
---
--- Name: test Enable delete for all users; Type: POLICY; Schema: test_schema; Owner: postgres
---
-
-CREATE POLICY "Enable delete for all users" ON test_schema.test FOR DELETE TO test_schema USING (true);
+CREATE POLICY "Allow update" ON sveltekit_template.test FOR UPDATE TO sveltekit_template USING (true);
 
 
 --
--- Name: test Enable insert for all; Type: POLICY; Schema: test_schema; Owner: postgres
+-- Name: test Enable delete for all users; Type: POLICY; Schema: sveltekit_template; Owner: postgres
 --
 
-CREATE POLICY "Enable insert for all" ON test_schema.test FOR INSERT TO test_schema WITH CHECK (true);
-
-
---
--- Name: test Enable read access for all; Type: POLICY; Schema: test_schema; Owner: postgres
---
-
-CREATE POLICY "Enable read access for all" ON test_schema.test FOR SELECT TO test_schema USING (true);
+CREATE POLICY "Enable delete for all users" ON sveltekit_template.test FOR DELETE TO sveltekit_template USING (true);
 
 
 --
--- Name: admin Enable users to view their own data only; Type: POLICY; Schema: test_schema; Owner: postgres
+-- Name: test Enable insert for all; Type: POLICY; Schema: sveltekit_template; Owner: postgres
 --
 
-CREATE POLICY "Enable users to view their own data only" ON test_schema.admin FOR SELECT TO authenticated USING ((( SELECT auth.uid() AS uid) = id));
-
-
---
--- Name: profile Enable users to view their own data only; Type: POLICY; Schema: test_schema; Owner: postgres
---
-
-CREATE POLICY "Enable users to view their own data only" ON test_schema.profile FOR SELECT TO authenticated USING ((( SELECT auth.uid() AS uid) = id));
+CREATE POLICY "Enable insert for all" ON sveltekit_template.test FOR INSERT TO sveltekit_template WITH CHECK (true);
 
 
 --
--- Name: account_notification; Type: ROW SECURITY; Schema: test_schema; Owner: postgres
+-- Name: test Enable read access for all; Type: POLICY; Schema: sveltekit_template; Owner: postgres
 --
 
-ALTER TABLE test_schema.account_notification ENABLE ROW LEVEL SECURITY;
-
---
--- Name: admin; Type: ROW SECURITY; Schema: test_schema; Owner: postgres
---
-
-ALTER TABLE test_schema.admin ENABLE ROW LEVEL SECURITY;
-
---
--- Name: profile; Type: ROW SECURITY; Schema: test_schema; Owner: postgres
---
-
-ALTER TABLE test_schema.profile ENABLE ROW LEVEL SECURITY;
-
---
--- Name: role; Type: ROW SECURITY; Schema: test_schema; Owner: postgres
---
-
-ALTER TABLE test_schema.role ENABLE ROW LEVEL SECURITY;
-
---
--- Name: role_account; Type: ROW SECURITY; Schema: test_schema; Owner: postgres
---
-
-ALTER TABLE test_schema.role_account ENABLE ROW LEVEL SECURITY;
-
---
--- Name: session; Type: ROW SECURITY; Schema: test_schema; Owner: postgres
---
-
-ALTER TABLE test_schema.session ENABLE ROW LEVEL SECURITY;
-
---
--- Name: SCHEMA test_schema; Type: ACL; Schema: -; Owner: postgres
---
-
-GRANT USAGE ON SCHEMA test_schema TO anon;
-GRANT USAGE ON SCHEMA test_schema TO authenticated;
-GRANT USAGE ON SCHEMA test_schema TO service_role;
+CREATE POLICY "Enable read access for all" ON sveltekit_template.test FOR SELECT TO sveltekit_template USING (true);
 
 
 --
--- Name: TABLE account_notification; Type: ACL; Schema: test_schema; Owner: postgres
+-- Name: admin Enable users to view their own data only; Type: POLICY; Schema: sveltekit_template; Owner: postgres
 --
 
-GRANT ALL ON TABLE test_schema.account_notification TO service_role;
-GRANT ALL ON TABLE test_schema.account_notification TO anon;
-GRANT ALL ON TABLE test_schema.account_notification TO authenticated;
+CREATE POLICY "Enable users to view their own data only" ON sveltekit_template.admin FOR SELECT TO authenticated USING ((( SELECT auth.uid() AS uid) = id));
 
 
 --
--- Name: TABLE admin; Type: ACL; Schema: test_schema; Owner: postgres
+-- Name: profile Enable users to view their own data only; Type: POLICY; Schema: sveltekit_template; Owner: postgres
 --
 
-GRANT ALL ON TABLE test_schema.admin TO service_role;
-GRANT ALL ON TABLE test_schema.admin TO anon;
-GRANT ALL ON TABLE test_schema.admin TO authenticated;
+CREATE POLICY "Enable users to view their own data only" ON sveltekit_template.profile FOR SELECT TO authenticated USING ((( SELECT auth.uid() AS uid) = id));
 
 
 --
--- Name: TABLE profile; Type: ACL; Schema: test_schema; Owner: postgres
+-- Name: account_notification; Type: ROW SECURITY; Schema: sveltekit_template; Owner: postgres
 --
 
-GRANT ALL ON TABLE test_schema.profile TO service_role;
-GRANT ALL ON TABLE test_schema.profile TO anon;
-GRANT ALL ON TABLE test_schema.profile TO authenticated;
-
+ALTER TABLE sveltekit_template.account_notification ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: TABLE role; Type: ACL; Schema: test_schema; Owner: postgres
+-- Name: admin; Type: ROW SECURITY; Schema: sveltekit_template; Owner: postgres
 --
 
-GRANT ALL ON TABLE test_schema.role TO service_role;
-GRANT ALL ON TABLE test_schema.role TO anon;
-GRANT ALL ON TABLE test_schema.role TO authenticated;
-
+ALTER TABLE sveltekit_template.admin ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: TABLE role_account; Type: ACL; Schema: test_schema; Owner: postgres
+-- Name: profile; Type: ROW SECURITY; Schema: sveltekit_template; Owner: postgres
 --
 
-GRANT ALL ON TABLE test_schema.role_account TO service_role;
-GRANT ALL ON TABLE test_schema.role_account TO anon;
-GRANT ALL ON TABLE test_schema.role_account TO authenticated;
-
+ALTER TABLE sveltekit_template.profile ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: TABLE session; Type: ACL; Schema: test_schema; Owner: postgres
+-- Name: role; Type: ROW SECURITY; Schema: sveltekit_template; Owner: postgres
 --
 
-GRANT ALL ON TABLE test_schema.session TO service_role;
-GRANT ALL ON TABLE test_schema.session TO anon;
-GRANT ALL ON TABLE test_schema.session TO authenticated;
-
+ALTER TABLE sveltekit_template.role ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: TABLE test; Type: ACL; Schema: test_schema; Owner: postgres
+-- Name: role_account; Type: ROW SECURITY; Schema: sveltekit_template; Owner: postgres
 --
 
-GRANT ALL ON TABLE test_schema.test TO anon;
-GRANT ALL ON TABLE test_schema.test TO authenticated;
-GRANT ALL ON TABLE test_schema.test TO service_role;
-
+ALTER TABLE sveltekit_template.role_account ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: test_schema; Owner: postgres
+-- Name: session; Type: ROW SECURITY; Schema: sveltekit_template; Owner: postgres
 --
 
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA test_schema GRANT ALL ON SEQUENCES TO anon;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA test_schema GRANT ALL ON SEQUENCES TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA test_schema GRANT ALL ON SEQUENCES TO service_role;
+ALTER TABLE sveltekit_template.session ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: SCHEMA sveltekit_template; Type: ACL; Schema: -; Owner: postgres
+--
+
+GRANT USAGE ON SCHEMA sveltekit_template TO anon;
+GRANT USAGE ON SCHEMA sveltekit_template TO authenticated;
+GRANT USAGE ON SCHEMA sveltekit_template TO service_role;
 
 
 --
--- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: test_schema; Owner: postgres
+-- Name: TABLE account_notification; Type: ACL; Schema: sveltekit_template; Owner: postgres
 --
 
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA test_schema GRANT ALL ON FUNCTIONS TO anon;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA test_schema GRANT ALL ON FUNCTIONS TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA test_schema GRANT ALL ON FUNCTIONS TO service_role;
+GRANT ALL ON TABLE sveltekit_template.account_notification TO service_role;
+GRANT ALL ON TABLE sveltekit_template.account_notification TO anon;
+GRANT ALL ON TABLE sveltekit_template.account_notification TO authenticated;
 
 
 --
--- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: test_schema; Owner: postgres
+-- Name: TABLE admin; Type: ACL; Schema: sveltekit_template; Owner: postgres
 --
 
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA test_schema GRANT ALL ON TABLES TO anon;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA test_schema GRANT ALL ON TABLES TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA test_schema GRANT ALL ON TABLES TO service_role;
+GRANT ALL ON TABLE sveltekit_template.admin TO service_role;
+GRANT ALL ON TABLE sveltekit_template.admin TO anon;
+GRANT ALL ON TABLE sveltekit_template.admin TO authenticated;
+
+
+--
+-- Name: TABLE profile; Type: ACL; Schema: sveltekit_template; Owner: postgres
+--
+
+GRANT ALL ON TABLE sveltekit_template.profile TO service_role;
+GRANT ALL ON TABLE sveltekit_template.profile TO anon;
+GRANT ALL ON TABLE sveltekit_template.profile TO authenticated;
+
+
+--
+-- Name: TABLE role; Type: ACL; Schema: sveltekit_template; Owner: postgres
+--
+
+GRANT ALL ON TABLE sveltekit_template.role TO service_role;
+GRANT ALL ON TABLE sveltekit_template.role TO anon;
+GRANT ALL ON TABLE sveltekit_template.role TO authenticated;
+
+
+--
+-- Name: TABLE role_account; Type: ACL; Schema: sveltekit_template; Owner: postgres
+--
+
+GRANT ALL ON TABLE sveltekit_template.role_account TO service_role;
+GRANT ALL ON TABLE sveltekit_template.role_account TO anon;
+GRANT ALL ON TABLE sveltekit_template.role_account TO authenticated;
+
+
+--
+-- Name: TABLE session; Type: ACL; Schema: sveltekit_template; Owner: postgres
+--
+
+GRANT ALL ON TABLE sveltekit_template.session TO service_role;
+GRANT ALL ON TABLE sveltekit_template.session TO anon;
+GRANT ALL ON TABLE sveltekit_template.session TO authenticated;
+
+
+--
+-- Name: TABLE test; Type: ACL; Schema: sveltekit_template; Owner: postgres
+--
+
+GRANT ALL ON TABLE sveltekit_template.test TO anon;
+GRANT ALL ON TABLE sveltekit_template.test TO authenticated;
+GRANT ALL ON TABLE sveltekit_template.test TO service_role;
+
+
+--
+-- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: sveltekit_template; Owner: postgres
+--
+
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA sveltekit_template GRANT ALL ON SEQUENCES TO anon;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA sveltekit_template GRANT ALL ON SEQUENCES TO authenticated;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA sveltekit_template GRANT ALL ON SEQUENCES TO service_role;
+
+
+--
+-- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: sveltekit_template; Owner: postgres
+--
+
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA sveltekit_template GRANT ALL ON FUNCTIONS TO anon;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA sveltekit_template GRANT ALL ON FUNCTIONS TO authenticated;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA sveltekit_template GRANT ALL ON FUNCTIONS TO service_role;
+
+
+--
+-- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: sveltekit_template; Owner: postgres
+--
+
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA sveltekit_template GRANT ALL ON TABLES TO anon;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA sveltekit_template GRANT ALL ON TABLES TO authenticated;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA sveltekit_template GRANT ALL ON TABLES TO service_role;
 
 
 --
