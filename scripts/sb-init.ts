@@ -142,18 +142,6 @@ export default async () => {
 	`.trim()
 	);
 	// Generate the supabase types
-	// const contents = await runTask(
-	// 	'npx',
-	// 	'supabase',
-	// 	'gen',
-	// 	'types',
-	// 	'typescript',
-	// 	'--db-url',
-	// 	`postgres://postgres.${config.supabase.tenant_id}:${config.supabase.pg_pass}@${config.supabase.local_ip}:5432/postgres`,
-	// 	'--schema',
-	// 	config.supabase.schema + ',public'
-	// ).unwrap();
-
 	const contents = await runTask(
 		'npx',
 		'supabase',
@@ -162,7 +150,10 @@ export default async () => {
 		'typescript',
 		'--db-url',
 		`postgres://postgres.${config.supabase.tenant_id}:${config.supabase.pg_pass}@${config.supabase.local_ip}:5432/postgres`,
+		'--schema',
+		config.supabase.schema + ',public'
 	).unwrap();
+
 
 	// Save raw supabase types
 	fs.writeFileSync('src/lib/types/supabase.ts', contents);
