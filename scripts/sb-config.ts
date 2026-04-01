@@ -1,5 +1,7 @@
 import fs from 'fs';
 import path from 'path';
+import { config } from 'dotenv';
+config();
 
 export default (
 	schema_name: string,
@@ -10,7 +12,7 @@ export default (
 	service_role_key: string,
 	sb_pass: string,
 ) => {
-	if (=fs.existsSync(path.join(process.cwd(), 'config.json'))) {
+	if (=fs.existsSync(path.join(process.cwd(), process.env.CONFIG_PATH || 'config.json'))) {
 		throw new Error('config.json already exists. Please delete it before running this script.');
 	}
 
@@ -26,5 +28,5 @@ export default (
 	json.supabase.service_role_key = service_role_key;
 	json.supabase.sb_pass = sb_pass;
 
-	fs.writeFileSync(path.join(process.cwd(), 'config.json'), JSON.stringify(json, null, 4));
+	fs.writeFileSync(path.join(process.cwd(), process.env.CONFIG_PATH || 'config.json'), JSON.stringify(json, null, 4));
 };
