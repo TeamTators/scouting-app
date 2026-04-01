@@ -38,8 +38,8 @@ export const runTask = (
 						{
 							env: {
 								...process.env,
-								...env,
-							},
+								...env
+							}
 						},
 						(error, stdout) => {
 							if (error) return rej(error);
@@ -51,9 +51,7 @@ export const runTask = (
 	}
 
 	// Shell mode (keeps your existing behavior)
-	const command = [envOrCommand as string, commandOrArg, ...args]
-		.map(String)
-		.join(' ');
+	const command = [envOrCommand as string, commandOrArg, ...args].map(String).join(' ');
 
 	return attemptAsync(
 		async () =>

@@ -4,7 +4,7 @@ import { config } from '../src/lib/server/utils/env';
 export default () => {
 	return runTask(
 		{
-			PGPASSWORD: config.supabase.pg_pass,
+			PGPASSWORD: config.supabase.pg_pass
 		},
 		'psql',
 		'-h',

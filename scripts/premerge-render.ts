@@ -88,10 +88,7 @@ export default async (...args: string[]) => {
 		.replaceAll('/sveltekit-template', `/${repoName}`);
 	await fs.writeFile(path.resolve(process.cwd(), 'README.md'), readme);
 
-	await fs.writeFile(
-		path.resolve(process.cwd(), '.env'),
-		'CONFIG_PATH=./config.json',
-	)
+	await fs.writeFile(path.resolve(process.cwd(), '.env'), 'CONFIG_PATH=./config.json');
 
 	await fs.copyFile(
 		path.resolve(process.cwd(), 'config.example.json'),

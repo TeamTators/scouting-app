@@ -55,7 +55,10 @@ jobs:
         run: |
           echo "Setting up Supabase config..."
           COMMIT_HASH=$(git rev-parse --short HEAD)
-          pnpm run sb:config ${COMMIT_HASH} ${{ secrets.SB_TENANT_ID }} ${{ secrets.SB_PG_PASS }} ${{ secrets.SB_ANON_KEY }} ${{ secrets.SB_DOMAIN }} ${{ secrets.SB_SERVICE_ROLE_KEY }} ${{ secrets.SB_DB_PORT }} ${{ secrets.SB_SB_PASS }}
+          SCHEMA_NAME="check_${COMMIT_HASH}"
+          pnpm run sb:config tenant_id=${{ secrets.SB_TENANT_ID }} pg_pass=${{ secrets.SB_PG_PASS }} anon_key=${{ secrets.SB_ANON_KEY }} domain=${{ secrets.SB_DOMAIN }} service_role_key=${{ secrets.SB_SERVICE_ROLE_KEY }} sb_pass=${{ secrets.SB_SB_PASS }} local_ip=${{ secrets.SB_LOCAL_IP }} --force
+          pnpm run sb:set-schema ${SCHEMA_NAME}
+          pnpm run sb:push
 
       - name: Init supabase types
         run: pnpm run sb:init
