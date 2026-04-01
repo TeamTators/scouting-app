@@ -11,7 +11,7 @@
 		"tenant_id": "your-tenant-id",
 		"pg_pass": "your-supabase-password",
 		"port": 8000,
-		"protocol": "http",
+		"protocol": "https",
 		"anon_key": "your_anon_key",
 		"domain": "supabase_domain",
 		"local_ip": "127.0.0.1",

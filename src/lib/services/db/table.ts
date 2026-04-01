@@ -422,6 +422,14 @@ export class Table<Name extends string, Type extends SchemaDefinition> {
 		});
 	}
 
+	/**
+	 * Fetches records with pagination based on a custom getter function.
+	 * This allows for complex queries that may not be directly supported by Dexie's API.
+	 * @param col - The column name to filter on
+	 * @param op - The comparison operator to use for filtering
+	 * @param value - The value used to compare
+	 * @param config - Read config
+	 */
 	where<K extends keyof Type>(
 		col: Extract<K, string>,
 		op: 'eq' | 'ne' | 'gt' | 'lt' | 'gte' | 'lte',
