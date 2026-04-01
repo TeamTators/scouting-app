@@ -3,6 +3,7 @@ import { sleep } from 'ts-utils/sleep';
 import fs from 'fs/promises';
 import path from 'path';
 import { config } from '../src/lib/server/utils/env';
+import { fromSnakeCase, toSnakeCase } from 'ts-utils';
 
 export default async (...args: string[]) => {
 	if (!args.includes('--force')) {
@@ -87,7 +88,21 @@ export default async (...args: string[]) => {
 		.replaceAll('/sveltekit-template', `/${repoName}`);
 	await fs.writeFile(path.resolve(process.cwd(), 'README.md'), readme);
 
-	config.supabase.schema = repoName;
+	await fs.writeFile(
+		path.resolve(process.cwd(), '.env'),
+		'CONFIG_PATH=./config.json',
+	)
+
+	await fs.copyFile(
+		path.resolve(process.cwd(), 'config.example.json'),
+		path.resolve(process.cwd(), 'config.json')
+	);
+
+	const { default: setSchema } = await import('./sb-set-schema');
+
+	await setSchema(repoName);
+
+	config.supabase.schema = toSnakeCase(fromSnakeCase(repoName, '-'), '_').toLowerCase();
 	await fs.writeFile(
 		path.resolve(process.cwd(), 'config.example.json'),
 		JSON.stringify(config, null, 4)

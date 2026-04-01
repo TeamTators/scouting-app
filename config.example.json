@@ -7,7 +7,7 @@
 		"protocol": "http"
 	},
 	"supabase": {
-		"schema": "schema_name",
+		"schema": "sveltekit_template",
 		"tenant_id": "your-tenant-id",
 		"pg_pass": "your-supabase-password",
 		"port": 8000,

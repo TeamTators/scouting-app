@@ -51,7 +51,7 @@ export default async (schema: string) => {
 
 	// backup files
 	for (const file of filesToEdit) {
-try {
+		try {
 			const filePath = path.resolve(process.cwd(), file);
 			const name = path.basename(filePath);
 			const backupPath = path.join(
@@ -69,9 +69,9 @@ try {
 			const updatedContents = contents.replace(new RegExp(currentSchema, 'g'), schema);
 			await fs.writeFile(filePath, updatedContents, 'utf-8');
 			console.log(`Updated ${file} with new schema name: ${schema}`);
-} catch (error) {
-	console.warn(`Failed to update ${file}:`, error);
-	console.warn(`Please check the file manually to ensure the schema name is updated to ${schema}.`);
-}
+		} catch (error) {
+			console.warn(`Failed to update ${file}:`, error);
+			console.warn(`Please check the file manually to ensure the schema name is updated to ${schema}.`);
+		}
 	}
 };
