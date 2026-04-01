@@ -41,6 +41,11 @@ export default (
 		}
 	}
 
+	for (const [key, value] of Object.entries({schema_name, tenant_id, pg_pass, anon_key, domain, service_role_key, sb_pass})) {
+		if (value === '') {
+			throw new Error(`Missing value for ${key}. Please provide a value before running this script.`);
+		}
+	}
 
 	const force = args.includes('--force') || args.includes('-f');
 	if (!force && fs.existsSync(path.join(process.cwd(), process.env.CONFIG_PATH || 'config.json'))) {
