@@ -29,12 +29,6 @@ jobs:
           pnpm add -D typescript
           pnpm install --frozen-lockfile
 
-      - name: Set up Supabase Config
-        run: |
-          echo "Setting up Supabase config..."
-          COMMIT_HASH=$(git rev-parse --short HEAD)
-          pnpm run sb:config ${COMMIT_HASH} ${{ secrets.SB_TENANT_ID }} ${{ secrets.SB_PG_PASS }} ${{ secrets.SB_ANON_KEY }} ${{ secrets.SB_DOMAIN }} ${{ secrets.SB_SERVICE_ROLE_KEY }} ${{ secrets.SB_DB_PORT }} ${{ secrets.SB_SB_PASS }}
-
       - name: Load .env variables
         run: |
           touch .env
@@ -42,6 +36,12 @@ jobs:
           echo "OAUTH2_CLIENT_SECRET=1234567890" >> .env
           echo "CONFIG_PATH=./config.json" >> .env
           export $(cat .env | xargs)
+      - name: Set up Supabase Config
+        run: |
+          echo "Setting up Supabase config..."
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          pnpm run sb:config ${COMMIT_HASH} ${{ secrets.SB_TENANT_ID }} ${{ secrets.SB_PG_PASS }} ${{ secrets.SB_ANON_KEY }} ${{ secrets.SB_DOMAIN }} ${{ secrets.SB_SERVICE_ROLE_KEY }} ${{ secrets.SB_DB_PORT }} ${{ secrets.SB_SB_PASS }}
+
 
       - name: Init supabase types
         run: pnpm run sb:init

@@ -25,6 +25,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Load .env variables
+        run: |
+          touch .env
+          echo "OAUTH2_CLIENT_ID=1234567890" >> .env
+          echo "OAUTH2_CLIENT_SECRET=1234567890" >> .env
+          echo "CONFIG_PATH=./config.json" >> .env
+          export $(cat .env | xargs)
       - name: Install dependencies
         run: |
           echo "Installing dependencies..."
@@ -37,13 +44,6 @@ jobs:
           COMMIT_HASH=$(git rev-parse --short HEAD)
           pnpm run sb:config ${COMMIT_HASH} ${{ secrets.SB_TENANT_ID }} ${{ secrets.SB_PG_PASS }} ${{ secrets.SB_ANON_KEY }} ${{ secrets.SB_DOMAIN }} ${{ secrets.SB_SERVICE_ROLE_KEY }} ${{ secrets.SB_DB_PORT }} ${{ secrets.SB_SB_PASS }}
 
-      - name: Load .env variables
-        run: |
-          touch .env
-          echo "OAUTH2_CLIENT_ID=1234567890" >> .env
-          echo "OAUTH2_CLIENT_SECRET=1234567890" >> .env
-          echo "CONFIG_PATH=./config.json" >> .env
-          export $(cat .env | xargs)
 
 
       - name: Init supabase types
