@@ -50,10 +50,10 @@ jobs:
       - name: Run Vitest tests
         run: npm run test:unit
 
-      - name: Clean up Supabase config
-        if: always()
-        run: rm -f config.json .env
-
       - name: Drop Supabase schema
         if: always()
         run: pnpm run sb:drop-schema
+
+      - name: Clean up Supabase config
+        if: always()
+        run: rm -f config.json .env
