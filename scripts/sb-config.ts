@@ -67,6 +67,7 @@ export default (
 	json.supabase.domain = domain;
 	json.supabase.service_role_key = service_role_key;
 	json.supabase.sb_pass = sb_pass;
+	json.supabase.local_ip = local_ip;
 
 	fs.writeFileSync(path.join(process.cwd(), process.env.CONFIG_PATH || 'config.json'), JSON.stringify(json, null, 4));
 };
