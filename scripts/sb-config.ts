@@ -9,9 +9,8 @@ export default (
 	domain: string,
 	service_role_key: string,
 	sb_pass: string,
-	force?: string
 ) => {
-	if (force !== 'force' && fs.existsSync(path.join(process.cwd(), 'config.json'))) {
+	if (=fs.existsSync(path.join(process.cwd(), 'config.json'))) {
 		throw new Error('config.json already exists. Please delete it before running this script.');
 	}
 
