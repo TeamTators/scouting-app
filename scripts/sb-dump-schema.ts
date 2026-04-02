@@ -14,8 +14,13 @@ export default async () => {
 		'-d',
 		'postgres',
 		'--schema-only',
-		'--schema',
-		config.supabase.schema,
+		'--schema', config.supabase.schema,
+		'--schema', 'public',
+		'--schema', 'auth',
+		'--schema', 'storage',
+		'--schema', 'realtime',
+		'--schema', 'extensions',
+		'--schema', 'functions',
 		'>',
 		'supabase/schema.sql'
 	);
