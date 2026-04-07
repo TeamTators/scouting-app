@@ -58,7 +58,7 @@ export const GET = async (event) => {
 
 		const password = crypto.randomUUID();
 
-		const { error: signUpError } = await supabase.auth.signUp({
+		const { error: signUpError, data: signUpData } = await supabase.auth.signUp({
 			email: String(info.data.email),
 			password,
 			options: {
@@ -68,6 +68,11 @@ export const GET = async (event) => {
 
 		if (signUpError) {
 			terminal.error('Failed to sign up user:', signUpError);
+			throw error(ServerCode.internalServerError, 'Failed to sign up user');
+		}
+
+		if (!signUpData.user) {
+			terminal.error('No user data returned from sign up:', signUpData);
 			throw error(ServerCode.internalServerError, 'Failed to sign up user');
 		}
 
@@ -85,6 +90,7 @@ export const GET = async (event) => {
 
 		const res = await profile
 			.new({
+				id: signUpData.user.id,
 				email: String(info.data.email),
 				first_name: String(info.data.name).split(' ')[0],
 				last_name: String(info.data.name).split(' ').slice(1).join(' '),

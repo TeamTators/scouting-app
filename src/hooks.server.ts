@@ -19,7 +19,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	event.locals.start = performance.now();
 	event.locals.supabase = createServerClient<DB>(
 		`${config.supabase.protocol}://${config.supabase.domain}:${config.supabase.port}`,
-		config.supabase.anon_key,
+		config.supabase.public_key,
 		{
 			cookies: {
 				getAll: () => event.cookies.getAll(),

@@ -27,8 +27,6 @@ export const runTask = (
 	if (hasEnv) {
 		const env = envOrCommand;
 
-		console.log('Running command with env:', env);
-
 		return attemptAsync(
 			async () =>
 				new Promise<string>((res, rej) => {
@@ -56,7 +54,6 @@ export const runTask = (
 	return attemptAsync(
 		async () =>
 			new Promise<string>((res, rej) => {
-				console.log('Running command:', command);
 				exec(command, (error, stdout) => {
 					if (error) return rej(error);
 					res(stdout.trim());

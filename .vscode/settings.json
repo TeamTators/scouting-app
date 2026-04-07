@@ -1,7 +1,7 @@
 {
 	"colorMyText.configurations": [
 		{
-			"paths": ["*.html", "*.mjml", "*.md"],
+			"paths": ["*.html", "*.mjml", "*.md", "*.sql"],
 			"rules": [
 				{
 					"patterns": ["\\{\\{ [^}]+\\}\\}"],

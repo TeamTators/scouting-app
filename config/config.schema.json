@@ -65,13 +65,13 @@
 					"enum": ["http", "https"],
 					"description": "Protocol to use for Supabase (for self-hosted instances)"
 				},
-				"anon_key": {
+				"public_key": {
 					"type": "string",
-					"description": "Supabase anon key (for client-side use)"
+					"description": "Supabase public key (for client-side use)"
 				},
-				"service_role_key": {
+				"secret_key": {
 					"type": "string",
-					"description": "Supabase service role key (for server-side use)"
+					"description": "Supabase secret key (for server-side use)"
 				},
 				"local_ip": {
 					"type": "string",
@@ -95,8 +95,8 @@
 				"domain",
 				"port",
 				"protocol",
-				"anon_key",
-				"service_role_key",
+				"public_key",
+				"secret_key",
 				"schema",
 				"local_ip",
 				"db_port",

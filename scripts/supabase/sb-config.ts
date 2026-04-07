@@ -6,9 +6,9 @@ config();
 export default (...args: string[]) => {
 	let tenant_id = '',
 		pg_pass = '',
-		anon_key = '',
+		public_key = '',
 		domain = '',
-		service_role_key = '',
+		secret_key = '',
 		sb_pass = '',
 		local_ip = '';
 
@@ -21,14 +21,14 @@ export default (...args: string[]) => {
 			case 'pg_pass':
 				pg_pass = value;
 				break;
-			case 'anon_key':
-				anon_key = value;
+			case 'public_key':
+				public_key = value;
 				break;
 			case 'domain':
 				domain = value;
 				break;
-			case 'service_role_key':
-				service_role_key = value;
+			case 'secret_key':
+				secret_key = value;
 				break;
 			case 'sb_pass':
 				sb_pass = value;
@@ -42,9 +42,9 @@ export default (...args: string[]) => {
 	for (const [key, value] of Object.entries({
 		tenant_id,
 		pg_pass,
-		anon_key,
+		public_key: public_key,
 		domain,
-		service_role_key,
+		secret_key: secret_key,
 		sb_pass,
 		local_ip
 	})) {
@@ -66,9 +66,9 @@ export default (...args: string[]) => {
 
 	json.supabase.tenant_id = tenant_id;
 	json.supabase.pg_pass = pg_pass;
-	json.supabase.anon_key = anon_key;
+	json.supabase.public_key = public_key;
 	json.supabase.domain = domain;
-	json.supabase.service_role_key = service_role_key;
+	json.supabase.secret_key = secret_key;
 	json.supabase.sb_pass = sb_pass;
 	json.supabase.local_ip = local_ip;
 

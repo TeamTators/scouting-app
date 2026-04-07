@@ -1,7 +1,8 @@
-import { runTask } from '../src/lib/server/utils/task';
-import { config } from '../src/lib/server/utils/env';
+import { runTask } from '../../src/lib/server/utils/task';
+import { config } from '../../src/lib/server/utils/env';
 import fs from 'fs';
 import ts from 'typescript';
+import { dbUrl } from '../../src/lib/server/services/supabase';
 
 /**
  * Generates a Zod schema string for a given schema property in a TypeScript file.
@@ -128,7 +129,7 @@ ${tableStrings}
 } as const;`;
 }
 
-export default async () => {
+export default async (...args: string[]) => {
 	fs.writeFileSync(
 		'src/lib/types/supabase-schema.ts',
 		`
@@ -142,15 +143,19 @@ export const schemaName: SchemaName = '${config.supabase.schema}';`.trim()
 	);
 	// Generate the supabase types
 	const contents = await runTask(
+		{
+			SUPABASE_DB_PASSWORD: config.supabase.pg_pass
+		},
 		'npx',
 		'supabase',
 		'gen',
 		'types',
 		'typescript',
 		'--db-url',
-		`postgres://postgres.${config.supabase.tenant_id}:${config.supabase.pg_pass}@${config.supabase.local_ip}:5432/postgres`,
+		dbUrl,
 		'--schema',
-		config.supabase.schema + ',public'
+		config.supabase.schema + ',public',
+		...args
 	).unwrap();
 
 	// Save raw supabase types

@@ -37,7 +37,7 @@ export default defineConfig({
 				'**/coverage/**',
 				'docs/**',
 				'**/public/**',
-				'**/.svelte-kit/**',
+				'**/.svelte-kit/**'
 			]
 		}
 	},
@@ -51,7 +51,7 @@ export default defineConfig({
 			sse: config.sse,
 			supabase: {
 				url: `${config.supabase.protocol}://${config.supabase.domain}`,
-				anon_key: config.supabase.anon_key
+				public_key: config.supabase.public_key
 			}
 		})
 	}

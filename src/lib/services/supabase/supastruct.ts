@@ -322,8 +322,11 @@ export class SupaStruct<Name extends Names> {
 					}
 				}
 			)
-			.subscribe((status) => {
+			.subscribe((status, error) => {
 				this.log(`Subscription status for channel ${this.name}:`, status);
+				if (error) {
+					this.log(`Subscription error for channel ${this.name}:`, error);
+				}
 				this.emit('realtime', status);
 			});
 		return true;
@@ -1426,7 +1429,7 @@ export class SupaStruct<Name extends Names> {
 		get().then((data) => {
 			arr.set(data.map((item) => this.Generator(item)));
 		});
-		this.registerArray(cacheKey, arr, (data) => ids.includes(String(data.id)));
+		this.registerArray(cacheKey, arr, (data) => ids.includes(String(data.id) as any));
 		return arr;
 	}
 }

@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { config } from '../src/lib/server/utils/env';
+import { config } from '../../src/lib/server/utils/env';
 
 export default async (schema: string) => {
 	let tackOn = false;
@@ -43,8 +43,6 @@ export default async (schema: string) => {
 	const filesToEdit = [
 		'./src/lib/types/supabase.ts',
 		'./src/lib/types/supabase-schema.ts',
-		'./supabase/roles.sql',
-		'./supabase/schema.sql',
 		'./config.json'
 	];
 	const date = Date.now();

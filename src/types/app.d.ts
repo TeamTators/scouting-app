@@ -50,7 +50,7 @@ declare global {
 		};
 		supabase: {
 			url: string;
-			anon_key: string;
+			public_key: string;
 		};
 	};
 }

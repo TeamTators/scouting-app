@@ -7,12 +7,12 @@ import { isBrowser, createServerClient, createBrowserClient } from '@supabase/ss
 export const load = async (event) => {
 	event.depends('supabase:auth');
 	const supabase = isBrowser()
-		? createBrowserClient(__APP_ENV__.supabase.url, __APP_ENV__.supabase.anon_key, {
+		? createBrowserClient(__APP_ENV__.supabase.url, __APP_ENV__.supabase.public_key, {
 				global: {
 					fetch: event.fetch
 				}
 			})
-		: createServerClient(__APP_ENV__.supabase.url, __APP_ENV__.supabase.anon_key, {
+		: createServerClient(__APP_ENV__.supabase.url, __APP_ENV__.supabase.public_key, {
 				global: {
 					fetch: event.fetch
 				},

@@ -12,10 +12,10 @@
 		"pg_pass": "your-supabase-password",
 		"port": 8000,
 		"protocol": "https",
-		"anon_key": "your_anon_key",
+		"public_key": "your_public_key",
 		"domain": "supabase_domain",
 		"local_ip": "127.0.0.1",
-		"service_role_key": "service_role_key",
+		"secret_key": "your_secret_key",
 		"db_port": 5432,
 		"sb_pass": "your-supabase-password"
 	},

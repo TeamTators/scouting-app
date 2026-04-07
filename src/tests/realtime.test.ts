@@ -10,8 +10,8 @@ import { SupaStructData } from '$lib/services/supabase/supastruct-data';
 describe('Realtime Tests', () => {
 	const struct = SupaStruct.get({
 		client: supabase,
-		name: 'test'
-		// debug: true
+		name: 'test',
+		debug: true
 	});
 
 	struct.setupListeners();
