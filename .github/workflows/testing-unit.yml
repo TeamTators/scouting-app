@@ -40,9 +40,11 @@ jobs:
       - name: Set up Supabase Config
         run: |
           echo "Setting up Supabase config..."
+          pnpm sb:start
           COMMIT_HASH=$(git rev-parse --short HEAD)
           SCHEMA_NAME="unit_test_${COMMIT_HASH}"
-          pnpm run sb:config pg_pass=postgres public_key=${{ secrets.SB_PUBLIC_KEY }} domain=127.0.0.1 secret_key=${{ secrets.SB_SECRET_KEY }} local_ip=127.0.0.1 --force
+          # pnpm run sb:config pg_pass=postgres public_key=${{ secrets.SB_PUBLIC_KEY }} domain=127.0.0.1 secret_key=${{ secrets.SB_SECRET_KEY }} local_ip=127.0.0.1 --force
+          pnpm run sb:local-config
           pnpm run sb:set-schema ${SCHEMA_NAME}
           pnpm run sb:push
 
