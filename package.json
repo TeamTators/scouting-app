@@ -32,7 +32,7 @@
 		"restore": "pnpm script restore",
 		"dev:docs": "vitepress preview docs",
 		"prepare": "husky install",
-		"sb:start": "npx supabase start >> supabase/sb-start.log",
+		"sb:start": "npx supabase start > supabase/sb-start.log",
 		"sb:stop": "npx supabase stop",
 		"sb:pull-types": "pnpm script supabase/sb-pull-types",
 		"sb": "npx supabase",

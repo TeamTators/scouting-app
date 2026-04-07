@@ -39,11 +39,17 @@ export default async (schema: string) => {
 	if (tackOn) {
 		schema = currentSchema + '_' + schema;
 	}
+
+	const migrations = await fs.readdir(path.join(process.cwd(), 'supabase', 'migrations'));
+
 	console.log(`New schema: ${schema}`);
 	const filesToEdit = [
 		'./src/lib/types/supabase.ts',
 		'./src/lib/types/supabase-schema.ts',
-		'./config.json'
+		'./supabase/snipppets/create_schema.sql',
+		'./config.json',
+		'./supabase/config.toml',
+		...migrations.map((file) => `./supabase/migrations/${file}`)
 	];
 	const date = Date.now();
 

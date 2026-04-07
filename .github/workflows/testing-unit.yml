@@ -42,7 +42,7 @@ jobs:
           echo "Setting up Supabase config..."
           COMMIT_HASH=$(git rev-parse --short HEAD)
           SCHEMA_NAME="unit_test_${COMMIT_HASH}"
-          pnpm run sb:config tenant_id=${{ secrets.SB_TENANT_ID }} pg_pass=${{ secrets.SB_PG_PASS }} public_key=${{ secrets.SB_PUBLIC_KEY }} domain=${{ secrets.SB_DOMAIN }} secret_key=${{ secrets.SB_SECRET_KEY }} sb_pass=${{ secrets.SB_SB_PASS }} local_ip=${{ secrets.SB_LOCAL_IP }} --force
+          pnpm run sb:config pg_pass=postgres public_key=${{ secrets.SB_PUBLIC_KEY }} domain=127.0.0.1 secret_key=${{ secrets.SB_SECRET_KEY }} local_ip=127.0.0.1 --force
           pnpm run sb:set-schema ${SCHEMA_NAME}
           pnpm run sb:push
 

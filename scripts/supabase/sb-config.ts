@@ -40,8 +40,6 @@ export default (...args: string[]) => {
 	}
 
 	for (const [key, value] of Object.entries({
-		tenant_id,
-		pg_pass,
 		public_key: public_key,
 		domain,
 		secret_key: secret_key,
@@ -64,13 +62,13 @@ export default (...args: string[]) => {
 		fs.readFileSync(path.join(process.cwd(), 'config.example.json'), 'utf-8')
 	);
 
-	json.supabase.tenant_id = tenant_id;
-	json.supabase.pg_pass = pg_pass;
-	json.supabase.public_key = public_key;
-	json.supabase.domain = domain;
-	json.supabase.secret_key = secret_key;
-	json.supabase.sb_pass = sb_pass;
-	json.supabase.local_ip = local_ip;
+	json.supabase.tenant_id = tenant_id || json.supabase.tenant_id;
+	json.supabase.pg_pass = pg_pass || json.supabase.pg_pass;
+	json.supabase.public_key = public_key || json.supabase.public_key;
+	json.supabase.domain = domain || json.supabase.domain;
+	json.supabase.secret_key = secret_key || json.supabase.secret_key;
+	json.supabase.sb_pass = sb_pass || json.supabase.sb_pass;
+	json.supabase.local_ip = local_ip || json.supabase.local_ip;
 
 	fs.writeFileSync(
 		path.join(process.cwd(), process.env.CONFIG_PATH || 'config.json'),
