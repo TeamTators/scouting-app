@@ -272,11 +272,13 @@
 						<Comments {app} />
 					</div>
 					<div class="row mb-3">
-						<div class="col-md-4 col-sm-12">
-							<ScoutInput {accounts} />
-						</div>
 						<div class="col-md-8 col-sm-12">
 							<ScoreContribution {app} />
+						</div>
+					</div>
+					<div class="row mb-3">
+						<div class="col-md-4 col-sm-12">
+							<ScoutInput {accounts} />
 						</div>
 					</div>
 					<div class="row mb-3">
