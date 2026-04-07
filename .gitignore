@@ -61,4 +61,4 @@ src/lib/types/supabase.ts
 src/lib/types/supabase-zod.ts
 private/backups/
 
-supabase/migrations/
+# supabase/migrations/
