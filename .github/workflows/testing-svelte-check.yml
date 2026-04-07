@@ -42,10 +42,10 @@ jobs:
       - name: Set up Supabase Config
         run: |
           echo "Setting up Supabase config..."
-          pnpm sb:start
           COMMIT_HASH=$(git rev-parse --short HEAD)
           SCHEMA_NAME="unit_test_${COMMIT_HASH}"
-          # pnpm run sb:config pg_pass=postgres public_key=${{ secrets.SB_PUBLIC_KEY }} domain=127.0.0.1 secret_key=${{ secrets.SB_SECRET_KEY }} local_ip=127.0.0.1 --force
+          sed -i "s/^project_id = .*/project_id = \"${COMMIT_HASH}\"/" supabase/config.toml
+          pnpm sb:start
           pnpm run sb:local-config
           pnpm run sb:set-schema ${SCHEMA_NAME}
           pnpm run sb:push
@@ -61,6 +61,10 @@ jobs:
       - name: Drop Supabase schema
         if: always()
         run: pnpm run sb:drop-schema
+
+      - name: Shutdown supabase
+        if: always()
+        run: pnpm sb:stop
 
       - name: Clean up Supabase config
         if: always()
