@@ -65,7 +65,7 @@ export class Account extends WritableBase<{
 	getNotifications(config: { expires: Date }) {
 		return this.factory.config.notifications.get(
 			{
-				user_id: this.id
+				account_id: this.id
 			},
 			{
 				type: 'all',

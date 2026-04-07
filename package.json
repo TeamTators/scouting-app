@@ -32,13 +32,13 @@
 		"restore": "pnpm script restore",
 		"dev:docs": "vitepress preview docs",
 		"prepare": "husky install",
-		"sb:start": "npx supabase start",
+		"sb:start": "npx supabase start >> supabase/sb-start.log",
 		"sb:stop": "npx supabase stop",
-		"sb:pull": "pnpm script supabase/sb-pull",
+		"sb:pull-types": "pnpm script supabase/sb-pull-types",
 		"sb": "npx supabase",
 		"sb:db": "pnpm script supabase/sb-db",
 		"sb:reset": "pnpm script supabase/sb-reset",
-		"sb:restart": "npx supabase stop && npx supabase start"
+		"sb:restart": "pnpm sb:stop && pnpm sb:start"
 	},
 	"packageManager": "pnpm@10.30.0",
 	"engines": {

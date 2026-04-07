@@ -17,14 +17,12 @@ export const globalNotification = (notif: {
 		const { error } = await supabase.from('account_notification').insert(
 			accounts.map((a) => ({
 				account_id: a.id,
-				archived: false,
 				icon: notif.icon.name,
 				icon_type: notif.icon.type,
 				message: notif.message,
 				link: notif.link,
 				title: notif.title,
-				severity: notif.severity,
-				read: false
+				severity: notif.severity
 			}))
 		);
 

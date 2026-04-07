@@ -43,8 +43,8 @@ export class Session {
 		return String(this.config.customSession.data.id);
 	}
 
-	get userId() {
-		return this.config.customSession.data.user_id;
+	get accountId() {
+		return this.config.customSession.data.account_id;
 	}
 
 	get prevUrl() {
@@ -181,7 +181,7 @@ class SessionFactory {
 			const res = await this.config.session
 				.upsert({
 					id: sessionId,
-					user_id: data.session.user.id,
+					account_id: data.session.user.id,
 					prev_url: setUrl
 				})
 				.await()
