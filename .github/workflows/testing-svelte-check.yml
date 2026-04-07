@@ -44,7 +44,7 @@ jobs:
           echo "Setting up Supabase config..."
           COMMIT_HASH=$(git rev-parse --short HEAD)
           SCHEMA_NAME="unit_test_${COMMIT_HASH}"
-          sed -i "s/^project_id = .*/project_id = \"${COMMIT_HASH}\"/" supabase/config.toml
+          sed -i "s/^project_id = .*/project_id = \"${SCHEMA_NAME}\"/" supabase/config.toml
           pnpm sb:start
           pnpm run sb:local-config
           pnpm run sb:set-schema ${SCHEMA_NAME}
@@ -58,13 +58,9 @@ jobs:
           echo "Testing..."
           pnpm run check
 
-      - name: Drop Supabase schema
-        if: always()
-        run: pnpm run sb:drop-schema
-
       - name: Shutdown supabase
         if: always()
-        run: pnpm sb:stop
+        run: pnpm sb:stop --no-backup
 
       - name: Clean up Supabase config
         if: always()

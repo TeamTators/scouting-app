@@ -115,12 +115,9 @@ jobs:
         run: |
           docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image my-app:latest
 
-      - name: Drop Supabase schema
-        if: always()
-        run: pnpm run sb:drop-schema
       - name: Shutdown supabase
         if: always()
-        run: pnpm sb:stop
+        run: pnpm sb:stop --no-backup
 
       - name: Clean up Supabase config
         if: always()
