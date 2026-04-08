@@ -8,9 +8,8 @@ export default () => {
     const mcp = 54321;
     const postgres = 54322;
 
-    const max = 65535 - Math.max(studio, mailpit, mcp, postgres);
 
-    const add = Math.floor(Math.random() * max);
+    const add = Math.floor(Math.random() * 10000);
 
 
     const files = [
