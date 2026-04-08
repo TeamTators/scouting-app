@@ -45,6 +45,7 @@ jobs:
           COMMIT_HASH=$(git rev-parse --short HEAD)
           SCHEMA_NAME="unit_test_${COMMIT_HASH}"
           sed -i "s/^project_id = .*/project_id = \"${SCHEMA_NAME}\"/" supabase/config.toml
+          pnpm script supabase/sb-random-ports
           pnpm sb:start --debug
           echo "Waiting for supabase to be ready..."
           until pnpm run sb:status | grep -q "Development Tools"; do
