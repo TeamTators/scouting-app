@@ -15,11 +15,7 @@ const normalizeKey = (key: string) =>
 		.replace(/^_+|_+$/g, '');
 
 const normalizeSection = (section: string) =>
-	normalizeKey(
-		section
-			.trim()
-			.replace(/^[^a-zA-Z0-9]+/, '')
-	);
+	normalizeKey(section.trim().replace(/^[^a-zA-Z0-9]+/, ''));
 
 /**
  * Parse Supabase CLI startup output and extract all section parameters
@@ -73,7 +69,6 @@ export const parseSupabaseStartLog = (contents: string) => {
 		storage_s3_secret_key: z.string(),
 		storage_s3_region: z.string()
 	});
-
 
 	return zod.parse(params);
 };

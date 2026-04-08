@@ -199,7 +199,7 @@ export type Database = {
         }
         Relationships: []
       }
-      sveltekit_template: {
+      test: {
         Row: {
           age: number
           archive: boolean
