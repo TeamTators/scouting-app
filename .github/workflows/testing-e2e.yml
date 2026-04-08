@@ -45,6 +45,10 @@ jobs:
           echo "Setting up Supabase config..."
           COMMIT_HASH=$(git rev-parse --short HEAD)
           SCHEMA_NAME="e2e_test_${COMMIT_HASH}"
+          echo "Configuring local supabase"
+          pnpm run sb:local-config
+          echo "Setting schema to ${SCHEMA_NAME}..."
+          pnpm run sb:set-schema ${SCHEMA_NAME}
           sed -i "s/^project_id = .*/project_id = \"${SCHEMA_NAME}\"/" supabase/config.toml
           pnpm script supabase/sb-random-ports
           pnpm sb:start --debug
@@ -53,10 +57,6 @@ jobs:
             echo "Supabase not ready yet, waiting..."
             sleep 5
           done
-          echo "Configuring local supabase"
-          pnpm run sb:local-config
-          echo "Setting schema to ${SCHEMA_NAME}..."
-          pnpm run sb:set-schema ${SCHEMA_NAME}
           pnpm run sb:push
 
       # - name: Init supabase types
