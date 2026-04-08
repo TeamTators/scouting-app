@@ -20,9 +20,7 @@ export default async () => {
     config.supabase.tenant_id = '';
     config.supabase.pg_pass = 'postgres';
     config.supabase.domain = parsed.apis_project_url.replace(/^https?:\/\//, '');
-    config.supabase.port = 54321;
     config.supabase.protocol = 'http';
-    config.supabase.db_port = 54322;
     config.supabase.sb_pass = '';
     config.supabase.local_ip = '127.0.0.1';
 
