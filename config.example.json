@@ -10,13 +10,13 @@
 		"schema": "sveltekit_template",
 		"tenant_id": "your-tenant-id",
 		"pg_pass": "your-supabase-password",
-		"port": 8000,
+		"port": 54321,
 		"protocol": "https",
 		"public_key": "your_public_key",
 		"domain": "supabase_domain",
 		"local_ip": "127.0.0.1",
 		"secret_key": "your_secret_key",
-		"db_port": 5432,
+		"db_port": 54322,
 		"sb_pass": "your-supabase-password"
 	},
 	"sessions": {
