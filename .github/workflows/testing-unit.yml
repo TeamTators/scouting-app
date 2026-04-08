@@ -58,8 +58,8 @@ jobs:
           pnpm run sb:set-schema ${SCHEMA_NAME}
           pnpm run sb:push
 
-      - name: Init supabase types
-        run: pnpm run sb:pull-types
+      # - name: Init supabase types
+      #   run: pnpm run sb:pull-types
 
       - name: Run Vitest tests
         run: npm run test:unit
