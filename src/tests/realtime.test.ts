@@ -19,23 +19,32 @@ describe('Realtime Tests', () => {
 	it('Should run the create-update-delete flow', async () => {
 		await new Promise<void>((res) =>
 			struct.on('realtime', (status) => {
-				if (status === 'SUBSCRIBED') res();
+				if (status === 'SUBSCRIBED') setTimeout(res, 200);
 			})
 		);
-		const createPromise = new Promise<SupaStructData<'test'>>((res) => {
+		const createPromise = new Promise<SupaStructData<'test'>>((res, rej) => {
 			struct.on('new', (data) => {
 				res(data);
 			});
+			setTimeout(() => {
+				rej(new Error('Did not receive create event within 5 seconds'));
+			}, 5000);
 		});
-		const updatePromise = new Promise<SupaStructData<'test'>>((res) => {
+		const updatePromise = new Promise<SupaStructData<'test'>>((res, rej) => {
 			struct.on('update', (data) => {
 				res(data);
 			});
+			setTimeout(() => {
+				rej(new Error('Did not receive update event within 7.5 seconds'));
+			}, 7500);
 		});
-		const deletePromise = new Promise<SupaStructData<'test'>>((res) => {
+		const deletePromise = new Promise<SupaStructData<'test'>>((res, rej) => {
 			struct.on('delete', (data) => {
 				res(data);
 			});
+			setTimeout(() => {
+				rej(new Error('Did not receive delete event within 10 seconds'));
+			}, 10000);
 		});
 
 		const age = Math.round(Math.random() * 100);
