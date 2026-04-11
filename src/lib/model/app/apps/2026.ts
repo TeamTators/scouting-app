@@ -217,7 +217,7 @@ export default (config: {
 		object: blueObjects.hub1,
 		button: blueButtons.hub1,
 		alliance: 'blue',
-		staticX: true,
+		staticX: false,
 		staticY: true,
 		viewCondition: (tick) => {
 			const p = tick.prev()?.point?.slice() as Point2D;
@@ -234,7 +234,7 @@ export default (config: {
 		object: blueObjects.hub5,
 		button: blueButtons.hub5,
 		alliance: 'blue',
-		staticX: true,
+		staticX: false,
 		staticY: true,
 		viewCondition: (tick) => {
 			const p = tick.prev()?.point?.slice() as Point2D;
@@ -251,7 +251,7 @@ export default (config: {
 		object: blueObjects.hub10,
 		button: blueButtons.hub10,
 		alliance: 'blue',
-		staticX: true,
+		staticX: false,
 		staticY: true,
 		viewCondition: (tick) => {
 			const p = tick.prev()?.point?.slice() as Point2D;
@@ -268,7 +268,7 @@ export default (config: {
 		object: blueObjects.lob1,
 		button: blueButtons.lob1,
 		alliance: 'blue',
-		staticX: true,
+		staticX: false,
 		staticY: true,
 		viewCondition: (tick) => {
 			const p = tick.prev()?.point?.slice() as Point2D;
@@ -285,7 +285,7 @@ export default (config: {
 		object: blueObjects.lob5,
 		button: blueButtons.lob5,
 		alliance: 'blue',
-		staticX: true,
+		staticX: false,
 		staticY: true,
 		viewCondition: (tick) => {
 			const p = tick.prev()?.point?.slice() as Point2D;
@@ -302,7 +302,7 @@ export default (config: {
 		object: blueObjects.lob10,
 		button: blueButtons.lob10,
 		alliance: 'blue',
-		staticX: true,
+		staticX: false,
 		staticY: true,
 		viewCondition: (tick) => {
 			const p = tick.prev()?.point?.slice() as Point2D;
@@ -338,7 +338,7 @@ export default (config: {
 		alliance: 'blue',
 		staticX: false,
 		staticY: false,
-		viewCondition: () => app.matchData.alliance === 'blue'
+		//viewCondition: () => app.matchData.alliance === 'blue'
 	});
 
 	const blueher25L = app.addAppObject({
@@ -382,7 +382,7 @@ export default (config: {
 		alliance: 'blue',
 		staticX: false,
 		staticY: false,
-		viewCondition: () => app.matchData.alliance === 'blue'
+		//viewCondition: () => app.matchData.alliance === 'blue'
 	});
 
 	const blueher25R = app.addAppObject({
@@ -412,11 +412,11 @@ export default (config: {
 		//viewCondition: () => app.matchData.alliance === 'blue'
 	});
 	const redHub1 = app.addAppObject({
-		point: [0.025, 0.2],
+		point: [0.975, 0.2],
 		object: redObjects.hub1,
 		button: redButtons.hub1,
 		alliance: 'red',
-		staticX: true,
+		staticX: false,
 		staticY: true,
 		viewCondition: (tick) => {
 			const p = tick.prev()?.point?.slice() as Point2D;
@@ -429,11 +429,11 @@ export default (config: {
 	});
 
 	const redHub5 = app.addAppObject({
-		point: [0.025, 0.4],
+		point: [0.975, 0.4],
 		object: redObjects.hub5,
 		button: redButtons.hub5,
 		alliance: 'red',
-		staticX: true,
+		staticX: false,
 		staticY: true,
 		viewCondition: (tick) => {
 			const p = tick.prev()?.point?.slice() as Point2D;
@@ -446,11 +446,11 @@ export default (config: {
 	});
 
 	const redHub10 = app.addAppObject({
-		point: [0.025, 0.6],
+		point: [0.975, 0.6],
 		object: redObjects.hub10,
 		button: redButtons.hub10,
 		alliance: 'red',
-		staticX: true,
+		staticX: false,
 		staticY: true,
 		viewCondition: (tick) => {
 			const p = tick.prev()?.point?.slice() as Point2D;
@@ -463,11 +463,11 @@ export default (config: {
 	});
 
 	const redLob1 = app.addAppObject({
-		point: [0.025, 0.6],
+		point: [0.975, 0.6],
 		object: redObjects.lob1,
 		button: redButtons.lob1,
 		alliance: 'red',
-		staticX: true,
+		staticX: false,
 		staticY: true,
 		viewCondition: (tick) => {
 			const p = tick.prev()?.point?.slice() as Point2D;
@@ -480,11 +480,11 @@ export default (config: {
 	});
 
 	const redLob5 = app.addAppObject({
-		point: [0.025, 0.4],
+		point: [0.975, 0.4],
 		object: redObjects.lob5,
 		button: redButtons.lob5,
 		alliance: 'red',
-		staticX: true,
+		staticX: false,
 		staticY: true,
 		viewCondition: (tick) => {
 			const p = tick.prev()?.point?.slice() as Point2D;
@@ -497,11 +497,11 @@ export default (config: {
 	});
 
 	const redLob10 = app.addAppObject({
-		point: [0.025, 0.2],
+		point: [0.975, 0.2],
 		object: redObjects.lob10,
 		button: redButtons.lob10,
 		alliance: 'red',
-		staticX: true,
+		staticX: false,
 		staticY: true,
 		viewCondition: (tick) => {
 			const p = tick.prev()?.point?.slice() as Point2D;
@@ -537,7 +537,7 @@ export default (config: {
 		alliance: 'red',
 		staticX: false,
 		staticY: false,
-		viewCondition: () => app.matchData.alliance === 'red'
+		//viewCondition: () => app.matchData.alliance === 'red'
 	});
 
 	const redher25L = app.addAppObject({
@@ -581,7 +581,7 @@ export default (config: {
 		alliance: 'red',
 		staticX: false,
 		staticY: false,
-		viewCondition: () => app.matchData.alliance === 'red'
+		//viewCondition: () => app.matchData.alliance === 'red'
 	});
 
 	const redher25R = app.addAppObject({
@@ -648,54 +648,54 @@ export default (config: {
 	// 	zone: 'BlueTrenchRight'
 	// });
 
-	app.settings.add(
-		{
-			default: 'left',
-			type: 'string',
-			name: 'Which side do you want the lob/shot buttons on?',
-			options: [
-				{
-					name: 'Left',
-					value: 'left'
-				},
-				{
-					name: 'Right',
-					value: 'right'
-				}
-			],
-			description:
-				'Choose which side of the screen you want the lob/shot buttons on. This does not affect the outpost button.'
-		},
-		(value) => {
-			if (value === 'left') {
-				redLob10.point = [0.025, 0.2];
-				redHub10.point = [0.025, 0.2];
-				redLob5.point = [0.025, 0.4];
-				redHub5.point = [0.025, 0.4];
-				redLob1.point = [0.025, 0.6];
-				redHub1.point = [0.025, 0.6];
-				blueLob10.point = [0.025, 0.2];
-				blueHub10.point = [0.025, 0.2];
-				blueLob5.point = [0.025, 0.4];
-				blueHub5.point = [0.025, 0.4];
-				blueLob1.point = [0.025, 0.6];
-				blueHub1.point = [0.025, 0.6];
-			} else {
-				redLob10.point = [0.975, 0.2];
-				redHub10.point = [0.975, 0.2];
-				redLob5.point = [0.975, 0.4];
-				redHub5.point = [0.975, 0.4];
-				redLob1.point = [0.975, 0.6];
-				redHub1.point = [0.975, 0.6];
-				blueLob10.point = [0.975, 0.2];
-				blueHub10.point = [0.975, 0.2];
-				blueLob5.point = [0.975, 0.4];
-				blueHub5.point = [0.975, 0.4];
-				blueLob1.point = [0.975, 0.6];
-				blueHub1.point = [0.975, 0.6];
-			}
-		}
-	);
+	// app.settings.add(
+	// 	{
+	// 		default: 'left',
+	// 		type: 'string',
+	// 		name: 'Which side do you want the lob/shot buttons on?',
+	// 		options: [
+	// 			{
+	// 				name: 'Left',
+	// 				value: 'left'
+	// 			},
+	// 			{
+	// 				name: 'Right',
+	// 				value: 'right'
+	// 			}
+	// 		],
+	// 		description:
+	// 			'Choose which side of the screen you want the lob/shot buttons on. This does not affect the outpost button.'
+	// 	},
+	// 	(value) => {
+	// 		if (value === 'left') {
+	// 			redLob10.point = [0.025, 0.2];
+	// 			redHub10.point = [0.025, 0.2];
+	// 			redLob5.point = [0.025, 0.4];
+	// 			redHub5.point = [0.025, 0.4];
+	// 			redLob1.point = [0.025, 0.6];
+	// 			redHub1.point = [0.025, 0.6];
+	// 			blueLob10.point = [0.025, 0.2];
+	// 			blueHub10.point = [0.025, 0.2];
+	// 			blueLob5.point = [0.025, 0.4];
+	// 			blueHub5.point = [0.025, 0.4];
+	// 			blueLob1.point = [0.025, 0.6];
+	// 			blueHub1.point = [0.025, 0.6];
+	// 		} else {
+	// 			redLob10.point = [0.975, 0.2];
+	// 			redHub10.point = [0.975, 0.2];
+	// 			redLob5.point = [0.975, 0.4];
+	// 			redHub5.point = [0.975, 0.4];
+	// 			redLob1.point = [0.975, 0.6];
+	// 			redHub1.point = [0.975, 0.6];
+	// 			blueLob10.point = [0.975, 0.2];
+	// 			blueHub10.point = [0.975, 0.2];
+	// 			blueLob5.point = [0.975, 0.4];
+	// 			blueHub5.point = [0.975, 0.4];
+	// 			blueLob1.point = [0.975, 0.6];
+	// 			blueHub1.point = [0.975, 0.6];
+	// 		}
+	// 	}
+	// );
 
 	app.checks
 		.addCheck('success', 'lostCountOfFuel')
