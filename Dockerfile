@@ -1,8 +1,8 @@
 FROM node:24.13.1-alpine
 
 # Install pnpm globally
-RUN npm install -g pnpm@latest
-RUN npm install -g typescript@latest
+RUN npm install -g pnpm@10.30.0
+RUN npm install -g typescript@5.9.3
 
 WORKDIR /app
 

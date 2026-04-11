@@ -35,6 +35,9 @@ jobs:
         with:
           node-version: v24.13.1
 
+      - name: Install typescript v5.9.3
+        run: npm install -g typescript@5.9.3
+
       - name: Install dependencies
         run: |
           echo "Installing dependencies..."

@@ -58,7 +58,7 @@ export const CompressedMatchSchema = z.object({
 		})
 	),
 	flagForReview: z.object({
-		flagged: z.boolean(),
+		flagged: z.boolean().default(false),
 		reason: z.string()
 	})
 	// scoreCorrection: z.object({
