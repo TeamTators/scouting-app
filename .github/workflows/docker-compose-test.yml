@@ -59,6 +59,9 @@ jobs:
         with:
           version: 10.30.0
 
+      - name: Install typescript v5.9.3
+        run: npm install -g typescript@5.9.3
+        
       - name: Install Dependencies
         run: pnpm i
 

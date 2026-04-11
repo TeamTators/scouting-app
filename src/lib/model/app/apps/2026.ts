@@ -704,7 +704,7 @@ export default (config: {
 		.addCheck('success', 'crossesTrench')
 		.addCheck('success', 'crossesBump')
 		//.addCheck('success', 'clankClimb (fast L1)')
-		.addCheck('success', 'stoleFuelFromOpponent\'sZone')
+		.addCheck('success', "stoleFuelFromOpponent'sZone")
 		.addCheck('success', 'autoClimb')
 		.addCheck('success', 'endClimbL1')
 		.addCheck('success', 'endClimbL2')
