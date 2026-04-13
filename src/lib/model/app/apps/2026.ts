@@ -314,49 +314,49 @@ export default (config: {
 		}
 	});
 
-	const blueher5L = app.addAppObject({
-		point: [0.2, 0.96],
-		object: blueObjects.her5,
-		button: blueButtons.her5L,
-		alliance: 'blue',
-		staticX: true,
-		staticY: false,
-		viewCondition: () => {
-			if (globalData.flipX) {
-				blueher5L.point = [0.6, 0.96];
-			} else {
-				blueher5L.point = [0.2, 0.96];
-			}
-			return true;
-		}
-	});
+	// const blueher5L = app.addAppObject({
+	// 	point: [0.2, 0.96],
+	// 	object: blueObjects.her5,
+	// 	button: blueButtons.her5L,
+	// 	alliance: 'blue',
+	// 	staticX: true,
+	// 	staticY: false,
+	// 	viewCondition: () => {
+	// 		if (globalData.flipX) {
+	// 			blueher5L.point = [0.6, 0.96];
+	// 		} else {
+	// 			blueher5L.point = [0.2, 0.96];
+	// 		}
+	// 		return true;
+	// 	}
+	// });
 
-	app.addAppObject({
-		point: [0.3, 0.96],
-		object: blueObjects.her10,
-		button: blueButtons.her10L,
-		alliance: 'blue',
-		staticX: false,
-		staticY: false,
-		//viewCondition: () => app.matchData.alliance === 'blue'
-	});
+	// app.addAppObject({
+	// 	point: [0.3, 0.96],
+	// 	object: blueObjects.her10,
+	// 	button: blueButtons.her10L,
+	// 	alliance: 'blue',
+	// 	staticX: false,
+	// 	staticY: false,
+	// 	//viewCondition: () => app.matchData.alliance === 'blue'
+	// });
 
-	const blueher25L = app.addAppObject({
-		point: [0.4, 0.96],
-		object: blueObjects.her25,
-		button: blueButtons.her25L,
-		alliance: 'blue',
-		staticX: true,
-		staticY: false,
-		viewCondition: () => {
-			if (globalData.flipX) {
-				blueher25L.point = [0.8, 0.96];
-			} else {
-				blueher25L.point = [0.4, 0.96];
-			}
-			return true;
-		}
-	});
+	// const blueher25L = app.addAppObject({
+	// 	point: [0.4, 0.96],
+	// 	object: blueObjects.her25,
+	// 	button: blueButtons.her25L,
+	// 	alliance: 'blue',
+	// 	staticX: true,
+	// 	staticY: false,
+	// 	viewCondition: () => {
+	// 		if (globalData.flipX) {
+	// 			blueher25L.point = [0.8, 0.96];
+	// 		} else {
+	// 			blueher25L.point = [0.4, 0.96];
+	// 		}
+	// 		return true;
+	// 	}
+	// });
 
 	const blueher5R = app.addAppObject({
 		point: [0.2, 0.04],
@@ -513,49 +513,49 @@ export default (config: {
 		}
 	});
 
-	const redher5L = app.addAppObject({
-		point: [0.6, 0.96],
-		object: redObjects.her5,
-		button: redButtons.her5L,
-		alliance: 'red',
-		staticX: true,
-		staticY: false,
-		viewCondition: () => {
-			if (globalData.flipX) {
-				redher5L.point = [0.2, 0.96];
-			} else {
-				redher5L.point = [0.6, 0.96];
-			}
-			return true;
-		}
-	});
+	// const redher5L = app.addAppObject({
+	// 	point: [0.6, 0.96],
+	// 	object: redObjects.her5,
+	// 	button: redButtons.her5L,
+	// 	alliance: 'red',
+	// 	staticX: true,
+	// 	staticY: false,
+	// 	viewCondition: () => {
+	// 		if (globalData.flipX) {
+	// 			redher5L.point = [0.2, 0.96];
+	// 		} else {
+	// 			redher5L.point = [0.6, 0.96];
+	// 		}
+	// 		return true;
+	// 	}
+	// });
 
-	app.addAppObject({
-		point: [0.7, 0.96],
-		object: redObjects.her10,
-		button: redButtons.her10L,
-		alliance: 'red',
-		staticX: false,
-		staticY: false,
-		//viewCondition: () => app.matchData.alliance === 'red'
-	});
+	// app.addAppObject({
+	// 	point: [0.7, 0.96],
+	// 	object: redObjects.her10,
+	// 	button: redButtons.her10L,
+	// 	alliance: 'red',
+	// 	staticX: false,
+	// 	staticY: false,
+	// 	//viewCondition: () => app.matchData.alliance === 'red'
+	// });
 
-	const redher25L = app.addAppObject({
-		point: [0.8, 0.96],
-		object: redObjects.her25,
-		button: redButtons.her25L,
-		alliance: 'red',
-		staticX: true,
-		staticY: false,
-		viewCondition: () => {
-			if (globalData.flipX) {
-				redher25L.point = [0.4, 0.96];
-			} else {
-				redher25L.point = [0.8, 0.96];
-			}
-			return true;
-		}
-	});
+	// const redher25L = app.addAppObject({
+	// 	point: [0.8, 0.96],
+	// 	object: redObjects.her25,
+	// 	button: redButtons.her25L,
+	// 	alliance: 'red',
+	// 	staticX: true,
+	// 	staticY: false,
+	// 	viewCondition: () => {
+	// 		if (globalData.flipX) {
+	// 			redher25L.point = [0.4, 0.96];
+	// 		} else {
+	// 			redher25L.point = [0.8, 0.96];
+	// 		}
+	// 		return true;
+	// 	}
+	// });
 
 	const redher5R = app.addAppObject({
 		point: [0.6, 0.04],
