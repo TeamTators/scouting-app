@@ -9,7 +9,7 @@
 </script>
 
 <div>
-	<label for="scout"
+	<label for="scout" style="font-size: 18px;"
 		>Scout
 		<br />
 		<small class="text-muted"
