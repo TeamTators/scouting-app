@@ -16,8 +16,10 @@
 			<small class="text-muted"
 				>Be sure to use the same username as tatorscout.org or else you won't grow your potato!</small
 			>
-			<small class="text-danger" style:display="block"> Make sure this is your name, not someone else's!</small>
-	</label>
+			<small class="text-danger" style:display="block">
+				Make sure this is your name, not someone else's!</small
+			>
+		</label>
 		<input
 			class="form-control"
 			type="text"

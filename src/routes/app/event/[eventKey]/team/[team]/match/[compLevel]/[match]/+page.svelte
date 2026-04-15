@@ -269,7 +269,7 @@
 						<h3>Post Match Summary</h3>
 					</div>
 					<div class="row mb-3">
-							<ScoutInput {accounts} />
+						<ScoutInput {accounts} />
 					</div>
 					<div class="row mb-3">
 						<Comments {app} />
