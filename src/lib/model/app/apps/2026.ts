@@ -337,7 +337,7 @@ export default (config: {
 		button: blueButtons.her10L,
 		alliance: 'blue',
 		staticX: false,
-		staticY: true,
+		staticY: true
 		//viewCondition: () => app.matchData.alliance === 'blue'
 	});
 
@@ -536,7 +536,7 @@ export default (config: {
 		button: redButtons.her10L,
 		alliance: 'red',
 		staticX: false,
-		staticY: true,
+		staticY: true
 		//viewCondition: () => app.matchData.alliance === 'red'
 	});
 

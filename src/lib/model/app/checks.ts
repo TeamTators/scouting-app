@@ -123,7 +123,13 @@ export class Checks extends WritableArray<Check> {
 		} else {
 			let comment: Comment | undefined;
 			if (check.doComment) {
-				comment = this.app.comments.addComment(check.name, type, false, check.placeholder ?? `Please provide a brief description as to why you checked ${check.name}`);
+				comment = this.app.comments.addComment(
+					check.name,
+					type,
+					false,
+					check.placeholder ??
+						`Please provide a brief description as to why you checked ${check.name}`
+				);
 			}
 
 			if ('slider' in check) {

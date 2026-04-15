@@ -33,7 +33,7 @@ export class Comment extends WritableBase<{
 			value: '',
 			color,
 			show,
-			placeholder,
+			placeholder
 		});
 	}
 
