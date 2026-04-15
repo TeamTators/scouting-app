@@ -35,6 +35,7 @@ export default defineConfig({
 			'landon.tatorscout.org',
 			'anvita.tatorscout.org',
 			'daniel.tatorscout.org',
+			'app.kynlee.tatorscout.org',
 			'kynlee.tatorscout.org'
 		]
 	},

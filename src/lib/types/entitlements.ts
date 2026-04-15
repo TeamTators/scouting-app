@@ -1,8 +1,8 @@
 export type Entitlement =
-	| 'view-roles'
 	| 'test-permission-view'
 	| 'manage-roles'
+	| 'view-roles'
 	| 'manage-members'
 	| 'test-permission-manage';
-export type Group = 'Roles' | 'Testing';
+export type Group = 'Testing' | 'Roles';
 export type Features = 'manage-roles';
