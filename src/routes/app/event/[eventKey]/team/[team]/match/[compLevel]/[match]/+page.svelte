@@ -269,9 +269,7 @@
 						<h3>Post Match Summary</h3>
 					</div>
 					<div class="row mb-3">
-						<div class="col-md-4 col-sm-12">
 							<ScoutInput {accounts} />
-						</div>
 					</div>
 					<div class="row mb-3">
 						<Comments {app} />

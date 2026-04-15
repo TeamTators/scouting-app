@@ -8,8 +8,8 @@
 	const { accounts }: Props = $props();
 </script>
 
-<div class = "card">
-	<div class="card-body py-3 px-1 margin: 0 auto display: block">
+<div class="card mx-auto" style="width: 550px">
+	<div class="card-body d-flex justify-content-center flex-column text-center">
 		<label for="scout" style="font-size: 18px;"
 			>Scout
 			<br />
@@ -17,7 +17,7 @@
 				>Be sure to use the same username as tatorscout.org or else you won't grow your potato!</small
 			>
 			<small class="text-danger" style:display="block"> Make sure this is your name, not someone else's!</small>
-		</label>
+	</label>
 		<input
 			class="form-control"
 			type="text"
