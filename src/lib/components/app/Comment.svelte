@@ -37,7 +37,7 @@
 						bind:value={comment.value}
 						rows="3"
 						maxlength="200"
-						placeholder="Please provide a brief description... (max 200 characters)"
+						placeholder="{$comment.placeholder} (Max 200 characters)"
 					></textarea>
 				</div>
 			</div>

@@ -96,6 +96,7 @@ export class Checks extends WritableArray<Check> {
 					doComment: boolean;
 					render?: boolean;
 					defaultValue?: boolean;
+					placeholder?: string;
 			  }
 			| {
 					name: string;
@@ -103,6 +104,7 @@ export class Checks extends WritableArray<Check> {
 					doComment: boolean;
 					render?: boolean;
 					defaultValue?: boolean;
+					placeholder?: string;
 			  }
 			| string
 	) {
@@ -121,7 +123,7 @@ export class Checks extends WritableArray<Check> {
 		} else {
 			let comment: Comment | undefined;
 			if (check.doComment) {
-				comment = this.app.comments.addComment(check.name, type, false);
+				comment = this.app.comments.addComment(check.name, type, false, check.placeholder ?? `Please provide a brief description as to why you checked ${check.name}`);
 			}
 
 			if ('slider' in check) {
