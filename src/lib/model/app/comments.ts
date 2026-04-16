@@ -18,6 +18,7 @@ export class Comment extends WritableBase<{
 	value: string;
 	color: string;
 	show: boolean;
+	placeholder: string;
 }> {
 	/**
 	 * Creates a comment entry.
@@ -26,12 +27,13 @@ export class Comment extends WritableBase<{
 	 * @param {string} color - UI color token.
 	 * @param {boolean} show - Whether comment should be shown by default.
 	 */
-	constructor(key: string, color: string, show: boolean) {
+	constructor(key: string, color: string, show: boolean, placeholder: string) {
 		super({
 			key,
 			value: '',
 			color,
-			show
+			show,
+			placeholder
 		});
 	}
 
@@ -92,8 +94,8 @@ export class Comments extends WritableArray<Comment> {
 	 * @example
 	 * comments.addComment('Defense', 'warning', false);
 	 */
-	public addComment(key: string, color: string, show: boolean) {
-		const c = new Comment(key, color, show);
+	public addComment(key: string, color: string, show: boolean, placeholder: string) {
+		const c = new Comment(key, color, show, placeholder);
 		this.data.push(c);
 		this.inform();
 		this.pipe(c);
@@ -109,9 +111,9 @@ export class Comments extends WritableArray<Comment> {
 	 * dispose();
 	 */
 	init() {
-		this.addComment('Auto', 'success', true);
-		this.addComment('Teleop', 'primary', true);
-		this.addComment('Overall', 'info', true);
+		this.addComment('Auto', 'success', true, 'What kind of path did the robot take?');
+		this.addComment('Teleop', 'primary', true, 'How did the robot perform during teleop?');
+		this.addComment('Overall', 'info', true, 'Any additional comments or observations?');
 		return () => {
 			this.data = [];
 			this.inform();

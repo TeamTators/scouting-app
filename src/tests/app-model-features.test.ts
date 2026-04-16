@@ -41,7 +41,7 @@ describe('app model feature coverage', () => {
 		const app = {} as never;
 		const comments = new Comments(app);
 		comments.init();
-		comments.addComment('Defense', 'warning', false).value = 'Good counter cycles';
+		comments.addComment('Defense', 'warning', false, 'Description :)').value = 'Good counter cycles';
 
 		expect(comments.get('Auto')).toBeDefined();
 		expect(comments.get('Defense')?.value).toBe('Good counter cycles');
