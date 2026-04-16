@@ -209,7 +209,7 @@
 	let exitFullscreen = $state(() => {});
 </script>
 
-<div class="position-relative" style="height: 100vh;" bind:this={target}>
+<div class="position-relative" style="height: 100vh; overflow-x: hidden;" bind:this={target}>
 	<div class="d-flex w-100 justify-content-between position-absolute p-3">
 		<div class="btn-group" role="group" style="z-index: 300;">
 			<button type="button" class="btn px-2 btn-lg" onclick={() => matches.show()}>
