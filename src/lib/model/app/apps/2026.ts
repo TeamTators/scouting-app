@@ -463,7 +463,7 @@ export default (config: {
 	});
 
 	const redLob1 = app.addAppObject({
-		point: [0.975, 0.6],
+		point: [0.975, 0.2],
 		object: redObjects.lob1,
 		button: redButtons.lob1,
 		alliance: 'red',
@@ -497,7 +497,7 @@ export default (config: {
 	});
 
 	const redLob10 = app.addAppObject({
-		point: [0.975, 0.2],
+		point: [0.975, 0.6],
 		object: redObjects.lob10,
 		button: redButtons.lob10,
 		alliance: 'red',
