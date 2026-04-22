@@ -17,6 +17,7 @@ type C =
 			doSlider: true;
 			type: 'success' | 'primary' | 'warning' | 'danger';
 			render: boolean;
+			defaultValue: boolean;
 			slider: number;
 			values: [string, string, string, string, string];
 			color: [string, string, string, string, string];
@@ -30,6 +31,7 @@ type C =
 			doSlider: false;
 			type: 'success' | 'primary' | 'warning' | 'danger';
 			render: boolean;
+			defaultValue: boolean;
 			slider: 0;
 			alert: false | string;
 			doComment: boolean;
@@ -114,6 +116,7 @@ export class Checks extends WritableArray<Check> {
 				name: check,
 				doSlider: false,
 				value: false,
+				defaultValue: false,
 				type,
 				render: true,
 				slider: 0,
@@ -139,6 +142,7 @@ export class Checks extends WritableArray<Check> {
 					value: check.defaultValue ?? false,
 					type,
 					render: check.render ?? true,
+					defaultValue: check.defaultValue ?? false,
 					slider: 0,
 					values: check.slider,
 					color: check.color,
@@ -153,6 +157,7 @@ export class Checks extends WritableArray<Check> {
 					value: check.defaultValue ?? false,
 					type,
 					render: check.render ?? true,
+					defaultValue: check.defaultValue ?? false,
 					slider: 0,
 					alert: check.alert,
 					doComment: check.doComment,
@@ -276,7 +281,7 @@ export class Checks extends WritableArray<Check> {
 	 */
 	reset() {
 		for (const check of this.data) {
-			check.data.value = false;
+			check.data.value = check.data.defaultValue ?? false;
 			check.data.slider = 0;
 			check.inform();
 		}
