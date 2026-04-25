@@ -2,9 +2,6 @@ import { select } from '../cli/utils';
 import { sleep } from 'ts-utils/sleep';
 import fs from 'fs/promises';
 import path from 'path';
-import { config } from '../src/lib/server/utils/env';
-import { fromSnakeCase, toSnakeCase } from 'ts-utils';
-import { sb } from '../src/lib/server/services/supabase';
 
 export default async (...args: string[]) => {
 	if (!args.includes('--force')) {

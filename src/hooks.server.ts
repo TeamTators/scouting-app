@@ -6,7 +6,7 @@ import '$lib/server/utils/files';
 import createTree from '../scripts/create-route-tree';
 // import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
-import { type DB } from '$lib/services/supabase/supastruct';
+import { type DB } from '$lib/types/supabase';
 import { getSessionFactory } from '$lib/server/model/session';
 import { sse } from '$lib/server/services/sse';
 import { sb } from '$lib/server/services/supabase';

@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // import supabase from "$lib/services/supabase";
-import { type Database } from '$lib/types/supabase';
 import { attempt, attemptAsync, ComplexEventEmitter, ResultPromise, type Result } from 'ts-utils';
 import { WritableArray, WritableBase } from '../writables';
 import { type SchemaName, schemaName } from '$lib/types/supabase-schema';

@@ -1,7 +1,7 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 
 import type { createServerClient } from '@supabase/ssr';
-import type { DB } from '$lib/services/supabase/supastruct';
+import type { DB } from '$lib/types/supabase';
 import { Session } from '$lib/server/model/session';
 import type { Connection } from '$lib/server/services/sse';
 
