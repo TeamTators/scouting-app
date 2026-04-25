@@ -319,6 +319,7 @@ export const set = (vars: Record<string, string>) => {
 		if (config.environment === 'prod') {
 			throw new EnvironmentError('Cannot set environment variables in production');
 		}
+		console.log('Setting environment variables:', JSON.stringify(vars, null, 2));
 		let current = '';
 		try {
 			current = fs.readFileSync(exampleFilepath, 'utf-8');
