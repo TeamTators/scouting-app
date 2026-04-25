@@ -37,7 +37,7 @@ export const parseSupabaseStartLog = (contents: string) => {
 			const key = normalizeKey(rawKey);
 			if (!key) continue;
 
-			params[`${sectionName}_${key}`] = rawValue.replace('127.0.0.1', 'localhost');
+			params[`${sectionName}_${key}`] = rawValue;
 			continue;
 		}
 
