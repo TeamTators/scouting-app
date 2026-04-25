@@ -79,7 +79,7 @@ jobs:
         run: pnpm build
 
       - name: Build Docker image
-        run: docker build -t my-app:${{ github.sha }} .
+        run: docker build -t my-app:latest .
 
       - name: Debug Docker images
         run: |
@@ -92,11 +92,6 @@ jobs:
 
       - name: Start App
         run: docker compose --project-name test up -d app
-
-      - name: Debug Docker Network
-        run: |
-          echo "Inspecting docker network..."
-          docker network inspect test_default
 
       - name: Debug container state
         run: |
@@ -129,7 +124,7 @@ jobs:
 
       - name: Scan Docker image with Trivy
         run: |
-          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image my-app:${{ github.sha }}
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image my-app:latest
 
       - name: Shutdown supabase
         if: always()
