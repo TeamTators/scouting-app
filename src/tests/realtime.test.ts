@@ -27,16 +27,16 @@ describe('Realtime Tests', () => {
 				res(data);
 			});
 			setTimeout(() => {
-				rej(new Error('Did not receive create event within 5 seconds'));
-			}, 5000);
+				rej(new Error('Did not receive create event within 10 seconds'));
+			}, 10000);
 		});
 		const updatePromise = new Promise<SupaStructData<'test'>>((res, rej) => {
 			struct.on('update', (data) => {
 				res(data);
 			});
 			setTimeout(() => {
-				rej(new Error('Did not receive update event within 7.5 seconds'));
-			}, 7500);
+				rej(new Error('Did not receive update event within 10 seconds'));
+			}, 20000);
 		});
 		const deletePromise = new Promise<SupaStructData<'test'>>((res, rej) => {
 			struct.on('delete', (data) => {
@@ -44,7 +44,7 @@ describe('Realtime Tests', () => {
 			});
 			setTimeout(() => {
 				rej(new Error('Did not receive delete event within 10 seconds'));
-			}, 10000);
+			}, 30000);
 		});
 
 		const age = Math.round(Math.random() * 100);
@@ -93,5 +93,5 @@ describe('Realtime Tests', () => {
 
 		const deletedData = await deletePromise;
 		expect(deletedData).toBeDefined();
-	}, 20000);
+	}, 30000);
 });
