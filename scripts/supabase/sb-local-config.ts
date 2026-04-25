@@ -14,6 +14,9 @@ export default async () => {
 		SB_SECRET_KEY: parsed.authentication_keys_secret,
 		SB_STORAGE_ACCESS_KEY: parsed.storage_s3_access_key,
 		SB_STORAGE_SECRET_KEY: parsed.storage_s3_secret_key,
-		SB_REGION: parsed.storage_s3_region
+		SB_REGION: parsed.storage_s3_region,
+		SB_PUBLIC_URL: parsed.apis_project_url,
+		SB_POSTGRES_PASSWORD: 'postgres',
+		SB_TENANT_ID: '',
 	}).unwrap();
 };
