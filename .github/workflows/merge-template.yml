@@ -6,7 +6,7 @@ on:
 
 jobs:
   pre-check:
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
     outputs:
       run_pipeline: ${{ steps.check.outputs.run_pipeline }}
     steps:
