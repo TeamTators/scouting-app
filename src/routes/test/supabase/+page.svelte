@@ -3,8 +3,8 @@
 	import Test from '$lib/components/general/Test.svelte';
 
 	const arr = runTests();
-	const success = arr.derived((arr) => arr.filter((test) => test.data.success === true));
-	const failed = arr.derived((arr) => arr.filter((test) => test.data.success === false));
+	const success = arr.derived((arr) => arr.filter((test) => test.data.success === true || !test.data.required));
+	const failed = arr.derived((arr) => arr.filter((test) => test.data.success === false && test.data.required));
 	const pending = arr.derived((arr) => arr.filter((test) => test.data.pending));
 	const complete = arr.derived((arr) => arr.filter((test) => !test.data.pending).length);
 	const total = arr.length;

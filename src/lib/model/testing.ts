@@ -8,6 +8,7 @@ export class Test extends WritableBase<{
 	message: string;
 	name: string;
 	success: boolean | undefined;
+	required: boolean;
 }> {}
 
 export const runTests = () => {
@@ -23,56 +24,64 @@ export const runTests = () => {
 		pending: true,
 		message: '',
 		name: 'Realtime Connection',
-		success: undefined
+		success: undefined,
+		required: true
 	});
 
 	const create = new Test({
 		pending: true,
 		message: '',
 		name: 'Create',
-		success: undefined
+		success: undefined,
+		required: true
 	});
 
 	const read = new Test({
 		pending: true,
 		message: '',
 		name: 'Read',
-		success: undefined
+		success: undefined,
+		required: true
 	});
 
 	const update = new Test({
 		pending: true,
 		message: '',
 		name: 'Update',
-		success: undefined
+		success: undefined,
+		required: true
 	});
 
 	const del = new Test({
 		pending: true,
 		message: '',
 		name: 'Delete',
-		success: undefined
+		success: undefined,
+		required: true
 	});
 
 	const recieveCreate = new Test({
 		pending: true,
 		message: '',
 		name: 'Recieve Create',
-		success: undefined
+		success: undefined,
+		required: false
 	});
 
 	const recieveUpdate = new Test({
 		pending: true,
 		message: '',
 		name: 'Recieve Update',
-		success: undefined
+		success: undefined,
+		required: false
 	});
 
 	const recieveDelete = new Test({
 		pending: true,
 		message: '',
 		name: 'Recieve Delete',
-		success: undefined
+		success: undefined,
+		required: false
 	});
 
 	let id: string | undefined;
@@ -88,7 +97,8 @@ export const runTests = () => {
 					pending: false,
 					message: 'Realtime connection established',
 					name: 'Realtime Connection',
-					success: true
+					success: true,
+					required: realtime.data.required,
 				});
 				break;
 			case REALTIME_SUBSCRIBE_STATES.CLOSED:
@@ -96,7 +106,8 @@ export const runTests = () => {
 					pending: false,
 					message: 'Realtime connection closed',
 					name: 'Realtime Connection',
-					success: false
+					success: false,
+					required: realtime.data.required,
 				});
 				return;
 			case REALTIME_SUBSCRIBE_STATES.CHANNEL_ERROR:
@@ -104,7 +115,8 @@ export const runTests = () => {
 					pending: false,
 					message: 'Realtime connection error',
 					name: 'Realtime Connection',
-					success: false
+					success: false,
+					required: realtime.data.required,
 				});
 				return;
 			case REALTIME_SUBSCRIBE_STATES.TIMED_OUT:
@@ -112,7 +124,8 @@ export const runTests = () => {
 					pending: false,
 					message: 'Realtime connection timed out',
 					name: 'Realtime Connection',
-					success: false
+					success: false,
+					required: realtime.data.required,
 				});
 				return;
 		}
@@ -125,14 +138,16 @@ export const runTests = () => {
 					pending: false,
 					message: res.error.message,
 					name: 'Read',
-					success: false
+					success: false,
+					required: read.data.required,
 				});
 			} else {
 				read.set({
 					pending: false,
 					message: 'Read successfully',
 					name: 'Read',
-					success: true
+					success: true,
+					required: read.data.required,
 				});
 			}
 		});
@@ -149,7 +164,8 @@ export const runTests = () => {
 						pending: false,
 						message: res.error.message,
 						name: 'Create',
-						success: false
+						success: false,
+						required: create.data.required,
 					});
 				} else {
 					if ('error' in res.value) {
@@ -157,7 +173,8 @@ export const runTests = () => {
 							pending: false,
 							message: res.value.error.message,
 							name: 'Create',
-							success: false
+							success: false,
+							required: create.data.required,
 						});
 						return;
 					}
@@ -166,7 +183,8 @@ export const runTests = () => {
 						pending: false,
 						message: 'Created successfully',
 						name: 'Create',
-						success: true
+						success: true,
+						required: create.data.required,
 					});
 
 					if (!res.value.pending && 'result' in res.value) {
@@ -175,7 +193,8 @@ export const runTests = () => {
 								pending: false,
 								message: 'No results found for update',
 								name: 'Update',
-								success: false
+								success: false,
+								required: update.data.required
 							});
 							return;
 						}
@@ -190,7 +209,8 @@ export const runTests = () => {
 								pending: false,
 								message: updateRes.error.message,
 								name: 'Update',
-								success: false
+								success: false,
+								required: update.data.required
 							});
 						} else {
 							if ('error' in updateRes.value) {
@@ -198,7 +218,8 @@ export const runTests = () => {
 									pending: false,
 									message: updateRes.value.error.message,
 									name: 'Update',
-									success: false
+									success: false,
+									required: update.data.required
 								});
 								return;
 							}
@@ -206,7 +227,8 @@ export const runTests = () => {
 								pending: false,
 								message: 'Updated successfully',
 								name: 'Update',
-								success: true
+								success: true,
+								required: update.data.required
 							});
 
 							await recieveUpdate.await();
@@ -217,7 +239,8 @@ export const runTests = () => {
 									pending: false,
 									message: deleteRes.error.message,
 									name: 'Delete',
-									success: false
+									success: false,
+									required: del.data.required
 								});
 							} else {
 								if ('error' in deleteRes.value) {
@@ -225,7 +248,8 @@ export const runTests = () => {
 										pending: false,
 										message: deleteRes.value.error.message,
 										name: 'Delete',
-										success: false
+										success: false,
+										required: del.data.required
 									});
 									return;
 								}
@@ -233,7 +257,8 @@ export const runTests = () => {
 									pending: false,
 									message: 'Deleted successfully',
 									name: 'Delete',
-									success: true
+									success: true,
+									required: del.data.required
 								});
 							}
 						}
@@ -247,7 +272,8 @@ export const runTests = () => {
 					pending: false,
 					message: 'Read timed out',
 					name: 'Read',
-					success: false
+					success: false,
+					required: read.data.required,
 				});
 			}
 			if (recieveCreate.data.pending) {
@@ -255,7 +281,8 @@ export const runTests = () => {
 					pending: false,
 					message: 'Recieve Create timed out',
 					name: 'Recieve Create',
-					success: false
+					success: false,
+					required: recieveCreate.data.required,
 				});
 			}
 			if (recieveUpdate.data.pending) {
@@ -263,7 +290,8 @@ export const runTests = () => {
 					pending: false,
 					message: 'Recieve Update timed out',
 					name: 'Recieve Update',
-					success: false
+					success: false,
+					required: recieveUpdate.data.required,
 				});
 			}
 			if (recieveDelete.data.pending) {
@@ -271,7 +299,8 @@ export const runTests = () => {
 					pending: false,
 					message: 'Recieve Delete timed out',
 					name: 'Recieve Delete',
-					success: false
+					success: false,
+					required: recieveDelete.data.required,
 				});
 			}
 			if (update.data.pending) {
@@ -279,7 +308,8 @@ export const runTests = () => {
 					pending: false,
 					message: 'Update timed out',
 					name: 'Update',
-					success: false
+					success: false,
+					required: update.data.required,
 				});
 			}
 			if (del.data.pending) {
@@ -287,7 +317,8 @@ export const runTests = () => {
 					pending: false,
 					message: 'Delete timed out',
 					name: 'Delete',
-					success: false
+					success: false,
+					required: del.data.required,
 				});
 			}
 			if (create.data.pending) {
@@ -295,7 +326,8 @@ export const runTests = () => {
 					pending: false,
 					message: 'Create timed out',
 					name: 'Create',
-					success: false
+					success: false,
+					required: create.data.required,
 				});
 			}
 		}, 1000 * 10);
@@ -307,7 +339,8 @@ export const runTests = () => {
 				pending: false,
 				message: 'Recieved create successfully',
 				name: 'Recieve Create',
-				success: true
+				success: true,
+				required: recieveCreate.data.required,
 			});
 		}
 	});
@@ -318,7 +351,8 @@ export const runTests = () => {
 				pending: false,
 				message: 'Recieved update successfully',
 				name: 'Recieve Update',
-				success: true
+				success: true,
+				required: recieveUpdate.data.required,
 			});
 		}
 	});
@@ -329,7 +363,8 @@ export const runTests = () => {
 				pending: false,
 				message: 'Recieved delete successfully',
 				name: 'Recieve Delete',
-				success: true
+				success: true,
+				required: recieveDelete.data.required,
 			});
 		}
 	});
