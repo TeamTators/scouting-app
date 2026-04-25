@@ -56,7 +56,6 @@ jobs:
           done
           echo "Configuring local supabase"
           pnpm run sb:local-config
-          pnpm sb:reset
           pnpm run sb:push
 
       # - name: Init supabase types
