@@ -51,7 +51,6 @@ jobs:
           sed -i "s/^project_id = .*/project_id = \"${SCHEMA_NAME}\"/" supabase/config.toml
           pnpm script supabase/sb-random-ports
           pnpm sb:start --debug
-          pnpm sb:reset
           echo "Waiting for supabase to be ready..."
           until pnpm run sb:status | grep -q "Development Tools"; do
             echo "Supabase not ready yet, waiting..."
@@ -59,6 +58,7 @@ jobs:
           done
           echo "Configuring local supabase"
           pnpm run sb:local-config
+          pnpm sb:reset
           pnpm run sb:push
 
       # - name: Init supabase types
