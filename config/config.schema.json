@@ -74,9 +74,17 @@
 					"description": "Supabase secret key (for server-side use)"
 				},
 				"local_ip": {
-					"type": "string",
 					"description": "Local IP address for connecting to Supabase (for self-hosted instances)",
-					"format": "ipv4"
+					"oneOf": [
+						{
+							"type": "string",
+							"format": "ipv4"
+						},
+						{
+							"type": "string",
+							"enum": ["localhost"]
+						}
+					]
 				},
 				"db_port": {
 					"type": "integer",

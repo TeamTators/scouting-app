@@ -93,7 +93,7 @@ export default z.object({
 		public_key: z.string().min(1),
 		schema: z.string().min(1),
 		secret_key: z.string().min(1),
-		local_ip: z.string().ip(),
+		local_ip: z.union([z.string().ip(), z.literal('localhost')]),
 		db_port: z.number().min(1).max(65535),
 		sb_pass: z.string()
 	}),
