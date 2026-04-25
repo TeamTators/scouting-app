@@ -135,3 +135,7 @@ jobs:
       - name: Clean up Supabase config
         if: always()
         run: rm -f config.json .env
+
+      - name: Tear down Docker Compose
+        if: always()
+        run: docker compose --project-name test down -v --remove-orphans
