@@ -22,7 +22,7 @@ export default async () => {
 	config.supabase.domain = parsed.apis_project_url.replace(/^https?:\/\//, '');
 	config.supabase.protocol = 'http';
 	config.supabase.sb_pass = '';
-	config.supabase.local_ip = '127.0.0.1';
+	config.supabase.local_ip = 'localhost';
 
 	await fs.writeFile(configPath, JSON.stringify(config, null, 2), 'utf-8');
 };
