@@ -38,6 +38,7 @@ jobs:
           echo "OAUTH2_CLIENT_ID=1234567890" >> .env
           echo "OAUTH2_CLIENT_SECRET=1234567890" >> .env
           echo "CONFIG_PATH=./config.json" >> .env
+          echo "SB_SCHEMA=svelte_check" >> .env
           export $(cat .env | xargs)
       - name: Set up Supabase Config
         run: |

@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { config } from '../../src/lib/server/utils/env';
+import { str } from '../../src/lib/server/utils/env';
 
 export default async (schema: string) => {
 	let tackOn = false;
@@ -34,7 +34,7 @@ export default async (schema: string) => {
 		throw new Error(`The schema name "${schema}" is reserved and cannot be used.`);
 	}
 
-	const currentSchema = config.supabase.schema;
+	const currentSchema = str('SB_SCHEMA', true);
 	console.log(`Current schema: ${currentSchema}`);
 	if (tackOn) {
 		schema = currentSchema + '_' + schema;
@@ -47,8 +47,8 @@ export default async (schema: string) => {
 		'./src/lib/types/supabase.ts',
 		'./src/lib/types/supabase-schema.ts',
 		'./supabase/snipppets/create_schema.sql',
-		'./config.json',
 		'./supabase/config.toml',
+		'./.env',
 		...migrations.map((file) => `./supabase/migrations/${file}`)
 	];
 	const date = Date.now();

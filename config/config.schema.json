@@ -34,84 +34,84 @@
 			"required": ["host", "port", "protocol"],
 			"additionalProperties": false
 		},
-		"supabase": {
-			"description": "Supabase configuration",
-			"type": "object",
-			"properties": {
-				"schema": {
-					"type": "string",
-					"description": "Supabase schema name"
-				},
-				"tenant_id": {
-					"type": "string",
-					"description": "Supabase tenant ID (for self-hosted instances)"
-				},
-				"pg_pass": {
-					"type": "string",
-					"description": "Supabase password (for self-hosted instances)"
-				},
-				"domain": {
-					"type": "string",
-					"description": "Supabase domain (for self-hosted instances)"
-				},
-				"port": {
-					"type": "integer",
-					"minimum": 1,
-					"maximum": 65535,
-					"description": "Supabase port (for self-hosted instances)"
-				},
-				"protocol": {
-					"type": "string",
-					"enum": ["http", "https"],
-					"description": "Protocol to use for Supabase (for self-hosted instances)"
-				},
-				"public_key": {
-					"type": "string",
-					"description": "Supabase public key (for client-side use)"
-				},
-				"secret_key": {
-					"type": "string",
-					"description": "Supabase secret key (for server-side use)"
-				},
-				"local_ip": {
-					"description": "Local IP address for connecting to Supabase (for self-hosted instances)",
-					"oneOf": [
-						{
-							"type": "string",
-							"format": "ipv4"
-						},
-						{
-							"type": "string",
-							"enum": ["localhost"]
-						}
-					]
-				},
-				"db_port": {
-					"type": "integer",
-					"minimum": 1,
-					"maximum": 65535,
-					"description": "Database port for connecting to Supabase (for self-hosted instances)"
-				},
-				"sb_pass": {
-					"type": "string",
-					"description": "Supabase password for connecting to the database (for self-hosted instances)"
-				}
-			},
-			"required": [
-				"tenant_id",
-				"pg_pass",
-				"domain",
-				"port",
-				"protocol",
-				"public_key",
-				"secret_key",
-				"schema",
-				"local_ip",
-				"db_port",
-				"sb_pass"
-			],
-			"additionalProperties": false
-		},
+		// "supabase": {
+		// 	"description": "Supabase configuration",
+		// 	"type": "object",
+		// 	"properties": {
+		// 		"schema": {
+		// 			"type": "string",
+		// 			"description": "Supabase schema name"
+		// 		},
+		// 		"tenant_id": {
+		// 			"type": "string",
+		// 			"description": "Supabase tenant ID (for self-hosted instances)"
+		// 		},
+		// 		"pg_pass": {
+		// 			"type": "string",
+		// 			"description": "Supabase password (for self-hosted instances)"
+		// 		},
+		// 		"domain": {
+		// 			"type": "string",
+		// 			"description": "Supabase domain (for self-hosted instances)"
+		// 		},
+		// 		"port": {
+		// 			"type": "integer",
+		// 			"minimum": 1,
+		// 			"maximum": 65535,
+		// 			"description": "Supabase port (for self-hosted instances)"
+		// 		},
+		// 		"protocol": {
+		// 			"type": "string",
+		// 			"enum": ["http", "https"],
+		// 			"description": "Protocol to use for Supabase (for self-hosted instances)"
+		// 		},
+		// 		"public_key": {
+		// 			"type": "string",
+		// 			"description": "Supabase public key (for client-side use)"
+		// 		},
+		// 		"secret_key": {
+		// 			"type": "string",
+		// 			"description": "Supabase secret key (for server-side use)"
+		// 		},
+		// 		"local_ip": {
+		// 			"description": "Local IP address for connecting to Supabase (for self-hosted instances)",
+		// 			"oneOf": [
+		// 				{
+		// 					"type": "string",
+		// 					"format": "ipv4"
+		// 				},
+		// 				{
+		// 					"type": "string",
+		// 					"enum": ["localhost"]
+		// 				}
+		// 			]
+		// 		},
+		// 		"db_port": {
+		// 			"type": "integer",
+		// 			"minimum": 1,
+		// 			"maximum": 65535,
+		// 			"description": "Database port for connecting to Supabase (for self-hosted instances)"
+		// 		},
+		// 		"sb_pass": {
+		// 			"type": "string",
+		// 			"description": "Supabase password for connecting to the database (for self-hosted instances)"
+		// 		}
+		// 	},
+		// 	"required": [
+		// 		"tenant_id",
+		// 		"pg_pass",
+		// 		"domain",
+		// 		"port",
+		// 		"protocol",
+		// 		"public_key",
+		// 		"secret_key",
+		// 		"schema",
+		// 		"local_ip",
+		// 		"db_port",
+		// 		"sb_pass"
+		// 	],
+		// 	"additionalProperties": false
+		// },
 		"sessions": {
 			"description": "Session management configuration",
 			"type": "object",

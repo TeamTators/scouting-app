@@ -1,28 +1,19 @@
 import sbParseLog from './sb-parse-log';
-import path from 'path';
-import fs from 'fs/promises';
-import { parseJSON } from '../../src/lib/server/utils/files';
-import z from 'zod';
+import { set } from '../../src/lib/server/utils/env';
 
 export default async () => {
-	const configPath = path.join(process.cwd(), process.env.CONFIG_PATH || 'config.json');
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const config = parseJSON(await fs.readFile(configPath, 'utf-8'), z.unknown()).unwrap() as any;
-
-	if (!config.supabase) {
-		throw new Error('Supabase configuration not found in config.json');
-	}
-
 	const parsed = sbParseLog();
 
-	config.supabase.secret_key = parsed.authentication_keys_secret;
-	config.supabase.public_key = parsed.authentication_keys_publishable;
-	config.supabase.tenant_id = '';
-	config.supabase.pg_pass = 'postgres';
-	config.supabase.domain = parsed.apis_project_url.replace(/^https?:\/\//, '');
-	config.supabase.protocol = 'http';
-	config.supabase.sb_pass = '';
-	config.supabase.local_ip = 'localhost';
-
-	await fs.writeFile(configPath, JSON.stringify(config, null, 2), 'utf-8');
+	set({
+		SB_STUDIO_URL: parsed.development_tools_studio,
+		SB_MAILPIT_URL: parsed.development_tools_mailpit,
+		SB_MCP_URL: parsed.development_tools_mcp,
+		SB_PROJECT_URL: parsed.apis_project_url,
+		SB_DB_URL: parsed.database_url,
+		SB_PUBLIC_KEY: parsed.authentication_keys_publishable,
+		SB_SECRET_KEY: parsed.authentication_keys_secret,
+		SB_STORAGE_ACCESS_KEY: parsed.storage_s3_access_key,
+		SB_STORAGE_SECRET_KEY: parsed.storage_s3_secret_key,
+		SB_REGION: parsed.storage_s3_region
+	}).unwrap();
 };

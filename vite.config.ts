@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitest/config';
 import { sveltekit } from '@sveltejs/kit/vite';
-import { config } from './src/lib/server/utils/env';
+import { config, str } from './src/lib/server/utils/env';
 
 const isTest = Boolean(process.env.VITEST);
 
@@ -50,8 +50,8 @@ export default defineConfig({
 			struct_batching: config.struct_batching,
 			sse: config.sse,
 			supabase: {
-				url: `${config.supabase.protocol}://${config.supabase.domain}`,
-				public_key: config.supabase.public_key
+				url: str('SB_PUBLIC_URL', false) || 'http://localhost:8000',
+				public_key: str('SB_PUBLIC_KEY', false) || ''
 			}
 		})
 	}

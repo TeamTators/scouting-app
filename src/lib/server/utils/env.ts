@@ -13,7 +13,7 @@
 import { config as dotenv } from 'dotenv';
 import fs from 'fs';
 import path from 'path';
-import { attemptAsync } from 'ts-utils/check';
+import { attempt, attemptAsync } from 'ts-utils/check';
 import z from 'zod';
 import configSchema from './config';
 import { openJSONSync } from './files';
@@ -26,6 +26,7 @@ const keys = new Map<
 		required: boolean;
 		default?: unknown;
 		type?: string;
+		comment?: string;
 	}
 >();
 
@@ -104,12 +105,14 @@ type EnvConfig<T> = {
 	values?: string[];
 	parser?: (val: string) => T;
 	type?: string;
+	comment?: string;
 };
 
-const filepath = path.join(process.cwd(), '.env.example');
+const exampleFilepath = path.join(process.cwd(), '.env.example');
+const envFilepath = path.join(process.cwd(), '.env');
 let current = '';
 try {
-	current = fs.readFileSync(filepath, 'utf-8');
+	current = fs.readFileSync(exampleFilepath, 'utf-8');
 } catch {
 	console.log('.env.example does not exist, will create it automatically');
 }
@@ -133,7 +136,7 @@ function generateExample() {
 			currentLines.push('');
 		}
 
-		for (const [key, { required, default: def, type }] of keys) {
+		for (const [key, { required, default: def, type, comment: keyComment }] of keys) {
 			if (currentLines.find((l) => l.startsWith(key + '='))) continue;
 			console.log('Adding to env example:', key, type);
 
@@ -142,10 +145,14 @@ function generateExample() {
 				if (comment.length) comment += ` (${type})`;
 				else comment += `# (${type})`;
 			}
+			if (keyComment) {
+				if (comment.length) comment += ` - ${keyComment}`;
+				else comment += `# ${keyComment}`;
+			}
 
 			currentLines.push(`${key}="${def ?? `some_${key.toLowerCase()}`}" ${comment}`);
 		}
-		fs.writeFileSync(filepath, currentLines.join('\n'));
+		fs.writeFileSync(exampleFilepath, currentLines.join('\n'));
 
 		keys.clear();
 	}, 1000);
@@ -170,7 +177,8 @@ export function get<T = string>(key: string, config?: EnvConfig<T>): T | undefin
 			keys.set(key, {
 				required: config?.required ?? false,
 				default: config?.default,
-				type: config?.type
+				type: config?.type,
+				comment: config?.comment
 			});
 			generateExample();
 		}
@@ -224,14 +232,16 @@ export function get<T = string>(key: string, config?: EnvConfig<T>): T | undefin
  *
  * @param {string} key - Environment key.
  * @param {boolean} required - Whether the key is required.
+ * @param {string} [comment] - Optional comment for the env var.
  */
-export function num(key: string, required: true): number;
-export function num(key: string, required: false): number | undefined;
-export function num(key: string, required: boolean): number | undefined {
+export function num(key: string, required: true, comment?: string): number;
+export function num(key: string, required: false, comment?: string): number | undefined;
+export function num(key: string, required: boolean, comment?: string): number | undefined {
 	const res = get<number>(key, {
 		required: required ?? false,
 		parser: (val) => parseInt(val),
-		type: 'number'
+		type: 'number',
+		comment
 	});
 	if (res !== undefined && isNaN(res)) {
 		throw new EnvironmentError(`Env var "${key}" is not a valid number`);
@@ -246,15 +256,17 @@ export function num(key: string, required: boolean): number | undefined {
  *
  * @param {string} key - Environment key.
  * @param {boolean} required - Whether the key is required.
+ * @param {string} [comment] - Optional comment for the env var.
  */
-export function bool(key: string, required: true): boolean;
-export function bool(key: string, required: false): boolean | undefined;
-export function bool(key: string, required: boolean): boolean | undefined {
+export function bool(key: string, required: true, comment?: string): boolean;
+export function bool(key: string, required: false, comment?: string): boolean | undefined;
+export function bool(key: string, required: boolean, comment?: string): boolean | undefined {
 	return get<boolean>(key, {
 		required: required ?? false,
 		parser: (val) => ['true', 'y', '1'].includes(val.toLowerCase()),
 		type: 'y/n, true/false, 1/0',
-		values: ['y', 'n', 'Y', 'N', 'true', 'false', 'TRUE', 'FALSE', 'True', 'False', '1', '0']
+		values: ['y', 'n', 'Y', 'N', 'true', 'false', 'TRUE', 'FALSE', 'True', 'False', '1', '0'],
+		comment
 	});
 }
 
@@ -264,11 +276,12 @@ export function bool(key: string, required: boolean): boolean | undefined {
  *
  * @param {string} key - Environment key.
  * @param {boolean} required - Whether the key is required.
+ * @param {string} [comment] - Optional comment for the env var.
  */
-export function str(key: string, required: true): string;
-export function str(key: string, required: false): string | undefined;
-export function str(key: string, required: boolean): string | undefined {
-	return get<string>(key, { required: required ?? false });
+export function str(key: string, required: true, comment?: string): string;
+export function str(key: string, required: false, comment?: string): string | undefined;
+export function str(key: string, required: boolean, comment?: string): string | undefined {
+	return get<string>(key, { required: required ?? false, comment });
 }
 
 /**
@@ -298,5 +311,38 @@ export const getPublicIp = () => {
 				})
 			})
 			.parse(await res.json()).ip;
+	});
+};
+
+export const set = (vars: Record<string, string>) => {
+	return attempt(() => {
+		if (config.environment === 'prod') {
+			throw new EnvironmentError('Cannot set environment variables in production');
+		}
+		let current = '';
+		try {
+			current = fs.readFileSync(exampleFilepath, 'utf-8');
+		} catch {
+			console.log('.env.example does not exist, will create it automatically');
+		}
+		const currentLines = current.split('\n').map((l) => l.trim());
+
+		if (currentLines.length === 1 && currentLines[0] === '') {
+			currentLines.push('# This file was auto-generated by src/lib/server/utils/env.ts');
+			currentLines.push('# Feel free to comment and to replace default example values');
+			currentLines.push('');
+		}
+
+		for (const [key, value] of Object.entries(vars)) {
+			process.env[key] = value;
+			// overwrite existing key in .env.example or add if missing
+			const existingIndex = currentLines.findIndex((l) => l.startsWith(key + '='));
+			if (existingIndex !== -1) {
+				currentLines[existingIndex] = `${key}=${value}`;
+			} else {
+				currentLines.push(`${key}=${value}`);
+			}
+		}
+		fs.writeFileSync(envFilepath, currentLines.join('\n'));
 	});
 };

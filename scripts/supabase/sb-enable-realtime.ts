@@ -1,7 +1,7 @@
-import { config } from '../../src/lib/server/utils/env';
 import fs from 'fs/promises';
 import path from 'path';
 import supabase from '../../src/lib/server/services/supabase';
+import { sb } from '../../src/lib/server/services/supabase';
 
 export default async () => {
 	const sql = await fs.readFile(
@@ -9,7 +9,7 @@ export default async () => {
 		'utf-8'
 	);
 
-	const replacedSql = sql.replace(/{{ schema_name }}/g, config.supabase.schema);
+	const replacedSql = sql.replace(/{{ schema_name }}/g, sb.schema);
 
 	const { data, error } = await supabase.rpc('execute_sql', { sql: replacedSql });
 

@@ -15,8 +15,8 @@ import { browser } from '$app/environment';
 import { SupaStructData } from './supastruct-data';
 import { SupaPagination } from './supa-pagination';
 import { SupaCache } from './supacache';
+import { type DB } from '$lib/types/supabase';
 
-export type DB = Omit<Database, 'public'>;
 export type Client = SupabaseClient<DB, SchemaName>;
 
 /**

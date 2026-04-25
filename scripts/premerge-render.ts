@@ -4,6 +4,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { config } from '../src/lib/server/utils/env';
 import { fromSnakeCase, toSnakeCase } from 'ts-utils';
+import { sb } from '../src/lib/server/services/supabase';
 
 export default async (...args: string[]) => {
 	if (!args.includes('--force')) {
@@ -95,13 +96,7 @@ export default async (...args: string[]) => {
 		path.resolve(process.cwd(), 'config.json')
 	);
 
-	const { default: setSchema } = await import('./sb-set-schema');
+	const { default: setSchema } = await import('./supabase/sb-set-schema');
 
 	await setSchema(repoName);
-
-	config.supabase.schema = toSnakeCase(fromSnakeCase(repoName, '-'), '_').toLowerCase();
-	await fs.writeFile(
-		path.resolve(process.cwd(), 'config.example.json'),
-		JSON.stringify(config, null, 4)
-	);
 };

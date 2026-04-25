@@ -32,6 +32,7 @@ jobs:
           echo "OAUTH2_CLIENT_ID=1234567890" >> .env
           echo "OAUTH2_CLIENT_SECRET=1234567890" >> .env
           echo "CONFIG_PATH=./config.json" >> .env
+          echo "SB_SCHEMA=e2e_test" >> .env
           export $(cat .env | xargs)
       - name: Install dependencies
         run: |
