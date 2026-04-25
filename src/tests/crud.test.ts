@@ -32,8 +32,6 @@ describe('Realtime Tests', () => {
 		if (!data) throw new Error('Data is not defined'); // should never happen but for type safety
 		expect(data.data.name).toBe('Realtime Test');
 		expect(data.data.age).toBe(age);
-		const id = data.id || '';
-
 
 		const updated = await data
 			.update((data) => ({
