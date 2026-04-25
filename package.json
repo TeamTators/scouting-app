@@ -44,7 +44,8 @@
 		"sb:push": "pnpm sb:db migration up",
 		"sb:diff": "npx supabase db diff",
 		"sb:set-schema": "pnpm script supabase/sb-set-schema",
-		"sb:status": "npx supabase status"
+		"sb:status": "npx supabase status",
+		"sb:migrate": "pnpm script supabase/sb-migrate"
 	},
 	"packageManager": "pnpm@10.30.0",
 	"engines": {
