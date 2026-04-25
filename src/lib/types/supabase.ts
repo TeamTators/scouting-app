@@ -18,7 +18,7 @@ export type Database = {
 			[_ in never]: never;
 		};
 	};
-	test_schema: {
+	sveltekit_template: {
 		Tables: {
 			account_notification: {
 				Row: {
@@ -355,7 +355,7 @@ export const Constants = {
 	public: {
 		Enums: {}
 	},
-	test_schema: {
+	sveltekit_template: {
 		Enums: {}
 	}
 } as const;
