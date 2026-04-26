@@ -653,7 +653,7 @@ export class PDF {
                 }
 
                 if (options.emulateMediaType !== undefined) {
-                    await page.emulateMediaType(options.emulateMediaType ?? undefined);
+                    await page.emulateMediaType(options.emulateMediaType);
                 }
 
                 return await callback(page);
