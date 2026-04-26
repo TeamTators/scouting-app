@@ -84,7 +84,7 @@ export const runTests = () => {
 	// 	required: false
 	// });
 
-	let id: string | undefined;
+	// let id: string | undefined;
 	const all = struct.all({
 		type: 'all'
 	});
@@ -198,7 +198,7 @@ export const runTests = () => {
 							});
 							return;
 						}
-						id = String(res.value.result[0].data.id);
+						// id = String(res.value.result[0].data.id);
 						const updateRes = await res.value.result[0]
 							.update(() => ({
 								age: 2
