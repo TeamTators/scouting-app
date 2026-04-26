@@ -120,13 +120,13 @@ jobs:
       - name: Shutdown supabase
         if: always()
         run: |
-          pnpm sb:stop --no-backup
+          pnpm sb:stop --no-backup || true
           docker rm -f $(docker ps -aq --filter "name=supabase-${SCHEMA_NAME}") || true
+
+      - name: Tear down Docker Compose
+        if: always()
+        run: docker compose --project-name test down -v --remove-orphans || true
 
       - name: Clean up Supabase config
         if: always()
         run: rm -f config.json .env
-
-      - name: Tear down Docker Compose
-        if: always()
-        run: docker compose --project-name test down -v --remove-orphans

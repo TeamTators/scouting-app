@@ -1,18 +1,14 @@
-# syntax=docker/dockerfile:1.7
 FROM node:24.13.1-alpine
 
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-
-# Use the pinned pnpm version from the repo for stable cache keys.
-RUN corepack enable && corepack prepare pnpm@10.30.0 --activate
+# Install pnpm globally
+RUN npm install -g pnpm@latest
+RUN npm install -g typescript@latest
 
 WORKDIR /app
 
 # Copy only package files first for caching
 COPY package.json pnpm-lock.yaml ./
-RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
-	pnpm install --frozen-lockfile --prefer-offline
+RUN pnpm install
 
 
 COPY ./build ./build

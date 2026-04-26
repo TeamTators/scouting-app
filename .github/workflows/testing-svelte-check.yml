@@ -70,7 +70,7 @@ jobs:
       - name: Shutdown supabase
         if: always()
         run: |
-          pnpm sb:stop --no-backup
+          pnpm sb:stop --no-backup || true
           docker rm -f $(docker ps -aq --filter "name=supabase-${SCHEMA_NAME}") || true
 
       - name: Clean up Supabase config
