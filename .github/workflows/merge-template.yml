@@ -41,7 +41,7 @@ jobs:
     uses: ./.github/workflows/docker-compose-test.yml
 
   merge-template:
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
     needs: [format, unit-tests, E2E, check, docker-compose]
 
     strategy:
