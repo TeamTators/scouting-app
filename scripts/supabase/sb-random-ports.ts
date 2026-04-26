@@ -10,7 +10,6 @@ export default () => {
 	console.log(`Adding ${add} to Supabase ports...`);
 
 	const files = [
-		path.join(process.cwd(), str('CONFIG_PATH', true)),
 		path.join(process.cwd(), 'supabase', 'config.toml')
 	];
 
