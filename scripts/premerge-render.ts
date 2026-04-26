@@ -86,13 +86,6 @@ export default async (...args: string[]) => {
 		.replaceAll('/sveltekit-template', `/${repoName}`);
 	await fs.writeFile(path.resolve(process.cwd(), 'README.md'), readme);
 
-	await fs.writeFile(path.resolve(process.cwd(), '.env'), 'CONFIG_PATH=./config.json');
-
-	await fs.copyFile(
-		path.resolve(process.cwd(), 'config.example.json'),
-		path.resolve(process.cwd(), 'config.json')
-	);
-
 	const { default: setSchema } = await import('./supabase/sb-set-schema');
 
 	await setSchema(repoName);

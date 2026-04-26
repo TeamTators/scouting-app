@@ -46,7 +46,6 @@ jobs:
       - name: Configure project
         run: |
           cp .env.example .env
-          cp config.example.json config.json
 
       - name: Generate Documentation
         run: pnpm build:docs

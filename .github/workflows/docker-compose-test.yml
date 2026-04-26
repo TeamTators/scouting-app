@@ -26,13 +26,11 @@ jobs:
 
       - name: Initialize .env
         run: |
-          cp config.example.json config.json
           # .env for local app (host values)
           cat <<EOF > .env
           PORT=3000
           OAUTH2_CLIENT_ID=1234567890
           OAUTH2_CLIENT_SECRET=1234567890
-          CONFIG_PATH=./config.json
           SB_SCHEMA=docker_test
           EOF
 
@@ -69,7 +67,6 @@ jobs:
       - name: Build Docker image
         run: |
           cp .env .docker.env
-          cp config.json config.docker.json
           docker build -t my-app:latest .
 
       - name: Debug Docker images
@@ -129,4 +126,4 @@ jobs:
 
       - name: Clean up Supabase config
         if: always()
-        run: rm -f config.json .env
+        run: rm -f .env

@@ -425,9 +425,9 @@ export const parseJSON = <T>(json: string, parser: z.ZodType<T>) => {
  * @returns {Attempt<T>} Result containing parsed and validated data
  * @example
  * ```typescript
- * const config = openJSONSync('./config.json', configSchema);
- * if (config.isOk()) {
- *   console.log('Configuration loaded:', config.value);
+ * const testJSON = openJSONSync('./test.json', z.object({ key: z.string() }));
+ * if (testJSON.isOk()) {
+ *   console.log('Configuration loaded:', testJSON.value);
  * }
  * ```
  */
@@ -449,9 +449,9 @@ export const openJSONSync = <T>(filePath: string, parser: z.ZodType<T>) => {
  * @returns {Promise<AttemptAsync<T>>} Promise resolving to parsed and validated data
  * @example
  * ```typescript
- * const config = await openJSON('./config.json', configSchema);
- * if (config.isOk()) {
- *   console.log('Configuration loaded:', config.value);
+ * const testJSON = await openJSON('./test.json', z.object({ key: z.string() }));
+ * if (testJSON.isOk()) {
+ *   console.log('Configuration loaded:', testJSON.value);
  * }
  * ```
  */

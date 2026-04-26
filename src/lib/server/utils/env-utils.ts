@@ -1,8 +1,7 @@
 /**
  * @fileoverview Environment and configuration helpers with .env example generation.
  *
- * Loads config.json, provides typed access to environment variables, and keeps
- * .env.example in sync with requested keys during development.
+ * This module provides utilities to access environment variables with type parsing, validation, and automatic .env.example generation. It includes helper functions for common types like numbers, booleans, URLs, and more. The `get()` function is the core accessor that supports various options for requiredness, defaults, allowed values, and custom parsers.
  *
  * @example
  * import { get, num, env, config } from '$lib/server/utils/env';

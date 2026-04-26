@@ -4,8 +4,8 @@ Configuration assets used by local dev, containers, and production deployments.
 
 ### Files
 
-- config.example.json: sample app configuration (copy to config.json).
-- config.json: local configuration overrides (not committed).
+- .env.example: sample environment variables (copy to .env).
+- .env: local environment variable overrides (not committed).
 - config.schema.json: JSON schema for config validation.
 - nginx.conf: reverse proxy template for container deployments.
 - nvm.sh: Node version helper for shell-based setups.
@@ -16,11 +16,11 @@ Configuration assets used by local dev, containers, and production deployments.
 ### Setup
 
 1. Copy the example config:
-   - config.example.json → config.json
+   - .env.example to .env
 2. Adjust values for your environment (ports, database, redis, etc.).
 3. If you want validation, use config.schema.json in your editor or tooling.
 
 ### Notes
 
-- config.json is environment-specific. Avoid committing secrets.
-- Docker files and scripts read from config.json and environment variables.
+- .env is environment-specific. Avoid committing secrets.
+- Docker files and scripts read from .env and environment variables.

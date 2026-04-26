@@ -49,6 +49,7 @@ export default async (schema: string) => {
 		'./supabase/snipppets/create_schema.sql',
 		'./supabase/config.toml',
 		'./.env',
+		'./.env.example',
 		...migrations.map((file) => `./supabase/migrations/${file}`)
 	];
 	const date = Date.now();
