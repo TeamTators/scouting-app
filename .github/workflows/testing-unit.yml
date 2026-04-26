@@ -28,7 +28,7 @@ jobs:
       - name: Install dependencies
         run: |
           echo "Installing dependencies..."
-          pnpm add -D typescript
+          pnpm add -D typescript@latest
           pnpm install --frozen-lockfile
 
       - name: Load .env variables
