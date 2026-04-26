@@ -156,8 +156,8 @@ importers:
         specifier: ^0.45.2
         version: 0.45.2(@types/pg@8.20.0)(gel@2.2.0)(pg@8.20.0)(postgres@3.4.8)
       drizzle-struct:
-        specifier: git+https://github.com/tsaxking/drizzle-struct.git#v3.0.0
-        version: https://codeload.github.com/tsaxking/drizzle-struct/tar.gz/8d7113f74632dc3f19bd56b3b85b7cdd3b003e1f(@types/node@22.19.15)(@types/pg@8.20.0)(@types/react@18.3.28)(jsdom@28.1.0)(react@19.2.4)(sass-embedded@1.98.0)(sass@1.98.0)
+        specifier: git+https://github.com/tsaxking/drizzle-struct.git#45334fd
+        version: https://codeload.github.com/tsaxking/drizzle-struct/tar.gz/45334fd3b01ae725c04426cc32c448dc4c24ab0b(@types/node@22.19.15)(@types/pg@8.20.0)(@types/react@18.3.28)(jsdom@28.1.0)(react@19.2.4)(sass-embedded@1.98.0)(sass@1.98.0)
       express:
         specifier: ^5.1.0
         version: 5.2.1
@@ -3454,8 +3454,8 @@ packages:
       sqlite3:
         optional: true
 
-  drizzle-struct@https://codeload.github.com/tsaxking/drizzle-struct/tar.gz/8d7113f74632dc3f19bd56b3b85b7cdd3b003e1f:
-    resolution: {tarball: https://codeload.github.com/tsaxking/drizzle-struct/tar.gz/8d7113f74632dc3f19bd56b3b85b7cdd3b003e1f}
+  drizzle-struct@https://codeload.github.com/tsaxking/drizzle-struct/tar.gz/45334fd3b01ae725c04426cc32c448dc4c24ab0b:
+    resolution: {tarball: https://codeload.github.com/tsaxking/drizzle-struct/tar.gz/45334fd3b01ae725c04426cc32c448dc4c24ab0b}
     version: 1.0.0
     engines: {node: '>=v24'}
 
@@ -5267,11 +5267,6 @@ packages:
   redent@3.0.0:
     resolution: {integrity: sha512-6tDA8g98We0zd0GvVeMT9arEOnTw9qM03L9cJXaCjrip1OO764RDBLBfrB4cwzNGDj5OA5ioymC9GkizgWJDUg==}
     engines: {node: '>=8'}
-
-  redis-service@https://codeload.github.com/tsaxking/redis/tar.gz/51166d1f64926a3c5a96e593ded35ac49768c25c:
-    resolution: {tarball: https://codeload.github.com/tsaxking/redis/tar.gz/51166d1f64926a3c5a96e593ded35ac49768c25c}
-    version: 1.0.0
-    engines: {node: '>=v24'}
 
   redis@5.11.0:
     resolution: {integrity: sha512-YwXjATVDT+AuxcyfOwZn046aml9jMlQPvU1VXIlLDVAExe0u93aTfPYSeRgG4p9Q/Jlkj+LXJ1XEoFV+j2JKcQ==}
@@ -9465,7 +9460,7 @@ snapshots:
       pg: 8.20.0
       postgres: 3.4.8
 
-  drizzle-struct@https://codeload.github.com/tsaxking/drizzle-struct/tar.gz/8d7113f74632dc3f19bd56b3b85b7cdd3b003e1f(@types/node@22.19.15)(@types/pg@8.20.0)(@types/react@18.3.28)(jsdom@28.1.0)(react@19.2.4)(sass-embedded@1.98.0)(sass@1.98.0):
+  drizzle-struct@https://codeload.github.com/tsaxking/drizzle-struct/tar.gz/45334fd3b01ae725c04426cc32c448dc4c24ab0b(@types/node@22.19.15)(@types/pg@8.20.0)(@types/react@18.3.28)(jsdom@28.1.0)(react@19.2.4)(sass-embedded@1.98.0)(sass@1.98.0):
     dependencies:
       '@eslint/compat': 1.4.1(eslint@9.39.4)
       '@msgpack/msgpack': 3.0.0-beta3
@@ -9486,8 +9481,6 @@ snapshots:
       prettier: 3.8.1
       prettier-plugin-svelte: 3.5.1(prettier@3.8.1)(svelte@5.55.1)
       proper-lockfile: 4.1.2
-      redis: 5.11.0
-      redis-utils: redis-service@https://codeload.github.com/tsaxking/redis/tar.gz/51166d1f64926a3c5a96e593ded35ac49768c25c(@types/node@22.19.15)(jsdom@28.1.0)(sass-embedded@1.98.0)(sass@1.98.0)
       svelte: 5.55.1
       ts-node: 10.9.2(@types/node@22.19.15)(typescript@5.9.3)
       ts-utils: https://codeload.github.com/tsaxking/global-ts-utilities/tar.gz/41d2ddec9d5552a057d4272e57805283a2e580b4(@types/node@22.19.15)(jsdom@28.1.0)(sass-embedded@1.98.0)(sass@1.98.0)
@@ -9503,7 +9496,6 @@ snapshots:
       - '@libsql/client'
       - '@libsql/client-wasm'
       - '@neondatabase/serverless'
-      - '@node-rs/xxhash'
       - '@op-engineering/op-sqlite'
       - '@opentelemetry/api'
       - '@planetscale/database'
@@ -11744,32 +11736,6 @@ snapshots:
     dependencies:
       indent-string: 4.0.0
       strip-indent: 3.0.0
-
-  redis-service@https://codeload.github.com/tsaxking/redis/tar.gz/51166d1f64926a3c5a96e593ded35ac49768c25c(@types/node@22.19.15)(jsdom@28.1.0)(sass-embedded@1.98.0)(sass@1.98.0):
-    dependencies:
-      redis: 5.11.0
-      ts-utils: https://codeload.github.com/tsaxking/global-ts-utilities/tar.gz/7f4bdafefe7da988f7a7e055e412131062d7ba11(@types/node@22.19.15)(jsdom@28.1.0)(sass-embedded@1.98.0)(sass@1.98.0)
-      uuid: 11.1.0
-      vitest: 3.2.4(@types/node@22.19.15)(jsdom@28.1.0)(sass-embedded@1.98.0)(sass@1.98.0)
-      zod: 3.25.76
-    transitivePeerDependencies:
-      - '@edge-runtime/vm'
-      - '@node-rs/xxhash'
-      - '@types/debug'
-      - '@types/node'
-      - '@vitest/browser'
-      - '@vitest/ui'
-      - happy-dom
-      - jsdom
-      - less
-      - lightningcss
-      - msw
-      - sass
-      - sass-embedded
-      - stylus
-      - sugarss
-      - supports-color
-      - terser
 
   redis@5.11.0:
     dependencies:
