@@ -219,7 +219,7 @@ export class PDF {
      * const result = await PDF.fromURL('report', 'https://example.com/reports/2024', {
      *   waitUntil: 'networkidle0',
      *   emulateMediaType: 'print',
-     *   timeout: 30_000
+     *   timeoutMs: 30_000
      * });
      * if (result.isErr()) throw result.error;
      * const pdf = result.unwrap();
