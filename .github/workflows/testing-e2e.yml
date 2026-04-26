@@ -25,13 +25,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+
       - name: Load .env variables
         run: |
-          touch .env
-          echo "OAUTH2_CLIENT_ID=1234567890" >> .env
-          echo "OAUTH2_CLIENT_SECRET=1234567890" >> .env
-          echo "SB_SCHEMA=e2e_test" >> .env
-          export $(cat .env | xargs)
+          cp .env.example .env
+          echo "Loaded .env variables"
       - name: Install dependencies
         run: |
           echo "Installing dependencies..."

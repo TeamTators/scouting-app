@@ -24,15 +24,11 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Initialize .env
+
+      - name: Load .env variables
         run: |
-          # .env for local app (host values)
-          cat <<EOF > .env
-          PORT=3000
-          OAUTH2_CLIENT_ID=1234567890
-          OAUTH2_CLIENT_SECRET=1234567890
-          SB_SCHEMA=docker_test
-          EOF
+          cp .env.example .env
+          echo "Loaded .env variables"
 
       - name: Install Dependencies
         run: |

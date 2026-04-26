@@ -31,11 +31,8 @@ jobs:
 
       - name: Load .env variables
         run: |
-          touch .env
-          echo "OAUTH2_CLIENT_ID=1234567890" >> .env
-          echo "OAUTH2_CLIENT_SECRET=1234567890" >> .env
-          echo "SB_SCHEMA=unit_test" >> .env
-          export $(cat .env | xargs)
+          cp .env.example .env
+          echo "Loaded .env variables"
 
       - name: Set up Supabase Config
         run: |
