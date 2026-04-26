@@ -88,7 +88,7 @@ Top navigation bar with stack controls, theme toggle, account menu, and notifica
 					width:	min-content;
 				"
 				>
-					{#if self && self.username === 'guest'}
+					{#if !self || self.username === 'guest'}
 						<li><a class="dropdown-item" href="/account/sign-in">Sign In</a></li>
 					{:else}
 						<li><a class="dropdown-item" href="/account/sign-out">Sign Out</a></li>
