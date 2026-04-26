@@ -377,6 +377,11 @@ class AccountFactory {
 	 *   { type: 'all' }
 	 * );
 	 */
+	search(query: SearchQuery<'profile'>, config: ReadConfig<'all'>): SupaStructArray<'profile'>;
+	search(
+		query: SearchQuery<'profile'>,
+		config: ReadConfig<'single'>
+	): ResultPromise<SupaStructData<'profile'> | null>;
 	search(query: SearchQuery<'profile'>, config: ReadConfig<ReadType>): ReadReturnType<'profile'> {
 		return this.profile
 			.search(query, config as any)
