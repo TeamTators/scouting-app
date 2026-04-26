@@ -86,7 +86,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pnpm add -D typescript@latest
+          pnpm add -D typescript@5.9.3
           pnpm install --frozen-lockfile
 
       - name: Load .env variables

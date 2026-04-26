@@ -33,7 +33,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pnpm add -D typescript@latest
+          pnpm add -D typescript@5.9.3
           pnpm install --frozen-lockfile
 
       - name: Set up Supabase Config
