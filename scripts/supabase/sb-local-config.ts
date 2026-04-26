@@ -12,6 +12,7 @@ export default async () => {
 		SB_DB_URL: parsed.database_url,
 		SB_PUBLIC_KEY: parsed.authentication_keys_publishable,
 		SB_SECRET_KEY: parsed.authentication_keys_secret,
+		SB_STORAGE_ENDPOINT: parsed.storage_s3_url.replace(parsed.apis_project_url, ''),
 		SB_STORAGE_ACCESS_KEY: parsed.storage_s3_access_key,
 		SB_STORAGE_SECRET_KEY: parsed.storage_s3_secret_key,
 		SB_REGION: parsed.storage_s3_region,
