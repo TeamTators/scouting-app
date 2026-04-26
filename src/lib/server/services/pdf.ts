@@ -204,35 +204,6 @@ export class PDF {
 		});
 	}
 
-<<<<<<< Updated upstream
-    /**
-     * Create a PDF from a URL.
-     *
-     * Launches a Puppeteer browser, navigates to the URL, waits for resources based on the
-     * wait strategy, and generates a PDF. Validates HTTP response status. Browser closes
-     * automatically after generation.
-     *
-     * @param {string} name Desired file name. `.pdf` is appended if missing.
-     * @param {string} url Absolute URL to render. Must be a valid, accessible HTTP(S) address.
-     * @param {PDFRenderOptions} [options={}] Rendering and Puppeteer options.
-     * @returns {import('ts-utils').ResultPromise<PDF, Error>} Result-wrapped PDF instance.
-     * @example
-     * const result = await PDF.fromURL('report', 'https://example.com/reports/2024', {
-     *   waitUntil: 'networkidle0',
-     *   emulateMediaType: 'print',
-     *   timeoutMs: 30_000
-     * });
-     * if (result.isErr()) throw result.error;
-     * const pdf = result.unwrap();
-     */
-    public static fromURL(name: string, url: string, options: PDFRenderOptions = {}) {
-        return attemptAsync(async () => {
-            const data = await PDF.renderFromURL(url, options).unwrap();
-            const normalizedName = PDF.normalizeName(name).unwrap();
-            return new PDF(normalizedName, data);
-        });
-    }
-=======
 	/**
 	 * Create a PDF from a URL.
 	 *
@@ -260,7 +231,6 @@ export class PDF {
 			return new PDF(normalizedName, data);
 		});
 	}
->>>>>>> Stashed changes
 
 	/**
 	 * Create a PDF from binary bytes.
@@ -329,9 +299,9 @@ export class PDF {
 				throw new Error('File is not a valid PDF: ' + filePath);
 			}
 
-			const fileName = filePath.split('/').slice(-1)[0];
-			const normalizedName = PDF.normalizeName(fileName).unwrap();
-			const fileBuffer = attempt(() => Buffer.from(data)).unwrap();
+            const fileName = path.basename(filePath);
+            const normalizedName = PDF.normalizeName(fileName).unwrap();
+            const fileBuffer = attempt(() => Buffer.from(data)).unwrap();
 
 			return new PDF(normalizedName, fileBuffer);
 		});
@@ -526,25 +496,25 @@ export class PDF {
 		});
 	}
 
-	/**
-	 * Save PDF bytes to disk.
-	 *
-	 * By default creates parent directories if missing. Fails with error if the path is not
-	 * absolute. Suitable for archiving, batch processing, or generating downloadable files.
-	 *
-	 * @param {string} filePath Absolute output path. Must start with `/` (absolute path required).
-	 * @param {PDFSaveOptions} [options={}] Save options (directory creation, file mode).
-	 * @returns {import('ts-utils').ResultPromise<void, Error>} Async save result.
-	 * @example
-	 * const saveResult = await pdf.save('/var/reports/invoice_2024.pdf', {
-	 *   ensureDirectory: true,
-	 *   mode: 0o644
-	 * });
-	 * if (saveResult.isErr()) throw saveResult.error;
-	 */
-	save(filePath: string, options: PDFSaveOptions = {}) {
-		return attemptAsync(async () => {
-			PDF.assertAbsolutePath(filePath).unwrap();
+    /**
+     * Save PDF bytes to disk.
+     *
+     * By default creates parent directories if missing. Fails with error if the path is not
+     * absolute. Suitable for archiving, batch processing, or generating downloadable files.
+     *
+     * @param {string} filePath Absolute output path. Must be an absolute path.
+     * @param {PDFSaveOptions} [options={}] Save options (directory creation, file mode).
+     * @returns {import('ts-utils').ResultPromise<void, Error>} Async save result.
+     * @example
+     * const saveResult = await pdf.save('/var/reports/invoice_2024.pdf', {
+     *   ensureDirectory: true,
+     *   mode: 0o644
+     * });
+     * if (saveResult.isErr()) throw saveResult.error;
+     */
+    save(filePath: string, options: PDFSaveOptions = {}) {
+        return attemptAsync(async () => {
+            PDF.assertAbsolutePath(filePath).unwrap();
 
 			if (options.ensureDirectory ?? true) {
 				await fs.mkdir(PDF.parentDirectory(filePath), { recursive: true });
@@ -673,11 +643,6 @@ export class PDF {
 		});
 	}
 
-<<<<<<< Updated upstream
-                if (options.emulateMediaType !== undefined) {
-                    await page.emulateMediaType(options.emulateMediaType);
-                }
-=======
 	/**
 	 * Normalize a file name to include `.pdf`.
 	 *
@@ -692,7 +657,6 @@ export class PDF {
 			if (!trimmed) {
 				throw new Error('PDF name cannot be empty');
 			}
->>>>>>> Stashed changes
 
 			return trimmed.toLowerCase().endsWith('.pdf') ? trimmed : `${trimmed}.pdf`;
 		});
