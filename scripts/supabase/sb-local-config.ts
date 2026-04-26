@@ -1,5 +1,5 @@
 import sbParseLog from './sb-parse-log';
-import { set } from '../../src/lib/server/utils/env';
+import { set } from '../../src/lib/server/utils/env-utils';
 
 export default async () => {
 	const parsed = sbParseLog();
