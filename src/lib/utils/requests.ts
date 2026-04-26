@@ -10,7 +10,6 @@ import { attemptAsync, type Result } from 'ts-utils/check';
 import { Stream } from 'ts-utils/stream';
 import { EventEmitter } from 'ts-utils/event-emitter';
 import { z } from 'zod';
-import { Struct } from '$lib/services/struct';
 
 export namespace Requests {
 	/** Metadata headers applied to all requests. */
@@ -167,7 +166,6 @@ export namespace Requests {
 	 */
 	export const setMeta = (key: string, value: string) => {
 		metadata[key] = value;
-		Struct.headers.set(key, value);
 	};
 
 	/**

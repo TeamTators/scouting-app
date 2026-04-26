@@ -11,10 +11,10 @@ Notification card with read/unread and delete actions.
 ```
 -->
 <script lang="ts">
-	import { Account } from '$lib/model/account';
+	import type { SupaStructData } from '$lib/services/supabase/supastruct-data';
 
 	interface Props {
-		notification: Account.AccountNotificationData;
+		notification: SupaStructData<'account_notification'>;
 	}
 
 	const { notification }: Props = $props();

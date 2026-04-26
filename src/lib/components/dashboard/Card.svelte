@@ -20,7 +20,7 @@ Dashboard card container with maximize and hide controls.
 <script lang="ts">
 	import { onMount, type Snippet } from 'svelte';
 	import { capitalize } from 'ts-utils/text';
-	import { Dashboard } from '$lib/model/dashboard';
+	import { Dashboard } from '$lib/utils/dashboard';
 	import { browser } from '$app/environment';
 
 	const CARD_HEIGHT = 300; // in pixels

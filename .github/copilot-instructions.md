@@ -10,7 +10,6 @@
 
 ## Config and environment conventions
 
-- config.json is required and validated via src/lib/server/utils/env.ts with config/schema from config/config.schema.json; copy config.example.json to config.json for local setup.
 - env helper in src/lib/server/utils/env.ts auto-updates .env.example during dev when new keys are requested.
 
 ## Developer workflows (project-specific)

@@ -21,7 +21,7 @@ Dashboard layout wrapper that renders cards grid.
 	import { capitalize } from 'ts-utils/text';
 	import { onMount, type Snippet } from 'svelte';
 	import MinimizedCards from './MinimizedCards.svelte';
-	import { Dashboard } from '$lib/model/dashboard';
+	import { Dashboard } from '$lib/utils/dashboard';
 
 	interface Props {
 		body: Snippet<[Dashboard.Card[]]>;

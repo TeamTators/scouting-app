@@ -133,9 +133,18 @@ export class Table<Name extends string, Type extends SchemaDefinition> {
 	 */
 	constructor(
 		public name: Name,
-		public schema: Type
+		public schema: Type,
+		public config?: {
+			debug?: boolean;
+		}
 	) {
 		this.table = _define<Type>(name, schema);
+	}
+
+	private log(...args: unknown[]) {
+		if (this.config?.debug) {
+			console.log(`IndexDB: [${this.name}]`, ...args);
+		}
 	}
 
 	/**
@@ -149,6 +158,7 @@ export class Table<Name extends string, Type extends SchemaDefinition> {
 	}) {
 		return attemptAsync(async () => {
 			_init();
+			this.log('Creating new record with data:', data);
 			const newData = {
 				...data,
 				id: Math.random().toString(36).substring(2, 10) + Date.now().toString(36),
@@ -171,6 +181,7 @@ export class Table<Name extends string, Type extends SchemaDefinition> {
 	fromId(id: string) {
 		return attemptAsync(async () => {
 			_init();
+			this.log(`Fetching record with id: ${id}`);
 			const has = this.cache.get(id);
 			if (has) return has;
 			const data = await this.table().get(id);
@@ -204,6 +215,7 @@ export class Table<Name extends string, Type extends SchemaDefinition> {
 	all(config: ReadConfig<boolean>) {
 		return attemptAsync(async () => {
 			_init();
+			this.log(`Fetching all records with config:`, config);
 			if (config.pagination) {
 				const total = await this.table().count();
 				const datas = await this.table()
@@ -237,7 +249,7 @@ export class Table<Name extends string, Type extends SchemaDefinition> {
 				const offUpdate = this.on('update', () => {
 					arr.inform();
 				});
-				arr.onAllUnsubscribe(() => {
+				arr.on('all-unsubscribe', () => {
 					offNew();
 					offDelete();
 					offUpdate();
@@ -261,7 +273,7 @@ export class Table<Name extends string, Type extends SchemaDefinition> {
 			const offUpdate = this.on('update', () => {
 				w.inform();
 			});
-			w.onAllUnsubscribe(() => {
+			w.on('all-unsubscribe', () => {
 				offNew();
 				offDelete();
 				offUpdate();
@@ -306,6 +318,7 @@ export class Table<Name extends string, Type extends SchemaDefinition> {
 	 */
 	clear() {
 		return attemptAsync(async () => {
+			this.log('Clearing all records from the table');
 			_init();
 			await this.table().clear();
 		});
@@ -328,7 +341,7 @@ export class Table<Name extends string, Type extends SchemaDefinition> {
 	): ResultPromise<TableDataArr<Name, Type> | PaginatedTableData<Name, Type>> {
 		return attemptAsync(async () => {
 			_init();
-
+			this.log(`Fetching records with filter:`, data, `and config:`, config);
 			if (config.pagination) {
 				const total = await this.table().where(data).count();
 				const datas = await this.table()
@@ -399,7 +412,94 @@ export class Table<Name extends string, Type extends SchemaDefinition> {
 			const offDelete = this.on('delete', onDelete);
 			const offUpdate = this.on('update', onUpdate);
 
-			arr.onAllUnsubscribe(() => {
+			arr.on('all-unsubscribe', () => {
+				offNew();
+				offDelete();
+				offUpdate();
+			});
+
+			return arr;
+		});
+	}
+
+	/**
+	 * Fetches records with pagination based on a custom getter function.
+	 * This allows for complex queries that may not be directly supported by Dexie's API.
+	 * @param col - The column name to filter on
+	 * @param op - The comparison operator to use for filtering
+	 * @param value - The value used to compare
+	 * @param config - Read config
+	 */
+	where<K extends keyof Type>(
+		col: Extract<K, string>,
+		op: 'eq' | 'ne' | 'gt' | 'lt' | 'gte' | 'lte',
+		value: SchemaFieldReturnType<Type[K]>,
+		config: ReadConfig<false>
+	): ResultPromise<TableDataArr<Name, Type>> {
+		return attemptAsync(async () => {
+			_init();
+			this.log(`Fetching records where ${col} ${op} ${value} with config:`, config);
+			void config;
+
+			const toComparable = (v: unknown): number | string | null => {
+				if (v instanceof Date) return v.getTime();
+				if (typeof v === 'number' || typeof v === 'string') return v;
+				return null;
+			};
+
+			const matches = (item: TableData<Name, Type>) => {
+				const current = item.data[col] as SchemaFieldReturnType<Type[K]>;
+				const left = toComparable(current);
+				const right = toComparable(value);
+				switch (op) {
+					case 'eq':
+						return current === value;
+					case 'ne':
+						return current !== value;
+					case 'gt':
+						return left !== null && right !== null && left > right;
+					case 'lt':
+						return left !== null && right !== null && left < right;
+					case 'gte':
+						return left !== null && right !== null && left >= right;
+					case 'lte':
+						return left !== null && right !== null && left <= right;
+				}
+			};
+
+			const datas = await this.table()
+				.filter((item) => matches(this.Generator(item)))
+				.toArray();
+			const arr = new TableDataArr(
+				this,
+				datas.map((data) => this.Generator(data))
+			);
+
+			const onNew = (d: TableData<Name, Type>) => {
+				if (matches(d)) {
+					arr.add(d);
+				}
+			};
+
+			const onDelete = (d: TableData<Name, Type>) => {
+				if (matches(d)) {
+					arr.remove(d);
+				}
+			};
+
+			const onUpdate = (d: TableData<Name, Type>) => {
+				if (matches(d)) {
+					arr.add(d);
+				} else {
+					arr.remove(d);
+				}
+			};
+
+			const offNew = this.on('new', onNew);
+			const offDelete = this.on('delete', onDelete);
+			const offUpdate = this.on('update', onUpdate);
+
+			arr.on('all-unsubscribe', () => {
 				offNew();
 				offDelete();
 				offUpdate();
@@ -535,19 +635,19 @@ export class TableDataArr<Name extends string, Type extends SchemaDefinition> ex
 	 * @readonly
 	 * @type {ComplexEventEmitter}
 	 */
-	private readonly em = new ComplexEventEmitter<{
+	private readonly localEm = new ComplexEventEmitter<{
 		add: [TableData<Name, Type>];
 		remove: [TableData<Name, Type>];
 	}>();
 
 	/** Event listener for 'add' and 'remove' events */
-	public on = this.em.on.bind(this.em);
+	public localOn = this.localEm.on.bind(this.localEm);
 	/** Remove event listener */
-	public off = this.em.off.bind(this.em);
+	public localOff = this.localEm.off.bind(this.localEm);
 	/** Listen once for event */
-	public once = this.em.once.bind(this.em);
+	public localOnce = this.localEm.once.bind(this.localEm);
 	/** Emit array events */
-	public emit = this.em.emit.bind(this.em);
+	public localEmit = this.localEm.emit.bind(this.localEm);
 
 	/**
 	 * Creates an instance of TableDataArr.
@@ -612,7 +712,7 @@ export class TableDataArr<Name extends string, Type extends SchemaDefinition> ex
 		this.data.push(item);
 		this.data = this.data.filter((v, i, a) => a.findIndex((dd) => dd.data.id === v.data.id) === i);
 		if (this.data.length !== len) {
-			this.emit('add', item);
+			this.localEmit('add', item);
 		}
 		this.inform(); // Debounced for event-driven updates
 	}
@@ -643,7 +743,7 @@ export class TableDataArr<Name extends string, Type extends SchemaDefinition> ex
 			this.data = this.data.filter((d) => !predicate(d));
 			if (this.data.length !== len && removed.length > 0) {
 				for (const item of removed) {
-					this.emit('remove', item);
+					this.localEmit('remove', item);
 				}
 			}
 		} else {
@@ -653,7 +753,7 @@ export class TableDataArr<Name extends string, Type extends SchemaDefinition> ex
 			this.data = this.data.filter((d) => !idsToRemove.has(d.data.id));
 			if (this.data.length !== len) {
 				for (const item of itemsToRemove) {
-					this.emit('remove', item);
+					this.localEmit('remove', item);
 				}
 			}
 		}
@@ -729,7 +829,7 @@ export class PaginatedTableData<
 		});
 
 		// Refresh data when items are added
-		this.on('add', async () => {
+		this.localOn('add', async () => {
 			const current = get(this.info);
 			const newData = await getter(current.page, current.pageSize);
 			this.data = newData;
@@ -738,7 +838,7 @@ export class PaginatedTableData<
 		});
 
 		// Refresh data when items are removed
-		this.on('remove', async () => {
+		this.localOn('remove', async () => {
 			const current = get(this.info);
 			const newData = await getter(current.page, current.pageSize);
 			this.data = newData;

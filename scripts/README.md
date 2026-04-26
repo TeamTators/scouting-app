@@ -15,11 +15,7 @@ The runner lives at scripts/index.ts and is wired in package.json as the script 
 - `pnpm route-tree`: generates the route tree used by the app.
 - `pnpm build:docs`: builds the static documentation site.
 - `pnpm build:email`: builds MJML email templates.
-- `pnpm test:schema`: validates the schema.
 - `pnpm test:integration`: runs integration tests.
-- `pnpm backup`: creates a backup.
-- `pnpm restore`: restores from a backup.
-- `pnpm fix-readme`: normalizes README formatting.
 
 ## Notes
 

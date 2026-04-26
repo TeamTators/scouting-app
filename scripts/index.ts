@@ -1,8 +1,7 @@
 import path from 'path';
-import { runTs } from '../src/lib/server/utils/task';
-import terminal from '../src/lib/server/utils/terminal';
 import fs from 'fs/promises';
 import { select, prompt } from '../cli/utils';
+import { createServer } from 'vite';
 
 // Convert import.meta.url to a file path
 
@@ -36,19 +35,32 @@ const main = async () => {
 				?.split(' ') ?? [];
 	}
 
-	terminal.log('Running file:', file);
+	// terminal.log('Running file:', file, 'with args:', args);
 
-	const res = await runTs(path.join('scripts', file), 'default', ...args);
+	// const res = await runTs(path.join('scripts', file), 'default', ...args);
 
-	if (res.isErr()) {
-		await terminal.error(res.error);
-		process.exit(1);
+	// const res = await import(path.join(process.cwd(), 'scripts', file)).then((mod) => {
+	// 	if (!mod.default) {
+	// 		throw new Error(`Script ${file} does not have a default export`);
+	// 	}
+	// 	return mod.default(...args);
+	// });
+	// console.log('Result:', res);
+
+	const server = await createServer({
+		configFile: path.join(process.cwd(), 'vite.config.ts'),
+		server: {
+			middlewareMode: true
+		}
+	});
+	const mod = await server.ssrLoadModule(path.join(process.cwd(), 'scripts', file));
+	if (!mod.default) {
+		throw new Error(`Script ${file} does not have a default export`);
 	}
-
-	if (res.isOk()) {
-		await terminal.log(res.value);
-		process.exit(0);
-	}
+	const res = await mod.default(...args);
+	console.log('Result:', res);
+	server.close();
+	process.exit(0);
 };
 
 // Vite-specific check: is this the entry module?

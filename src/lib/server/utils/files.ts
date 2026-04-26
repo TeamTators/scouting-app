@@ -8,143 +8,11 @@
  * import { FileReceiver, fileTree } from '$lib/server/utils/files';
  * const receiver = new FileReceiver({ maxFileSize: 10_000_000, maxFiles: 5 });
  */
-import { Readable } from 'stream';
-import Busboy from 'busboy';
 import path from 'path';
 import fs from 'fs';
-import { uuid } from './uuid';
 import { attemptAsync, attempt } from 'ts-utils/check';
 import { z } from 'zod';
 import { parse } from 'comment-json';
-
-/**
- * Directory where uploaded files are stored
- * @constant {string}
- */
-const UPLOAD_DIR = path.resolve(process.cwd(), 'static/uploads');
-
-// Ensure the upload directory exists
-fs.promises.mkdir(UPLOAD_DIR, { recursive: true }).catch(() => {});
-
-/**
- * Request event interface for SvelteKit request handling
- * @interface RequestEvent
- */
-interface RequestEvent {
-	request: {
-		headers: Headers;
-		body: ReadableStream<Uint8Array> | null;
-	};
-}
-
-/**
- * File upload receiver that handles multipart/form-data file uploads with size and count limits.
- * Uses Busboy to parse multipart data and saves files to the static/uploads directory.
- *
- * @export
- * @class FileReceiver
- */
-export class FileReceiver {
-	/**
-	 * Creates an instance of FileReceiver.
-	 *
-	 * @constructor
-	 * @param {object} config - Configuration for file upload limits
-	 * @param {number} config.maxFileSize - Maximum file size in bytes
-	 * @param {number} config.maxFiles - Maximum number of files allowed per request
-	 */
-	constructor(
-		public readonly config: {
-			maxFileSize: number; // In bytes
-			maxFiles: number; // Maximum number of files allowed
-		}
-	) {}
-
-	/**
-	 * Receives and processes multipart/form-data file uploads from a request.
-	 * Validates content type, enforces file limits, and saves files with unique names.
-	 *
-	 * @async
-	 * @param {RequestEvent} { request } - SvelteKit request event containing the multipart data
-	 * @returns {Promise<AttemptAsync<{files: {fieldName: string, filePath: string}[]}>>} Promise resolving to uploaded file information
-	 * @throws {Error} When content type is invalid, no body is present, or file limits are exceeded
-	 * @example
-	 * ```typescript
-	 * const receiver = new FileReceiver({ maxFileSize: 10 * 1024 * 1024, maxFiles: 5 });
-	 * const result = await receiver.receive({ request });
-	 * if (result.isOk()) {
-	 *   console.log('Files uploaded:', result.value.files);
-	 * }
-	 * ```
-	 */
-	async receive({ request }: RequestEvent) {
-		return attemptAsync(async () => {
-			if (!request.headers.get('content-type')?.startsWith('multipart/form-data')) {
-				throw new Error('Invalid content type. Expected multipart/form-data.');
-			}
-
-			if (!request.body) {
-				throw new Error('No body found in request.');
-			}
-
-			const busboy = Busboy({
-				headers: {
-					'content-type': request.headers.get('content-type') || ''
-				},
-				limits: {
-					fileSize: this.config.maxFileSize,
-					files: this.config.maxFiles
-				}
-			});
-
-			const files: { fieldName: string; filePath: string }[] = [];
-			let fileCount = 0;
-
-			return new Promise<{
-				files: { fieldName: string; filePath: string }[];
-			}>((resolve, reject) => {
-				// Adapt the ReadableStream to a Node.js Readable
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const nodeStream = Readable.from(request.body as any);
-
-				busboy.on('file', (fieldName, file, fileInfo) => {
-					if (fileCount >= this.config.maxFiles) {
-						file.resume(); // Discard the rest of the file
-						return reject(new Error('Exceeded the maximum allowed number of files.'));
-					}
-
-					const fileName = fileInfo.filename;
-
-					const safeFileName = `${uuid()}_${fileName}`;
-					const filePath = path.join(UPLOAD_DIR, safeFileName);
-
-					const writeStream = fs.createWriteStream(filePath);
-					file.pipe(writeStream);
-
-					fileCount++;
-
-					file.on('end', () => {
-						files.push({ fieldName, filePath });
-					});
-
-					file.on('error', (err) => {
-						reject(err);
-					});
-				});
-
-				busboy.on('finish', () => {
-					resolve({ files });
-				});
-
-				busboy.on('error', (err) => {
-					reject(err);
-				});
-
-				nodeStream.pipe(busboy);
-			});
-		});
-	}
-}
 
 /**
  * Represents a file or directory in a hierarchical tree structure
@@ -557,9 +425,9 @@ export const parseJSON = <T>(json: string, parser: z.ZodType<T>) => {
  * @returns {Attempt<T>} Result containing parsed and validated data
  * @example
  * ```typescript
- * const config = openJSONSync('./config.json', configSchema);
- * if (config.isOk()) {
- *   console.log('Configuration loaded:', config.value);
+ * const testJSON = openJSONSync('./test.json', z.object({ key: z.string() }));
+ * if (testJSON.isOk()) {
+ *   console.log('Configuration loaded:', testJSON.value);
  * }
  * ```
  */
@@ -581,9 +449,9 @@ export const openJSONSync = <T>(filePath: string, parser: z.ZodType<T>) => {
  * @returns {Promise<AttemptAsync<T>>} Promise resolving to parsed and validated data
  * @example
  * ```typescript
- * const config = await openJSON('./config.json', configSchema);
- * if (config.isOk()) {
- *   console.log('Configuration loaded:', config.value);
+ * const testJSON = await openJSON('./test.json', z.object({ key: z.string() }));
+ * if (testJSON.isOk()) {
+ *   console.log('Configuration loaded:', testJSON.value);
  * }
  * ```
  */

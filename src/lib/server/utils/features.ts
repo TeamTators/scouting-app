@@ -1,10 +1,10 @@
 import { attemptAsync } from 'ts-utils/check';
 import fs from 'fs';
 import path from 'path';
-import z from 'zod';
-import { Account } from '../structs/account';
+import { z } from 'zod';
 import type { Icon } from '$lib/types/icons';
 import { type Feature } from '../../types/features';
+import { globalNotification } from '../model/notifications';
 
 export const getCachedList = () => {
 	return attemptAsync(async () => {
@@ -33,7 +33,7 @@ export const makeFeatureNotifications = () => {
 
 		await Promise.all(
 			newFeatures.map((f) =>
-				Account.globalNotification({
+				globalNotification({
 					title: `New Feature: ${f.name}`,
 					message: f.description,
 					severity: 'info',
@@ -107,7 +107,7 @@ export const getFeatureList = () => {
 		return fs.promises
 			.readdir(path.resolve(process.cwd(), 'static', 'features'))
 			.then((features) =>
-				Promise.all(features.map((f) => getFeatureMetadata(path.basename(f)).unwrap()))
+				Promise.all(features.reverse().map((f) => getFeatureMetadata(path.basename(f)).unwrap()))
 			);
 	});
 };

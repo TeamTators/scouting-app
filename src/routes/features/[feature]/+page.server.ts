@@ -1,4 +1,4 @@
-import { domain } from '$lib/server/utils/env.js';
+import { domain } from '$lib/server/utils/env-utils.js';
 import { getFeature } from '$lib/server/utils/features.js';
 
 export const load = async (event) => {

@@ -1,4 +1,4 @@
-import { Navbar } from '$lib/model/navbar';
+import { Navbar } from '$lib/nav';
 
 export default () => {
 	Navbar.addSection({

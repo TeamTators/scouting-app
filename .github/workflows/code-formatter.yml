@@ -2,42 +2,29 @@ name: Format & Lint
 
 on:
   workflow_call:
-    # secrets:
-    #   GH_TOKEN:
-    #     description: 'GitHub Token'
-    #     required: true
+    #
   push:
-    branches:
-      - '*'
-      - '!deploy'
-      - '!gh-pages'
+    branches-ignore:
+      - 'deploy'
+      - 'gh-pages'
 
 permissions:
   contents: read
 
 jobs:
   format_and_lint:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
     steps:
       - name: Retrieve git dependencies
         uses: actions/checkout@v3
         with:
           submodules: 'true'
-          # token: ${{ secrets.GH_TOKEN }}
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.30.0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: v24.13.1
+          # token: ${{ secrets.GH_TOKEN }}Do i rea
 
       - name: Install dependencies
         run: |
           echo "Installing dependencies..."
+          pnpm add -D typescript
           pnpm install --frozen-lockfile
 
       - name: Run

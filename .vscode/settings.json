@@ -1,7 +1,7 @@
 {
 	"colorMyText.configurations": [
 		{
-			"paths": ["*.html", "*.mjml", "*.md"],
+			"paths": ["*.html", "*.mjml", "*.md", "*.sql"],
 			"rules": [
 				{
 					"patterns": ["\\{\\{ [^}]+\\}\\}"],
@@ -49,15 +49,5 @@
 		}
 	],
 	"liveServer.settings.port": 5501,
-	"json.schemas": [
-		{
-			"fileMatch": ["config.json", "config.example.json", "config.docker.json"],
-			"url": "./config/config.schema.json"
-		}
-	],
-	"files.associations": {
-		"config.json": "jsonc",
-		"config.*.json": "jsonc"
-	},
 	"excalidraw.theme": "dark"
 }

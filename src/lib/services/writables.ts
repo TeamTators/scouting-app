@@ -6,7 +6,7 @@
  * const store = new WritableBase(0);
  */
 import type { Subscriber, Unsubscriber, Writable } from 'svelte/store';
-import { attempt, attemptAsync, debounce, ResultPromise } from 'ts-utils';
+import { attempt, attemptAsync, debounce, ComplexEventEmitter, ResultPromise } from 'ts-utils';
 import deepEqual from 'fast-deep-equal';
 
 /**
@@ -20,6 +20,17 @@ import deepEqual from 'fast-deep-equal';
  * @implements {Writable<T>}
  */
 export class WritableBase<T> implements Writable<T> {
+	private readonly em = new ComplexEventEmitter<{
+		'all-unsubscribe': void;
+		subscribe: [Subscriber<T>];
+		destroy: void;
+	}>();
+
+	private readonly emit = this.em.emit.bind(this.em);
+	public readonly on = this.em.on.bind(this.em);
+	public readonly off = this.em.off.bind(this.em);
+	public readonly once = this.em.once.bind(this.em);
+
 	/**
 	 * Creates an instance of WritableBase.
 	 *
@@ -94,24 +105,18 @@ export class WritableBase<T> implements Writable<T> {
 	subscribe(run: Subscriber<T>): Unsubscriber {
 		run(this.data);
 		this.subscribers.add(run);
+		this.emit('subscribe', run);
 		return () => {
 			this.subscribers.delete(run);
-			if (this.subscribers.size === 0) {
-				for (const callback of this._onAllUnsubscribeCallbacks) {
-					callback();
-					this.destroy();
-				}
-			}
-			// if we are in debug mode, it starts with 1 subscriber, so it's ready to be destroyed.
-			if (this.subscribers.size === 1 && this._config?.debug) {
-				this.log('Last subscriber removed');
-				for (const callback of this._onAllUnsubscribeCallbacks) {
-					callback();
-					this.destroy();
-				}
-				this.subscribers.clear();
-			}
+			this.unsub();
 		};
+	}
+
+	private unsub() {
+		if (this.subscribers.size === 0 || (this.subscribers.size === 1 && this._config?.debug)) {
+			this.log('Last subscriber removed');
+			this.emit('all-unsubscribe');
+		}
 	}
 
 	/**
@@ -131,11 +136,13 @@ export class WritableBase<T> implements Writable<T> {
 		const wrapper: Subscriber<T> = (value) => {
 			run(value);
 			this.subscribers.delete(wrapper);
+			this.unsub();
 		};
 
 		this.subscribers.add(wrapper);
 		return () => {
 			this.subscribers.delete(wrapper);
+			this.unsub();
 		};
 	}
 
@@ -210,37 +217,16 @@ export class WritableBase<T> implements Writable<T> {
 	}
 
 	/**
-	 * Set of callbacks to execute when all subscribers have unsubscribed
-	 *
-	 * @private
-	 * @type {Set<() => void>}
-	 */
-	private _onAllUnsubscribeCallbacks: Set<() => void> = new Set();
-
-	/**
-	 * Registers a callback to execute when all subscribers have unsubscribed
-	 *
-	 * @param {() => void} cb - Function to call when all subscribers are removed
-	 * @returns {void}
-	 * @example
-	 * ```typescript
-	 * store.onAllUnsubscribe(() => {
-	 *   console.log('All subscribers removed - cleaning up resources');
-	 * });
-	 * ```
-	 */
-	onAllUnsubscribe(cb: () => void): void {
-		this._onAllUnsubscribeCallbacks.add(cb);
-	}
-
-	/**
 	 * Pipes updates from the target writable into this writable
 	 * Once piped, this writable will receive updates from the target
 	 * Once this writable has no subscribers, the pipe subscription will be unsubscribed
 	 * @param {Writable<unknown>} target - The writable store to pipe from
 	 */
 	pipe(target: Writable<unknown>): void {
-		this.onAllUnsubscribe(target.subscribe(() => this.inform()));
+		this.on(
+			'all-unsubscribe',
+			target.subscribe(() => this.inform())
+		);
 	}
 
 	/**
@@ -258,7 +244,8 @@ export class WritableBase<T> implements Writable<T> {
 	 * ```
 	 */
 	pipeData<Target>(target: Writable<Target>, transform: (data: Target) => T): void {
-		this.onAllUnsubscribe(
+		this.on(
+			'all-unsubscribe',
 			target.subscribe((data) => {
 				this.data = transform(data);
 			})
@@ -338,9 +325,10 @@ export class WritableBase<T> implements Writable<T> {
 	 */
 	destroy() {
 		this.subscribers.clear();
+		this.emit('destroy');
 		this.interceptors.clear();
 		this.validators.clear();
-		this._onAllUnsubscribeCallbacks.clear();
+		this.em.destroyEvents();
 	}
 
 	/**

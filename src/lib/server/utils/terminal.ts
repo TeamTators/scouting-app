@@ -11,12 +11,12 @@
 import chalk from 'chalk';
 import fs from 'fs';
 import path from 'path';
-import { config } from './env';
+import env from './env';
 
 /** Whether stdout/stderr logging is enabled. */
-const doLog = config.logs.enabled;
+const doLog = env.LOGS_ENABLED;
 /** Directory where log files are written. */
-const LOG_DIR = config.logs.outdir;
+const LOG_DIR = env.LOGS_OUTDIR;
 
 /**
  * Returns a formatted callsite string for log output.
@@ -106,5 +106,18 @@ export default {
 	log,
 	error,
 	warn
+	// debug: (...args: unknown[]) => {
+	// 	if (config.logs.debug) {
+	// 		const callsite = getCallsite();
+	// 		if (doLog)
+	// 			console.debug(
+	// 				new Date().toISOString(),
+	// 				chalk.gray(`[${callsite}]`),
+	// 				'(DEBUG)',
+	// 				...args
+	// 			);
+	// 		return save(callsite, 'debug', ...args);
+	// 	}
+	// }
 	// clear: console.clear
 };

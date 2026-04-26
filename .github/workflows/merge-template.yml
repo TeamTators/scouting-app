@@ -6,7 +6,7 @@ on:
 
 jobs:
   pre-check:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
     outputs:
       run_pipeline: ${{ steps.check.outputs.run_pipeline }}
     steps:
@@ -39,7 +39,7 @@ jobs:
     uses: ./.github/workflows/docker-compose-test.yml
 
   merge-template:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
     needs: [format, unit-tests, E2E, check, docker-compose]
 
     strategy:
@@ -83,15 +83,14 @@ jobs:
           node-version: v24.13.1
 
       - name: Install dependencies
-        run: pnpm i
+        run: |
+          pnpm add -D typescript
+          pnpm install --frozen-lockfile
 
       - name: Load .env variables
         run: |
-          cp config.example.json config.json
-          touch .env
-          echo "OAUTH2_CLIENT_ID=1234567890" >> .env
-          echo "OAUTH2_CLIENT_SECRET=1234567890" >> .env
-          export $(cat .env | xargs)
+          cp .env.example .env
+          echo "Loaded .env variables"
 
       - name: Send pull-request
         run: |

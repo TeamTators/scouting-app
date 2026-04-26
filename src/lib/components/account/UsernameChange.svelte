@@ -12,14 +12,15 @@ Username change input with availability checks.
 -->
 <script lang="ts">
 	import { Account } from '$lib/model/account';
+	import { after } from 'ts-utils';
 
 	interface Props {
-		account: Account.AccountData;
+		account: Account;
 	}
 
 	const { account }: Props = $props();
 
-	let username = $derived(account.data.username || '');
+	let username = $derived(account.username || '');
 	let usernameState: 'exists' | 'available' | 'checking' | 'yours' | 'error' = $state('yours');
 	let testTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -27,13 +28,24 @@ Username change input with availability checks.
 		if (testTimeout) clearTimeout(testTimeout);
 
 		testTimeout = setTimeout(() => {
-			Account.usernameExists(username)
+			account.factory
+				.search(
+					{
+						field: 'username',
+						operator: 'eq',
+						value: username
+					},
+					{
+						type: 'single',
+						expires: after(5 * 60 * 1000)
+					}
+				)
 				.unwrap()
 				.then((result) => {
-					if (result) {
-						usernameState = 'exists';
-					} else if (username === account.data.username) {
+					if (username === account.username || (result && result.id === account.id)) {
 						usernameState = 'yours';
+					} else if (result) {
+						usernameState = 'exists';
 					} else {
 						usernameState = 'available';
 					}

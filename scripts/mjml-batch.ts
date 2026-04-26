@@ -2,6 +2,7 @@ import { resolveAll } from 'ts-utils/check';
 import { runTask } from '../src/lib/server/utils/task';
 import fs from 'fs';
 import path from 'path';
+import { Ok } from 'ts-utils';
 
 const INPUT_DIR = path.join(process.cwd(), 'mjml');
 const OUTPUT_DIR = path.join(process.cwd(), 'private', 'emails');
@@ -23,6 +24,9 @@ export default async () => {
 	resolveAll(
 		await Promise.all(
 			files.map(async (f) => {
+				if (!f.endsWith('.mjml')) {
+					return new Ok(null);
+				}
 				return runTask(
 					'mjml',
 					path.join(INPUT_DIR, f),

@@ -24,7 +24,7 @@ import { runTask } from './task';
  */
 export const branch = () =>
 	attemptAsync(async () => {
-		const result = await runTask('git rev-parse --abbrev-ref HEAD').unwrap();
+		const result = await runTask('git', 'rev-parse', '--abbrev-ref', 'HEAD').unwrap();
 		return result.trim();
 	});
 
@@ -44,7 +44,7 @@ export const branch = () =>
  */
 export const commit = () =>
 	attemptAsync(async () => {
-		const result = await runTask('git rev-parse HEAD').unwrap();
+		const result = await runTask('git', 'rev-parse', 'HEAD').unwrap();
 		return result.trim();
 	});
 
@@ -65,7 +65,7 @@ export const commit = () =>
  */
 export const repoName = () =>
 	attemptAsync(async () => {
-		const result = await runTask('git rev-parse --show-toplevel').unwrap();
+		const result = await runTask('git', 'rev-parse', '--show-toplevel').unwrap();
 		const path = result.trim();
 		return path.split('/').pop()!;
 	});
@@ -89,7 +89,7 @@ export const repoName = () =>
  */
 export const repoUrl = () =>
 	attemptAsync(async () => {
-		const result = await runTask('git config --get remote.origin.url').unwrap();
+		const result = await runTask('git', 'config', '--get', 'remote.origin.url').unwrap();
 		return result.trim();
 	});
 
@@ -112,7 +112,7 @@ export const repoUrl = () =>
  */
 export const repoSlug = () =>
 	attemptAsync(async () => {
-		const result = await runTask('git config --get remote.origin.url').unwrap();
+		const result = await runTask('git', 'config', '--get', 'remote.origin.url').unwrap();
 		const url = result.trim();
 
 		// Match for SSH or HTTPS

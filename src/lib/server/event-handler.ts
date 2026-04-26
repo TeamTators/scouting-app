@@ -9,7 +9,6 @@
  * return Success.ok({ id: '123' });
  */
 import { PropertyAction, DataAction } from '$lib/types/struct';
-import { Account } from './structs/account';
 import { z } from 'zod';
 import terminal from '$lib/server/utils/terminal';
 import { json } from '@sveltejs/kit';
@@ -166,31 +165,6 @@ export const Errors = {
 				code: EventErrorCode.InternalError
 			},
 			{ status: 500 }
-		);
-	},
-
-	/**
-	 * Returns a 403 when an account is not permitted to perform an action.
-	 *
-	 * @param {Account.AccountData} account - Acting account.
-	 * @param {DataAction|PropertyAction} action - Attempted action.
-	 * @param {string} structName - Struct name.
-	 */
-	notPermitted: (
-		account: Account.AccountData,
-		action: DataAction | PropertyAction,
-		structName: string
-	) => {
-		terminal.warn(
-			`Errors.notPermitted: Account ${account.id} is not permitted to perform ${action} on ${structName}`
-		);
-		return status(
-			{
-				success: false,
-				message: `Account ${account.id} is not permitted to perform ${action} on ${structName}`,
-				code: EventErrorCode.NotPermitted
-			},
-			{ status: 403 }
 		);
 	},
 

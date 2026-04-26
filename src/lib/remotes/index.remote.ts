@@ -9,21 +9,21 @@
  * const isLoggedIn = await baseRemote.isLoggedIn();
  */
 import { getRequestEvent, query } from '$app/server';
-import { Account } from '$lib/server/structs/account';
-import { error } from '@sveltejs/kit';
+import terminal from '$lib/server/utils/terminal';
 
 /**
  * Returns true when the current account is an administrator.
  */
 export const isAdmin = query(async () => {
 	const event = getRequestEvent();
-	if (!event.locals.account) return false;
-	const res = await Account.isAdmin(event.locals.account);
-	if (res.isErr()) {
-		return error(500, 'Internal Server Error');
-	} else {
-		return res.value;
+	const session = event.locals.session;
+	if (!session) return false;
+	const data = await session.getAccount();
+	if (data.isErr()) {
+		terminal.error('Error fetching account in isAdmin remote:', data.error);
+		return false;
 	}
+	return (await data.value?.isAdmin().unwrapOr(false)) ?? false;
 });
 
 /**
@@ -31,7 +31,14 @@ export const isAdmin = query(async () => {
  */
 export const isLoggedIn = query(async () => {
 	const event = getRequestEvent();
-	return !!event.locals.account;
+	const session = event.locals.session;
+	if (!session) return false;
+	const data = await session.getAccount();
+	if (data.isErr()) {
+		terminal.error('Error fetching account in isLoggedIn remote:', data.error);
+		return false;
+	}
+	return !!data.value;
 });
 
 /**
@@ -39,21 +46,12 @@ export const isLoggedIn = query(async () => {
  */
 export const getAccount = query(async () => {
 	const event = getRequestEvent();
-	return event.locals.account || null;
-});
-
-/**
- * Returns the current session data.
- */
-export const getSession = query(async () => {
-	const event = getRequestEvent();
-	return event.locals.session;
-});
-
-/**
- * Returns the current SSE connection if available.
- */
-export const getSSE = query(async () => {
-	const event = getRequestEvent();
-	return event.locals.sse;
+	const session = event.locals.session;
+	if (!session) return null;
+	const data = await session.getAccount();
+	if (data.isErr()) {
+		terminal.error('Error fetching account in getAccount remote:', data.error);
+		return null;
+	}
+	return data.value || null;
 });

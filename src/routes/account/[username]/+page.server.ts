@@ -1,32 +1,36 @@
-/**
- * @fileoverview Server load for `/account/[username]` profile page.
- */
-import { Account } from '$lib/server/structs/account';
+import { getAccountFactory } from '$lib/model/account';
 import { fail } from '@sveltejs/kit';
-import { ServerCode } from 'ts-utils/status';
 
 export const load = async (event) => {
-	const account = await Account.Account.get(
-		{ username: event.params.username },
+	const { username } = event.params;
+	const { supabase } = event.locals;
+
+	const accountFactory = getAccountFactory(supabase, {
+		debug: true
+	});
+
+	const res = await accountFactory.search(
+		{
+			field: 'username',
+			operator: 'eq',
+			value: username
+		},
 		{
 			type: 'single'
 		}
-	).unwrap();
-
-	if (!account) {
-		throw fail(ServerCode.notFound, {
-			message: 'Account not found'
+	);
+	if (res.isErr()) {
+		throw fail(500, {
+			message: 'An error occurred while fetching the account. Please try again later.'
+		});
+	}
+	if (!res.value) {
+		throw fail(404, {
+			message: 'Account not found.'
 		});
 	}
 
-	// business logic for filtering the params the user can view
-	const accountInfo = await Account.getAccountInfo(account).unwrap();
-
-	const accountData = account.safe();
-	const accountInfoData = accountInfo.safe();
-
 	return {
-		account: accountData,
-		info: accountInfoData
+		account: res.value.data
 	};
 };

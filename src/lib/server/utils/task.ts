@@ -6,7 +6,7 @@
  * const out = await runTask('echo', 'hello').unwrap();
  */
 import { attemptAsync } from 'ts-utils/check';
-import { exec } from 'child_process';
+import { exec, execFile } from 'child_process';
 import path from 'path';
 // import * as tsNode from 'ts-node';
 import url from 'url';
@@ -17,17 +17,48 @@ import url from 'url';
  * @param {...string[]} args
  * @returns {*}
  */
-export const runTask = (...args: string[]) => {
+export const runTask = (
+	envOrCommand: Record<string, string> | string,
+	commandOrArg: string,
+	...args: (string | number | boolean)[]
+) => {
+	const hasEnv = typeof envOrCommand === 'object';
+
+	if (hasEnv) {
+		const env = envOrCommand;
+
+		return attemptAsync(
+			async () =>
+				new Promise<string>((res, rej) => {
+					execFile(
+						commandOrArg,
+						args.map(String),
+						{
+							env: {
+								...process.env,
+								...env
+							}
+						},
+						(error, stdout) => {
+							if (error) return rej(error);
+							res(stdout.trim());
+						}
+					);
+				})
+		);
+	}
+
+	// Shell mode (keeps your existing behavior)
+	const command = [envOrCommand as string, commandOrArg, ...args].map(String).join(' ');
+
 	return attemptAsync(
 		async () =>
-			new Promise<string>((res, rej) =>
-				exec(args.join(' '), (error, stdout) => {
-					if (error) {
-						rej(error);
-					}
+			new Promise<string>((res, rej) => {
+				exec(command, (error, stdout) => {
+					if (error) return rej(error);
 					res(stdout.trim());
-				})
-			)
+				});
+			})
 	);
 };
 /**

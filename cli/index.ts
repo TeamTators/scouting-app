@@ -2,8 +2,6 @@
  * @fileoverview CLI entrypoint that builds structs and opens the home menu.
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { DB } from '../src/lib/server/db/index';
-import { Struct } from 'drizzle-struct';
 import { openStructs } from './struct';
 import { Folder } from './utils';
 import accounts from './accounts';

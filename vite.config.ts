@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitest/config';
 import { sveltekit } from '@sveltejs/kit/vite';
-import { config } from './src/lib/server/utils/env';
+import env from './src/lib/server/utils/env';
 
 const isTest = Boolean(process.env.VITEST);
 
@@ -24,18 +24,34 @@ export default defineConfig({
 		noExternal: ['node-html-parser']
 	},
 	server: {
-		port: config.network.port,
+		port: env.PORT,
 		host: '0.0.0.0',
-		allowedHosts: ['dev.tsaxking.com']
+		allowedHosts: ['dev.tsaxking.com'],
+		watch: {
+			ignored: [
+				'**/node_modules/**',
+				'**/.git/**',
+				'**/dist/**',
+				'**/build/**',
+				'**/out/**',
+				'**/coverage/**',
+				'docs/**',
+				'**/public/**',
+				'**/.svelte-kit/**'
+			]
+		}
 	},
 	define: {
 		__APP_ENV__: JSON.stringify({
-			environment: config.environment,
-			name: config.app_name,
-			indexed_db: config.indexed_db,
-			struct_cache: config.struct_cache,
-			struct_batching: config.struct_batching,
-			sse: config.sse
+			environment: env.ENVIRONMENT,
+			name: env.APP_NAME,
+			indexed_db: env.INDEXED_DB_ENABLED,
+			struct_cache: env.STRUCT_CACHE_ENABLED,
+			supabase: {
+				url: env.SB_PUBLIC_URL,
+				public_key: env.SB_PUBLIC_KEY,
+				s3_access_key: env.SB_STORAGE_ACCESS_KEY
+			}
 		})
 	}
 });

@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   tsc:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
     steps:
       - name: Retrieve git dependencies
         uses: actions/checkout@v3
@@ -25,30 +25,50 @@ jobs:
           submodules: 'true'
           #  token: ${{ secrets.GH_TOKEN }}
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.30.0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: v24.13.1
-
       - name: Install dependencies
         run: |
           echo "Installing dependencies..."
+          pnpm add -D typescript
           pnpm install --frozen-lockfile
 
       - name: Load .env variables
         run: |
-          cp config.example.json config.json
-          touch .env
-          echo "OAUTH2_CLIENT_ID=1234567890" >> .env
-          echo "OAUTH2_CLIENT_SECRET=1234567890" >> .env
-          export $(cat .env | xargs)
+          cp .env.example .env
+          echo "Loaded .env variables"
+
+      - name: Set up Supabase Config
+        run: |
+          echo "Setting up Supabase config..."
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          SCHEMA_NAME="svelte_check_${COMMIT_HASH}"
+          echo "Setting schema to ${SCHEMA_NAME}..."
+          pnpm run sb:set-schema ${SCHEMA_NAME}
+          sed -i "s/^project_id = .*/project_id = \"${SCHEMA_NAME}\"/" supabase/config.toml
+          pnpm script supabase/sb-random-ports
+          pnpm sb:start --debug
+          echo "Waiting for supabase to be ready..."
+          until pnpm run sb:status | grep -q "Development Tools"; do
+            echo "Supabase not ready yet, waiting..."
+            sleep 5
+          done
+          echo "Configuring local supabase"
+          pnpm run sb:local-config
+          pnpm run sb:push
+
+      # - name: Init supabase types
+      #   run: pnpm run sb:pull-types
 
       - name: Run
         run: |
           echo "Testing..."
           pnpm run check
+
+      - name: Shutdown supabase
+        if: always()
+        run: |
+          pnpm sb:stop --no-backup || true
+          docker rm -f $(docker ps -aq --filter "name=supabase-${SCHEMA_NAME}") || true
+
+      - name: Clean up Supabase config
+        if: always()
+        run: rm -f .env

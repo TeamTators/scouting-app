@@ -10,23 +10,11 @@ services:
       context: .
       dockerfile: Dockerfile
     depends_on:
-      - db
       - redis
     ports:
       - '${PORT}:${PORT}'
     volumes:
       - appdata:/app
-  db:
-    image: postgres:16
-    container_name: db
-    restart: always
-    environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
-    ports:
-      - '5432:5432'
-    volumes:
-      - pgdata:/var/lib/postgresql/data
 
   redis:
     container_name: redis

@@ -3,16 +3,12 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 
-vi.mock('$lib/server/structs/account', () => ({
-	Account: {
-		globalNotification: vi.fn(() => Promise.resolve())
-	}
+vi.mock('$lib/server/model/notifications', () => ({
+	globalNotification: vi.fn(() => Promise.resolve())
 }));
 
-vi.mock('../lib/server/structs/account', () => ({
-	Account: {
-		globalNotification: vi.fn(() => Promise.resolve())
-	}
+vi.mock('../lib/server/model/notifications', () => ({
+	globalNotification: vi.fn(() => Promise.resolve())
 }));
 
 describe('Ensure features utilities work correctly', () => {

@@ -87,7 +87,7 @@ describe('WritableBase', () => {
 	test('onAllUnsubscribe runs after last unsubscription', () => {
 		const store = new WritableBase(0);
 		const calls: number[] = [];
-		store.onAllUnsubscribe(() => calls.push(1));
+		store.on('all-unsubscribe', () => calls.push(1));
 
 		const unsubscribeA = store.subscribe(() => undefined);
 		const unsubscribeB = store.subscribe(() => undefined);

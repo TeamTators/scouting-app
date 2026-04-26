@@ -1,177 +1,115 @@
 /**
  * @fileoverview Server load/actions for `/account/sign-up`.
  */
-import { Account } from '$lib/server/structs/account.js';
-import { fail, redirect } from '@sveltejs/kit';
-import { ServerCode } from 'ts-utils/status';
-import { z } from 'zod';
-import { passwordStrength } from 'check-password-strength';
-import { OAuth2Client } from 'google-auth-library';
-import { domain, str } from '$lib/server/utils/env';
+import { fail } from '@sveltejs/kit';
+import { domain } from '$lib/server/utils/env-utils';
+import { getAccountFactory } from '$lib/model/account';
+import serverSB from '$lib/server/services/supabase';
+
+// export const load = async (event) => {
+// 	const res = await event.locals.getSession();
+
+// 	if (res.isErr()) {
+// 		return {
+// 			session: null
+// 		};
+// 	}
+
+// 	return { url: event.url.origin };
+// };
 
 export const actions = {
 	register: async (event) => {
-		const data = await event.request.formData();
+		const {
+			request,
+			locals: { supabase }
+		} = event;
+		const formData = await request.formData();
+		const email = String(formData.get('email'));
+		const password = String(formData.get('password'));
+		const validEmail = /^[\w-.+]+@([\w-]+\.)+[\w-]{2,8}$/.test(email);
+		const username = String(formData.get('username'));
+		const firstName = String(formData.get('firstName'));
+		const lastName = String(formData.get('lastName'));
 
-		const username = z.string().min(3).max(20).safeParse(data.get('username'));
-		const email = z.string().email().safeParse(data.get('email'));
-		const firstName = z.string().min(1).max(20).safeParse(data.get('firstName'));
-		const lastName = z.string().min(1).max(20).safeParse(data.get('lastName'));
-		const password = z.string().min(8).max(20).safeParse(data.get('password'));
-		const confirmPassword = z.string().min(8).max(20).safeParse(data.get('confirmPassword'));
-
-		// Type check - ensure they didn't send files and that all fields are present and correct
-		{
-			if (!username.success) {
-				return fail(ServerCode.badRequest, {
-					message: 'Invalid username',
-					error: username.error.issues[0]?.message.replace('String', 'Username')
-				});
-			}
-
-			if (!email.success) {
-				return fail(ServerCode.badRequest, {
-					message: 'Invalid email',
-					error: email.error.issues[0]?.message.replace('String', 'Username')
-				});
-			}
-
-			if (!firstName.success) {
-				return fail(ServerCode.badRequest, {
-					message: 'Invalid first name',
-					error: firstName.error.issues[0]?.message.replace('String', 'First name')
-				});
-			}
-
-			if (!lastName.success) {
-				return fail(ServerCode.badRequest, {
-					message: 'Invalid last name',
-					error: lastName.error.issues[0]?.message.replace('String', 'Last name')
-				});
-			}
-
-			if (!password.success) {
-				return fail(ServerCode.badRequest, {
-					message: 'Invalid password',
-					error: password.error.issues[0]?.message.replace('String', 'Password')
-				});
-			}
-
-			if (!confirmPassword.success) {
-				return fail(ServerCode.badRequest, {
-					message: 'Invalid confirm password',
-					error: confirmPassword.error.issues[0]?.message.replace('String', 'Confirm password')
-				});
-			}
-
-			if (password.data !== confirmPassword.data) {
-				return fail(ServerCode.badRequest, {
-					message: 'Passwords do not match'
-				});
-			}
+		if (!validEmail) {
+			return {
+				success: false,
+				message: 'Please enter a valid email address.'
+			};
 		}
 
-		// Password strength
-		{
-			const strength = passwordStrength(password.data);
-
-			if (strength.id < 2) {
-				return fail(ServerCode.badRequest, {
-					message:
-						'Password is not strong enough. Please include at least one uppercase letter, one lowercase letter, one number, and one special character, with a minimum length of 8 characters.',
-					error: 'Password is not strong enough'
-				});
-			}
-		}
-
-		// Check if user exists
-		{
-			const byEmail = await Account.Account.get(
-				{ email: email.data },
-				{
-					type: 'single'
-				}
-			);
-			const byUser = await Account.Account.get(
-				{ username: username.data },
-				{
-					type: 'single'
-				}
-			);
-
-			if (byEmail.isErr())
-				return fail(ServerCode.internalServerError, {
-					message: 'Failed to check if email exists',
-					error: 'Failed to check if email exists'
-				});
-
-			if (byUser.isErr())
-				return fail(ServerCode.internalServerError, {
-					message: 'Failed to check if username exists',
-					error: 'Failed to check if username exists'
-				});
-
-			if (byEmail.value)
-				return fail(ServerCode.badRequest, {
-					message: 'Account with that email already exists'
-				});
-
-			if (byUser.value)
-				return fail(ServerCode.badRequest, {
-					message: 'Account with that username already exists'
-				});
-		}
-
-		const account = await Account.createAccount({
-			username: username.data,
-			email: email.data,
-			firstName: firstName.data,
-			lastName: lastName.data,
-			password: password.data
+		const accountFactory = getAccountFactory(serverSB, {
+			debug: true
 		});
 
-		if (account.isErr()) {
-			console.error(account.error);
-			return fail(ServerCode.internalServerError, {
-				message: 'Failed to create account',
-				error: 'Failed to create account'
-			});
+		const exists = await accountFactory.profile.getOR(
+			{
+				username,
+				email
+			},
+			{
+				type: 'single'
+			}
+		);
+
+		if (exists.isErr()) {
+			return {
+				success: false,
+				message: 'An error occurred while checking your information. Please try again later.'
+			};
+		}
+
+		if (exists.value) {
+			return {
+				success: false,
+				message: 'An account with that email or username already exists.'
+			};
+		}
+		const { data, error } = await supabase.auth.signUp({
+			email,
+			password,
+			options: {
+				emailRedirectTo: domain({
+					protocol: true,
+					port: false
+				})
+			}
+		});
+
+		if (error) {
+			return fail(400, { errors: { email: error.message }, email });
+		}
+
+		if (data.user) {
+			const res = await accountFactory.profile
+				.new({
+					username,
+					first_name: firstName,
+					last_name: lastName,
+					id: data.user.id,
+					email
+				})
+				.await();
+
+			if (res.isErr()) {
+				throw fail(500, {
+					errors: {
+						profile: 'An error occurred while creating your profile. Please try again later.'
+					}
+				});
+			}
+
+			return {
+				success: true,
+				message: 'Registration successful! Please check your email to confirm your account.',
+				redirect: '/account/sign-in'
+			};
 		}
 
 		return {
-			message: 'Account created',
-			redirect: '/account/sign-in',
-			success: true
+			success: false,
+			message: 'An unexpected error occurred. Please try again later.'
 		};
-	},
-	OAuth2: async () => {
-		// const domain = String(process.env.PUBLIC_DOMAIN).includes('localhost')
-		// 	? `${process.env.PUBLIC_DOMAIN}:${process.env.PORT}`
-		// 	: process.env.PUBLIC_DOMAIN;
-		// const protocol = process.env.HTTPS === 'true' ? 'https://' : 'http://';
-		const url = domain({
-			port: false,
-			protocol: true
-		});
-		const redirectUri = `${url}/api/oauth/sign-up`;
-		const client = new OAuth2Client({
-			clientSecret: str('OAUTH2_CLIENT_SECRET', true),
-			clientId: str('OAUTH2_CLIENT_ID', true),
-			redirectUri
-		});
-		// log(client);
-		const authorizeUrl = client.generateAuthUrl({
-			access_type: 'offline',
-			// scope: 'https://www.googleapis.com/auth/userinfo.profile openid email',
-			scope: [
-				'https://www.googleapis.com/auth/userinfo.profile',
-				'https://www.googleapis.com/auth/userinfo.email',
-				'openid'
-			],
-			prompt: 'consent'
-		});
-		// log(authorizeUrl);
-
-		throw redirect(ServerCode.temporaryRedirect, authorizeUrl);
 	}
 };

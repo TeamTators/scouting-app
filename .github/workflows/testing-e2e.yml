@@ -19,60 +19,57 @@ jobs:
   e2e-tests:
     # this has a chance of infinite loop if we write a test wrong, timeout should catch it eventually.
     timeout-minutes: 5
-    runs-on: ubuntu-latest
-    services:
-      redis:
-        image: redis:latest
-        ports:
-          - 6379:6379
-      postgres:
-        image: postgres:latest
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_USER: username
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: db
-        options: >-
-          --health-cmd "pg_isready -U username"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    runs-on: [self-hosted, Linux, X64]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.30.0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: v24.13.1
-
+      - name: Load .env variables
+        run: |
+          cp .env.example .env
+          echo "Loaded .env variables"
       - name: Install dependencies
         run: |
           echo "Installing dependencies..."
+          pnpm add -D typescript
           pnpm install --frozen-lockfile
           pnpm exec playwright install
 
-      - name: Load .env variables
+      - name: Set up Supabase Config
         run: |
-          cp config.example.json config.json
-          touch .env
-          echo "OAUTH2_CLIENT_ID=1234567890" >> .env
-          echo "OAUTH2_CLIENT_SECRET=1234567890" >> .env
-          export $(cat .env | xargs)
+          echo "Setting up Supabase config..."
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          SCHEMA_NAME="e2e_test_${COMMIT_HASH}"
+          echo "Setting schema to ${SCHEMA_NAME}..."
+          pnpm run sb:set-schema ${SCHEMA_NAME}
+          sed -i "s/^project_id = .*/project_id = \"${SCHEMA_NAME}\"/" supabase/config.toml
+          pnpm script supabase/sb-random-ports
+          pnpm sb:start --debug
+          echo "Waiting for supabase to be ready..."
+          until pnpm run sb:status | grep -q "Development Tools"; do
+            echo "Supabase not ready yet, waiting..."
+            sleep 5
+          done
+          echo "Configuring local supabase"
+          pnpm run sb:local-config
+          pnpm run sb:push
 
-      - name: Run migrations
-        run: |
-          pnpm run db:migrate
-          pnpm run db:push --strict --verbose --force
+      # - name: Init supabase types
+      #   run: |
+      #     pnpm run sb:pull-types
 
       - name: Run
         run: |
           echo "Running e2e tests..."
           pnpm run test:e2e
+
+      - name: Shutdown supabase
+        if: always()
+        run: |
+          pnpm sb:stop --no-backup || true
+          docker rm -f $(docker ps -aq --filter "name=supabase-${SCHEMA_NAME}") || true
+
+      - name: Clean up Supabase config
+        if: always()
+        run: rm -f .env

@@ -3,14 +3,19 @@
 Root layout wrapper for all routes. Acts as middleware for global bootstrapping.
 -->
 <script>
-	import { Struct } from '$lib/services/struct';
-	import { browser } from '$app/environment';
 	import '$lib/index';
+	const { children, data } = $props();
+	import { invalidate } from '$app/navigation';
+	import { onMount } from 'svelte';
 
-	setTimeout(() => {
-		if (browser) Struct.buildAll();
+	onMount(() => {
+		const res = data.supabase.auth.onAuthStateChange((event, session) => {
+			if (session?.expires_at !== data.session?.expires_at) {
+				invalidate('supabase:auth');
+			}
+		});
+		return res.data.subscription.unsubscribe();
 	});
-	const { children } = $props();
 </script>
 
 <main>

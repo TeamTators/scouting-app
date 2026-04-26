@@ -1,18 +1,19 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 
+import type { createServerClient } from '@supabase/ssr';
+import type { DB } from '$lib/types/supabase';
+import { Session } from '$lib/server/model/session';
 import type { Connection } from '$lib/server/services/sse';
-import type { Account } from '$lib/server/structs/account';
-import type { Session } from '$lib/server/structs/session';
 
 // for information about these interfaces
 declare global {
 	namespace App {
 		// interface Error {}
 		interface Locals {
-			account?: Account.AccountData | undefined;
-			session: Session.SessionData;
 			start: number;
-			sse?: Connection;
+			supabase: ReturnType<typeof createServerClient<DB>>;
+			session: Session | null;
+			sse: Connection | null;
 		}
 		// interface PageData {}
 		// interface PageState {}
@@ -33,19 +34,9 @@ declare global {
 			enabled: boolean;
 			debug: boolean;
 		};
-		struct_batching: {
-			enabled: boolean;
-			interval: number;
-			timeout: number;
-			limit: number;
-			batch_size: number;
-			debug: boolean;
-		};
-		sse: {
-			debug: boolean;
-			ping_interval_ms: number;
-			state_report_threshold: number;
-			do_report: boolean;
+		supabase: {
+			url: string;
+			public_key: string;
 		};
 	};
 }

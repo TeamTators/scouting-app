@@ -2,21 +2,21 @@
 import '@total-typescript/ts-reset';
 import { fingerprint } from './utils/fingerprint';
 
-import { init } from './services/analytics';
 import { Requests } from './utils/requests';
 import { browser } from '$app/environment';
 
-init();
 fingerprint();
 
 export const ogFetch = (() => {
 	if (!browser) return fetch;
 	const og = window.fetch;
 	window.fetch = (url: URL | RequestInfo, config?: RequestInit) => {
-		const headers = {
-			...(config?.headers ?? {}),
-			...Object.fromEntries(Object.entries(Requests.metadata).map(([k, v]) => [`X-${k}`, v]))
-		};
+		const headers = new Headers(config?.headers);
+
+		for (const [k, v] of Object.entries(Requests.metadata)) {
+			headers.set(`X-${k}`, v as string);
+		}
+
 		return og(url, {
 			...config,
 			headers

@@ -13,9 +13,12 @@ Top navigation bar with stack controls, theme toggle, account menu, and notifica
 <script lang="ts">
 	import SideNav from './SideNav.svelte';
 	import Notifications from './Notifications.svelte';
-	import { Account } from '$lib/model/account';
+	import { getAccountFactory } from '$lib/model/account';
 	import { Stack } from '$lib/utils/stack';
 	import ThemeSwitch from './ThemeSwitch.svelte';
+	import supabase from '$lib/services/supabase';
+	import { Account } from '$lib/model/account';
+	import { onMount } from 'svelte';
 
 	interface Props {
 		title: string;
@@ -26,7 +29,18 @@ Top navigation bar with stack controls, theme toggle, account menu, and notifica
 
 	const { title }: Props = $props();
 	let notifs = $state(0);
-	const self = Account.getSelf();
+
+	const accounts = getAccountFactory(supabase);
+	let self: Account | null = $state(null);
+	onMount(() => {
+		accounts.getSelf().then((res) => {
+			if (res.isOk()) {
+				self = res.value;
+			} else {
+				console.error('Error fetching account in Navbar:', res.error);
+			}
+		});
+	});
 </script>
 
 <nav class="navbar navbar-expand-lg layer-2">
@@ -74,36 +88,40 @@ Top navigation bar with stack controls, theme toggle, account menu, and notifica
 					width:	min-content;
 				"
 				>
-					{#if $self.data.username === 'guest'}
+					{#if !self || self.username === 'guest'}
 						<li><a class="dropdown-item" href="/account/sign-in">Sign In</a></li>
 					{:else}
 						<li><a class="dropdown-item" href="/account/sign-out">Sign Out</a></li>
 					{/if}
 				</ul>
 			</div>
-			<button
-				class="me-5 btn position-relative"
-				type="button"
-				data-bs-toggle="offcanvas"
-				data-bs-target="#notifications"
-				aria-controls="notifications"
-			>
-				<i class="material-icons"> notifications </i>
-				{#if notifs}
-					<span
-						class="position-absolute badge rounded-pill bg-danger animate__animated animate__bounce animate__delay-2s animate__repeat-2"
-					>
-						{notifs}
-						<span class="visually-hidden">unread messages</span>
-					</span>
-				{/if}
-			</button>
+			{#if self}
+				<button
+					class="me-5 btn position-relative"
+					type="button"
+					data-bs-toggle="offcanvas"
+					data-bs-target="#notifications"
+					aria-controls="notifications"
+				>
+					<i class="material-icons"> notifications </i>
+					{#if notifs}
+						<span
+							class="position-absolute badge rounded-pill bg-danger animate__animated animate__bounce animate__delay-2s animate__repeat-2"
+						>
+							{notifs}
+							<span class="visually-hidden">unread messages</span>
+						</span>
+					{/if}
+				</button>
+			{/if}
 		</div>
 	</div>
 </nav>
 <SideNav id="pages" />
 
-<Notifications bind:notifs />
+{#if self}
+	<Notifications bind:notifs account={self} />
+{/if}
 
 <style>
 	.stack-btn {

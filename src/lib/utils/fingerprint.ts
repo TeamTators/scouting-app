@@ -8,7 +8,6 @@
 import { getCurrentBrowserFingerPrint } from '@rajesh896/broprint.js';
 import { attemptAsync } from 'ts-utils/check';
 import { browser } from '$app/environment';
-import { fingerprint as fp } from '$lib/remotes/analytics.remote';
 
 /**
  * Computes a browser fingerprint and reports it to the server.
@@ -23,7 +22,6 @@ export const fingerprint = () => {
 			throw new Error('Failed to retrieve fingerprint');
 		}
 
-		await fp({ fingerprint });
 		return fingerprint;
 	});
 };

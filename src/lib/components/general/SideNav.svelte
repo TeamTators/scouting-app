@@ -14,7 +14,7 @@ Side navigation offcanvas that renders sections from the navbar registry.
 ```
 -->
 <script lang="ts">
-	import { Navbar } from '$lib/model/navbar';
+	import { Navbar } from '$lib/nav';
 	import { onMount } from 'svelte';
 	// import { Analytics } from '$lib/model/analytics';
 	// import { getTitle } from '$lib/utils/pages';

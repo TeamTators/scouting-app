@@ -21,7 +21,6 @@ COPY ./private ./private
 COPY ./scripts ./scripts
 COPY ./src ./src
 COPY ./static ./static
-COPY ./config.docker.json ./config.json
 
 RUN touch .env
 
