@@ -1,16 +1,41 @@
+/**
+ * @fileoverview Integration test harness for validating database operations in real-time.
+ * Provides Test class for tracking individual test states and runTests function to orchestrate CRUD operation testing.
+ * Uses Supabase realtime listeners and struct operations to verify database connectivity and functionality.
+ */
 import supabase from '$lib/services/supabase';
 import { SupaStruct } from '$lib/services/supabase/supastruct';
 import { WritableArray, WritableBase } from '$lib/services/writables';
 import { REALTIME_SUBSCRIBE_STATES } from '@supabase/supabase-js';
 
+/**
+ * Represents the state of a single integration test with tracking for pending/completed status.
+ * Extends WritableBase for reactive test state updates.
+ */
 export class Test extends WritableBase<{
+	/** Whether this test is still running. */
 	pending: boolean;
+	/** Result or status message from the test. */
 	message: string;
+	/** Display name for the test. */
 	name: string;
+	/** Test result: true for pass, false for fail, undefined for pending. */
 	success: boolean | undefined;
+	/** Whether this test must pass for system to be operational. */
 	required: boolean;
 }> {}
 
+/**
+ * Runs a comprehensive integration test suite covering realtime, create, update, and delete operations.
+ * Initializes test tracking via realtime listener and orchestrates database operations through struct lifecycle.
+ * @async
+ * @returns {WritableArray<Test>} Reactive array of test results with subscription support.
+ * @example
+ * const tests = runTests();
+ * tests.subscribe((testArray) => {
+ *   console.log('Tests updated:', testArray.data.map(t => ({ name: t.data.name, success: t.data.success })));
+ * });
+ */
 export const runTests = () => {
 	const struct = SupaStruct.get({
 		name: 'test',

@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Session management and authentication service for handling user sessions.
+ * Provides Session class for managing individual session state, and SessionFactory for creating and retrieving sessions.
+ * All async operations return typed Results via attemptAsync for consistent error handling.
+ */
 import { SupaStruct, type Client } from '$lib/services/supabase/supastruct';
 import { SupaStructData } from '$lib/services/supabase/supastruct-data';
 import { type Provider, type Session as S } from '@supabase/supabase-js';
@@ -8,6 +13,13 @@ import supabase from '../services/supabase';
 import { domain } from '../utils/env-utils';
 import { z } from 'zod';
 
+/**
+ * Resolves a user by username or email by querying the profile struct.
+ * @async
+ * @param {string} usernameOrEmail - Username or email to look up.
+ * @returns {ResultPromise<User|null, Error>} User object if found, null if not found, error if lookup fails.
+ * @private
+ */
 const getUser = (usernameOrEmail: string) => {
 	return attemptAsync(async () => {
 		const factory = getAccountFactory(supabase);
@@ -29,7 +41,19 @@ const getUser = (usernameOrEmail: string) => {
 	});
 };
 
-export class Session {
+	/**
+	 * Represents an authenticated user session with associated account and auth state.
+	 * Wraps Supabase session with application-specific session data from database.
+	 */
+	export class Session {
+	/**
+	 * Creates a Session instance.
+	 * @param {Object} config - Session configuration.
+	 * @param {S} config.session - Supabase session object containing auth tokens and user data.
+	 * @param {SupaStructData<'session'>} config.customSession - Application session record from database.
+	 * @param {Client} config.client - Supabase client instance for API calls.
+	 * @param {boolean} [config.debug] - Enable debug logging for session operations.
+	 */
 	constructor(
 		public readonly config: {
 			session: S;
@@ -39,24 +63,54 @@ export class Session {
 		}
 	) {}
 
+	/**
+	 * Unique identifier for this session.
+	 * @type {string}
+	 * @readonly
+	 */
 	get id() {
 		return String(this.config.customSession.data.id);
 	}
 
+	/**
+	 * Account ID associated with this session.
+	 * @type {string}
+	 * @readonly
+	 */
 	get accountId() {
 		return this.config.customSession.data.account_id;
 	}
 
+	/**
+	 * Previous URL the user was on before authentication.
+	 * @type {string|null}
+	 * @readonly
+	 */
 	get prevUrl() {
 		return this.config.customSession.data.prev_url;
 	}
 
+	/**
+	 * Logs debug messages if debug mode is enabled.
+	 * @param {...unknown[]} args - Values to log.
+	 * @private
+	 */
 	log(...args: unknown[]) {
 		if (this.config.debug) {
 			console.log('[Session]', ...args);
 		}
 	}
 
+	/**
+	 * Retrieves the Account object associated with this session.
+	 * @async
+	 * @returns {ResultPromise<Account|null, Error>} Account instance if user authenticated, null otherwise.
+	 * @example
+	 * const res = await session.getAccount().unwrap();
+	 * if (res) {
+	 *   console.log('Account ID:', res.id);
+	 * }
+	 */
 	getAccount() {
 		return attemptAsync(async () => {
 			const accountFactory = getAccountFactory(this.config.client, {
@@ -67,6 +121,14 @@ export class Session {
 		});
 	}
 
+	/**
+	 * Retrieves the Supabase User object for this session.
+	 * @async
+	 * @returns {ResultPromise<User, Error>} Authenticated user object.
+	 * @example
+	 * const res = await session.getUser().unwrap();
+	 * console.log('User email:', res.email);
+	 */
 	getUser() {
 		return attemptAsync(async () => {
 			const { data, error } = await this.config.client.auth.getUser();
@@ -75,6 +137,19 @@ export class Session {
 		});
 	}
 
+	/**
+	 * Authenticates a user with email/username and password credentials.
+	 * @async
+	 * @param {Object} config - Sign-in configuration.
+	 * @param {string} config.emailOrUsername - User's email address or username.
+	 * @param {string} config.password - User's password.
+	 * @returns {ResultPromise<Session, Error>} Authenticated session if successful.
+	 * @example
+	 * const res = await session.signIn({
+	 *   emailOrUsername: 'user@example.com',
+	 *   password: 'secure-password'
+	 * }).unwrap();
+	 */
 	signIn(config: { emailOrUsername: string; password: string }) {
 		return attemptAsync(async () => {
 			const user = await getUser(config.emailOrUsername).unwrap();
@@ -90,6 +165,17 @@ export class Session {
 		});
 	}
 
+	/**
+	 * Initiates one-time password (OTP) authentication flow via email.
+	 * @async
+	 * @param {Object} config - OTP sign-in configuration.
+	 * @param {string} config.emailOrUsername - User's email address or username.
+	 * @returns {ResultPromise<OTPResponse, Error>} OTP session data for email verification.
+	 * @example
+	 * const res = await session.signInOTP({
+	 *   emailOrUsername: 'user@example.com'
+	 * }).unwrap();
+	 */
 	signInOTP(config: { emailOrUsername: string }) {
 		return attemptAsync(async () => {
 			const user = await getUser(config.emailOrUsername).unwrap();
@@ -110,6 +196,17 @@ export class Session {
 		});
 	}
 
+	/**
+	 * Initiates OAuth2 authentication with external provider.
+	 * @async
+	 * @param {Object} config - OAuth configuration.
+	 * @param {Provider} config.provider - OAuth provider name (e.g., 'google', 'github').
+	 * @returns {ResultPromise<OAuthResponse, Error>} OAuth URL and session data.
+	 * @example
+	 * const res = await session.signInOAuth2({
+	 *   provider: 'google'
+	 * }).unwrap();
+	 */
 	signInOAuth2(config: { provider: Provider }) {
 		return attemptAsync(async () => {
 			const url = domain({
@@ -128,6 +225,13 @@ export class Session {
 		});
 	}
 
+	/**
+	 * Signs out the user and invalidates the current session.
+	 * @async
+	 * @returns {ResultPromise<void, Error>} Resolves when sign-out completes.
+	 * @example
+	 * const res = await session.signOut().unwrap();
+	 */
 	signOut() {
 		return attemptAsync(async () => {
 			const { error } = await this.config.client.auth.signOut();
@@ -136,7 +240,18 @@ export class Session {
 	}
 }
 
+/**
+ * Factory for creating and retrieving Session instances.
+ * Handles session creation, lookup, and associated authentication operations.
+ */
 class SessionFactory {
+	/**
+	 * Creates a SessionFactory instance.
+	 * @param {Object} config - Factory configuration.
+	 * @param {Client} config.client - Supabase client for API operations.
+	 * @param {boolean} [config.debug] - Enable debug logging.
+	 * @param {SupaStruct<'session'>} config.session - Session struct for database operations.
+	 */
 	constructor(
 		public readonly config: {
 			client: Client;
@@ -145,16 +260,33 @@ class SessionFactory {
 		}
 	) {}
 
+	/**
+	 * Supabase client instance.
+	 * @type {Client}
+	 * @readonly
+	 */
 	get session() {
 		return this.config.client;
 	}
 
+	/**
+	 * Logs debug messages if debug mode is enabled.
+	 * @param {...unknown[]} args - Values to log.
+	 * @private
+	 */
 	log(...args: unknown[]) {
 		if (this.config.debug) {
 			console.log('[SessionFactory]', ...args);
 		}
 	}
 
+	/**
+	 * Creates a Session instance from Supabase and custom session data.
+	 * @param {S} session - Supabase session object.
+	 * @param {SupaStructData<'session'>} customSession - Application session record.
+	 * @returns {Session} New Session instance.
+	 * @private
+	 */
 	Generator(session: S, customSession: SupaStructData<'session'>) {
 		return new Session({
 			session,
@@ -164,6 +296,17 @@ class SessionFactory {
 		});
 	}
 
+	/**
+	 * Retrieves or creates the current authenticated session.
+	 * @async
+	 * @param {string} [setUrl] - Optional URL to set as previous navigation point.
+	 * @returns {ResultPromise<Session|null, Error>} Current session if authenticated, null if not.
+	 * @example
+	 * const res = await factory.getSelf('/previous-page').unwrap();
+	 * if (res) {
+	 *   console.log('Session ID:', res.id);
+	 * }
+	 */
 	getSelf(setUrl?: string) {
 		return attemptAsync(async () => {
 			const { data, error } = await this.session.auth.getSession();
@@ -202,12 +345,28 @@ class SessionFactory {
 		});
 	}
 
+	/**
+	 * Retrieves a session by ID from the database.
+	 * @param {string} id - Unique session identifier.
+	 * @returns {ResultPromise<SupaStructData<'session'>, Error>} Session data from database.
+	 */
 	fromId(id: string) {
 		return this.config.session.fromId(id);
 	}
 }
 
 // const factories = new TempMap<Client, SessionFactory>();
+/**
+ * Creates or retrieves a SessionFactory instance for the given Supabase client.
+ * Serves as the factory function for session management operations.
+ * @param {Client} client - Supabase client instance.
+ * @param {Object} [config] - Optional factory configuration.
+ * @param {boolean} [config.debug] - Enable debug logging.
+ * @returns {SessionFactory} Factory for creating and managing sessions.
+ * @example
+ * const factory = getSessionFactory(supabase, { debug: true });
+ * const session = await factory.getSelf().unwrap();
+ */
 export const getSessionFactory = (
 	client: Client,
 	config?: {
