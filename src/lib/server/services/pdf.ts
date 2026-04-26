@@ -504,7 +504,7 @@ export class PDF {
      * By default creates parent directories if missing. Fails with error if the path is not
      * absolute. Suitable for archiving, batch processing, or generating downloadable files.
      *
-     * @param {string} filePath Absolute output path. Must start with `/` (absolute path required).
+     * @param {string} filePath Absolute output path. Must be an absolute path.
      * @param {PDFSaveOptions} [options={}] Save options (directory creation, file mode).
      * @returns {import('ts-utils').ResultPromise<void, Error>} Async save result.
      * @example
