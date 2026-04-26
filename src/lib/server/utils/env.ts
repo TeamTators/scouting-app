@@ -13,7 +13,12 @@ export default {
 		true,
 		'The base URL of your website. Used as an allow-list for redirects and for constructing URLs used in emails.'
 	),
-	PROTOCOL: union('PROTOCOL', ['http', 'https'], true, 'The protocol to use for the SITE_URL (http or https)'),
+	PROTOCOL: union(
+		'PROTOCOL',
+		['http', 'https'],
+		true,
+		'The protocol to use for the SITE_URL (http or https)'
+	),
 	PORT: num('PORT', true, 'The port to run the server on'),
 	APP_NAME: str('APP_NAME', true, 'Application name to use as sender name in emails'),
 

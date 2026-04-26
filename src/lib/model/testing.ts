@@ -374,7 +374,7 @@ export const runTests = () => {
 		create,
 		// read,
 		update,
-		del,
+		del
 		// recieveCreate,
 		// recieveUpdate,
 		// recieveDelete

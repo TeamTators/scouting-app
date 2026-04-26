@@ -36,7 +36,6 @@ jobs:
           cp .env.example .env
           echo "Loaded .env variables"
 
-          
       - name: Set up Supabase Config
         run: |
           echo "Setting up Supabase config..."

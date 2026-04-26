@@ -9,7 +9,7 @@ import {
 	type SupabaseClient
 } from '@supabase/supabase-js';
 import { schemas } from '$lib/types/supabase-zod';
-import {z} from 'zod';
+import { z } from 'zod';
 import { browser } from '$app/environment';
 import { SupaStructData } from './supastruct-data';
 import { SupaPagination } from './supa-pagination';

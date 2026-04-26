@@ -87,7 +87,6 @@ jobs:
           pnpm add -D typescript
           pnpm install --frozen-lockfile
 
-
       - name: Load .env variables
         run: |
           cp .env.example .env
