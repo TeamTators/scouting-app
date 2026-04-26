@@ -42,10 +42,10 @@ Username change input with availability checks.
 				)
 				.unwrap()
 				.then((result) => {
-					if (result) {
-						usernameState = 'exists';
-					} else if (username === account.username) {
+					if (username === account.username || (result && result.id === account.id)) {
 						usernameState = 'yours';
+					} else if (result) {
+						usernameState = 'exists';
 					} else {
 						usernameState = 'available';
 					}
