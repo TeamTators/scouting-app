@@ -3,7 +3,7 @@ declare
   schema_name text;
 begin
   foreach schema_name in array array[
-    'sveltekit_template'
+    'tators-app-kit'
   ]
   loop
     execute format('create schema if not exists %I', schema_name);
