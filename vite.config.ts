@@ -52,7 +52,7 @@ export default defineConfig({
 			supabase: {
 				url: str('SB_PUBLIC_URL', false) || 'http://localhost:8000',
 				public_key: str('SB_PUBLIC_KEY', false) || '',
-				s3_access_key: str('SB_STORAGE_ACCESS_KEY', false) || '',
+				s3_access_key: str('SB_STORAGE_ACCESS_KEY', false) || ''
 			}
 		})
 	}

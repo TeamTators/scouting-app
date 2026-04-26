@@ -31,7 +31,10 @@ test('FileUploader component', async ({ page }) => {
 		buffer: Buffer.from('this is a test')
 	});
 	await expect(page.getByText('test.txt')).toBeVisible();
-	await page.getByRole('dialog').getByRole('button', { name: /Upload 1 file/i }).click();
+	await page
+		.getByRole('dialog')
+		.getByRole('button', { name: /Upload 1 file/i })
+		.click();
 
 	const uploadRequest = await uploadRequestPromise;
 	expect(uploadRequest.method()).toBe('POST');

@@ -98,7 +98,7 @@ export const runTests = () => {
 					message: 'Realtime connection established',
 					name: 'Realtime Connection',
 					success: true,
-					required: realtime.data.required,
+					required: realtime.data.required
 				});
 				break;
 			case REALTIME_SUBSCRIBE_STATES.CLOSED:
@@ -107,7 +107,7 @@ export const runTests = () => {
 					message: 'Realtime connection closed',
 					name: 'Realtime Connection',
 					success: false,
-					required: realtime.data.required,
+					required: realtime.data.required
 				});
 				return;
 			case REALTIME_SUBSCRIBE_STATES.CHANNEL_ERROR:
@@ -116,7 +116,7 @@ export const runTests = () => {
 					message: 'Realtime connection error',
 					name: 'Realtime Connection',
 					success: false,
-					required: realtime.data.required,
+					required: realtime.data.required
 				});
 				return;
 			case REALTIME_SUBSCRIBE_STATES.TIMED_OUT:
@@ -125,7 +125,7 @@ export const runTests = () => {
 					message: 'Realtime connection timed out',
 					name: 'Realtime Connection',
 					success: false,
-					required: realtime.data.required,
+					required: realtime.data.required
 				});
 				return;
 		}
@@ -139,7 +139,7 @@ export const runTests = () => {
 					message: res.error.message,
 					name: 'Read',
 					success: false,
-					required: read.data.required,
+					required: read.data.required
 				});
 			} else {
 				read.set({
@@ -147,7 +147,7 @@ export const runTests = () => {
 					message: 'Read successfully',
 					name: 'Read',
 					success: true,
-					required: read.data.required,
+					required: read.data.required
 				});
 			}
 		});
@@ -165,7 +165,7 @@ export const runTests = () => {
 						message: res.error.message,
 						name: 'Create',
 						success: false,
-						required: create.data.required,
+						required: create.data.required
 					});
 				} else {
 					if ('error' in res.value) {
@@ -174,7 +174,7 @@ export const runTests = () => {
 							message: res.value.error.message,
 							name: 'Create',
 							success: false,
-							required: create.data.required,
+							required: create.data.required
 						});
 						return;
 					}
@@ -184,7 +184,7 @@ export const runTests = () => {
 						message: 'Created successfully',
 						name: 'Create',
 						success: true,
-						required: create.data.required,
+						required: create.data.required
 					});
 
 					if (!res.value.pending && 'result' in res.value) {
@@ -273,7 +273,7 @@ export const runTests = () => {
 					message: 'Read timed out',
 					name: 'Read',
 					success: false,
-					required: read.data.required,
+					required: read.data.required
 				});
 			}
 			if (recieveCreate.data.pending) {
@@ -282,7 +282,7 @@ export const runTests = () => {
 					message: 'Recieve Create timed out',
 					name: 'Recieve Create',
 					success: false,
-					required: recieveCreate.data.required,
+					required: recieveCreate.data.required
 				});
 			}
 			if (recieveUpdate.data.pending) {
@@ -291,7 +291,7 @@ export const runTests = () => {
 					message: 'Recieve Update timed out',
 					name: 'Recieve Update',
 					success: false,
-					required: recieveUpdate.data.required,
+					required: recieveUpdate.data.required
 				});
 			}
 			if (recieveDelete.data.pending) {
@@ -300,7 +300,7 @@ export const runTests = () => {
 					message: 'Recieve Delete timed out',
 					name: 'Recieve Delete',
 					success: false,
-					required: recieveDelete.data.required,
+					required: recieveDelete.data.required
 				});
 			}
 			if (update.data.pending) {
@@ -309,7 +309,7 @@ export const runTests = () => {
 					message: 'Update timed out',
 					name: 'Update',
 					success: false,
-					required: update.data.required,
+					required: update.data.required
 				});
 			}
 			if (del.data.pending) {
@@ -318,7 +318,7 @@ export const runTests = () => {
 					message: 'Delete timed out',
 					name: 'Delete',
 					success: false,
-					required: del.data.required,
+					required: del.data.required
 				});
 			}
 			if (create.data.pending) {
@@ -327,7 +327,7 @@ export const runTests = () => {
 					message: 'Create timed out',
 					name: 'Create',
 					success: false,
-					required: create.data.required,
+					required: create.data.required
 				});
 			}
 		}, 1000 * 10);
@@ -340,7 +340,7 @@ export const runTests = () => {
 				message: 'Recieved create successfully',
 				name: 'Recieve Create',
 				success: true,
-				required: recieveCreate.data.required,
+				required: recieveCreate.data.required
 			});
 		}
 	});
@@ -352,7 +352,7 @@ export const runTests = () => {
 				message: 'Recieved update successfully',
 				name: 'Recieve Update',
 				success: true,
-				required: recieveUpdate.data.required,
+				required: recieveUpdate.data.required
 			});
 		}
 	});
@@ -364,7 +364,7 @@ export const runTests = () => {
 				message: 'Recieved delete successfully',
 				name: 'Recieve Delete',
 				success: true,
-				required: recieveDelete.data.required,
+				required: recieveDelete.data.required
 			});
 		}
 	});

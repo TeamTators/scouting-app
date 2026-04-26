@@ -21,21 +21,21 @@
 <FileUploader
 	bucket="e2e_test"
 	bind:this={fileUploader}
-    uppyOpts={{
-        restrictions: {
-            maxFileSize: 1000000, // 1MB
-            maxNumberOfFiles: 1,
-            allowedFileTypes: ['text/plain'],
-            minFileSize: 1,
-            maxTotalFileSize: 1000000,
-            minNumberOfFiles: 1,
-            requiredMetaFields: ['name'],
-        },
-        debug: true,
-    }}
+	uppyOpts={{
+		restrictions: {
+			maxFileSize: 1000000, // 1MB
+			maxNumberOfFiles: 1,
+			allowedFileTypes: ['text/plain'],
+			minFileSize: 1,
+			maxTotalFileSize: 1000000,
+			minNumberOfFiles: 1,
+			requiredMetaFields: ['name']
+		},
+		debug: true
+	}}
 	btn={{
 		text: 'Upload a Text File',
-		classes: 'btn btn-primary',
+		classes: 'btn btn-primary'
 	}}
 />
 

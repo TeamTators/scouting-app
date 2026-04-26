@@ -58,23 +58,16 @@ File upload modal backed by Uppy dashboard.
 			classes?: string;
 			icon?: Icon;
 			style?: string;
-		}
+		};
 	}
 
-	const {
-		bucket,
-		path,
-		message = 'Upload File',
-		uppyOpts: opts,
-		btn,
-	}: Props = $props();
+	const { bucket, path, message = 'Upload File', uppyOpts: opts, btn }: Props = $props();
 
 	let modal: Modal;
 
 	const uppy = $derived(new Uppy<M, B>(opts));
 
 	export const getUppy = () => uppy;
-
 
 	const uploadDirectly = async (fileIDs: string[]) => {
 		for (const fileID of fileIDs) {
@@ -111,7 +104,6 @@ File upload modal backed by Uppy dashboard.
 	};
 
 	$effect(() => {
-
 		uppy.addUploader(uploadDirectly);
 
 		return () => {
@@ -139,7 +131,7 @@ File upload modal backed by Uppy dashboard.
 					proudlyDisplayPoweredByUppy: false,
 					inline: true,
 					autoOpen: 'imageEditor',
-					disabled: false,
+					disabled: false
 				}}
 			/>
 		</div>

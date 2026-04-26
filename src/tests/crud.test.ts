@@ -43,7 +43,6 @@ describe('Realtime Tests', () => {
 		if (updated.pending) throw new Error('Update is pending');
 		if ('error' in updated) throw new Error('Update failed: ' + updated.error.message);
 
-
 		const deleted = await data.delete().await().unwrap();
 		if (deleted.pending) throw new Error('Delete is pending');
 		if ('error' in deleted) throw new Error('Delete failed: ' + deleted.error.message);
