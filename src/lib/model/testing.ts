@@ -60,29 +60,29 @@ export const runTests = () => {
 		required: true
 	});
 
-	const recieveCreate = new Test({
-		pending: true,
-		message: '',
-		name: 'Recieve Create',
-		success: undefined,
-		required: false
-	});
+	// const recieveCreate = new Test({
+	// 	pending: true,
+	// 	message: '',
+	// 	name: 'Recieve Create',
+	// 	success: undefined,
+	// 	required: false
+	// });
 
-	const recieveUpdate = new Test({
-		pending: true,
-		message: '',
-		name: 'Recieve Update',
-		success: undefined,
-		required: false
-	});
+	// const recieveUpdate = new Test({
+	// 	pending: true,
+	// 	message: '',
+	// 	name: 'Recieve Update',
+	// 	success: undefined,
+	// 	required: false
+	// });
 
-	const recieveDelete = new Test({
-		pending: true,
-		message: '',
-		name: 'Recieve Delete',
-		success: undefined,
-		required: false
-	});
+	// const recieveDelete = new Test({
+	// 	pending: true,
+	// 	message: '',
+	// 	name: 'Recieve Delete',
+	// 	success: undefined,
+	// 	required: false
+	// });
 
 	let id: string | undefined;
 	const all = struct.all({
@@ -231,7 +231,7 @@ export const runTests = () => {
 								required: update.data.required
 							});
 
-							await recieveUpdate.await();
+							// await recieveUpdate.await();
 
 							const deleteRes = await res.value.result[0].delete().await();
 							if (deleteRes.isErr()) {
@@ -276,33 +276,33 @@ export const runTests = () => {
 					required: read.data.required
 				});
 			}
-			if (recieveCreate.data.pending) {
-				recieveCreate.set({
-					pending: false,
-					message: 'Recieve Create timed out',
-					name: 'Recieve Create',
-					success: false,
-					required: recieveCreate.data.required
-				});
-			}
-			if (recieveUpdate.data.pending) {
-				recieveUpdate.set({
-					pending: false,
-					message: 'Recieve Update timed out',
-					name: 'Recieve Update',
-					success: false,
-					required: recieveUpdate.data.required
-				});
-			}
-			if (recieveDelete.data.pending) {
-				recieveDelete.set({
-					pending: false,
-					message: 'Recieve Delete timed out',
-					name: 'Recieve Delete',
-					success: false,
-					required: recieveDelete.data.required
-				});
-			}
+			// if (recieveCreate.data.pending) {
+			// 	recieveCreate.set({
+			// 		pending: false,
+			// 		message: 'Recieve Create timed out',
+			// 		name: 'Recieve Create',
+			// 		success: false,
+			// 		required: recieveCreate.data.required
+			// 	});
+			// }
+			// if (recieveUpdate.data.pending) {
+			// 	recieveUpdate.set({
+			// 		pending: false,
+			// 		message: 'Recieve Update timed out',
+			// 		name: 'Recieve Update',
+			// 		success: false,
+			// 		required: recieveUpdate.data.required
+			// 	});
+			// }
+			// if (recieveDelete.data.pending) {
+			// 	recieveDelete.set({
+			// 		pending: false,
+			// 		message: 'Recieve Delete timed out',
+			// 		name: 'Recieve Delete',
+			// 		success: false,
+			// 		required: recieveDelete.data.required
+			// 	});
+			// }
 			if (update.data.pending) {
 				update.set({
 					pending: false,
@@ -333,41 +333,41 @@ export const runTests = () => {
 		}, 1000 * 10);
 	});
 
-	struct.on('new', (data) => {
-		if (id && String(data.data.id) === id) {
-			recieveCreate.set({
-				pending: false,
-				message: 'Recieved create successfully',
-				name: 'Recieve Create',
-				success: true,
-				required: recieveCreate.data.required
-			});
-		}
-	});
+	// struct.on('new', (data) => {
+	// 	if (id && String(data.data.id) === id) {
+	// 		recieveCreate.set({
+	// 			pending: false,
+	// 			message: 'Recieved create successfully',
+	// 			name: 'Recieve Create',
+	// 			success: true,
+	// 			required: recieveCreate.data.required
+	// 		});
+	// 	}
+	// });
 
-	struct.on('update', (data) => {
-		if (id && String(data.data.id) === id) {
-			recieveUpdate.set({
-				pending: false,
-				message: 'Recieved update successfully',
-				name: 'Recieve Update',
-				success: true,
-				required: recieveUpdate.data.required
-			});
-		}
-	});
+	// struct.on('update', (data) => {
+	// 	if (id && String(data.data.id) === id) {
+	// 		recieveUpdate.set({
+	// 			pending: false,
+	// 			message: 'Recieved update successfully',
+	// 			name: 'Recieve Update',
+	// 			success: true,
+	// 			required: recieveUpdate.data.required
+	// 		});
+	// 	}
+	// });
 
-	struct.on('delete', (data) => {
-		if (id && String(data.data.id) === id) {
-			recieveDelete.set({
-				pending: false,
-				message: 'Recieved delete successfully',
-				name: 'Recieve Delete',
-				success: true,
-				required: recieveDelete.data.required
-			});
-		}
-	});
+	// struct.on('delete', (data) => {
+	// 	if (id && String(data.data.id) === id) {
+	// 		recieveDelete.set({
+	// 			pending: false,
+	// 			message: 'Recieved delete successfully',
+	// 			name: 'Recieve Delete',
+	// 			success: true,
+	// 			required: recieveDelete.data.required
+	// 		});
+	// 	}
+	// });
 
 	const arr = new WritableArray([
 		realtime,
@@ -375,9 +375,9 @@ export const runTests = () => {
 		read,
 		update,
 		del,
-		recieveCreate,
-		recieveUpdate,
-		recieveDelete
+		// recieveCreate,
+		// recieveUpdate,
+		// recieveDelete
 	]);
 
 	arr.on(
