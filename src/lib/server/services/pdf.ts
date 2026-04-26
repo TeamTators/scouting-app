@@ -301,7 +301,7 @@ export class PDF {
                 throw new Error('File is not a valid PDF: ' + filePath);
             }
 
-            const fileName = filePath.split('/').slice(-1)[0];
+            const fileName = path.basename(filePath);
             const normalizedName = PDF.normalizeName(fileName).unwrap();
             const fileBuffer = attempt(() => Buffer.from(data)).unwrap();
 
