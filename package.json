@@ -182,7 +182,6 @@
 		"proper-lockfile": "^4.1.2",
 		"qr-scanner": "^1.4.2",
 		"redis": "^5.7.0",
-		"redis-utils": "github:tsaxking/redis#v3.0.0",
 		"supabase": "^2.95.3",
 		"svelte-filepond": "^0.2.2",
 		"svelte-portal": "^2.2.1",
@@ -206,7 +205,6 @@
 			"html-constructor",
 			"math",
 			"puppeteer",
-			"redis-service",
 			"supabase",
 			"svelte-preprocess",
 			"ts-utils"

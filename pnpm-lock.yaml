@@ -254,9 +254,6 @@ importers:
       redis:
         specifier: ^5.7.0
         version: 5.11.0
-      redis-utils:
-        specifier: github:tsaxking/redis#v3.0.0
-        version: redis-service@https://codeload.github.com/tsaxking/redis/tar.gz/51166d1f64926a3c5a96e593ded35ac49768c25c(@types/node@22.19.15)(jsdom@28.1.0)(sass-embedded@1.98.0)(sass@1.98.0)
       supabase:
         specifier: ^2.95.3
         version: 2.95.3

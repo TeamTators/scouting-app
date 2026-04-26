@@ -41,11 +41,11 @@ const getUser = (usernameOrEmail: string) => {
 	});
 };
 
-	/**
-	 * Represents an authenticated user session with associated account and auth state.
-	 * Wraps Supabase session with application-specific session data from database.
-	 */
-	export class Session {
+/**
+ * Represents an authenticated user session with associated account and auth state.
+ * Wraps Supabase session with application-specific session data from database.
+ */
+export class Session {
 	/**
 	 * Creates a Session instance.
 	 * @param {Object} config - Session configuration.
