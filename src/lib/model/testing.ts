@@ -393,6 +393,7 @@ export const runTests = () => {
 			if (data.success === false) {
 				console.error(`Test "${data.name}" failed: ${data.message}`);
 			}
+			console.log(`Test "${data.name}" updated:`, data);
 		});
 
 		arr.on('all-unsubscribe', unsub);

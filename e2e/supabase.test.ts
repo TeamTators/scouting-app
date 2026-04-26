@@ -3,6 +3,10 @@ import { expect, test } from '@playwright/test';
 test('Supabase page tests complete and pass', async ({ page }) => {
 	await page.goto('http://127.0.0.1:4173/test/supabase');
 
+	page.on('console', (msg) => {
+		console.log(`Console message: [${msg.type()}] ${msg.text()}`);
+	});
+
 	const container = page.locator('#supabase-tests');
 	await expect(container).toBeVisible();
 
