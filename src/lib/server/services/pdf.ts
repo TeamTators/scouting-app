@@ -299,9 +299,9 @@ export class PDF {
 				throw new Error('File is not a valid PDF: ' + filePath);
 			}
 
-            const fileName = path.basename(filePath);
-            const normalizedName = PDF.normalizeName(fileName).unwrap();
-            const fileBuffer = attempt(() => Buffer.from(data)).unwrap();
+			const fileName = path.basename(filePath);
+			const normalizedName = PDF.normalizeName(fileName).unwrap();
+			const fileBuffer = attempt(() => Buffer.from(data)).unwrap();
 
 			return new PDF(normalizedName, fileBuffer);
 		});
@@ -496,25 +496,25 @@ export class PDF {
 		});
 	}
 
-    /**
-     * Save PDF bytes to disk.
-     *
-     * By default creates parent directories if missing. Fails with error if the path is not
-     * absolute. Suitable for archiving, batch processing, or generating downloadable files.
-     *
-     * @param {string} filePath Absolute output path. Must be an absolute path.
-     * @param {PDFSaveOptions} [options={}] Save options (directory creation, file mode).
-     * @returns {import('ts-utils').ResultPromise<void, Error>} Async save result.
-     * @example
-     * const saveResult = await pdf.save('/var/reports/invoice_2024.pdf', {
-     *   ensureDirectory: true,
-     *   mode: 0o644
-     * });
-     * if (saveResult.isErr()) throw saveResult.error;
-     */
-    save(filePath: string, options: PDFSaveOptions = {}) {
-        return attemptAsync(async () => {
-            PDF.assertAbsolutePath(filePath).unwrap();
+	/**
+	 * Save PDF bytes to disk.
+	 *
+	 * By default creates parent directories if missing. Fails with error if the path is not
+	 * absolute. Suitable for archiving, batch processing, or generating downloadable files.
+	 *
+	 * @param {string} filePath Absolute output path. Must be an absolute path.
+	 * @param {PDFSaveOptions} [options={}] Save options (directory creation, file mode).
+	 * @returns {import('ts-utils').ResultPromise<void, Error>} Async save result.
+	 * @example
+	 * const saveResult = await pdf.save('/var/reports/invoice_2024.pdf', {
+	 *   ensureDirectory: true,
+	 *   mode: 0o644
+	 * });
+	 * if (saveResult.isErr()) throw saveResult.error;
+	 */
+	save(filePath: string, options: PDFSaveOptions = {}) {
+		return attemptAsync(async () => {
+			PDF.assertAbsolutePath(filePath).unwrap();
 
 			if (options.ensureDirectory ?? true) {
 				await fs.mkdir(PDF.parentDirectory(filePath), { recursive: true });

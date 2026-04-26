@@ -33,6 +33,8 @@ export const scanQR = () => {
 			);
 
 			modal.show();
+
+			modal.on('hide', () => setTimeout(() => rej(new Error('User cancelled QR scan')), 100));
 		});
 	});
 };
