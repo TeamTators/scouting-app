@@ -17,6 +17,8 @@ permissions:
 
 jobs:
   unit-tests:
+    env:
+      PUPPETEER_SKIP_DOWNLOAD: true
     runs-on: [self-hosted, Linux, X64]
 
     steps:

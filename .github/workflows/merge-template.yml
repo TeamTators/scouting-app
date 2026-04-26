@@ -6,6 +6,8 @@ on:
 
 jobs:
   pre-check:
+    env:
+      PUPPETEER_SKIP_DOWNLOAD: true
     runs-on: [self-hosted, Linux, X64]
     outputs:
       run_pipeline: ${{ steps.check.outputs.run_pipeline }}
@@ -56,7 +58,7 @@ jobs:
             git@github.com:lordbagel42/better-fundraising.git,
             git@github.com:Ansodo-SophieH/tracker-app.git,
             git@github.com:tsaxking/tsaxking-com.git,
-            git@github.com:tsaxking/nginx-manager.git
+            git@github.com:tsaxking/audio-flow.git
           ]
 
     steps:
