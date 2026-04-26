@@ -58,7 +58,7 @@ jobs:
             git@github.com:lordbagel42/better-fundraising.git,
             git@github.com:Ansodo-SophieH/tracker-app.git,
             git@github.com:tsaxking/tsaxking-com.git,
-            git@github.com:tsaxking/audio-flow.git
+            git@github.com:tsaxking-repos/audio-flow.git
           ]
 
     steps:
