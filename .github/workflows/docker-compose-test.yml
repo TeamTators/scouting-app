@@ -69,6 +69,7 @@ jobs:
       - name: Build Docker image
         run: |
           cp .env .docker.env
+          cp config.json config.docker.json
           docker build -t my-app:latest .
 
       - name: Debug Docker images
