@@ -1,6 +1,5 @@
 import path from 'path';
 import fs from 'fs';
-import { str } from '../../src/lib/server/utils/env-utils';
 
 export default () => {
 	const range = (min: number, max: number) =>

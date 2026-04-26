@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
-import { get } from 'svelte/store';
 import fs from 'fs';
 import path from 'path';
 
