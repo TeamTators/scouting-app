@@ -46,7 +46,7 @@ export default async (schema: string) => {
 	const filesToEdit = [
 		'./src/lib/types/supabase.ts',
 		'./src/lib/types/supabase-schema.ts',
-		'./supabase/snipppets/create_schema.sql',
+		'./supabase/snippets/create_schema.sql',
 		'./supabase/config.toml',
 		'./.env',
 		'./.env.example',

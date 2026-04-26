@@ -13,7 +13,7 @@ import { config as dotenv } from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import { attempt, attemptAsync } from 'ts-utils/check';
-import z from 'zod';
+import {z} from 'zod';
 dotenv();
 
 let timeout: ReturnType<typeof setTimeout>;

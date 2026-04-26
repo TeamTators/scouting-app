@@ -30,7 +30,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	// TODO: only save pages
 	const sessionFactory = getSessionFactory(event.locals.supabase, {
-		debug: true
+		debug: false
 	});
 
 	const res = await sessionFactory.getSelf(event.url.pathname);

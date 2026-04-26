@@ -1,7 +1,7 @@
 import { attemptAsync } from 'ts-utils/check';
 import fs from 'fs';
 import path from 'path';
-import z from 'zod';
+import {z} from 'zod';
 import type { Icon } from '$lib/types/icons';
 import { type Feature } from '../../types/features';
 import { globalNotification } from '../model/notifications';
