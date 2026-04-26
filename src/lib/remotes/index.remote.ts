@@ -55,10 +55,3 @@ export const getAccount = query(async () => {
 	}
 	return data.value || null;
 });
-// /**
-//  * Returns the current SSE connection if available.
-//  */
-// export const getSSE = query(async () => {
-// 	const event = getRequestEvent();
-// 	return event.locals.sse;
-// });

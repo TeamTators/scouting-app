@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { str } from '../../src/lib/server/utils/env';
+import { str } from '../../src/lib/server/utils/env-utils';
 
 export default async (schema: string) => {
 	let tackOn = false;

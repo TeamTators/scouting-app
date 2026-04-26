@@ -34,20 +34,6 @@ declare global {
 			enabled: boolean;
 			debug: boolean;
 		};
-		struct_batching: {
-			enabled: boolean;
-			interval: number;
-			timeout: number;
-			limit: number;
-			batch_size: number;
-			debug: boolean;
-		};
-		sse: {
-			debug: boolean;
-			ping_interval_ms: number;
-			state_report_threshold: number;
-			do_report: boolean;
-		};
 		supabase: {
 			url: string;
 			public_key: string;

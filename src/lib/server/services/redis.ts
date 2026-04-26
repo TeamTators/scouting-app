@@ -9,7 +9,7 @@
  * const queue = redis.createQueue('emails', z.string(), 100);
  */
 import { Redis } from 'redis-utils';
-import { config } from '../utils/env';
+import env from '../utils/env';
 
 /**
  * Preconfigured Redis client.
@@ -18,6 +18,6 @@ import { config } from '../utils/env';
  * @property {string} url - Redis connection URL.
  */
 export default new Redis({
-	name: config.redis.name,
-	url: config.redis.url
+	name: env.REDIS_NAME,
+	url: env.REDIS_URL
 });

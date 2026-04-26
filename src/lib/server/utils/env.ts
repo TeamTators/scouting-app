@@ -1,349 +1,152 @@
-/**
- * @fileoverview Environment and configuration helpers with .env example generation.
- *
- * Loads config.json, provides typed access to environment variables, and keeps
- * .env.example in sync with requested keys during development.
- *
- * @example
- * import { get, num, env, config } from '$lib/server/utils/env';
- * const apiKey = get('API_KEY', { required: true });
- * const port = num('PORT', false) ?? config.network.port;
- * console.log(env);
- */
-import { config as dotenv } from 'dotenv';
-import fs from 'fs';
-import path from 'path';
-import { attempt, attemptAsync } from 'ts-utils/check';
-import z from 'zod';
-import configSchema from './config';
-import { openJSONSync } from './files';
-dotenv();
+import { arr, bool, num, str, union } from './env-utils';
 
-let timeout: ReturnType<typeof setTimeout>;
-const keys = new Map<
-	string,
-	{
-		required: boolean;
-		default?: unknown;
-		type?: string;
-		comment?: string;
-	}
->();
+export default {
+	ENVIRONMENT: union(
+		'ENVIRONMENT',
+		['dev', 'staging', 'prod'],
+		true,
+		'The current environment (development, staging, production)'
+	),
 
-const cache = new Map<string, unknown>();
+	SITE_URL: str(
+		'SITE_URL',
+		true,
+		'The base URL of your website. Used as an allow-list for redirects and for constructing URLs used in emails.'
+	),
+	PROTOCOL: str('PROTOCOL', true, 'The protocol to use for the SITE_URL (http or https)'),
+	PORT: num('PORT', true, 'The port to run the server on'),
+	APP_NAME: str('APP_NAME', true, 'Application name to use as sender name in emails'),
 
-/**
- * Error thrown for invalid or missing environment configuration.
- */
-export class EnvironmentError extends Error {
-	constructor(message: string) {
-		super(message);
-		this.name = 'EnvironmentError';
-	}
-}
+	SB_PUBLIC_URL: str('SB_PUBLIC_URL', true, 'Public Supabase URL'),
+	SB_PROJECT_URL: str(
+		'SB_PROJECT_URL',
+		true,
+		'Supabase Project URL for testing server-side Supabase operations'
+	),
+	SB_PUBLIC_KEY: str('SB_PUBLIC_KEY', true, 'Public Supabase API Key'),
+	SB_STUDIO_URL: str('SB_STUDIO_URL', true, 'Supabase Studio URL'),
+	SB_MAILPIT_URL: str('SB_MAILPIT_URL', true, 'Mailpit URL for testing email sending'),
+	SB_MCP_URL: str('SB_MCP_URL', true, 'Supabase MCP URL for testing file uploads'),
+	SB_DB_URL: str('SB_DB_URL', true, 'Supabase Database URL for testing database connection'),
+	SB_SECRET_KEY: str(
+		'SB_SECRET_KEY',
+		true,
+		'Supabase Secret API Key for testing server-side Supabase operations'
+	),
+	SB_STORAGE_ACCESS_KEY: str(
+		'SB_STORAGE_ACCESS_KEY',
+		true,
+		'Supabase Storage Access Key for testing file uploads'
+	),
+	SB_STORAGE_SECRET_KEY: str(
+		'SB_STORAGE_SECRET_KEY',
+		true,
+		'Supabase Storage Secret Key for testing file uploads'
+	),
+	SB_REGION: str('SB_REGION', true, 'Supabase Region for testing file uploads'),
+	SB_SCHEMA: str('SB_SCHEMA', true, 'Supabase Schema for testing database connection'),
+	SB_POSTGRES_PASSWORD: str(
+		'SB_POSTGRES_PASSWORD',
+		true,
+		'Supabase Postgres Password for testing database connection'
+	),
+	SB_STORAGE_ENDPOINT: str(
+		'SB_STORAGE_ENDPOINT',
+		true,
+		'Supabase Storage Endpoint for testing file uploads'
+	),
 
-/**
- * Parsed and validated application configuration.
- */
-export const config = (() => {
-	let configPath = str('CONFIG_PATH', true);
-	if (configPath.startsWith('./')) {
-		configPath = path.join(process.cwd(), configPath.slice(2));
-	}
+	SMTP_HOST: str('SMTP_HOST', true, 'SMTP host for sending emails'),
+	SMTP_USER: str('SMTP_USER', true, 'SMTP user for sending emails'),
+	SMTP_PASS: str('SMTP_PASS', true, 'SMTP password for sending emails'),
+	SMTP_ADMIN_EMAIL: str('SMTP_ADMIN_EMAIL', true, 'Admin email to receive notifications'),
 
-	if (!fs.existsSync(configPath)) {
-		throw new EnvironmentError(`Config file does not exist at path: ${configPath}`);
-	}
+	OAUTH2_PROVIDER: str('OAUTH2_PROVIDER', true, 'OAuth2 provider for testing authentication'),
+	OAUTH2_CLIENT_ID: str('OAUTH2_CLIENT_ID', true, 'OAuth2 client ID for testing authentication'),
+	OAUTH2_CLIENT_SECRET: str(
+		'OAUTH2_CLIENT_SECRET',
+		true,
+		'OAuth2 client secret for testing authentication'
+	),
 
-	const example = openJSONSync(
-		path.resolve(process.cwd(), './config.example.json'),
-		configSchema
-	).unwrap();
-	const envConfig = openJSONSync(configPath, z.unknown()).unwrap();
+	FINGERPRINT_SECRET: str(
+		'FINGERPRINT_SECRET',
+		true,
+		'Secret key for generating fingerprint tokens'
+	),
 
-	const deepMerge = (base: unknown, override: unknown): unknown => {
-		if (
-			override === null ||
-			override === undefined ||
-			typeof override !== 'object' ||
-			Array.isArray(override)
-		) {
-			return override ?? base;
-		}
-		if (base === null || base === undefined || typeof base !== 'object' || Array.isArray(base)) {
-			return override;
-		}
-		const result: Record<string, unknown> = { ...(base as Record<string, unknown>) };
-		for (const key of Object.keys(override as Record<string, unknown>)) {
-			result[key] = deepMerge(
-				(base as Record<string, unknown>)[key],
-				(override as Record<string, unknown>)[key]
-			);
-		}
-		return result;
-	};
+	INDEXED_DB_ENABLED: bool(
+		'INDEXED_DB_ENABLED',
+		true,
+		'Whether to enable IndexedDB for testing purposes'
+	),
+	INDEXED_DB_NAME: str(
+		'INDEXED_DB_NAME',
+		true,
+		'The name of the IndexedDB database to use for testing'
+	),
+	INDEXED_DB_VERSION: num(
+		'INDEXED_DB_VERSION',
+		true,
+		'The version of the IndexedDB database to use for testing'
+	),
+	INDEXED_DB_DEBUG: bool(
+		'INDEXED_DB_DEBUG',
+		false,
+		'Whether to enable debug logging for IndexedDB operations'
+	),
+	INDEXED_DB_DEBOUNCE_INTERVAL_MS: num(
+		'INDEXED_DB_DEBOUNCE_INTERVAL_MS',
+		true,
+		'The debounce interval in milliseconds for IndexedDB operations'
+	),
 
-	const combined = deepMerge(example, envConfig);
+	STRUCT_CACHE_ENABLED: bool(
+		'STRUCT_CACHE_ENABLED',
+		true,
+		'Whether to enable caching for Struct instances'
+	),
+	STRUCT_CACHE_DEBUG: bool(
+		'STRUCT_CACHE_DEBUG',
+		false,
+		'Whether to enable debug logging for Struct caching operations'
+	),
 
-	return configSchema.parse(combined);
-})();
+	NTP_ENABLED: bool('NTP_ENABLED', true, 'Whether to enable NTP synchronization'),
+	NTP_SERVERS: arr(
+		'NTP_SERVERS',
+		'string',
+		true,
+		'Comma-separated list of NTP servers to use for synchronization'
+	),
 
-/**
- * Options for `get()` environment accessor.
- *
- * @property {boolean} [required] - Whether the env var must be present.
- * @property {T} [default] - Default value when missing.
- * @property {T} [devDefault] - Default value in development when missing.
- * @property {string[]} [values] - Allowed raw string values.
- * @property {(val: string) => T} [parser] - Parser for raw value.
- * @property {string} [type] - Human-readable type for .env.example.
- */
-type EnvConfig<T> = {
-	required?: boolean;
-	default?: T;
-	devDefault?: T;
-	values?: string[];
-	parser?: (val: string) => T;
-	type?: string;
-	comment?: string;
-};
+	ADMIN_ENABLED: bool('ADMIN_ENABLED', true, 'Whether to enable the admin interface'),
+	ADMIN_USERNAME: str('ADMIN_USERNAME', true, 'Username for admin interface'),
+	ADMIN_PASSWORD: str('ADMIN_PASSWORD', true, 'Password for admin interface'),
+	ADMIN_EMAIL: str('ADMIN_EMAIL', true, 'Email for admin interface'),
+	ADMIN_FIRST_NAME: str('ADMIN_FIRST_NAME', true, 'First name for admin interface'),
+	ADMIN_LAST_NAME: str('ADMIN_LAST_NAME', true, 'Last name for admin interface'),
 
-const exampleFilepath = path.join(process.cwd(), '.env.example');
-const envFilepath = path.join(process.cwd(), '.env');
-let current = '';
-try {
-	current = fs.readFileSync(exampleFilepath, 'utf-8');
-} catch {
-	console.log('.env.example does not exist, will create it automatically');
-}
+	LOGS_ENABLED: bool('LOGS_ENABLED', true, 'Whether to enable logging'),
+	LOGS_OUTDIR: str('LOGS_OUTDIR', true, 'The directory to write logs to'),
+	LOGS_LEVEL: arr(
+		'LOGS_LEVEL',
+		'string',
+		true,
+		'Comma-separated list of log levels to enable (error, warn, info, debug)'
+	),
 
-/**
- * Current environment name.
- */
-export const env = config.environment;
+	REDIS_URL: str('REDIS_URL', true, 'Redis connection URL for caching and other Redis operations'),
+	REDIS_NAME: str('REDIS_NAME', true, 'Name of the Redis instance for logging purposes'),
 
-/**
- * Schedules a .env.example update based on requested keys.
- */
-function generateExample() {
-	if (timeout) clearTimeout(timeout);
-	timeout = setTimeout(async () => {
-		const currentLines = current.split('\n').map((l) => l.trim());
-
-		if (currentLines.length === 1 && currentLines[0] === '') {
-			currentLines.push('# This file was auto-generated by src/lib/server/utils/env.ts');
-			currentLines.push('# Feel free to comment and to replace default example values');
-			currentLines.push('');
-		}
-
-		for (const [key, { required, default: def, type, comment: keyComment }] of keys) {
-			if (currentLines.find((l) => l.startsWith(key + '='))) continue;
-			console.log('Adding to env example:', key, type);
-
-			let comment = `${required ? '# Required' : ''}`;
-			if (type) {
-				if (comment.length) comment += ` (${type})`;
-				else comment += `# (${type})`;
-			}
-			if (keyComment) {
-				if (comment.length) comment += ` - ${keyComment}`;
-				else comment += `# ${keyComment}`;
-			}
-
-			currentLines.push(`${key}="${def ?? `some_${key.toLowerCase()}`}" ${comment}`);
-		}
-		fs.writeFileSync(exampleFilepath, currentLines.join('\n'));
-
-		keys.clear();
-	}, 1000);
-}
-
-// Overloads for get()
-/**
- * Gets an environment variable with optional parsing/validation.
- *
- * @param {string} key - Environment key (case-insensitive).
- * @param {EnvConfig<T>} [config] - Accessor config.
- */
-export function get<T = string>(key: string, config: EnvConfig<T> & { required: true }): T;
-export function get<T = string>(key: string, config?: EnvConfig<T>): T | undefined;
-export function get<T = string>(key: string, config?: EnvConfig<T>): T | undefined {
-	if (cache.has(key)) return cache.get(key) as T;
-	key = key.toUpperCase();
-	const gen = (data: T) => {
-		cache.set(key, data);
-		if (process.env.ENVIRONMENT === 'prod') return; // Don't change git-tracked files in production
-		if (!keys.has(key)) {
-			keys.set(key, {
-				required: config?.required ?? false,
-				default: config?.default,
-				type: config?.type,
-				comment: config?.comment
-			});
-			generateExample();
-		}
-	};
-	const raw = process.env[key];
-
-	if (config?.required && (config.default !== undefined || config.devDefault !== undefined)) {
-		throw new EnvironmentError(
-			`Env var "${key}" cannot be required and have a default or devDefault`
-		);
-	}
-
-	if (config?.required && !raw) {
-		throw new EnvironmentError(`Missing required env var "${key}"`);
-	}
-
-	const parse = (val: string) => (config?.parser ? config.parser(val) : (val as unknown as T));
-	if (raw) {
-		if (config?.values && !config.values.includes(raw)) {
-			throw new EnvironmentError(
-				`Invalid raw value for env var "${key}". Must be one of: ${config.values.join(', ')}`
-			);
-		}
-		const actual = parse(raw);
-		if (
-			(config?.default !== undefined && typeof config.default !== typeof actual) ||
-			(config?.devDefault !== undefined && typeof config.devDefault !== typeof actual)
-		) {
-			throw new EnvironmentError(
-				`Env var "${key}" has a different type than the provided default/devDefault`
-			);
-		}
-		gen(actual);
-		return actual;
-	}
-
-	if (process.env.NODE_ENV === 'development' && config?.devDefault !== undefined) {
-		gen(config.devDefault);
-		return config.devDefault;
-	}
-
-	gen(config?.default as T);
-	return config?.default;
-}
-
-// ===== Helper functions with correct typing =====
-
-// Number helpers
-/**
- * Reads a numeric env var.
- *
- * @param {string} key - Environment key.
- * @param {boolean} required - Whether the key is required.
- * @param {string} [comment] - Optional comment for the env var.
- */
-export function num(key: string, required: true, comment?: string): number;
-export function num(key: string, required: false, comment?: string): number | undefined;
-export function num(key: string, required: boolean, comment?: string): number | undefined {
-	const res = get<number>(key, {
-		required: required ?? false,
-		parser: (val) => parseInt(val),
-		type: 'number',
-		comment
-	});
-	if (res !== undefined && isNaN(res)) {
-		throw new EnvironmentError(`Env var "${key}" is not a valid number`);
-	}
-
-	return res;
-}
-
-// Boolean helpers
-/**
- * Reads a boolean env var.
- *
- * @param {string} key - Environment key.
- * @param {boolean} required - Whether the key is required.
- * @param {string} [comment] - Optional comment for the env var.
- */
-export function bool(key: string, required: true, comment?: string): boolean;
-export function bool(key: string, required: false, comment?: string): boolean | undefined;
-export function bool(key: string, required: boolean, comment?: string): boolean | undefined {
-	return get<boolean>(key, {
-		required: required ?? false,
-		parser: (val) => ['true', 'y', '1'].includes(val.toLowerCase()),
-		type: 'y/n, true/false, 1/0',
-		values: ['y', 'n', 'Y', 'N', 'true', 'false', 'TRUE', 'FALSE', 'True', 'False', '1', '0'],
-		comment
-	});
-}
-
-// String helpers
-/**
- * Reads a string env var.
- *
- * @param {string} key - Environment key.
- * @param {boolean} required - Whether the key is required.
- * @param {string} [comment] - Optional comment for the env var.
- */
-export function str(key: string, required: true, comment?: string): string;
-export function str(key: string, required: false, comment?: string): string | undefined;
-export function str(key: string, required: boolean, comment?: string): string | undefined {
-	return get<string>(key, { required: required ?? false, comment });
-}
-
-/**
- * Builds a public domain string from config.
- *
- * @param {{ port: boolean; protocol: boolean }} domainConfig - Formatting options.
- */
-export function domain(domainConfig: { port: boolean; protocol: boolean }) {
-	const host = config.network.host;
-	const port = config.network.port;
-	const protocol = config.network.protocol + '://';
-
-	return `${domainConfig.protocol ? protocol : ''}${host}${domainConfig.port ? `:${port}` : ''}`;
-}
-
-/**
- * Fetches the public IPv4 address for the running instance.
- */
-export const getPublicIp = () => {
-	return attemptAsync(async () => {
-		const res = await fetch('https://api.ipify.org?format=json');
-		if (!res.ok) throw new Error('Failed to fetch public IP');
-		return z
-			.object({
-				ip: z.string().ip({
-					version: 'v4'
-				})
-			})
-			.parse(await res.json()).ip;
-	});
-};
-
-export const set = (vars: Record<string, string>) => {
-	return attempt(() => {
-		if (config.environment === 'prod') {
-			throw new EnvironmentError('Cannot set environment variables in production');
-		}
-		console.log('Setting environment variables:', JSON.stringify(vars, null, 2));
-		let current = '';
-		try {
-			current = fs.readFileSync(exampleFilepath, 'utf-8');
-		} catch {
-			console.log('.env.example does not exist, will create it automatically');
-		}
-		const currentLines = current.split('\n').map((l) => l.trim());
-
-		if (currentLines.length === 1 && currentLines[0] === '') {
-			currentLines.push('# This file was auto-generated by src/lib/server/utils/env.ts');
-			currentLines.push('# Feel free to comment and to replace default example values');
-			currentLines.push('');
-		}
-
-		for (const [key, value] of Object.entries(vars)) {
-			process.env[key] = value;
-			// overwrite existing key in .env.example or add if missing
-			const existingIndex = currentLines.findIndex((l) => l.startsWith(key + '='));
-			if (existingIndex !== -1) {
-				currentLines[existingIndex] = `${key}=${value}`;
-			} else {
-				currentLines.push(`${key}=${value}`);
-			}
-		}
-		fs.writeFileSync(envFilepath, currentLines.join('\n'));
-	});
+	SESSION_AUTO_SIGN_IN_ENABLED: bool(
+		'SESSION_AUTO_SIGN_IN_ENABLED',
+		true,
+		'Whether to automatically sign in users on session restoration'
+	),
+	SESSION_AUTO_SIGN_IN_USER: str(
+		'SESSION_AUTO_SIGN_IN_USER',
+		true,
+		'Email of the user to automatically sign in on session restoration'
+	)
 };

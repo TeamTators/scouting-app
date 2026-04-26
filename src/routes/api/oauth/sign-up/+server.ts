@@ -6,7 +6,8 @@ import { error, redirect } from '@sveltejs/kit';
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 import { ServerCode } from 'ts-utils/status';
-import { domain, str } from '$lib/server/utils/env.js';
+import { domain } from '$lib/server/utils/env-utils.js';
+import env from '$lib/server/utils/env.js';
 import supabase from '$lib/server/services/supabase.js';
 import terminal from '$lib/server/utils/terminal.js';
 
@@ -20,8 +21,8 @@ export const GET = async (event) => {
 	const redirectUri = `${url}/api/oauth/sign-up`;
 	try {
 		const client = new OAuth2Client({
-			clientId: str('OAUTH2_CLIENT_ID', true),
-			clientSecret: str('OAUTH2_CLIENT_SECRET', true),
+			clientId: env.OAUTH2_CLIENT_ID,
+			clientSecret: env.OAUTH2_CLIENT_SECRET,
 			redirectUri
 		});
 		// log(client);

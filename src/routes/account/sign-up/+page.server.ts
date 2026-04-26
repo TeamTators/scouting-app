@@ -2,7 +2,7 @@
  * @fileoverview Server load/actions for `/account/sign-up`.
  */
 import { fail } from '@sveltejs/kit';
-import { domain } from '$lib/server/utils/env';
+import { domain } from '$lib/server/utils/env-utils';
 import { getAccountFactory } from '$lib/model/account';
 import serverSB from '$lib/server/services/supabase';
 

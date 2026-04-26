@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import z from 'zod';
-import os from 'os';
+// import os from 'os';
 
 export type SupabaseStartParams = Record<string, string>;
 

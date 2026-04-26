@@ -5,7 +5,7 @@ import { attemptAsync } from 'ts-utils';
 import { getAccountFactory } from '$lib/model/account';
 import supabase from '../services/supabase';
 // import { TempMap } from "$lib/utils/temp-map";
-import { domain } from '../utils/env';
+import { domain } from '../utils/env-utils';
 import z from 'zod';
 
 const getUser = (usernameOrEmail: string) => {

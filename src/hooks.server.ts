@@ -8,8 +8,7 @@ import createTree from '../scripts/create-route-tree';
 import { createServerClient } from '@supabase/ssr';
 import { type DB } from '$lib/types/supabase';
 import { getSessionFactory } from '$lib/server/model/session';
-import { sse } from '$lib/server/services/sse';
-import { sb } from '$lib/server/services/supabase';
+import env from '$lib/server/utils/env';
 
 (async () => {
 	await createTree();
@@ -17,7 +16,7 @@ import { sb } from '$lib/server/services/supabase';
 export const handle: Handle = async ({ event, resolve }) => {
 	// console.log('Request:', event.request.method, event.url.pathname);
 	event.locals.start = performance.now();
-	event.locals.supabase = createServerClient<DB>(sb.project_url, sb.public_key, {
+	event.locals.supabase = createServerClient<DB>(env.SB_PROJECT_URL, env.SB_PUBLIC_KEY, {
 		cookies: {
 			getAll: () => event.cookies.getAll(),
 			setAll: (cookies) => {
@@ -28,11 +27,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 			}
 		}
 	});
-
-	const connectionKey = event.request.headers.get('x-sse');
-	if (connectionKey) {
-		event.locals.sse = sse.getConnection(connectionKey);
-	}
 
 	// TODO: only save pages
 	const sessionFactory = getSessionFactory(event.locals.supabase, {

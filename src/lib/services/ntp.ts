@@ -10,7 +10,6 @@
  * console.log(TimeService.getTime());
  */
 import { attemptAsync } from 'ts-utils/check';
-import { sse } from './sse';
 import { z } from 'zod';
 import { EventEmitter } from 'ts-utils/event-emitter';
 
@@ -41,26 +40,26 @@ export namespace TimeService {
 			if (initialized) return;
 			initialized = true;
 
-			sse.on('time', (data) => {
-				const parsed = z
-					.object({
-						time: z.number(),
-						date: z.number()
-					})
-					.safeParse(data);
+			// sse.on('time', (data) => {
+			// 	const parsed = z
+			// 		.object({
+			// 			time: z.number(),
+			// 			date: z.number()
+			// 		})
+			// 		.safeParse(data);
 
-				if (!parsed.success) {
-					console.error('Invalid time data received:', parsed.error);
-					return;
-				}
+			// 	if (!parsed.success) {
+			// 		console.error('Invalid time data received:', parsed.error);
+			// 		return;
+			// 	}
 
-				const { time: ntpTime } = parsed.data;
+			// 	const { time: ntpTime } = parsed.data;
 
-				time = ntpTime + sse.latency / 2;
-				lastSynced = performance.now();
+			// 	time = ntpTime + sse.latency / 2;
+			// 	lastSynced = performance.now();
 
-				em.emit('time', time);
-			});
+			// 	em.emit('time', time);
+			// });
 		});
 	};
 
@@ -90,7 +89,7 @@ export namespace TimeService {
 				return time;
 			}
 			const { time: ntpTime } = parsed.data;
-			time = ntpTime + sse.latency / 2;
+			time = ntpTime;
 			lastSynced = performance.now();
 			em.emit('time', time);
 			return time;

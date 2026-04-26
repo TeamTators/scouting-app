@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="x-apple-disable-message-reformatting" />
+		<meta name="color-scheme" content="dark" />
+		<meta name="supported-color-schemes" content="dark" />
+		<title>You're invited</title>
+		<style>
+			body {
+				margin: 0;
+				padding: 0;
+				background-color: #070b16;
+				font-family: 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+				color: #e8efff;
+			}
+
+			table {
+				border-spacing: 0;
+				border-collapse: collapse;
+			}
+
+			.wrapper {
+				width: 100%;
+				background-color: #070b16;
+				padding: 28px 12px;
+			}
+
+			.card {
+				width: 100%;
+				max-width: 600px;
+				background-color: #10182b;
+				border: 1px solid #283453;
+				border-radius: 14px;
+				overflow: hidden;
+				box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
+			}
+
+			.content {
+				padding: 36px 28px;
+			}
+
+			.kicker {
+				display: inline-block;
+				font-size: 12px;
+				line-height: 1;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+				color: #9ed0ff;
+				background: #143154;
+				padding: 8px 10px;
+				border-radius: 999px;
+				font-weight: 700;
+				margin-bottom: 16px;
+			}
+
+			h1 {
+				margin: 0 0 12px;
+				font-size: 28px;
+				line-height: 1.2;
+				color: #f1f5ff;
+			}
+
+			p {
+				margin: 0 0 16px;
+				font-size: 16px;
+				line-height: 1.55;
+				color: #c4d0ea;
+			}
+
+			.button-wrap {
+				padding: 10px 0 14px;
+			}
+
+			.button {
+				display: inline-block;
+				background-color: #2b8fff;
+				color: #ffffff !important;
+				text-decoration: none;
+				font-weight: 700;
+				font-size: 16px;
+				line-height: 1;
+				padding: 14px 22px;
+				border-radius: 10px;
+			}
+
+			.small {
+				font-size: 13px;
+				color: #93a3c7;
+				margin-top: 8px;
+			}
+
+			.link {
+				color: #8fc5ff;
+				word-break: break-all;
+			}
+
+			.footer {
+				font-size: 12px;
+				color: #8798bd;
+				line-height: 1.6;
+				margin-top: 24px;
+				border-top: 1px solid #243150;
+				padding-top: 18px;
+			}
+
+			@media (max-width: 600px) {
+				.content {
+					padding: 28px 20px;
+				}
+
+				h1 {
+					font-size: 24px;
+				}
+
+				p {
+					font-size: 15px;
+				}
+
+				.button {
+					width: 100%;
+					box-sizing: border-box;
+					text-align: center;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<table role="presentation" width="100%" class="wrapper">
+			<tr>
+				<td align="center">
+					<table role="presentation" class="card">
+						<tr>
+							<td class="content">
+								<span class="kicker">Invitation</span>
+								<h1>Join {{ .SiteURL }}</h1>
+								<p>
+									You've been invited to create an account using this email address:
+									<strong>{{ .Email }}</strong>
+								</p>
+								<p>Click below to accept your invitation and finish setting up your account.</p>
+
+								<div class="button-wrap">
+									<a class="button" href="{{ .ConfirmationURL }}">Accept Invitation</a>
+								</div>
+
+								<p class="small">
+									If the button does not work, copy and paste this link into your browser:
+								</p>
+								<p class="small">
+									<a class="link" href="{{ .ConfirmationURL }}">{{ .ConfirmationURL }}</a>
+								</p>
+
+								<p class="footer">
+									If you did not expect this invitation, you can safely ignore this email. This
+									message was sent by {{ .SiteURL }}.
+								</p>
+							</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+		</table>
+	</body>
+</html>
