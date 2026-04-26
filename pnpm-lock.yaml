@@ -245,6 +245,9 @@ importers:
       proper-lockfile:
         specifier: ^4.1.2
         version: 4.1.2
+      puppeteer:
+        specifier: ^24.42.0
+        version: 24.42.0(typescript@5.9.3)
       qr-scanner:
         specifier: ^1.4.2
         version: 1.4.2
@@ -393,9 +396,6 @@ importers:
       prettier-plugin-svelte:
         specifier: ^3.4.0
         version: 3.5.1(prettier@3.8.1)(svelte@5.55.1)
-      puppeteer:
-        specifier: ^24.42.0
-        version: 24.42.0(typescript@5.9.3)
       sass-embedded:
         specifier: ^1.89.2
         version: 1.98.0

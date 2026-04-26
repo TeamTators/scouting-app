@@ -62,7 +62,6 @@ import { PDF } from '$lib/server/services/pdf';
 const pdf = await PDF.open('/absolute/path/report.pdf').unwrap();
 
 await pdf.save('/absolute/path/output/report-copy.pdf').unwrap();
-await pdf.saveAtomic('/absolute/path/output/report-atomic.pdf').unwrap();
 ```
 
 ### Convert and Serve
@@ -84,6 +83,6 @@ const response = pdf.toResponse({
 
 ### Notes
 
-- File paths for `open`, `save`, and `saveAtomic` must be absolute.
+- File paths for `open` and `save` must be absolute.
 - Names are normalized to include `.pdf` when missing.
 - Input buffers are checked for a PDF signature (`%PDF-`) before loading.

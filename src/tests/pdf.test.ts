@@ -143,7 +143,7 @@ describe('PDF service', () => {
 		expect(badBase64Res.isErr()).toBe(true);
 	});
 
-	test('save/open/saveAtomic and path validation work', async () => {
+	test('save/open and path validation work', async () => {
 		const pdf = new PDF('statement', Buffer.from('%PDF-1.4\nabc'));
 
 		const nestedPath = path.join(tempDir, 'nested', 'docs', 'statement.pdf');
@@ -153,11 +153,6 @@ describe('PDF service', () => {
 		const openRes = await PDF.open(nestedPath);
 		expect(openRes.isOk()).toBe(true);
 		expect(openRes.unwrap().name).toBe('statement.pdf');
-
-		const atomicPath = path.join(tempDir, 'atomic', 'statement.pdf');
-		const atomicRes = await pdf.saveAtomic(atomicPath);
-		expect(atomicRes.isOk()).toBe(true);
-		expect(await fs.readFile(atomicPath, 'utf8')).toContain('%PDF-1.4');
 
 		const nonPdfPath = path.join(tempDir, 'not-a-pdf.pdf');
 		await fs.writeFile(nonPdfPath, 'hello');
@@ -178,13 +173,15 @@ describe('PDF service', () => {
 		expect(inline.headers.get('content-type')).toBe('application/pdf');
 		expect(inline.headers.get('content-disposition')).toContain('inline; filename="invoice.pdf"');
 
-		const download = pdf.toResponse({
-			download: true,
-			cacheControl: 'no-store',
-			headers: {
-				'x-test': '1'
-			}
-		}).unwrap();
+		const download = pdf
+			.toResponse({
+				download: true,
+				cacheControl: 'no-store',
+				headers: {
+					'x-test': '1'
+				}
+			})
+			.unwrap();
 		expect(download.headers.get('content-disposition')).toContain(
 			'attachment; filename="invoice.pdf"'
 		);
