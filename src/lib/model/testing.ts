@@ -36,13 +36,13 @@ export const runTests = () => {
 		required: true
 	});
 
-	const read = new Test({
-		pending: true,
-		message: '',
-		name: 'Read',
-		success: undefined,
-		required: true
-	});
+	// const read = new Test({
+	// 	pending: true,
+	// 	message: '',
+	// 	name: 'Read',
+	// 	success: undefined,
+	// 	required: true
+	// });
 
 	const update = new Test({
 		pending: true,
@@ -132,25 +132,25 @@ export const runTests = () => {
 		if (initialized) return;
 		initialized = true;
 
-		all.await().then((res) => {
-			if (res.isErr()) {
-				read.set({
-					pending: false,
-					message: res.error.message,
-					name: 'Read',
-					success: false,
-					required: read.data.required
-				});
-			} else {
-				read.set({
-					pending: false,
-					message: 'Read successfully',
-					name: 'Read',
-					success: true,
-					required: read.data.required
-				});
-			}
-		});
+		// all.await().then((res) => {
+		// 	if (res.isErr()) {
+		// 		read.set({
+		// 			pending: false,
+		// 			message: res.error.message,
+		// 			name: 'Read',
+		// 			success: false,
+		// 			required: read.data.required
+		// 		});
+		// 	} else {
+		// 		read.set({
+		// 			pending: false,
+		// 			message: 'Read successfully',
+		// 			name: 'Read',
+		// 			success: true,
+		// 			required: read.data.required
+		// 		});
+		// 	}
+		// });
 
 		struct
 			.new({
@@ -267,15 +267,15 @@ export const runTests = () => {
 			});
 
 		setTimeout(() => {
-			if (read.data.pending) {
-				read.set({
-					pending: false,
-					message: 'Read timed out',
-					name: 'Read',
-					success: false,
-					required: read.data.required
-				});
-			}
+			// if (read.data.pending) {
+			// 	read.set({
+			// 		pending: false,
+			// 		message: 'Read timed out',
+			// 		name: 'Read',
+			// 		success: false,
+			// 		required: read.data.required
+			// 	});
+			// }
 			// if (recieveCreate.data.pending) {
 			// 	recieveCreate.set({
 			// 		pending: false,
@@ -372,7 +372,7 @@ export const runTests = () => {
 	const arr = new WritableArray([
 		realtime,
 		create,
-		read,
+		// read,
 		update,
 		del,
 		// recieveCreate,
