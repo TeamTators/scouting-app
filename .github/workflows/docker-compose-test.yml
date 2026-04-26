@@ -24,20 +24,8 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Initialize .docker.env and .env
+      - name: Initialize .env
         run: |
-          # .docker.env for Docker Compose (container values)
-          cp config.example.json config.docker.json
-          # Replace database values
-          jq '.database.host = "db"' config.docker.json > tmp.json && mv tmp.json config.docker.json
-          cat <<EOF > .docker.env
-          PORT=3000
-          OAUTH2_CLIENT_ID=1234567890
-          OAUTH2_CLIENT_SECRET=1234567890
-          CONFIG_PATH=./config.json
-          SB_SCHEMA=docker_test
-          EOF
-
           cp config.example.json config.json
           # .env for local app (host values)
           cat <<EOF > .env
@@ -79,7 +67,9 @@ jobs:
         run: pnpm build
 
       - name: Build Docker image
-        run: docker build -t my-app:latest .
+        run: |
+          cp .env .docker.env
+          docker build -t my-app:latest .
 
       - name: Debug Docker images
         run: |
@@ -105,7 +95,7 @@ jobs:
       - name: Wait for app startup
         run: |
           echo "Waiting for app to fully start..."
-          for i in $(seq 1 60); do
+          for i in $(seq 1 30); do
             if docker compose --project-name test logs app | grep -q "listening on"; then
               echo "App is ready! (found 'listening on' in logs)"
               exit 0
@@ -114,7 +104,7 @@ jobs:
               echo "App responding to requests!"
               exit 0
             fi
-            echo "Waiting for app startup... (attempt $i/60)"
+            echo "Waiting for app startup... (attempt $i/30)"
             sleep 2
           done
           echo "App failed to start within timeout!"
