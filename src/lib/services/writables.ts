@@ -243,9 +243,37 @@ export class WritableBase<T> implements Writable<T> {
 	 * source.set(42); // target will update to "Number is: 42"
 	 * ```
 	 */
-	pipeData<Target>(target: Writable<Target>, transform: (data: Target) => T | Promise<T>): void {
+	pipeData<Target>(target: Writable<Target>, transform: (data: Target) => T): void {
 		this.on(
 			'all-unsubscribe',
+			target.subscribe(async (data) => {
+				this.data = transform(data);
+			})
+		);
+	}
+
+	/**
+	 * Pipes updates from the target writable into this writable, transforming the data with an async function
+	 * Once piped, this writable will receive transformed updates from the target
+	 * Once this writable has no subscribers, the pipe subscription will be unsubscribed
+	 * @template Target - The type of data from the target writable
+	 * @param {Writable<Target>} target - The writable store to pipe from
+	 * @param {(data: Target) => Promise<T>} transform - Async function that transforms the target's data into the type of this writable
+	 * @returns {void}
+	 * @example
+	 * ```typescript
+	 * const source = new WritableBase(0);
+	 * const target = new WritableBase('');
+	 * target.pipeDataAsync(source, async num => `Number is: ${num}`);
+	 * source.set(42); // target will update to "Number is: 42"
+	 * ```
+	 */
+	pipeDataAsync<Target>(
+		target: Writable<Target>,
+		transform: (data: Target) => Promise<T>
+	) {
+		this.on(
+			'all-unsubscribe', 
 			target.subscribe(async (data) => {
 				this.data = await transform(data);
 			})
@@ -372,6 +400,22 @@ export class WritableBase<T> implements Writable<T> {
 		return derived;
 	}
 
+	/**
+	 * Creates a new WritableBase that derives its value from this WritableBase using an async transform function. The derived WritableBase will automatically update whenever this WritableBase changes, applying the transform function to produce the new value.
+	 * @template U - The type of the derived WritableBase
+	 * @param {(data: T) => Promise<U>} transform - Async function that transforms this WritableBase's data into the type of the derived WritableBase
+	 * @param {object} [config] - Optional configuration for the derived WritableBase (debounceMs, debug, and informType)
+	 * @param {number} [config.debounceMs] - Debounce delay for the derived WritableBase
+	 * @param {boolean} [config.debug] - Enable debug logging for the derived WritableBase
+	 * @param {'immediate' | 'debounced'} [config.informType] - Default inform type for the derived WritableBase
+	 * @returns {import('ts-utils').ResultPromise<WritableBase<U>>} ResultPromise that resolves with a new WritableBase instance that derives its value from this one
+	 * @example
+	 * ```typescript
+	 * const store = new WritableBase(1);
+	 * const derived = await store.derivedAsync(async num => `Number is: ${num}`);
+	 * store.set(2); // derived will update to "Number is: 2"
+	 * ```
+	 */
 	derivedAsync<U>(
 		transform: (data: T) => Promise<U>,
 		config?: { debounceMs?: number; debug?: boolean; informType?: 'immediate' | 'debounced' }
@@ -379,7 +423,7 @@ export class WritableBase<T> implements Writable<T> {
 		return attemptAsync(async () => {
 			const initial = await transform(this.data);
 			const derived = new WritableBase<U>(initial, config);
-			derived.pipeData(this, transform);
+			derived.pipeDataAsync(this, transform);
 			return derived;
 		});
 	}

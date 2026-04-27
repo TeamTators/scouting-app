@@ -2,7 +2,7 @@ import { select } from '../cli/utils';
 import { sleep } from 'ts-utils/sleep';
 import fs from 'fs/promises';
 import path from 'path';
-import { fromSnakeCase, toCamelCase, toSnakeCase } from 'ts-utils';
+import { fromSnakeCase, toSnakeCase } from 'ts-utils';
 
 export default async (...args: string[]) => {
 	if (!args.includes('--force')) {

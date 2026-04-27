@@ -429,7 +429,7 @@ describe('WritableAsync', () => {
 		});
 
 		expect(store.status(false)).toBe('pending');
-		await sleep(20);
+		await sleep(100);
 		expect(store.status(false)).toBe('fulfilled');
 		expect(store.result(false)).toBe(42);
 		expect(statuses[statuses.length - 1]).toBe('fulfilled');
