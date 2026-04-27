@@ -22,7 +22,7 @@ export type Database = {
 		Tables: {
 			account_notification: {
 				Row: {
-					account_id: string | null;
+					account_id: string;
 					archived: boolean;
 					created_at: string;
 					icon: string;
@@ -35,7 +35,7 @@ export type Database = {
 					title: string;
 				};
 				Insert: {
-					account_id?: string | null;
+					account_id: string;
 					archived?: boolean;
 					created_at?: string;
 					icon: string;
@@ -48,7 +48,7 @@ export type Database = {
 					title: string;
 				};
 				Update: {
-					account_id?: string | null;
+					account_id?: string;
 					archived?: boolean;
 					created_at?: string;
 					icon?: string;
@@ -196,7 +196,6 @@ export type Database = {
 			test: {
 				Row: {
 					age: number;
-					archive: boolean;
 					archived: boolean;
 					created_at: string;
 					id: string;
@@ -204,7 +203,6 @@ export type Database = {
 				};
 				Insert: {
 					age: number;
-					archive?: boolean;
 					archived?: boolean;
 					created_at?: string;
 					id?: string;
@@ -212,7 +210,6 @@ export type Database = {
 				};
 				Update: {
 					age?: number;
-					archive?: boolean;
 					archived?: boolean;
 					created_at?: string;
 					id?: string;

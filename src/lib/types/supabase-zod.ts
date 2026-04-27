@@ -7,7 +7,7 @@ import { z } from 'zod';
 export const schemas = {
 	account_notification: {
 		Row: z.object({
-			account_id: z.string().nullable(),
+			account_id: z.string(),
 			archived: z.boolean(),
 			created_at: z.string(),
 			icon: z.string(),
@@ -20,7 +20,7 @@ export const schemas = {
 			title: z.string()
 		}),
 		Insert: z.object({
-			account_id: z.string().nullable().optional(),
+			account_id: z.string(),
 			archived: z.boolean().optional(),
 			created_at: z.string().optional(),
 			icon: z.string(),
@@ -33,7 +33,7 @@ export const schemas = {
 			title: z.string()
 		}),
 		Update: z.object({
-			account_id: z.string().nullable().optional(),
+			account_id: z.string().optional(),
 			archived: z.boolean().optional(),
 			created_at: z.string().optional(),
 			icon: z.string().optional(),
@@ -163,7 +163,6 @@ export const schemas = {
 	test: {
 		Row: z.object({
 			age: z.number(),
-			archive: z.boolean(),
 			archived: z.boolean(),
 			created_at: z.string(),
 			id: z.string(),
@@ -171,7 +170,6 @@ export const schemas = {
 		}),
 		Insert: z.object({
 			age: z.number(),
-			archive: z.boolean().optional(),
 			archived: z.boolean().optional(),
 			created_at: z.string().optional(),
 			id: z.string().optional(),
@@ -179,7 +177,6 @@ export const schemas = {
 		}),
 		Update: z.object({
 			age: z.number().optional(),
-			archive: z.boolean().optional(),
 			archived: z.boolean().optional(),
 			created_at: z.string().optional(),
 			id: z.string().optional(),
