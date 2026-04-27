@@ -40,10 +40,10 @@
 		"sb:restart": "pnpm sb:stop && pnpm sb:start",
 		"sb:local-config": "pnpm script supabase/sb-local-config",
 		"sb:push": "pnpm sb:db db push",
+		"sb:pull": "pnpm sb:db db pull",
 		"sb:diff": "npx supabase db diff",
 		"sb:set-schema": "pnpm script supabase/sb-set-schema",
-		"sb:status": "npx supabase status",
-		"sb:migrate": "pnpm script supabase/sb-migrate"
+		"sb:status": "npx supabase status"
 	},
 	"packageManager": "pnpm@10.30.0",
 	"engines": {

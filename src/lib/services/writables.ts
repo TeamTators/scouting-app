@@ -243,11 +243,11 @@ export class WritableBase<T> implements Writable<T> {
 	 * source.set(42); // target will update to "Number is: 42"
 	 * ```
 	 */
-	pipeData<Target>(target: Writable<Target>, transform: (data: Target) => T): void {
+	pipeData<Target>(target: Writable<Target>, transform: (data: Target) => T | Promise<T>): void {
 		this.on(
 			'all-unsubscribe',
-			target.subscribe((data) => {
-				this.data = transform(data);
+			target.subscribe(async (data) => {
+				this.data = await transform(data);
 			})
 		);
 	}
@@ -370,6 +370,18 @@ export class WritableBase<T> implements Writable<T> {
 		const derived = new WritableBase<U>(transform(this.data), config);
 		derived.pipeData(this, transform);
 		return derived;
+	}
+
+	derivedAsync<U>(
+		transform: (data: T) => Promise<U>,
+		config?: { debounceMs?: number; debug?: boolean; informType?: 'immediate' | 'debounced' }
+	) {
+		return attemptAsync(async () => {
+			const initial = await transform(this.data);
+			const derived = new WritableBase<U>(initial, config);
+			derived.pipeData(this, transform);
+			return derived;
+		});
 	}
 
 	/**
@@ -532,7 +544,7 @@ export class WritableArray<T> extends WritableBase<T[]> {
 	 * Internal filter function (passes all by default)
 	 *
 	 * @private
-	 * @type {(item: T) => boolean}
+	 * @type {(item: T, index: number, array: T[]) => boolean}
 	 */
 	_filter = (_item: T, _index: number, _array: T[]): boolean => true;
 

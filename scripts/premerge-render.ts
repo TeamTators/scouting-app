@@ -2,6 +2,7 @@ import { select } from '../cli/utils';
 import { sleep } from 'ts-utils/sleep';
 import fs from 'fs/promises';
 import path from 'path';
+import { fromSnakeCase, toCamelCase, toSnakeCase } from 'ts-utils';
 
 export default async (...args: string[]) => {
 	if (!args.includes('--force')) {
@@ -30,6 +31,7 @@ export default async (...args: string[]) => {
 		);
 		await sleep(3000);
 	}
+
 	const count = [5, 4, 3, 2, 1];
 	for (const i of count) {
 		console.clear();
@@ -88,5 +90,5 @@ export default async (...args: string[]) => {
 
 	const { default: setSchema } = await import('./supabase/sb-set-schema');
 
-	await setSchema(repoName);
+	await setSchema(toSnakeCase(fromSnakeCase(repoName, '-'), '_'));
 };
