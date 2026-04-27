@@ -19,7 +19,7 @@ jobs:
   tsc:
     env:
       PUPPETEER_SKIP_DOWNLOAD: true
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: self-hosted
     steps:
       - name: Retrieve git dependencies
         uses: actions/checkout@v3

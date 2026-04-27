@@ -6,7 +6,7 @@ on:
 
 jobs:
   add-to-projects:
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: self-hosted
 
     steps:
       - name: Add issue to all linked projects
