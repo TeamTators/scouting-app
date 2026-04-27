@@ -268,12 +268,9 @@ export class WritableBase<T> implements Writable<T> {
 	 * source.set(42); // target will update to "Number is: 42"
 	 * ```
 	 */
-	pipeDataAsync<Target>(
-		target: Writable<Target>,
-		transform: (data: Target) => Promise<T>
-	) {
+	pipeDataAsync<Target>(target: Writable<Target>, transform: (data: Target) => Promise<T>) {
 		this.on(
-			'all-unsubscribe', 
+			'all-unsubscribe',
 			target.subscribe(async (data) => {
 				this.data = await transform(data);
 			})
