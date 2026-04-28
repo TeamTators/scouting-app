@@ -18,7 +18,7 @@ export type Database = {
 			[_ in never]: never;
 		};
 	};
-	sveltekit_template: {
+	tators_app_kit: {
 		Tables: {
 			account_notification: {
 				Row: {
@@ -352,7 +352,7 @@ export const Constants = {
 	public: {
 		Enums: {}
 	},
-	sveltekit_template: {
+	tators_app_kit: {
 		Enums: {}
 	}
 } as const;

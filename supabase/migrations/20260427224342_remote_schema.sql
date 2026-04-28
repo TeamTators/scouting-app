@@ -1,6 +1,6 @@
-alter table "sveltekit_template"."account_notification" alter column "read" set default false;
+alter table "tators_app_kit"."account_notification" alter column "read" set default false;
 
-alter table "sveltekit_template"."account_notification" alter column "read" set data type boolean using "read"::boolean;
+alter table "tators_app_kit"."account_notification" alter column "read" set data type boolean using "read"::boolean;
 
 
   create policy "Enable insert for authenticated users only"
