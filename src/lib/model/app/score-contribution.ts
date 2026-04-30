@@ -44,7 +44,14 @@ export class ScoreContribution extends WritableBase<ScoreContributionData> {
 	 * app.contribution.render();
 	 */
 	render() {
-		const newData: ScoreContributionData = Object.fromEntries(Object.entries(this.app.config.yearInfo.timer).map(([section, actions]) => [section, Object.fromEntries(Object.keys(actions).map(action => [action, 0]))]));
+		const newData: ScoreContributionData = Object
+			.fromEntries(
+				Object.keys(this.app.config.yearInfo.timer)
+				.map(section => [section, Object.keys(this.app.config.yearInfo.actions).reduce((acc, action) => {
+					acc[action] = 0;
+					return acc;
+				}, {} as Record<string, number>)]),
+			);
 
 		for (const tick of this.app.state.ticks.data) {
 			const section = tick.section;
