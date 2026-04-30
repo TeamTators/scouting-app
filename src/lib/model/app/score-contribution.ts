@@ -32,8 +32,7 @@ export class ScoreContribution extends WritableBase<ScoreContributionData> {
 	 * @param {App} app - App instance providing tick/action data.
 	 */
 	constructor(public readonly app: App) {
-		super({
-		});
+		super({});
 	}
 
 	/**
@@ -44,14 +43,18 @@ export class ScoreContribution extends WritableBase<ScoreContributionData> {
 	 * app.contribution.render();
 	 */
 	render() {
-		const newData: ScoreContributionData = Object
-			.fromEntries(
-				Object.keys(this.app.config.yearInfo.timer)
-				.map(section => [section, Object.keys(this.app.config.yearInfo.actions).reduce((acc, action) => {
-					acc[action] = 0;
-					return acc;
-				}, {} as Record<string, number>)]),
-			);
+		const newData: ScoreContributionData = Object.fromEntries(
+			Object.keys(this.app.config.yearInfo.timer).map((section) => [
+				section,
+				Object.keys(this.app.config.yearInfo.actions).reduce(
+					(acc, action) => {
+						acc[action] = 0;
+						return acc;
+					},
+					{} as Record<string, number>
+				)
+			])
+		);
 
 		for (const tick of this.app.state.ticks.data) {
 			const section = tick.section;
@@ -61,7 +64,9 @@ export class ScoreContribution extends WritableBase<ScoreContributionData> {
 				if (newData[section] && newData[section][action] !== undefined) {
 					newData[section][action]++;
 				} else {
-					console.warn(`Unexpected action "${action}" in section "${section}" at tick ${tick.index}`);
+					console.warn(
+						`Unexpected action "${action}" in section "${section}" at tick ${tick.index}`
+					);
 				}
 			}
 		}

@@ -12,6 +12,7 @@ import { ScoreCorrection } from '$lib/model/app/score-correction';
 import { ShortPath } from '$lib/model/app/short-path';
 import { build as buildForYear } from '$lib/model/app/apps/all';
 import { TICKS_PER_SECOND, TICK_DURATION } from '$lib/model/app/app';
+import YearInfo2025 from 'tatorscout/years/2025.js';
 
 describe('app model feature coverage', () => {
 	test('core constants stay consistent', () => {
@@ -194,11 +195,16 @@ describe('app model feature coverage', () => {
 						{ section: null, action: 'cl3' }
 					]
 				}
+			},
+			config: {
+				yearInfo: YearInfo2025
 			}
 		} as never;
 
 		const contribution = new ScoreContribution(app);
 		contribution.render();
+
+		console.log(contribution.data);
 
 		expect(contribution.data.auto.cl1).toBe(2);
 		expect(contribution.data.teleop.cl2).toBe(1);
