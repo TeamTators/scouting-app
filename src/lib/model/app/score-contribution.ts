@@ -15,11 +15,7 @@ import type { App } from './app';
  *   endgame: { dpc: 1 }
  * };
  */
-export type ScoreContributionData = {
-	auto: Record<string, number>;
-	teleop: Record<string, number>;
-	endgame: Record<string, number>;
-};
+export type ScoreContributionData = Record<string, Record<string, number>>;
 
 /**
  * Writable score contribution model derived from current app ticks.
@@ -37,9 +33,6 @@ export class ScoreContribution extends WritableBase<ScoreContributionData> {
 	 */
 	constructor(public readonly app: App) {
 		super({
-			auto: {},
-			teleop: {},
-			endgame: {}
 		});
 	}
 
@@ -51,26 +44,17 @@ export class ScoreContribution extends WritableBase<ScoreContributionData> {
 	 * app.contribution.render();
 	 */
 	render() {
-		const newData: ScoreContributionData = {
-			auto: {},
-			teleop: {},
-			endgame: {}
-		};
+		const newData: ScoreContributionData = Object.fromEntries(Object.entries(this.app.config.yearInfo.timer).map(([section, actions]) => [section, Object.fromEntries(Object.keys(actions).map(action => [action, 0]))]));
 
 		for (const tick of this.app.state.ticks.data) {
 			const section = tick.section;
 			if (tick.action && section) {
 				const action = tick.action;
-				switch (section) {
-					case 'auto':
-						newData.auto[action] = (newData.auto[action] || 0) + 1;
-						break;
-					case 'teleop':
-						newData.teleop[action] = (newData.teleop[action] || 0) + 1;
-						break;
-					case 'endgame':
-						newData.endgame[action] = (newData.endgame[action] || 0) + 1;
-						break;
+				const section = tick.section;
+				if (newData[section] && newData[section][action] !== undefined) {
+					newData[section][action]++;
+				} else {
+					console.warn(`Unexpected action "${action}" in section "${section}" at tick ${tick.index}`);
 				}
 			}
 		}

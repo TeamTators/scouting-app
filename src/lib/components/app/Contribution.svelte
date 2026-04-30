@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { App } from '$lib/model/app/app';
+	import { capitalize, fromCamelCase } from 'ts-utils';
 
 	interface Props {
 		app: App;
@@ -18,18 +19,18 @@
 	<thead>
 		<tr>
 			<th></th>
-			<th>Auto</th>
-			<th>Teleop</th>
-			<th>Endgame</th>
+			{#each Object.keys($contrib) as section}
+				<th>{capitalize(fromCamelCase(section))}</th>
+			{/each}
 		</tr>
 	</thead>
 	<tbody>
 		{#each Object.entries(app.config.yearInfo.actions) as [action, description]}
 			<tr>
 				<td>{description}</td>
-				{@render cont($contrib.auto[action] || 0)}
-				{@render cont($contrib.teleop[action] || 0)}
-				{@render cont($contrib.endgame[action] || 0)}
+				{#each Object.keys($contrib) as section}
+					{@render cont($contrib[section][action] || 0)}
+				{/each}
 			</tr>
 		{/each}
 	</tbody>
