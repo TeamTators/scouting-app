@@ -247,7 +247,7 @@ export class SupaStruct<
 	 * @param config - Table and client configuration.
 	 */
 	constructor(public readonly config: SupaConfig<Schema, RowName>) {
-		this.channel = this.supabase.channel(`struct.${this.table}`);
+		this.channel = this.supabase.channel(`struct.${this.schema}.${this.table}`);
 		// SupaStruct.structs.set(this.config.name, this as any);
 		this.log(`Initialized struct for schema ${this.schema} table ${this.table}`);
 		console.log(schemas, config.schema);
