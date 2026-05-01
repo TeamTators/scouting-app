@@ -6,7 +6,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { browser } from '$app/environment';
 import {
-	SupaLinkingStruct,
 	SupaStruct,
 	type Client,
 	type PartialRow,
@@ -14,7 +13,8 @@ import {
 	type ReadType,
 	type SearchQuery,
 	type ReadReturnType,
-	SupaStructArray
+	SupaStructArray,
+	SupaLinkingStruct
 } from '$lib/services/supabase/supastruct';
 import { SupaStructData } from '$lib/services/supabase/supastruct-data';
 import { WritableArray, WritableBase } from '$lib/services/writables';
@@ -27,7 +27,7 @@ import { attemptAsync, ResultPromise } from 'ts-utils';
  * Extends WritableBase for reactive state management with profile and user properties.
  */
 export class Account extends WritableBase<{
-	profile: PartialRow<'profile'>;
+	profile: PartialRow<'core', 'profile'>;
 	user?: Session['user'];
 }> {
 	/**
@@ -37,7 +37,7 @@ export class Account extends WritableBase<{
 	 * @param {Session['user']} [user] - Supabase user object if authenticated.
 	 */
 	constructor(
-		public readonly profile: SupaStructData<'profile'>,
+		public readonly profile: SupaStructData<'core', 'profile'>,
 		public readonly factory: AccountFactory,
 		public readonly user?: Session['user']
 	) {
@@ -156,11 +156,11 @@ class AccountFactory {
 	 */
 	constructor(
 		public readonly config: {
-			profile: SupaStruct<'profile'>;
-			admin: SupaStruct<'admin'>;
-			role: SupaStruct<'role'>;
-			roleAccount: SupaLinkingStruct<'role_account', 'profile', 'role'>;
-			notifications: SupaStruct<'account_notification'>;
+			profile: SupaStruct<'core', 'profile'>;
+			admin: SupaStruct<'core', 'admin'>;
+			role: SupaStruct<'core', 'role'>;
+			roleAccount: SupaLinkingStruct<'core', 'role_account', 'core', 'profile', 'core', 'role'>;
+			notifications: SupaStruct<'core', 'account_notification'>;
 			debug?: boolean;
 		}
 	) {
@@ -237,7 +237,7 @@ class AccountFactory {
 	 * @returns {Account} Account instance (cached if browser and previously created).
 	 * @private
 	 */
-	Generator(profile: SupaStructData<'profile'>, user?: Session['user']) {
+	Generator(profile: SupaStructData<'core', 'profile'>, user?: Session['user']) {
 		const has = this.cache.get(String(profile.data.id));
 		if (has) return has;
 		const account = new Account(profile, this, user);
@@ -342,7 +342,9 @@ class AccountFactory {
 	 * @returns {Account[]} Array of Account instances.
 	 */
 	getAccounts(...ids: string[]) {
-		const accounts = this.profile.fromIds(ids);
+		const accounts = this.profile.fromIds(ids, {
+			type: 'all'
+		});
 		return accounts.map((profile) => this.Generator(profile));
 	}
 
@@ -377,12 +379,18 @@ class AccountFactory {
 	 *   { type: 'all' }
 	 * );
 	 */
-	search(query: SearchQuery<'profile'>, config: ReadConfig<'all'>): SupaStructArray<'profile'>;
 	search(
-		query: SearchQuery<'profile'>,
+		query: SearchQuery<'core', 'profile'>,
+		config: ReadConfig<'all'>
+	): SupaStructArray<'core', 'profile'>;
+	search(
+		query: SearchQuery<'core', 'profile'>,
 		config: ReadConfig<'single'>
-	): ResultPromise<SupaStructData<'profile'> | null>;
-	search(query: SearchQuery<'profile'>, config: ReadConfig<ReadType>): ReadReturnType<'profile'> {
+	): ResultPromise<SupaStructData<'core', 'profile'> | null>;
+	search(
+		query: SearchQuery<'core', 'profile'>,
+		config: ReadConfig<ReadType>
+	): ReadReturnType<'core', 'profile'> {
 		return this.profile
 			.search(query, config as any)
 			.map((profile) => this.Generator(profile)) as any;
@@ -412,32 +420,36 @@ export const getAccountFactory = (
 	// const has = factories.get(client);
 	// if (has) return has;
 	const profile = SupaStruct.get({
-		name: 'profile',
+		schema: 'core',
+		table: 'profile',
 		client,
 		...config
 	});
 	const role = SupaStruct.get({
-		name: 'role',
+		schema: 'core',
+		table: 'role',
 		client,
 		...config
 	});
 	const admin = SupaStruct.get({
-		name: 'admin',
+		schema: 'core',
+		table: 'admin',
 		client,
 		...config
 	});
-	const roleAccount = SupaLinkingStruct.get('role_account', profile, role, config);
 	const notifications = SupaStruct.get({
-		name: 'account_notification',
+		schema: 'core',
+		table: 'account_notification',
 		client,
 		...config
 	});
+	const roleAccount = SupaLinkingStruct.get('core', 'role_account', profile, role);
 	const a = new AccountFactory({
 		profile,
 		admin,
 		role,
-		roleAccount,
 		notifications,
+		roleAccount,
 		...config
 	});
 	// factories.set(client, a);

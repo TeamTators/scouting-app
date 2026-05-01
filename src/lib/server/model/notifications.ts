@@ -34,21 +34,27 @@ export const globalNotification = (notif: {
 	link?: string;
 }) => {
 	return attemptAsync(async () => {
-		const { data: accounts, error: accountsError } = await supabase.from('profile').select('id');
+		const { data: accounts, error: accountsError } = await supabase
+			.schema('core')
+			.from('profile')
+			.select('id');
 		if (accountsError) throw accountsError;
 
 		if (!accounts) throw new Error('No accounts found');
-		const { error } = await supabase.from('account_notification').insert(
-			accounts.map((a) => ({
-				account_id: a.id,
-				icon: notif.icon.name,
-				icon_type: notif.icon.type,
-				message: notif.message,
-				link: notif.link,
-				title: notif.title,
-				severity: notif.severity
-			}))
-		);
+		const { error } = await supabase
+			.schema('core')
+			.from('account_notification')
+			.insert(
+				accounts.map((a) => ({
+					account_id: a.id,
+					icon: notif.icon.name,
+					icon_type: notif.icon.type,
+					message: notif.message,
+					link: notif.link,
+					title: notif.title,
+					severity: notif.severity
+				}))
+			);
 
 		if (error) throw error;
 	});

@@ -38,7 +38,8 @@ export class Test extends WritableBase<{
  */
 export const runTests = () => {
 	const struct = SupaStruct.get({
-		name: 'test',
+		schema: 'test',
+		table: 'test',
 		client: supabase,
 		debug: true
 	});

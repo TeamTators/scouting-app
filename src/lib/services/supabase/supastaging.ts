@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { attempt, attemptAsync } from 'ts-utils';
-import { SupaStruct, type Names, type PartialRow, type Row } from './supastruct';
+import {
+	SupaStruct,
+	type PartialRow,
+	type Row,
+	type RowSchemaName,
+	type RowTableName
+} from './supastruct';
 import { SupaStructData } from './supastruct-data';
 import { WritableBase } from '../writables';
 import deepEqual from 'fast-deep-equal';
@@ -11,15 +17,19 @@ import deepEqual from 'fast-deep-equal';
  * @template Name - Table name.
  * @template K - Field name that is in conflict.
  */
-type Conflict<Name extends Names, K extends keyof Row<Name>> = {
+type Conflict<
+	Schema extends RowSchemaName,
+	Name extends RowTableName<Schema>,
+	K extends keyof Row<Schema, Name>
+> = {
 	/** Conflicting field name. */
 	name: K;
 	/** Value from the baseline snapshot used for staging. */
-	base: PartialRow<Name>[K];
+	base: PartialRow<Schema, Name>[K];
 	/** Value currently in the local staging buffer. */
-	local: PartialRow<Name>[K];
+	local: PartialRow<Schema, Name>[K];
 	/** Value currently in remote struct data. */
-	remote: PartialRow<Name>[K];
+	remote: PartialRow<Schema, Name>[K];
 };
 
 /**
@@ -30,9 +40,13 @@ type Conflict<Name extends Names, K extends keyof Row<Name>> = {
  * @param conflict - Conflict payload containing base/local/remote values.
  * @returns Resolved value for the conflicted key.
  */
-type ConflictHandlerFn<Name extends Names, K extends keyof Row<Name>> = (
-	conflict: Conflict<Name, K>
-) => Promise<PartialRow<Name>[K]> | PartialRow<Name>[K];
+type ConflictHandlerFn<
+	Schema extends RowSchemaName,
+	Name extends RowTableName<Schema>,
+	K extends keyof Row<Schema, Name>
+> = (
+	conflict: Conflict<Schema, Name, K>
+) => Promise<PartialRow<Schema, Name>[K]> | PartialRow<Schema, Name>[K];
 
 /**
  * Pull/save conflict strategy.
@@ -46,10 +60,15 @@ type ConflictHandlerFn<Name extends Names, K extends keyof Row<Name>> = (
  * - `manual`: throw and require external resolution.
  * - `ConflictHandlerFn`: resolve each conflict programmatically.
  *
+ * @template Schema - Schema name.
  * @template Name - Table name.
  * @template K - Candidate field keys.
  */
-type SaveStrategy<Name extends Names, K extends keyof Row<Name>> = {
+type SaveStrategy<
+	Schema extends RowSchemaName,
+	Name extends RowTableName<Schema>,
+	K extends keyof Row<Schema, Name>
+> = {
 	strategy:
 		| 'ifClean'
 		| 'force'
@@ -57,7 +76,7 @@ type SaveStrategy<Name extends Names, K extends keyof Row<Name>> = {
 		| 'preferRemote'
 		| 'mergeClean'
 		| 'manual'
-		| ConflictHandlerFn<Name, K>;
+		| ConflictHandlerFn<Schema, Name, K>;
 };
 
 /** Merge summary between base/local/remote snapshots. */
@@ -66,24 +85,30 @@ type MergeStatus = 'clean' | 'localDiverge' | 'remoteDiverge' | 'diverged' | 'co
 /**
  * Full merge analysis payload.
  *
+ * @template Schema - Schema name.
  * @template Name - Table name.
  * @template K - Key type for compared fields.
  */
-interface MergeState<Name extends Names, K extends keyof Row<Name>> {
+interface MergeState<
+	Schema extends RowSchemaName,
+	Name extends RowTableName<Schema>,
+	K extends keyof Row<Schema, Name>
+> {
 	/** Aggregate merge status across all fields. */
 	status: MergeStatus;
 	/** Conflicts discovered while comparing base/local/remote snapshots. */
-	conflicts: Conflict<Name, K>[];
+	conflicts: Conflict<Schema, Name, K>[];
 }
 
 /**
  * Staging configuration for immutable/static fields.
  *
+ * @template Schema - Schema name.
  * @template Name - Table name.
  */
-type StructDataStageConfig<Name extends Names> = {
+type StructDataStageConfig<Schema extends RowSchemaName, Name extends RowTableName<Schema>> = {
 	/** Field list that cannot be mutated in the staging proxy. */
-	static?: (keyof Row<Name>)[];
+	static?: (keyof Row<Schema, Name>)[];
 };
 
 /**
@@ -95,6 +120,7 @@ type StructDataStageConfig<Name extends Names> = {
  * - pull remote changes with configurable conflict behavior,
  * - save staged changes back to the row.
  *
+ * @template Schema - Schema name for the staged row.
  * @template Name - Table name for the staged row.
  *
  * @example
@@ -102,12 +128,15 @@ type StructDataStageConfig<Name extends Names> = {
  * stage.data.email = 'next@company.com';
  * await stage.save({ strategy: 'mergeClean' });
  */
-export class SupaStaging<Name extends Names> extends WritableBase<PartialRow<Name>> {
+export class SupaStaging<
+	Schema extends RowSchemaName,
+	Name extends RowTableName<Schema>
+> extends WritableBase<PartialRow<Schema, Name>> {
 	/** Parent struct used for type context and persistence. */
-	private readonly struct: SupaStruct<Name>;
+	private readonly struct: SupaStruct<Schema, Name>;
 
 	/** Baseline snapshot used to compute divergence and conflicts. */
-	public base: PartialRow<Name>;
+	public base: PartialRow<Schema, Name>;
 
 	/**
 	 * Reactive flag describing whether remote data equals baseline.
@@ -142,8 +171,8 @@ export class SupaStaging<Name extends Names> extends WritableBase<PartialRow<Nam
 	 * @param config - Optional staging configuration.
 	 */
 	constructor(
-		public readonly structData: SupaStructData<Name>,
-		public readonly config: StructDataStageConfig<Name> = {}
+		public readonly structData: SupaStructData<Schema, Name>,
+		public readonly config: StructDataStageConfig<Schema, Name> = {}
 	) {
 		super({ ...structData.data });
 		this.struct = structData.struct;
@@ -157,18 +186,18 @@ export class SupaStaging<Name extends Names> extends WritableBase<PartialRow<Nam
 	 * @param data - Row-shaped data to proxy.
 	 * @returns Proxy that informs subscribers on set and blocks deletion.
 	 */
-	private makeStaging(data: PartialRow<Name>) {
+	private makeStaging(data: PartialRow<Schema, Name>) {
 		return new Proxy(
 			{ ...data },
 			{
 				set: (target, prop, value) => {
-					if (this.config.static?.includes(prop as keyof Row<Name>)) {
+					if (this.config.static?.includes(prop as keyof Row<Schema, Name>)) {
 						console.warn(
 							`Attempted to modify static field ${String(prop)}. This field is configured as static and cannot be modified.`
 						);
 						return true;
 					}
-					target[prop as keyof Row<Name>] = value;
+					target[prop as keyof Row<Schema, Name>] = value;
 					this.inform();
 					return true;
 				},
@@ -196,24 +225,24 @@ export class SupaStaging<Name extends Names> extends WritableBase<PartialRow<Nam
 	 *   strategy: async (conflict) => conflict.local ?? conflict.remote
 	 * });
 	 */
-	async pull(strategy: SaveStrategy<Name, keyof PartialRow<Name>>) {
+	async pull(strategy: SaveStrategy<Schema, Name, keyof PartialRow<Schema, Name>>) {
 		const remote = this.structData.data;
 		const local = this.data;
 		const base = this.base;
 
-		const mergeState: MergeState<Name, keyof PartialRow<Name>> = {
+		const mergeState: MergeState<Schema, Name, keyof PartialRow<Schema, Name>> = {
 			status: 'clean',
 			conflicts: []
 		};
 
 		for (const key in base) {
-			const baseValue = base[key as keyof PartialRow<Name>];
-			const localValue = local[key as keyof PartialRow<Name>];
-			const remoteValue = remote[key as keyof PartialRow<Name>];
+			const baseValue = base[key as keyof PartialRow<Schema, Name>];
+			const localValue = local[key as keyof PartialRow<Schema, Name>];
+			const remoteValue = remote[key as keyof PartialRow<Schema, Name>];
 
 			if (deepEqual(localValue, baseValue) && !deepEqual(remoteValue, baseValue)) {
 				// Remote changed, local did not
-				this.data[key as keyof PartialRow<Name>] = remoteValue;
+				this.data[key as keyof PartialRow<Schema, Name>] = remoteValue;
 				mergeState.status = mergeState.status === 'localDiverge' ? 'diverged' : 'remoteDiverge';
 			} else if (!deepEqual(localValue, baseValue) && deepEqual(remoteValue, baseValue)) {
 				// Local changed, remote did not
@@ -226,7 +255,7 @@ export class SupaStaging<Name extends Names> extends WritableBase<PartialRow<Nam
 				// Both changed differently
 				mergeState.status = 'conflict';
 				mergeState.conflicts.push({
-					name: key as keyof PartialRow<Name>,
+					name: key as keyof PartialRow<Schema, Name>,
 					base: baseValue,
 					local: localValue,
 					remote: remoteValue
@@ -242,7 +271,7 @@ export class SupaStaging<Name extends Names> extends WritableBase<PartialRow<Nam
 			} else if (typeof strategy.strategy === 'function') {
 				for (const conflict of mergeState.conflicts) {
 					const resolvedValue = await strategy.strategy(conflict);
-					this.data[conflict.name as keyof PartialRow<Name>] = resolvedValue;
+					this.data[conflict.name as keyof PartialRow<Schema, Name>] = resolvedValue;
 				}
 			} else {
 				switch (strategy.strategy) {
@@ -261,19 +290,20 @@ export class SupaStaging<Name extends Names> extends WritableBase<PartialRow<Nam
 						// Apply remote changes, but keep local changes that do not conflict
 						for (const key in remote) {
 							if (!mergeState.conflicts.some((c) => c.name === key)) {
-								this.data[key as keyof PartialRow<Name>] = remote[key as keyof PartialRow<Name>];
+								this.data[key as keyof PartialRow<Schema, Name>] =
+									remote[key as keyof PartialRow<Schema, Name>];
 							}
 						}
 						break;
 					case 'mergeClean':
 						// Apply remote changes only for fields that have not been modified locally
 						for (const key in remote) {
-							const baseValue = base[key as keyof PartialRow<Name>];
-							const localValue = local[key as keyof PartialRow<Name>];
-							const remoteValue = remote[key as keyof PartialRow<Name>];
+							const baseValue = base[key as keyof PartialRow<Schema, Name>];
+							const localValue = local[key as keyof PartialRow<Schema, Name>];
+							const remoteValue = remote[key as keyof PartialRow<Schema, Name>];
 
 							if (deepEqual(localValue, baseValue) && !deepEqual(remoteValue, baseValue)) {
-								this.data[key as keyof PartialRow<Name>] = remoteValue;
+								this.data[key as keyof PartialRow<Schema, Name>] = remoteValue;
 							}
 						}
 						break;
@@ -298,7 +328,7 @@ export class SupaStaging<Name extends Names> extends WritableBase<PartialRow<Nam
 	 * @example
 	 * stage.rollback('email', 'name');
 	 */
-	rollback(...properties: (keyof PartialRow<Name>)[]) {
+	rollback(...properties: (keyof PartialRow<Schema, Name>)[]) {
 		return attempt(() => {
 			if (properties.length > 0) {
 				let hasChanges = false;
@@ -336,7 +366,7 @@ export class SupaStaging<Name extends Names> extends WritableBase<PartialRow<Nam
 	 * @example
 	 * const result = await stage.save({ strategy: 'mergeClean' });
 	 */
-	public async save(strategy: SaveStrategy<Name, keyof PartialRow<Name>>) {
+	public async save(strategy: SaveStrategy<Schema, Name, keyof PartialRow<Schema, Name>>) {
 		return attemptAsync(async () => {
 			this.pull(strategy);
 			await this.update((data) => {
@@ -357,15 +387,15 @@ export class SupaStaging<Name extends Names> extends WritableBase<PartialRow<Nam
 			const local = this.data;
 			const base = this.base;
 
-			const mergeState: MergeState<Name, keyof Row<Name>> = {
+			const mergeState: MergeState<Schema, Name, keyof PartialRow<Schema, Name>> = {
 				status: 'clean',
 				conflicts: []
 			};
 
 			for (const key in base) {
-				const baseValue = base[key as keyof Row<Name>];
-				const localValue = local[key as keyof Row<Name>];
-				const remoteValue = remote[key as keyof Row<Name>];
+				const baseValue = base[key as keyof PartialRow<Schema, Name>];
+				const localValue = local[key as keyof PartialRow<Schema, Name>];
+				const remoteValue = remote[key as keyof PartialRow<Schema, Name>];
 
 				if (deepEqual(localValue, baseValue) && !deepEqual(remoteValue, baseValue)) {
 					// Remote changed, local did not
@@ -381,7 +411,7 @@ export class SupaStaging<Name extends Names> extends WritableBase<PartialRow<Nam
 					// Both changed differently
 					mergeState.status = 'conflict';
 					mergeState.conflicts.push({
-						name: key as keyof PartialRow<Name>,
+						name: key as keyof PartialRow<Schema, Name>,
 						base: baseValue,
 						local: localValue,
 						remote: remoteValue

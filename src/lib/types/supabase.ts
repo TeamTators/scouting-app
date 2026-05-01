@@ -1,24 +1,7 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
-	public: {
-		Tables: {
-			[_ in never]: never;
-		};
-		Views: {
-			[_ in never]: never;
-		};
-		Functions: {
-			[_ in never]: never;
-		};
-		Enums: {
-			[_ in never]: never;
-		};
-		CompositeTypes: {
-			[_ in never]: never;
-		};
-	};
-	sveltekit_template: {
+	core: {
 		Tables: {
 			account_notification: {
 				Row: {
@@ -193,6 +176,56 @@ export type Database = {
 				};
 				Relationships: [];
 			};
+		};
+		Views: {
+			[_ in never]: never;
+		};
+		Functions: {
+			[_ in never]: never;
+		};
+		Enums: {
+			[_ in never]: never;
+		};
+		CompositeTypes: {
+			[_ in never]: never;
+		};
+	};
+	public: {
+		Tables: {
+			_template: {
+				Row: {
+					archived: boolean;
+					created_at: string;
+					id: string;
+				};
+				Insert: {
+					archived?: boolean;
+					created_at?: string;
+					id?: string;
+				};
+				Update: {
+					archived?: boolean;
+					created_at?: string;
+					id?: string;
+				};
+				Relationships: [];
+			};
+		};
+		Views: {
+			[_ in never]: never;
+		};
+		Functions: {
+			[_ in never]: never;
+		};
+		Enums: {
+			[_ in never]: never;
+		};
+		CompositeTypes: {
+			[_ in never]: never;
+		};
+	};
+	test: {
+		Tables: {
 			test: {
 				Row: {
 					age: number;
@@ -349,12 +382,241 @@ export type CompositeTypes<
 		: never;
 
 export const Constants = {
+	core: {
+		Enums: {}
+	},
 	public: {
 		Enums: {}
 	},
-	sveltekit_template: {
+	test: {
 		Enums: {}
 	}
 } as const;
 
-export type DB = Omit<Database, 'public'>;
+export type SchemaName = keyof Database;
+
+export type DatabasePivoted = {
+	Row: {
+		core: {
+			account_notification: {
+				account_id: string;
+				archived: boolean;
+				created_at: string;
+				icon: string;
+				icon_type: string;
+				id: string;
+				link: string | null;
+				message: string;
+				read: boolean;
+				severity: string;
+				title: string;
+			};
+			admin: {
+				archived: boolean;
+				created_at: string;
+				id: string;
+			};
+			profile: {
+				archived: boolean;
+				created_at: string;
+				email: string;
+				first_name: string;
+				id: string;
+				last_name: string;
+				username: string;
+			};
+			role: {
+				archived: boolean;
+				color: string;
+				created_at: string;
+				description: string;
+				id: string;
+				name: string;
+			};
+			role_account: {
+				account: string | null;
+				archived: boolean;
+				created_at: string;
+				id: string;
+				role: string | null;
+			};
+			session: {
+				account_id: string | null;
+				archived: boolean;
+				created_at: string;
+				id: string;
+				prev_url: string | null;
+			};
+		};
+		public: {
+			_template: {
+				archived: boolean;
+				created_at: string;
+				id: string;
+			};
+		};
+		test: {
+			test: {
+				age: number;
+				archived: boolean;
+				created_at: string;
+				id: string;
+				name: string;
+			};
+		};
+	};
+	Insert: {
+		core: {
+			account_notification: {
+				account_id: string;
+				archived?: boolean;
+				created_at?: string;
+				icon: string;
+				icon_type: string;
+				id?: string;
+				link?: string | null;
+				message: string;
+				read?: boolean;
+				severity: string;
+				title: string;
+			};
+			admin: {
+				archived?: boolean;
+				created_at?: string;
+				id?: string;
+			};
+			profile: {
+				archived?: boolean;
+				created_at?: string;
+				email: string;
+				first_name: string;
+				id: string;
+				last_name: string;
+				username: string;
+			};
+			role: {
+				archived?: boolean;
+				color: string;
+				created_at?: string;
+				description: string;
+				id?: string;
+				name: string;
+			};
+			role_account: {
+				account?: string | null;
+				archived?: boolean;
+				created_at?: string;
+				id?: string;
+				role?: string | null;
+			};
+			session: {
+				account_id?: string | null;
+				archived?: boolean;
+				created_at?: string;
+				id?: string;
+				prev_url?: string | null;
+			};
+		};
+		public: {
+			_template: {
+				archived?: boolean;
+				created_at?: string;
+				id?: string;
+			};
+		};
+		test: {
+			test: {
+				age: number;
+				archived?: boolean;
+				created_at?: string;
+				id?: string;
+				name: string;
+			};
+		};
+	};
+	Update: {
+		core: {
+			account_notification: {
+				account_id?: string;
+				archived?: boolean;
+				created_at?: string;
+				icon?: string;
+				icon_type?: string;
+				id?: string;
+				link?: string | null;
+				message?: string;
+				read?: boolean;
+				severity?: string;
+				title?: string;
+			};
+			admin: {
+				archived?: boolean;
+				created_at?: string;
+				id?: string;
+			};
+			profile: {
+				archived?: boolean;
+				created_at?: string;
+				email?: string;
+				first_name?: string;
+				id?: string;
+				last_name?: string;
+				username?: string;
+			};
+			role: {
+				archived?: boolean;
+				color?: string;
+				created_at?: string;
+				description?: string;
+				id?: string;
+				name?: string;
+			};
+			role_account: {
+				account?: string | null;
+				archived?: boolean;
+				created_at?: string;
+				id?: string;
+				role?: string | null;
+			};
+			session: {
+				account_id?: string | null;
+				archived?: boolean;
+				created_at?: string;
+				id?: string;
+				prev_url?: string | null;
+			};
+		};
+		public: {
+			_template: {
+				archived?: boolean;
+				created_at?: string;
+				id?: string;
+			};
+		};
+		test: {
+			test: {
+				age?: number;
+				archived?: boolean;
+				created_at?: string;
+				id?: string;
+				name?: string;
+			};
+		};
+	};
+	Relationships: {
+		core: {
+			account_notification: Database['core']['Tables']['account_notification']['Relationships'];
+			admin: Database['core']['Tables']['admin']['Relationships'];
+			profile: Database['core']['Tables']['profile']['Relationships'];
+			role: Database['core']['Tables']['role']['Relationships'];
+			role_account: Database['core']['Tables']['role_account']['Relationships'];
+			session: Database['core']['Tables']['session']['Relationships'];
+		};
+		public: {
+			_template: Database['public']['Tables']['_template']['Relationships'];
+		};
+		test: {
+			test: Database['test']['Tables']['test']['Relationships'];
+		};
+	};
+};

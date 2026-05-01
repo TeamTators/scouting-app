@@ -26,39 +26,39 @@ export default {
 	SB_PROJECT_URL: str(
 		'SB_PROJECT_URL',
 		true,
-		'Supabase Project URL for testing server-side Supabase operations'
+		'Supabase Project URL for server-side Supabase operations'
 	),
 	SB_PUBLIC_KEY: str('SB_PUBLIC_KEY', true, 'Public Supabase API Key'),
 	SB_STUDIO_URL: str('SB_STUDIO_URL', true, 'Supabase Studio URL'),
-	SB_MAILPIT_URL: str('SB_MAILPIT_URL', true, 'Mailpit URL for testing email sending'),
-	SB_MCP_URL: str('SB_MCP_URL', true, 'Supabase MCP URL for testing file uploads'),
-	SB_DB_URL: str('SB_DB_URL', true, 'Supabase Database URL for testing database connection'),
+	SB_MAILPIT_URL: str('SB_MAILPIT_URL', true, 'Mailpit URL for email sending'),
+	SB_MCP_URL: str('SB_MCP_URL', true, 'Supabase MCP URL for file uploads'),
+	SB_DB_URL: str('SB_DB_URL', true, 'Supabase Database URL for database connection'),
 	SB_SECRET_KEY: str(
 		'SB_SECRET_KEY',
 		true,
-		'Supabase Secret API Key for testing server-side Supabase operations'
+		'Supabase Secret API Key for server-side Supabase operations'
 	),
 	SB_STORAGE_ACCESS_KEY: str(
 		'SB_STORAGE_ACCESS_KEY',
 		true,
-		'Supabase Storage Access Key for testing file uploads'
+		'Supabase Storage Access Key for file uploads'
 	),
 	SB_STORAGE_SECRET_KEY: str(
 		'SB_STORAGE_SECRET_KEY',
 		true,
-		'Supabase Storage Secret Key for testing file uploads'
+		'Supabase Storage Secret Key for file uploads'
 	),
-	SB_REGION: str('SB_REGION', true, 'Supabase Region for testing file uploads'),
-	SB_SCHEMA: str('SB_SCHEMA', true, 'Supabase Schema for testing database connection'),
+	SB_REGION: str('SB_REGION', true, 'Supabase Region for file uploads'),
+	SB_SCHEMAS: arr('SB_SCHEMAS', 'string', true, 'Supabase Schemas for database connection'),
 	SB_POSTGRES_PASSWORD: str(
 		'SB_POSTGRES_PASSWORD',
 		true,
-		'Supabase Postgres Password for testing database connection'
+		'Supabase Postgres Password for database connection'
 	),
 	SB_STORAGE_ENDPOINT: str(
 		'SB_STORAGE_ENDPOINT',
 		true,
-		'Supabase Storage Endpoint for testing file uploads'
+		'Supabase Storage Endpoint for file uploads'
 	),
 
 	SMTP_HOST: str('SMTP_HOST', true, 'SMTP host for sending emails'),
@@ -66,12 +66,12 @@ export default {
 	SMTP_PASS: str('SMTP_PASS', true, 'SMTP password for sending emails'),
 	SMTP_ADMIN_EMAIL: str('SMTP_ADMIN_EMAIL', true, 'Admin email to receive notifications'),
 
-	OAUTH2_PROVIDER: str('OAUTH2_PROVIDER', true, 'OAuth2 provider for testing authentication'),
-	OAUTH2_CLIENT_ID: str('OAUTH2_CLIENT_ID', true, 'OAuth2 client ID for testing authentication'),
+	OAUTH2_PROVIDER: str('OAUTH2_PROVIDER', true, 'OAuth2 provider for authentication'),
+	OAUTH2_CLIENT_ID: str('OAUTH2_CLIENT_ID', true, 'OAuth2 client ID for authentication'),
 	OAUTH2_CLIENT_SECRET: str(
 		'OAUTH2_CLIENT_SECRET',
 		true,
-		'OAuth2 client secret for testing authentication'
+		'OAuth2 client secret for authentication'
 	),
 
 	FINGERPRINT_SECRET: str(
@@ -80,20 +80,12 @@ export default {
 		'Secret key for generating fingerprint tokens'
 	),
 
-	INDEXED_DB_ENABLED: bool(
-		'INDEXED_DB_ENABLED',
-		true,
-		'Whether to enable IndexedDB for testing purposes'
-	),
-	INDEXED_DB_NAME: str(
-		'INDEXED_DB_NAME',
-		true,
-		'The name of the IndexedDB database to use for testing'
-	),
+	INDEXED_DB_ENABLED: bool('INDEXED_DB_ENABLED', true, 'Whether to enable IndexedDB'),
+	INDEXED_DB_NAME: str('INDEXED_DB_NAME', true, 'The name of the IndexedDB database to use'),
 	INDEXED_DB_VERSION: num(
 		'INDEXED_DB_VERSION',
 		true,
-		'The version of the IndexedDB database to use for testing'
+		'The version of the IndexedDB database to use'
 	),
 	INDEXED_DB_DEBUG: bool(
 		'INDEXED_DB_DEBUG',
