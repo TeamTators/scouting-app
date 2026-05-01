@@ -14,7 +14,7 @@ Profile display shell for an account.
 	import type { SupaStructData } from '$lib/services/supabase/supastruct-data';
 
 	interface Props {
-		profile: SupaStructData<'profile'>;
+		profile: SupaStructData<'core', 'profile'>;
 	}
 
 	const { profile: _profile }: Props = $props();

@@ -39,7 +39,8 @@ export const GET = async (event) => {
 
 		const profile = SupaStruct.get({
 			client: supabase,
-			name: 'profile'
+			schema: 'core',
+			table: 'profile'
 		});
 
 		const exists = await profile.get(

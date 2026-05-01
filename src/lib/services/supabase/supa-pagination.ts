@@ -1,5 +1,5 @@
 import { WritableBase } from '../writables';
-import { type Names, type Row, SupaStruct } from './supastruct';
+import { type Row, SupaStruct, type RowSchemaName, type RowTableName } from './supastruct';
 import { SupaStructData } from './supastruct-data';
 
 /**
@@ -7,8 +7,11 @@ import { SupaStructData } from './supastruct-data';
  *
  * @template Name - Table name represented by each row.
  */
-export class SupaPagination<Name extends Names> extends WritableBase<{
-	rows: SupaStructData<Name>[];
+export class SupaPagination<
+	Schema extends RowSchemaName,
+	Name extends RowTableName<Schema>
+> extends WritableBase<{
+	rows: SupaStructData<Schema, Name>[];
 	total: number;
 	page: number;
 	pageSize: number;
@@ -34,12 +37,12 @@ export class SupaPagination<Name extends Names> extends WritableBase<{
 	 * });
 	 */
 	constructor(
-		public readonly struct: SupaStruct<Name>,
+		public readonly struct: SupaStruct<Schema, Name>,
 		private readonly getter: (
 			page: number,
 			pageSize: number
 		) => Promise<{
-			rows: Row<Name>[];
+			rows: Row<Schema, Name>[];
 			total: number;
 			page: number;
 			pageSize: number;
@@ -77,7 +80,7 @@ export class SupaPagination<Name extends Names> extends WritableBase<{
 			})
 			.catch((error) => {
 				console.error(
-					`Failed to fetch page ${page} with page size ${pageSize} from table ${this.struct.name}:`,
+					`Failed to fetch page ${page} with page size ${pageSize} from table ${this.struct.table}:`,
 					error
 				);
 			});

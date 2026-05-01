@@ -25,9 +25,9 @@ Account search input with debounced query results.
 	const factory = getAccountFactory(supabase);
 
 	interface Props {
-		onselect: (account: SupaStructData<'profile'>) => void;
-		onsearch?: (account: SupaStructData<'profile'>[]) => void;
-		filter?: (account: SupaStructData<'profile'>) => boolean;
+		onselect: (account: SupaStructData<'core', 'profile'>) => void;
+		onsearch?: (account: SupaStructData<'core', 'profile'>[]) => void;
+		filter?: (account: SupaStructData<'core', 'profile'>) => boolean;
 	}
 
 	const { onselect, onsearch, filter }: Props = $props();
@@ -57,7 +57,7 @@ Account search input with debounced query results.
 		}, 300);
 	};
 
-	export const select = (account: SupaStructData<'profile'>) => {
+	export const select = (account: SupaStructData<'core', 'profile'>) => {
 		onselect(account);
 		query = '';
 	};

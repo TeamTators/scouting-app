@@ -6,10 +6,11 @@ import supabase from '$lib/server/services/supabase';
 import { SupaStruct } from '$lib/services/supabase/supastruct';
 import { describe, it, expect } from 'vitest';
 
-describe('Realtime Tests', () => {
+describe('CRUD Tests', () => {
 	const struct = SupaStruct.get({
 		client: supabase,
-		name: 'test',
+		schema: 'test',
+		table: 'test',
 		debug: true
 	});
 
@@ -19,7 +20,7 @@ describe('Realtime Tests', () => {
 		const age = Math.round(Math.random() * 100);
 		const created = await struct
 			.new({
-				name: 'Realtime Test',
+				name: 'CRUD Test',
 				age
 			})
 			.await()
@@ -30,7 +31,7 @@ describe('Realtime Tests', () => {
 		const [data] = created.result;
 		expect(data).toBeDefined();
 		if (!data) throw new Error('Data is not defined'); // should never happen but for type safety
-		expect(data.data.name).toBe('Realtime Test');
+		expect(data.data.name).toBe('CRUD Test');
 		expect(data.data.age).toBe(age);
 
 		const updated = await data

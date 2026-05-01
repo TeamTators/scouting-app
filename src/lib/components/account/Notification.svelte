@@ -14,7 +14,7 @@ Notification card with read/unread and delete actions.
 	import type { SupaStructData } from '$lib/services/supabase/supastruct-data';
 
 	interface Props {
-		notification: SupaStructData<'account_notification'>;
+		notification: SupaStructData<'core', 'account_notification'>;
 	}
 
 	const { notification }: Props = $props();

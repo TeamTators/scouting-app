@@ -2,7 +2,6 @@ import { select } from '../cli/utils';
 import { sleep } from 'ts-utils/sleep';
 import fs from 'fs/promises';
 import path from 'path';
-import { fromSnakeCase, toSnakeCase } from 'ts-utils';
 
 export default async (...args: string[]) => {
 	if (!args.includes('--force')) {
@@ -87,8 +86,4 @@ export default async (...args: string[]) => {
 		.replaceAll('tsaxking/sveltekit-template', slug)
 		.replaceAll('/sveltekit-template', `/${repoName}`);
 	await fs.writeFile(path.resolve(process.cwd(), 'README.md'), readme);
-
-	const { default: setSchema } = await import('./supabase/sb-set-schema');
-
-	await setSchema(toSnakeCase(fromSnakeCase(repoName, '-'), '_'));
 };

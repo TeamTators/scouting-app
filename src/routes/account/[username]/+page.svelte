@@ -13,7 +13,8 @@ Designed as a top-level page route and does not export component props.
 	const { data } = $props();
 	const account = $derived(data.account);
 	const struct = SupaStruct.get({
-		name: 'profile',
+		schema: 'core',
+		table: 'profile',
 		client: supabase
 	});
 	const profile = $derived(struct.Generator(account));

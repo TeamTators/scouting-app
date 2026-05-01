@@ -41,8 +41,6 @@ jobs:
           echo "Setting up Supabase config..."
           COMMIT_HASH=$(git rev-parse --short HEAD)
           SCHEMA_NAME="docker_test_${COMMIT_HASH}"
-          echo "Setting schema to ${SCHEMA_NAME}..."
-          pnpm run sb:set-schema ${SCHEMA_NAME}
           sed -i "s/^project_id = .*/project_id = \"${SCHEMA_NAME}\"/" supabase/config.toml
           pnpm script supabase/sb-random-ports
           pnpm sb:start --debug

@@ -6,9 +6,9 @@ import '$lib/server/utils/files';
 import createTree from '../scripts/create-route-tree';
 // import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
-import { type DB } from '$lib/types/supabase';
 import { getSessionFactory } from '$lib/server/model/session';
 import env from '$lib/server/utils/env';
+import type { Database } from '$lib/types/supabase';
 
 (async () => {
 	await createTree();
@@ -16,7 +16,7 @@ import env from '$lib/server/utils/env';
 export const handle: Handle = async ({ event, resolve }) => {
 	// console.log('Request:', event.request.method, event.url.pathname);
 	event.locals.start = performance.now();
-	event.locals.supabase = createServerClient<DB>(env.SB_PROJECT_URL, env.SB_PUBLIC_KEY, {
+	event.locals.supabase = createServerClient<Database>(env.SB_PROJECT_URL, env.SB_PUBLIC_KEY, {
 		cookies: {
 			getAll: () => event.cookies.getAll(),
 			setAll: (cookies) => {

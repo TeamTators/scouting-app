@@ -2,7 +2,6 @@
 // import supabase from "$lib/services/supabase";
 import { attempt, attemptAsync, ComplexEventEmitter, ResultPromise, type Result } from 'ts-utils';
 import { WritableArray, WritableBase } from '../writables';
-import { type SchemaName, schemaName } from '$lib/types/supabase-schema';
 import {
 	REALTIME_SUBSCRIBE_STATES,
 	RealtimeChannel,
@@ -14,44 +13,56 @@ import { browser } from '$app/environment';
 import { SupaStructData } from './supastruct-data';
 import { SupaPagination } from './supa-pagination';
 import { SupaCache } from './supacache';
-import { type DB } from '$lib/types/supabase';
+import { type Database, type DatabasePivoted, type SchemaName } from '$lib/types/supabase';
 
-export type Client = SupabaseClient<DB, SchemaName>;
+export type Client = SupabaseClient<Database>;
+
+// Yes, I need to do this to pivot the generated types into a shape that makes it easy to extract row types by table name in the SupaStruct class. No, I don't like it.
+// Hush
+// Although if you have a better idea, I'm open to it.
+export type RowSchemaName = keyof DatabasePivoted['Row'];
+export type InsertSchemaName = keyof DatabasePivoted['Insert'];
+export type UpdateSchemaName = keyof DatabasePivoted['Update'];
+
+export type RowTableName<S extends RowSchemaName> = keyof DatabasePivoted['Row'][S];
+export type InsertTableName<S extends InsertSchemaName> = keyof DatabasePivoted['Insert'][S];
+export type UpdateTableName<S extends UpdateSchemaName> = keyof DatabasePivoted['Update'][S];
+
+export type RowTableNames<Schema extends SchemaName = SchemaName> = RowTableName<Schema>;
+export type InsertTableNames<Schema extends SchemaName = SchemaName> = InsertTableName<Schema>;
+export type UpdateTableNames<Schema extends SchemaName = SchemaName> = UpdateTableName<Schema>;
+
+export type Row<
+	Schema extends SchemaName,
+	Name extends RowTableNames<Schema>
+> = DatabasePivoted['Row'][Schema][Name];
+export type Insert<
+	Schema extends SchemaName,
+	Name extends InsertTableNames<Schema>
+> = DatabasePivoted['Insert'][Schema][Name];
+export type Update<
+	Schema extends SchemaName,
+	Name extends UpdateTableNames<Schema>
+> = DatabasePivoted['Update'][Schema][Name];
 
 /**
  * Table metadata and row contract for a table in the active Supabase schema.
  *
  * @template Name - Table name from the generated database type.
  */
-export type Table<Name extends keyof DB[SchemaName]['Tables']> = DB[SchemaName]['Tables'][Name];
-/**
- * Union of table names available in the active Supabase schema.
- */
-export type Names = keyof DB[SchemaName]['Tables'];
-/**
- * Row type for a table.
- *
- * @template Name - Table name from {@link Names}.
- */
-export type Row<Name extends Names> = Table<Name>['Row'];
-/**
- * Insert payload type for a table.
- *
- * @template Name - Table name from {@link Names}.
- */
-export type Insert<Name extends Names> = Table<Name>['Insert'];
-/**
- * Update payload type for a table.
- *
- * @template Name - Table name from {@link Names}.
- */
-export type Update<Name extends Names> = Table<Name>['Update'];
+export type Table<
+	Schema extends SchemaName,
+	Name extends keyof Database[Schema]['Tables']
+> = Database[Schema]['Tables'][Name];
+
 /**
  * Partial row shape for patch operations, filters, and loose cache payloads.
  *
- * @template Name - Table name from {@link Names}.
+ * @template Name - Table name from {@link TableNames}.
  */
-export type PartialRow<Name extends Names> = Partial<Row<Name>>;
+export type PartialRow<Schema extends SchemaName, Name extends RowTableNames<Schema>> = Partial<
+	Row<Schema, Name>
+>;
 
 /**
  * Writable status container for async operations.
@@ -95,9 +106,10 @@ export class SupaStatus<T> extends WritableBase<
  * @property debug - Enables scoped console logging for this struct.
  * @property subscribe - Reserved flag for opt-in realtime behavior.
  */
-export type SupaConfig<Name> = {
-	name: Name;
+export type SupaConfig<Schema extends RowSchemaName, Name extends RowTableNames<Schema>> = {
+	table: Name;
 	client: Client;
+	schema: Schema;
 	versionHistory?: boolean;
 	debug?: boolean;
 	subscribe?: boolean;
@@ -114,10 +126,10 @@ export type ReadType = 'paginated' | 'all' | 'single' | 'count';
  * - `all` returns a live writable array.
  * - `single` returns an async `ResultPromise`.
  */
-export type ReadReturnType<Name extends Names> =
-	| SupaStructArray<Name>
-	| SupaPagination<Name>
-	| ResultPromise<SupaStructData<Name> | null>
+export type ReadReturnType<Schema extends RowSchemaName, RowName extends RowTableNames<Schema>> =
+	| SupaStructArray<Schema, RowName>
+	| SupaPagination<Schema, RowName>
+	| ResultPromise<SupaStructData<Schema, RowName> | null>
 	| ResultPromise<number>;
 
 /**
@@ -126,6 +138,7 @@ export type ReadReturnType<Name extends Names> =
  * @template T - Read mode discriminator.
  * @property type - Requested result mode.
  * @property expires - Absolute expiry used for browser-side cache persistence.
+ * @property archived - Optional flag to include archived rows in the result (if supported by the struct).
  *
  * @example
  * const config: ReadConfig<'single'> = {
@@ -136,6 +149,7 @@ export type ReadReturnType<Name extends Names> =
 export type ReadConfig<T extends ReadType> = {
 	type: T;
 	expires?: Date;
+	includeArchived?: boolean;
 } & (T extends 'all'
 	? {}
 	: T extends 'paginated'
@@ -159,10 +173,17 @@ export type ReadConfig<T extends ReadType> = {
  * - Keep registered arrays synchronized with realtime updates.
  * - Persist cached responses in browser storage through `SupaCache`.
  *
- * @template Name - Table name this struct instance represents.
+ * @template RowName - Table name this struct instance represents.
  */
-export class SupaStruct<Name extends Names> {
-	public static readonly structs = new Map<string, SupaStruct<Names>>();
+export class SupaStruct<
+	Schema extends RowSchemaName,
+	RowName extends RowTableNames<Schema>,
+	InsertName extends InsertTableNames<Schema> = Extract<RowName, InsertTableNames<Schema>>
+> {
+	public static readonly structs = new Map<
+		string,
+		SupaStruct<RowSchemaName, RowTableNames<RowSchemaName>>
+	>();
 
 	/**
 	 * Creates a struct instance for a table.
@@ -178,19 +199,21 @@ export class SupaStruct<Name extends Names> {
 	 *   debug: true
 	 * });
 	 */
-	public static get<Name extends Names>(config: SupaConfig<Name>): SupaStruct<Name> {
+	public static get<Schema extends RowSchemaName, Name extends RowTableNames<Schema>>(
+		config: SupaConfig<Schema, Name>
+	): SupaStruct<Schema, Name> {
 		// const existing = SupaStruct.structs.get(config.name);
 		// if (existing) return existing as unknown as SupaStruct<Name>;
 		return new SupaStruct(config);
 	}
 
-	private readonly cache = new Map<string, SupaStructData<Name>>();
+	private readonly cache = new Map<string, SupaStructData<Schema, RowName>>();
 	private readonly em = new ComplexEventEmitter<{
-		new: [SupaStructData<Name>];
-		update: [SupaStructData<Name>, SupaStructData<Name>['_data']];
-		delete: [SupaStructData<Name>];
-		archive: [SupaStructData<Name>];
-		restore: [SupaStructData<Name>];
+		new: [SupaStructData<Schema, RowName>];
+		update: [SupaStructData<Schema, RowName>, SupaStructData<Schema, RowName>['_data']];
+		delete: [SupaStructData<Schema, RowName>];
+		archive: [SupaStructData<Schema, RowName>];
+		restore: [SupaStructData<Schema, RowName>];
 		realtime: [REALTIME_SUBSCRIBE_STATES];
 	}>();
 
@@ -222,10 +245,21 @@ export class SupaStruct<Name extends Names> {
 	 *
 	 * @param config - Table and client configuration.
 	 */
-	constructor(public readonly config: SupaConfig<Name>) {
-		this.channel = this.supabase.channel(`struct-${schemaName}.${config.name}`);
+	constructor(public readonly config: SupaConfig<Schema, RowName>) {
+		this.channel = this.supabase.channel(`struct.${this.schema}.${this.table}`);
 		// SupaStruct.structs.set(this.config.name, this as any);
-		this.log(`Initialized struct for table ${this.name}`);
+		this.log(`Initialized struct for schema ${this.schema} table ${this.table}`);
+		if (!Object.keys(schemas).includes(this.schema)) {
+			throw new Error(
+				`Schema ${this.schema} not found in generated types. Please ensure your Supabase schema is correctly represented in your zod definitions.`
+			);
+		}
+
+		if (!Object.keys((schemas as any)[this.schema]).includes(this.table)) {
+			throw new Error(
+				`Table ${this.table} not found in generated types for schema ${this.schema}. Please ensure your table is correctly represented in your zod definitions.`
+			);
+		}
 	}
 
 	/**
@@ -233,8 +267,15 @@ export class SupaStruct<Name extends Names> {
 	 *
 	 * @returns Table name from generated DB types.
 	 */
-	get name() {
-		return this.config.name;
+	get table() {
+		return String(this.config.table) as Extract<RowName, string>;
+	}
+
+	/**
+	 * Active schema name inferred from the typed client.
+	 */
+	get schema() {
+		return this.config.schema;
 	}
 
 	/**
@@ -248,7 +289,7 @@ export class SupaStruct<Name extends Names> {
 
 	private log(...args: unknown[]) {
 		if (this.config.debug) {
-			console.log(`[SupaStruct ${this.name}]`, ...args);
+			console.log(`[SupaStruct ${this.table}]`, ...args);
 		}
 	}
 
@@ -273,8 +314,8 @@ export class SupaStruct<Name extends Names> {
 				'postgres_changes',
 				{
 					event: '*',
-					schema: schemaName,
-					table: this.name
+					schema: String(this.schema),
+					table: this.table
 				},
 				(payload) => {
 					this.log('Received event payload:', payload);
@@ -308,7 +349,9 @@ export class SupaStruct<Name extends Names> {
 					}
 
 					for (const { array, satisfies } of this.registeredArrays.values()) {
-						const has = array.data.find((item) => String(item.data.id) === String(data.data.id));
+						const has = array.data.find(
+							(item) => String((item.data as any).id) === String((data.data as any).id)
+						);
 						if (satisfies(data.data)) {
 							if (!has) {
 								array.push(data);
@@ -322,9 +365,9 @@ export class SupaStruct<Name extends Names> {
 				}
 			)
 			.subscribe((status, error) => {
-				this.log(`Subscription status for channel ${this.name}:`, status);
+				this.log(`Subscription status for channel ${this.table}:`, status);
 				if (error) {
-					this.log(`Subscription error for channel ${this.name}:`, error);
+					this.log(`Subscription error for channel ${this.table}:`, error);
 				}
 				this.emit('realtime', status);
 			});
@@ -340,32 +383,32 @@ export class SupaStruct<Name extends Names> {
 	 */
 	runTransaction(
 		transaction: {
-			data: Row<Name>[] | Row<Name> | null;
+			data: Row<Schema, RowName>[] | Row<Schema, RowName> | null;
 			error: Error | null;
 		},
 		expect: 'array'
-	): Result<Row<Name>[]>;
+	): Result<Row<Schema, RowName>[]>;
 	runTransaction(
 		transaction: {
-			data: Row<Name>[] | Row<Name> | null;
+			data: Row<Schema, RowName>[] | Row<Schema, RowName> | null;
 			error: Error | null;
 		},
 		expect: 'single'
-	): Result<Row<Name>>;
+	): Result<Row<Schema, RowName>>;
 	runTransaction(
 		transaction: {
-			data: Row<Name>[] | Row<Name> | null;
+			data: Row<Schema, RowName>[] | Row<Schema, RowName> | null;
 			error: Error | null;
 		},
 		expect: 'null'
 	): Result<null>;
 	runTransaction(
 		transaction: {
-			data: Row<Name>[] | Row<Name> | null;
+			data: Row<Schema, RowName>[] | Row<Schema, RowName> | null;
 			error: Error | null;
 		},
 		expect: 'array' | 'single' | 'null'
-	): Result<Row<Name>[] | Row<Name> | null> {
+	): Result<Row<Schema, RowName>[] | Row<Schema, RowName> | null> {
 		return attempt(() => {
 			if (transaction.error) {
 				throw transaction.error;
@@ -398,15 +441,15 @@ export class SupaStruct<Name extends Names> {
 	 *
 	 * @throws Always throws at runtime.
 	 */
-	get sample(): SupaStructData<Name> {
+	get sample(): SupaStructData<Schema, RowName> {
 		throw new Error('Sample should never be used at runtime');
 	}
 
 	private readonly registeredArrays = new Map<
 		string,
 		{
-			array: SupaStructArray<Name>;
-			satisfies: (data: PartialRow<Name>) => boolean;
+			array: SupaStructArray<Schema, RowName>;
+			satisfies: (data: PartialRow<Schema, RowName>) => boolean;
 		}
 	>();
 
@@ -444,8 +487,8 @@ export class SupaStruct<Name extends Names> {
 	 */
 	registerArray(
 		name: string,
-		array: SupaStructArray<Name>,
-		satisfies: (data: PartialRow<Name>) => boolean
+		array: SupaStructArray<Schema, RowName>,
+		satisfies: (data: PartialRow<Schema, RowName>) => boolean
 	) {
 		if (browser) {
 			this.log(`Registering array ${name} with realtime listeners`);
@@ -494,7 +537,7 @@ export class SupaStruct<Name extends Names> {
 				return has;
 			}
 		}
-		const data = new SupaStructData(this, validated as PartialRow<Name>);
+		const data = new SupaStructData(this, validated as PartialRow<Schema, RowName>);
 		if (browser) this.cache.set(String(validated.id), data);
 		return data;
 	}
@@ -507,14 +550,21 @@ export class SupaStruct<Name extends Names> {
 	 * @throws If the table schema is missing or parsing fails.
 	 */
 	validate(data: unknown) {
-		const schema = schemas[this.name];
+		const schema =
+			((schemas as any)[this.schema]?.[this.table] as
+				| {
+						Row: typeof z.any;
+						Insert: typeof z.any;
+						Update: typeof z.any;
+				  }
+				| undefined) ?? ((schemas as any)[this.table] as any);
 		if (!schema) {
-			throw new Error(`No schema found for table ${this.name}`);
+			throw new Error(`No schema found for table ${this.table}`);
 		}
 		const parseResult = schema.Row.partial().safeParse(data);
 		if (!parseResult.success) {
 			throw new Error(
-				`Failed to validate data for table ${this.name}: ` + parseResult.error.message
+				`Failed to validate data for table ${this.table}: ` + parseResult.error.message
 			);
 		}
 		return parseResult.data;
@@ -533,7 +583,7 @@ export class SupaStruct<Name extends Names> {
 	 *   expires: new Date(Date.now() + 60000)
 	 * });
 	 */
-	all(config: ReadConfig<'all'>): SupaStructArray<Name>;
+	all(config: ReadConfig<'all'>): SupaStructArray<Schema, RowName>;
 	// all(config: ReadConfig<'paginated'>): SupaPagination<Name>;
 	/**
 	 * Reads first available row as a `ResultPromise`.
@@ -541,7 +591,7 @@ export class SupaStruct<Name extends Names> {
 	 * @param config - Read configuration with cache expiry.
 	 * @returns Async result resolving to first row or `null`.
 	 */
-	all(config: ReadConfig<'single'>): ResultPromise<SupaStructData<Name> | null>;
+	all(config: ReadConfig<'single'>): ResultPromise<SupaStructData<Schema, RowName> | null>;
 	// all(config: ReadConfig<'count'>): ResultPromise<number>;
 	/**
 	 * Reads rows using cache-first behavior in the browser.
@@ -549,14 +599,14 @@ export class SupaStruct<Name extends Names> {
 	 * @param config - Read mode and cache metadata.
 	 * @returns Overloaded by `config.type`.
 	 */
-	all(config: ReadConfig<ReadType>): ReadReturnType<Name> {
+	all(config: ReadConfig<ReadType>): ReadReturnType<Schema, RowName> {
 		const has = this.registeredArrays.get('all');
 		if (has) return has.array;
 
 		const get = async () => {
 			if (browser) {
 				const cache = await SupaCache.get(
-					{ table: this.name, key: 'all' },
+					{ table: this.table, key: 'all' },
 					{
 						pagination: false
 					}
@@ -575,8 +625,24 @@ export class SupaStruct<Name extends Names> {
 				}
 			}
 
+			let query = this.supabase
+				.schema(this.schema)
+				.from(this.table)
+				.select('*') //,
+				.filter('archived', 'eq', config.includeArchived ?? false);
+			
+
+			if (config.includeArchived !== true) {
+				query = query.filter('archived', 'eq', false);
+			}
+
+			const transaction = await query;
+
 			const res = this.runTransaction(
-				await this.supabase.schema(schemaName).from(this.name).select('*'),
+				{
+					data: transaction.data as any,
+					error: transaction.error
+				},
 				'array'
 			);
 			if (res.isErr()) {
@@ -586,7 +652,7 @@ export class SupaStruct<Name extends Names> {
 
 			if (browser && config.expires && res.value.length) {
 				SupaCache.new({
-					table: this.name,
+					table: this.table,
 					key: 'all',
 					value: res.value,
 					expires: config.expires
@@ -608,7 +674,7 @@ export class SupaStruct<Name extends Names> {
 		get().then((data) => {
 			arr.set(data.map((item) => this.Generator(item)));
 		});
-		this.registerArray('all', arr, (data) => data.archived === false);
+		this.registerArray('all', arr, (data) => (data as { archived?: boolean }).archived === false);
 		return arr;
 	}
 
@@ -621,22 +687,54 @@ export class SupaStruct<Name extends Names> {
 	 * @example
 	 * const status = usersStruct.new({ email: 'a@b.com' } as Insert<'users'>);
 	 */
-	new(...data: Insert<Name>[]) {
+	new(...data: Insert<Schema, InsertName>[]) {
 		this.log('Creating new data with input:', data);
-		const status = new SupaStatus<SupaStructData<Name>[]>();
-		const parsed = z.array(schemas[this.name].Insert).safeParse(data);
-		if (parsed.success === false) {
-			this.log(`Error validating new data for table ${this.name}:`, parsed.error);
+		const status = new SupaStatus<SupaStructData<Schema, RowName>[]>();
+
+		const schemaGroup = schemas[this.schema];
+		if (!schemaGroup) {
+			this.log(`No schema found for ${this.schema} in generated types`);
 			status.set({
 				pending: false,
-				error: new Error(`Invalid data for table ${this.name}: ` + parsed.error.message)
+				error: new Error(`No schema found for ${this.schema} in generated types`)
+			});
+			return status;
+		}
+
+		const table = this.table;
+
+		if (table in schemaGroup === false) {
+			this.log(`No table ${table} found in schema ${this.schema} of generated types`);
+			status.set({
+				pending: false,
+				error: new Error(`No table ${table} found in schema ${this.schema} of generated types`)
+			});
+			return status;
+		}
+
+		const schemaFound = (schemaGroup as any)[table]?.Insert;
+		if (!schemaFound) {
+			this.log(`No Insert schema found for table ${table} in schema ${this.schema}`);
+			status.set({
+				pending: false,
+				error: new Error(`Insert schema not found for table ${table}`)
+			});
+			return status;
+		}
+
+		const parsed = z.array(schemaFound).safeParse(data);
+		if (parsed.success === false) {
+			this.log(`Error validating new data for table ${this.table}:`, parsed.error);
+			status.set({
+				pending: false,
+				error: new Error(`Invalid data for table ${this.table}: ` + parsed.error.message)
 			});
 			return status;
 		}
 		this.log('Validated new data:', parsed.data);
 		this.supabase
-			.schema(schemaName)
-			.from(this.name)
+			.schema(this.schema)
+			.from(this.table)
 			.insert(data as any)
 			.select('*')
 			.then((res) => {
@@ -652,7 +750,7 @@ export class SupaStruct<Name extends Names> {
 					status.set({
 						pending: false,
 						error: new Error(
-							`Failed to insert row into table ${this.name}: ` + transactionResult.error.message
+							`Failed to insert row into table ${this.table}: ` + transactionResult.error.message
 						)
 					});
 				} else {
@@ -671,23 +769,23 @@ export class SupaStruct<Name extends Names> {
 	 * @param data - Upsert payloads.
 	 * @returns Async status writable containing upserted row wrappers on success.
 	 */
-	upsert(...data: Insert<Name>[]) {
+	upsert(...data: Insert<Schema, InsertName>[]) {
 		this.log('Upserting data with input:', data);
-		const status = new SupaStatus<SupaStructData<Name>[]>();
-		const parsed = z.array(schemas[this.name].Insert).safeParse(data);
+		const status = new SupaStatus<SupaStructData<Schema, RowName>[]>();
+		const parsed = z.array((schemas as any)[this.schema]?.[this.table]?.Insert).safeParse(data);
 		if (!parsed.success) {
-			this.log(`Error validating upsert data for table ${this.name}:`, parsed.error);
+			this.log(`Error validating upsert data for table ${this.table}:`, parsed.error);
 			status.set({
 				pending: false,
-				error: new Error(`Invalid data for table ${this.name}: ` + parsed.error.message)
+				error: new Error(`Invalid data for table ${this.table}: ` + parsed.error.message)
 			});
 			return status;
 		}
 
 		this.log('Validated upsert data:', parsed.data);
 		this.supabase
-			.schema(schemaName)
-			.from(this.name)
+			.schema(this.schema)
+			.from(this.table)
 			.upsert(data as any)
 			.select('*')
 			.then((res) => {
@@ -703,7 +801,7 @@ export class SupaStruct<Name extends Names> {
 					status.set({
 						pending: false,
 						error: new Error(
-							`Failed to upsert row into table ${this.name}: ` + transactionResult.error.message
+							`Failed to upsert row into table ${this.table}: ` + transactionResult.error.message
 						)
 					});
 				} else {
@@ -763,11 +861,11 @@ export class SupaStruct<Name extends Names> {
 	 * @example
 	 * const result = await usersStruct.fromId('abc123');
 	 */
-	fromId(id: Row<Name>['id'], config?: { expires?: Date }) {
+	fromId(id: string, config?: { expires?: Date }) {
 		return attemptAsync(async () => {
 			if (browser) {
 				const cache = await SupaCache.get(
-					{ table: this.name, key: `id:${id}` },
+					{ table: this.table, key: `id:${id}` },
 					{ pagination: false }
 				);
 				if (cache.isOk()) {
@@ -789,10 +887,10 @@ export class SupaStruct<Name extends Names> {
 			}
 
 			const res = await this.supabase
-				.schema(schemaName)
-				.from(this.name)
+				.schema(this.schema)
+				.from(this.table)
 				.select('*')
-				.filter('id', 'eq', id as any)
+				.filter('id', 'eq', id)
 				.single();
 			const transactionResult = this.runTransaction(
 				{
@@ -802,14 +900,14 @@ export class SupaStruct<Name extends Names> {
 				'single'
 			);
 			if (transactionResult.isErr()) {
-				this.log(`Error fetching fromId ${id} from ${this.name}:`, transactionResult.error);
+				this.log(`Error fetching fromId ${id} from ${this.table}:`, transactionResult.error);
 				return undefined;
 			}
-			this.log(`Fetched fromId ${id} from ${this.name}:`, transactionResult.value);
+			this.log(`Fetched fromId ${id} from ${this.table}:`, transactionResult.value);
 
 			if (browser && transactionResult.value && config?.expires) {
 				SupaCache.new({
-					table: this.name,
+					table: this.table,
 					key: `id:${id}`,
 					value: [transactionResult.value],
 					expires: config?.expires || new Date(Date.now() + 5 * 60 * 1000) // Cache for 5 minutes
@@ -828,7 +926,10 @@ export class SupaStruct<Name extends Names> {
 	 * @param config - Read configuration.
 	 * @returns Reactive array of matches.
 	 */
-	get(data: Partial<Row<Name>>, config: ReadConfig<'all'>): SupaStructArray<Name>;
+	get(
+		data: Partial<Row<Schema, RowName>>,
+		config: ReadConfig<'all'>
+	): SupaStructArray<Schema, RowName>;
 	/**
 	 * Finds the first row where all provided fields are equal.
 	 *
@@ -837,11 +938,11 @@ export class SupaStruct<Name extends Names> {
 	 * @returns Async result with first match or `null`.
 	 */
 	get(
-		data: Partial<Row<Name>>,
+		data: Partial<Row<Schema, RowName>>,
 		config: ReadConfig<'single'>
-	): ResultPromise<SupaStructData<Name> | null>;
-	// get(data: Partial<Row<Name>>, config: ReadConfig<'count'>): ResultPromise<number>;
-	// get(data: Partial<Row<Name>>, config: ReadConfig<'paginated'>): SupaPagination<Name>;
+	): ResultPromise<SupaStructData<Schema, RowName> | null>;
+	// get(data: Partial<Row<Schema, Name>>, config: ReadConfig<'count'>): ResultPromise<number>;
+	// get(data: Partial<Row<Schema, Name>>, config: ReadConfig<'paginated'>): SupaPagination<Name>;
 	/**
 	 * AND filter read helper with cache and overload-based return types.
 	 *
@@ -851,7 +952,7 @@ export class SupaStruct<Name extends Names> {
 	 *
 	 * @example
 	 * const active = usersStruct.get(
-	 *   { archived: false } as Partial<Row<'users'>>,
+	 *   { username: 'some_username' } as Partial<Row<'users'>>,
 	 *   { type: 'all', expires: new Date(Date.now() + 60000) }
 	 * );
 	 *
@@ -861,7 +962,10 @@ export class SupaStruct<Name extends Names> {
 	 *   { type: 'single', expires: new Date(Date.now() + 60000) }
 	 * );
 	 */
-	get(data: Partial<Row<Name>>, config: ReadConfig<ReadType>): ReadReturnType<Name> {
+	get(
+		data: Partial<Row<Schema, RowName>>,
+		config: ReadConfig<ReadType>
+	): ReadReturnType<Schema, RowName> {
 		const cacheKey = JSON.stringify(`get:${JSON.stringify(data)}`);
 		const has = this.registeredArrays.get(cacheKey);
 		if (has) return has.array;
@@ -870,7 +974,7 @@ export class SupaStruct<Name extends Names> {
 		const get = async () => {
 			if (browser) {
 				const cache = await SupaCache.get(
-					{ table: this.name, key: cacheKey },
+					{ table: this.table, key: cacheKey },
 					{ pagination: false }
 				);
 				if (cache.isOk()) {
@@ -899,9 +1003,13 @@ export class SupaStruct<Name extends Names> {
 				}
 			}
 
-			let query = this.supabase.schema(schemaName).from(this.name).select('*');
+			let query = this.supabase.schema(this.schema).from(this.table).select('*');
 			for (const [key, value] of Object.entries(data)) {
-				query = query.filter(key, 'eq', value as any);
+				query = query.filter(key, 'eq', value);
+			}
+
+			if (config.includeArchived !== true) {
+				query = query.filter('archived', 'eq', false);
 			}
 
 			const res = await query;
@@ -914,7 +1022,7 @@ export class SupaStruct<Name extends Names> {
 			);
 			if (transactionResult.isErr()) {
 				this.log(
-					`Error fetching with get query ${JSON.stringify(data)} from ${this.name}:`,
+					`Error fetching with get query ${JSON.stringify(data)} from ${this.table}:`,
 					transactionResult.error
 				);
 				return [];
@@ -922,7 +1030,7 @@ export class SupaStruct<Name extends Names> {
 
 			if (browser && config.expires && res.data?.length) {
 				SupaCache.new({
-					table: this.name,
+					table: this.table,
 					key: cacheKey,
 					value: transactionResult.value,
 					expires: config.expires
@@ -936,7 +1044,7 @@ export class SupaStruct<Name extends Names> {
 			return attemptAsync(async () => {
 				const [res] = await get();
 				if (res) {
-					this.log(`Fetched with get query ${JSON.stringify(data)} from ${this.name}:`, res);
+					this.log(`Fetched with get query ${JSON.stringify(data)} from ${this.table}:`, res);
 					return this.Generator(res);
 				}
 				return null;
@@ -944,7 +1052,7 @@ export class SupaStruct<Name extends Names> {
 		}
 
 		get().then((data) => {
-			this.log(`Fetched with get query ${JSON.stringify(data)} from ${this.name}:`, data);
+			this.log(`Fetched with get query ${JSON.stringify(data)} from ${this.table}:`, data);
 			arr.set(data.map((item) => this.Generator(item)));
 		});
 
@@ -967,7 +1075,10 @@ export class SupaStruct<Name extends Names> {
 	 * @param config - Read configuration.
 	 * @returns Reactive array of matches.
 	 */
-	getOR(data: Partial<Row<Name>>, config: ReadConfig<'all'>): SupaStructArray<Name>;
+	getOR(
+		data: Partial<Row<Schema, RowName>>,
+		config: ReadConfig<'all'>
+	): SupaStructArray<Schema, RowName>;
 	/**
 	 * Finds first row where at least one provided field matches.
 	 *
@@ -976,11 +1087,11 @@ export class SupaStruct<Name extends Names> {
 	 * @returns Async result with first match or `null`.
 	 */
 	getOR(
-		data: Partial<Row<Name>>,
+		data: Partial<Row<Schema, RowName>>,
 		config: ReadConfig<'single'>
-	): ResultPromise<SupaStructData<Name> | null>;
-	// getOR(data: Partial<Row<Name>>, config: ReadConfig<'count'>): ResultPromise<number>;
-	// getOR(data: Partial<Row<Name>>, config: ReadConfig<'paginated'>): SupaPagination<Name>;
+	): ResultPromise<SupaStructData<Schema, RowName> | null>;
+	// getOR(data: Partial<Row<Schema, Name>>, config: ReadConfig<'count'>): ResultPromise<number>;
+	// getOR(data: Partial<Row<Schema, Name>>, config: ReadConfig<'paginated'>): SupaPagination<Name>;
 	/**
 	 * OR filter read helper with cache and overload-based return types.
 	 *
@@ -994,7 +1105,10 @@ export class SupaStruct<Name extends Names> {
 	 *   { type: 'all', expires: new Date(Date.now() + 60000) }
 	 * );
 	 */
-	getOR(data: Partial<Row<Name>>, config: ReadConfig<ReadType>): ReadReturnType<Name> {
+	getOR(
+		data: Partial<Row<Schema, RowName>>,
+		config: ReadConfig<ReadType>
+	): ReadReturnType<Schema, RowName> {
 		const cacheKey = JSON.stringify(`getOR:${JSON.stringify(data)}`);
 		const has = this.registeredArrays.get(cacheKey);
 		if (has) return has.array;
@@ -1002,7 +1116,7 @@ export class SupaStruct<Name extends Names> {
 		const get = async () => {
 			if (browser) {
 				const cache = await SupaCache.get(
-					{ table: this.name, key: cacheKey },
+					{ table: this.table, key: cacheKey },
 					{ pagination: false }
 				);
 				if (cache.isOk()) {
@@ -1031,10 +1145,14 @@ export class SupaStruct<Name extends Names> {
 				}
 			}
 
-			let query = this.supabase.schema(schemaName).from(this.name).select('*');
+			let query = this.supabase.schema(this.schema).from(this.table).select('*');
 			const keys = Object.keys(data);
 			for (const key of keys) {
 				query = query.or(`${key}.eq.${(data as any)[key]}`);
+			}
+
+			if (config.includeArchived !== true) {
+				query = query.filter('archived', 'eq', false);
 			}
 
 			const res = await query;
@@ -1047,7 +1165,7 @@ export class SupaStruct<Name extends Names> {
 			);
 			if (transactionResult.isErr()) {
 				this.log(
-					`Error fetching with getOR query ${JSON.stringify(data)} from ${this.name}:`,
+					`Error fetching with getOR query ${JSON.stringify(data)} from ${this.table}:`,
 					transactionResult.error
 				);
 				return [];
@@ -1055,7 +1173,7 @@ export class SupaStruct<Name extends Names> {
 
 			if (browser && config.expires && res.data?.length) {
 				SupaCache.new({
-					table: this.name,
+					table: this.table,
 					key: cacheKey,
 					value: transactionResult.value,
 					expires: config.expires
@@ -1069,7 +1187,7 @@ export class SupaStruct<Name extends Names> {
 			return attemptAsync(async () => {
 				const [res] = await get();
 				if (res) {
-					this.log(`Fetched with getOR query ${JSON.stringify(data)} from ${this.name}:`, res);
+					this.log(`Fetched with getOR query ${JSON.stringify(data)} from ${this.table}:`, res);
 					return this.Generator(res);
 				}
 				return null;
@@ -1078,7 +1196,7 @@ export class SupaStruct<Name extends Names> {
 
 		const arr = this.arr();
 		get().then((data) => {
-			this.log(`Fetched with getOR query ${JSON.stringify(data)} from ${this.name}:`, data);
+			this.log(`Fetched with getOR query ${JSON.stringify(data)} from ${this.table}:`, data);
 			arr.set(data.map((item) => this.Generator(item)));
 		});
 
@@ -1100,7 +1218,7 @@ export class SupaStruct<Name extends Names> {
 	 * @returns Empty `SupaStructArray`.
 	 */
 	arr() {
-		return new SupaStructArray<Name>([]);
+		return new SupaStructArray<Schema, RowName>([]);
 	}
 
 	/**
@@ -1110,7 +1228,10 @@ export class SupaStruct<Name extends Names> {
 	 * @param config - Read configuration.
 	 * @returns Reactive array of matches.
 	 */
-	search(query: SearchQuery<Name>, config: ReadConfig<'all'>): SupaStructArray<Name>;
+	search(
+		query: SearchQuery<Schema, RowName>,
+		config: ReadConfig<'all'>
+	): SupaStructArray<Schema, RowName>;
 	/**
 	 * Runs a structured search query and returns first match.
 	 *
@@ -1119,9 +1240,9 @@ export class SupaStruct<Name extends Names> {
 	 * @returns Async result with first match or `null`.
 	 */
 	search(
-		query: SearchQuery<Name>,
+		query: SearchQuery<Schema, RowName>,
 		config: ReadConfig<'single'>
-	): ResultPromise<SupaStructData<Name> | null>;
+	): ResultPromise<SupaStructData<Schema, RowName> | null>;
 	// search(query: SearchQuery<Name>, config: ReadConfig<'count'>): ResultPromise<number>;
 	// search(query: SearchQuery<Name>, config: ReadConfig<'paginated'>): SupaPagination<Name>;
 	/**
@@ -1146,17 +1267,20 @@ export class SupaStruct<Name extends Names> {
 	 *   expires: new Date(Date.now() + 60000)
 	 * });
 	 */
-	search(query: SearchQuery<Name>, config: ReadConfig<ReadType>): ReadReturnType<Name> {
+	search(
+		query: SearchQuery<Schema, RowName>,
+		config: ReadConfig<ReadType>
+	): ReadReturnType<Schema, RowName> {
 		const cacheKey = JSON.stringify(`search:${JSON.stringify(query)}`);
 		const has = this.registeredArrays.get(cacheKey);
 		if (has) return has.array;
 		const arr = this.arr();
 
-		const main = this.supabase.schema(schemaName).from(this.name).select('*');
+		const main = this.supabase.schema(this.schema).from(this.table).select('*');
 
-		const buildQuery = (base: typeof main, q: SearchQuery<Name>): typeof main => {
+		const buildQuery = (base: typeof main, q: SearchQuery<Schema, RowName>): typeof main => {
 			if ('field' in q) {
-				return base.filter(String(q.field), q.operator, q.value as any);
+				return base.filter(String(q.field), q.operator, q.value);
 			}
 			if (q.type === 'and') {
 				let current = base;
@@ -1184,7 +1308,7 @@ export class SupaStruct<Name extends Names> {
 		const get = async () => {
 			if (browser) {
 				const cache = await SupaCache.get(
-					{ table: this.name, key: cacheKey },
+					{ table: this.table, key: cacheKey },
 					{ pagination: false }
 				);
 				if (cache.isOk()) {
@@ -1213,7 +1337,12 @@ export class SupaStruct<Name extends Names> {
 				}
 			}
 
-			const queryBuilder = buildQuery(main, query);
+			let queryBuilder = buildQuery(main, query);
+
+			if (config.includeArchived !== true) {
+				queryBuilder = queryBuilder.filter('archived', 'eq', false);
+			}
+
 			const res = await queryBuilder;
 			const transactionResult = this.runTransaction(
 				{
@@ -1224,7 +1353,7 @@ export class SupaStruct<Name extends Names> {
 			);
 			if (transactionResult.isErr()) {
 				this.log(
-					`Error fetching with search query ${JSON.stringify(query)} from ${this.name}:`,
+					`Error fetching with search query ${JSON.stringify(query)} from ${this.table}:`,
 					transactionResult.error
 				);
 				return [];
@@ -1232,7 +1361,7 @@ export class SupaStruct<Name extends Names> {
 
 			if (browser && config.expires && res.data?.length) {
 				SupaCache.new({
-					table: this.name,
+					table: this.table,
 					key: cacheKey,
 					value: transactionResult.value,
 					expires: config.expires
@@ -1246,7 +1375,7 @@ export class SupaStruct<Name extends Names> {
 			return attemptAsync(async () => {
 				const [res] = await get();
 				if (res) {
-					this.log(`Fetched with search query ${JSON.stringify(query)} from ${this.name}:`, res);
+					this.log(`Fetched with search query ${JSON.stringify(query)} from ${this.table}:`, res);
 					return this.Generator(res);
 				}
 				return null;
@@ -1258,7 +1387,7 @@ export class SupaStruct<Name extends Names> {
 		});
 
 		this.registerArray(cacheKey, arr, (row) => {
-			const evaluateQuery = (q: SearchQuery<Name>): boolean => {
+			const evaluateQuery = (q: SearchQuery<Schema, RowName>): boolean => {
 				if ('field' in q) {
 					const rowValue = (row as any)[q.field];
 					switch (q.operator) {
@@ -1312,7 +1441,7 @@ export class SupaStruct<Name extends Names> {
 		const get = async () => {
 			if (browser) {
 				const cache = await SupaCache.get(
-					{ table: this.name, key: cacheKey },
+					{ table: this.table, key: cacheKey },
 					{ pagination: false }
 				);
 				if (cache.isOk()) {
@@ -1329,10 +1458,10 @@ export class SupaStruct<Name extends Names> {
 			}
 
 			const res = await this.supabase
-				.schema(schemaName)
-				.from(this.name)
+				.schema(this.schema)
+				.from(this.table)
 				.select('*')
-				.filter('archived', 'eq', true as any);
+				.filter('archived', 'eq', true);
 			const transactionResult = this.runTransaction(
 				{
 					data: res.data as any,
@@ -1341,14 +1470,14 @@ export class SupaStruct<Name extends Names> {
 				'array'
 			);
 			if (transactionResult.isErr()) {
-				this.log(`Error fetching archived from ${this.name}:`, transactionResult.error);
+				this.log(`Error fetching archived from ${this.table}:`, transactionResult.error);
 				return [];
 			}
 
 			if (browser) {
 				if (res.data?.length) {
 					SupaCache.new({
-						table: this.name,
+						table: this.table,
 						key: cacheKey,
 						value: transactionResult.value,
 						expires: new Date(Date.now() + 5 * 60 * 1000) // Cache for 5 minutes
@@ -1361,7 +1490,7 @@ export class SupaStruct<Name extends Names> {
 		get().then((data) => {
 			arr.set(data.map((item) => this.Generator(item)));
 		});
-		this.registerArray(cacheKey, arr, (data) => data.archived === true);
+		this.registerArray(cacheKey, arr, (data) => (data as { archived?: boolean }).archived === true);
 		return arr;
 	}
 
@@ -1371,7 +1500,14 @@ export class SupaStruct<Name extends Names> {
 	 * @param ids - List of row ids.
 	 * @returns Reactive array populated with matching rows.
 	 */
-	fromIds(ids: Row<Name>['id'][]) {
+	fromIds(ids: string[], config: ReadConfig<'all'>): SupaStructArray<Schema, RowName>;
+	fromIds(
+		ids: string[],
+		config: ReadConfig<'single'>
+	): ResultPromise<SupaStructData<Schema, RowName> | null>;
+	// fromIds(ids: Row<Schema, Name>['id'][], config: ReadConfig<'count'>): ResultPromise<number>;
+	// fromIds(ids: Row<Schema, Name>['id'][], config: ReadConfig<'paginated'>): SupaPagination<Name>;
+	fromIds(ids: string[], config: ReadConfig<ReadType>): ReadReturnType<Schema, RowName> {
 		const cacheKey = JSON.stringify(`fromIds:${JSON.stringify(ids)}`);
 		const has = this.registeredArrays.get(cacheKey);
 		if (has) return has.array;
@@ -1379,7 +1515,7 @@ export class SupaStruct<Name extends Names> {
 		const get = async () => {
 			if (browser) {
 				const cache = await SupaCache.get(
-					{ table: this.name, key: cacheKey },
+					{ table: this.table, key: cacheKey },
 					{ pagination: false }
 				);
 				if (cache.isOk()) {
@@ -1395,11 +1531,19 @@ export class SupaStruct<Name extends Names> {
 				}
 			}
 
-			const res = await this.supabase
-				.schema(schemaName)
-				.from(this.name)
+			let query = this.supabase
+				.schema(this.schema)
+				.from(this.table)
 				.select('*')
 				.in('id', ids as any);
+
+
+			if (config.includeArchived !== true) {
+				query = query.filter('archived', 'eq', false);
+			}
+
+			const res = await query;
+
 			const transactionResult = this.runTransaction(
 				{
 					data: res.data as any,
@@ -1408,14 +1552,14 @@ export class SupaStruct<Name extends Names> {
 				'array'
 			);
 			if (transactionResult.isErr()) {
-				this.log(`Error fetching fromIds from ${this.name}:`, transactionResult.error);
+				this.log(`Error fetching fromIds from ${this.table}:`, transactionResult.error);
 				return [];
 			}
 
 			if (browser) {
 				if (res.data?.length) {
 					SupaCache.new({
-						table: this.name,
+						table: this.table,
 						key: cacheKey,
 						value: transactionResult.value,
 						expires: new Date(Date.now() + 5 * 60 * 1000) // Cache for 5 minutes
@@ -1425,10 +1569,24 @@ export class SupaStruct<Name extends Names> {
 
 			return transactionResult.value;
 		};
+
+		if (config.type === 'single') {
+			return attemptAsync(async () => {
+				const [res] = await get();
+				if (res) {
+					this.log(`Fetched fromIds query ${ids} from ${this.table}:`, res);
+					return this.Generator(res);
+				}
+				return null;
+			});
+		}
+
 		get().then((data) => {
 			arr.set(data.map((item) => this.Generator(item)));
 		});
-		this.registerArray(cacheKey, arr, (data) => ids.includes(String(data.id) as any));
+		this.registerArray(cacheKey, arr, (data) =>
+			ids.includes(String((data as { id?: unknown }).id))
+		);
 		return arr;
 	}
 }
@@ -1451,15 +1609,15 @@ export class SupaStruct<Name extends Names> {
  *   ]
  * };
  */
-export type SearchQuery<Name extends Names> =
+export type SearchQuery<Schema extends RowSchemaName, Name extends RowTableNames<Schema>> =
 	| {
-			field: keyof Row<Name>;
+			field: keyof Row<Schema, Name>;
 			operator: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'like' | 'ilike';
-			value: Row<Name>[keyof Row<Name>];
+			value: Row<Schema, Name>[keyof Row<Schema, Name>];
 	  }
 	| {
 			type: 'and' | 'or';
-			conditions: SearchQuery<Name>[];
+			conditions: SearchQuery<Schema, Name>[];
 	  };
 
 /**
@@ -1467,7 +1625,10 @@ export type SearchQuery<Name extends Names> =
  *
  * @template Name - Table name represented by each array item.
  */
-export class SupaStructArray<Name extends Names> extends WritableArray<SupaStructData<Name>> {}
+export class SupaStructArray<
+	Schema extends RowSchemaName,
+	Name extends RowTableNames<Schema>
+> extends WritableArray<SupaStructData<Schema, Name>> {}
 
 /**
  * Helper for many-to-many style linking tables between two structs.
@@ -1476,10 +1637,24 @@ export class SupaStructArray<Name extends Names> extends WritableArray<SupaStruc
  * @template TableA - Left table name.
  * @template TableB - Right table name.
  */
-export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB extends Names> {
+export class SupaLinkingStruct<
+	LinkSchema extends RowSchemaName,
+	Link extends RowTableNames<LinkSchema>,
+	SchemaA extends RowSchemaName,
+	TableA extends RowTableNames<SchemaA>,
+	SchemaB extends RowSchemaName,
+	TableB extends RowTableNames<SchemaB>
+> {
 	private static readonly linkingStructs = new Map<
 		string,
-		SupaLinkingStruct<Names, Names, Names>
+		SupaLinkingStruct<
+			RowSchemaName,
+			RowTableNames<RowSchemaName>,
+			RowSchemaName,
+			RowTableNames<RowSchemaName>,
+			RowSchemaName,
+			RowTableNames<RowSchemaName>
+		>
 	>();
 
 	/**
@@ -1494,18 +1669,26 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 	 * @param config - Optional debug config.
 	 * @returns Linking helper instance.
 	 */
-	public static get<Link extends Names, TableA extends Names, TableB extends Names>(
+	public static get<
+		LinkSchema extends RowSchemaName,
+		Link extends RowTableNames<LinkSchema>,
+		SchemaA extends RowSchemaName,
+		TableA extends RowTableNames<SchemaA>,
+		SchemaB extends RowSchemaName,
+		TableB extends RowTableNames<SchemaB>
+	>(
+		schema: LinkSchema,
 		linkingTable: Link,
-		structA: SupaStruct<TableA>,
-		structB: SupaStruct<TableB>,
+		structA: SupaStruct<SchemaA, TableA>,
+		structB: SupaStruct<SchemaB, TableB>,
 		config?: {
 			debug?: boolean;
 		}
-	): SupaLinkingStruct<Link, TableA, TableB> {
+	): SupaLinkingStruct<LinkSchema, Link, SchemaA, TableA, SchemaB, TableB> {
 		// const key = `${linkingTable}-${structA.name}-${structB.name}`;
 		// const existing = SupaLinkingStruct.linkingStructs.get(key);
-		// if (existing) return existing as unknown as SupaLinkingStruct<Link, TableA, TableB>;
-		const newStruct = new SupaLinkingStruct(linkingTable, structA, structB, config);
+		// if (existing) return existing as unknown as SupaLinkingStruct<LinkSchema, Link, SchemaA, TableA, TableB>;
+		const newStruct = new SupaLinkingStruct(schema, linkingTable, structA, structB, config);
 		// if (browser) SupaLinkingStruct.linkingStructs.set(key, newStruct as any);
 		return newStruct;
 	}
@@ -1519,9 +1702,10 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 	 * @param config - Optional debug configuration.
 	 */
 	constructor(
+		public readonly schema: LinkSchema,
 		public readonly linkingTable: Link,
-		public readonly structA: SupaStruct<TableA>,
-		public readonly structB: SupaStruct<TableB>,
+		public readonly structA: SupaStruct<SchemaA, TableA>,
+		public readonly structB: SupaStruct<SchemaB, TableB>,
 		public readonly config: {
 			debug?: boolean;
 		} = {}
@@ -1543,7 +1727,7 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 	 */
 	log(...args: unknown[]) {
 		if (this.config.debug) {
-			console.log(`[SupaLinkingStruct ${this.linkingTable}]`, ...args);
+			console.log(`[SupaLinkingStruct ${String(this.linkingTable)}]`, ...args);
 		}
 	}
 
@@ -1554,20 +1738,21 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 	 * @param b - Right-side row wrapper.
 	 * @returns Async status writable with `null` on success.
 	 */
-	link(a: SupaStructData<TableA>, b: SupaStructData<TableB>) {
+	link(a: SupaStructData<SchemaA, TableA>, b: SupaStructData<SchemaB, TableB>) {
 		const status = new SupaStatus<null>();
 		this.supabase
-			.from(this.linkingTable)
+			.schema(this.schema)
+			.from(String(this.linkingTable))
 			.insert({
-				[`${this.structA.name}_id`]: a.data.id,
-				[`${this.structB.name}_id`]: b.data.id
+				[`${this.structA.table}_id`]: (a.data as any).id,
+				[`${this.structB.table}_id`]: (b.data as any).id
 			} as any)
 			.then((res) => {
 				if (res.error) {
 					status.set({
 						pending: false,
 						error: new Error(
-							`Failed to link ${this.structA.name} and ${this.structB.name}: ` + res.error.message
+							`Failed to link ${this.structA.table} and ${this.structB.table}: ` + res.error.message
 						)
 					});
 				} else {
@@ -1587,19 +1772,21 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 	 * @param b - Right-side row wrapper.
 	 * @returns Async status writable with `null` on success.
 	 */
-	unlink(a: SupaStructData<TableA>, b: SupaStructData<TableB>) {
+	unlink(a: SupaStructData<SchemaA, TableA>, b: SupaStructData<SchemaB, TableB>) {
 		const status = new SupaStatus<null>();
 		this.supabase
-			.from(this.linkingTable)
+			.schema(this.schema)
+			.from(String(this.linkingTable))
 			.delete()
-			.filter(`${this.structA.name}_id`, 'eq', a.data.id as any)
-			.filter(`${this.structB.name}_id`, 'eq', b.data.id as any)
+			.filter(`${this.structA.table}_id`, 'eq', (a.data as any).id)
+			.filter(`${this.structB.table}_id`, 'eq', (b.data as any).id)
 			.then((res) => {
 				if (res.error) {
 					status.set({
 						pending: false,
 						error: new Error(
-							`Failed to unlink ${this.structA.name} and ${this.structB.name}: ` + res.error.message
+							`Failed to unlink ${this.structA.table} and ${this.structB.table}: ` +
+								res.error.message
 						)
 					});
 				} else {
@@ -1620,9 +1807,9 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 	 * @returns Writable array of linked A records.
 	 */
 	getLinkedA(
-		b: SupaStructData<TableB>,
+		b: SupaStructData<SchemaB, TableB>,
 		config: ReadConfig<'all'>
-	): WritableArray<SupaStructData<TableA>>;
+	): WritableArray<SupaStructData<SchemaA, TableA>>;
 	/**
 	 * Reads the first A record linked to a B record.
 	 *
@@ -1631,9 +1818,9 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 	 * @returns Async result with first linked A record or `null`.
 	 */
 	getLinkedA(
-		b: SupaStructData<TableB>,
+		b: SupaStructData<SchemaB, TableB>,
 		config: ReadConfig<'single'>
-	): ResultPromise<SupaStructData<TableA> | null>;
+	): ResultPromise<SupaStructData<SchemaA, TableA> | null>;
 	/**
 	 * Fetches A-side links with browser cache persistence.
 	 *
@@ -1648,12 +1835,14 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 	 * });
 	 */
 	getLinkedA(
-		b: SupaStructData<TableB>,
+		b: SupaStructData<SchemaB, TableB>,
 		config: ReadConfig<'all'> | ReadConfig<'single'>
-	): WritableArray<SupaStructData<TableA>> | ResultPromise<SupaStructData<TableA> | null> {
-		const cacheKey = `getLinkedA:${b.data.id}`;
+	):
+		| WritableArray<SupaStructData<SchemaA, TableA>>
+		| ResultPromise<SupaStructData<SchemaA, TableA> | null> {
+		const cacheKey = `getLinkedA:${(b.data as any).id}`;
 
-		const get = async (): Promise<SupaStructData<TableA>[]> => {
+		const get = async (): Promise<SupaStructData<SchemaA, TableA>[]> => {
 			if (browser) {
 				const cache = await SupaCache.get(
 					{ table: String(this.linkingTable), key: cacheKey },
@@ -1665,8 +1854,11 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 						if (new Date() >= cached.data.expires) {
 							cached.delete();
 						} else {
-							this.log(`Using cached data for getLinkedA ${b.data.id}:`, cached.data.value);
-							return (cached.data.value as PartialRow<TableA>[]).map((i) =>
+							this.log(
+								`Using cached data for getLinkedA ${(b.data as any).id}:`,
+								cached.data.value
+							);
+							return (cached.data.value as PartialRow<SchemaA, TableA>[]).map((i) =>
 								this.structA.Generator(i)
 							);
 						}
@@ -1675,20 +1867,22 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 			}
 
 			const res = await this.supabase
-				.from(this.linkingTable)
-				.select(`*, ${this.structA.name}.*`)
-				.filter(`${this.structB.name}_id`, 'eq', b.data.id as any);
+				.schema(this.schema)
+				.from(String(this.linkingTable))
+				.select(`*, ${this.structA.table}.*`)
+				.filter(`${this.structB.table}_id`, 'eq', (b.data as any).id);
 
 			if (res.error) {
 				console.error(
-					`Failed to fetch linked ${this.structA.name} for ${this.structB.name} with id ${b.data.id}:`,
+					`Failed to fetch linked ${this.structA.table} for ${this.structB.table} with id ${(b.data as any).id}:`,
 					res.error
 				);
 				return [];
 			}
 
-			const rows: PartialRow<TableA>[] =
-				res.data?.map((item) => (item as any)[this.structA.name] as PartialRow<TableA>) || [];
+			const rows: PartialRow<SchemaA, TableA>[] =
+				res.data?.map((item) => (item as any)[this.structA.table] as PartialRow<SchemaA, TableA>) ||
+				[];
 
 			if (browser && config.expires && rows.length) {
 				SupaCache.new({
@@ -1709,7 +1903,7 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 			});
 		}
 
-		const arr: WritableArray<SupaStructData<TableA>> = this.structA.arr();
+		const arr: WritableArray<SupaStructData<SchemaA, TableA>> = this.structA.arr();
 		get().then((data) => arr.set(data));
 		return arr;
 	}
@@ -1722,9 +1916,9 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 	 * @returns Writable array of linked B records.
 	 */
 	getLinkedB(
-		b: SupaStructData<TableA>,
+		b: SupaStructData<SchemaA, TableA>,
 		config: ReadConfig<'all'>
-	): WritableArray<SupaStructData<TableB>>;
+	): WritableArray<SupaStructData<SchemaB, TableB>>;
 	/**
 	 * Reads the first B record linked to an A record.
 	 *
@@ -1733,9 +1927,9 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 	 * @returns Async result with first linked B record or `null`.
 	 */
 	getLinkedB(
-		b: SupaStructData<TableA>,
+		b: SupaStructData<SchemaA, TableA>,
 		config: ReadConfig<'single'>
-	): ResultPromise<SupaStructData<TableB> | null>;
+	): ResultPromise<SupaStructData<SchemaB, TableB> | null>;
 	/**
 	 * Fetches B-side links with browser cache persistence.
 	 *
@@ -1750,12 +1944,14 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 	 * });
 	 */
 	getLinkedB(
-		b: SupaStructData<TableA>,
+		b: SupaStructData<SchemaA, TableA>,
 		config: ReadConfig<'all'> | ReadConfig<'single'>
-	): WritableArray<SupaStructData<TableB>> | ResultPromise<SupaStructData<TableB> | null> {
-		const cacheKey = `getLinkedB:${b.data.id}`;
+	):
+		| WritableArray<SupaStructData<SchemaB, TableB>>
+		| ResultPromise<SupaStructData<SchemaB, TableB> | null> {
+		const cacheKey = `getLinkedB:${(b.data as any).id}`;
 
-		const get = async (): Promise<SupaStructData<TableB>[]> => {
+		const get = async (): Promise<SupaStructData<SchemaB, TableB>[]> => {
 			if (browser) {
 				const cache = await SupaCache.get(
 					{ table: String(this.linkingTable), key: cacheKey },
@@ -1767,8 +1963,11 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 						if (new Date() >= cached.data.expires) {
 							cached.delete();
 						} else {
-							this.log(`Using cached data for getLinkedB ${b.data.id}:`, cached.data.value);
-							return (cached.data.value as PartialRow<TableB>[]).map((i) =>
+							this.log(
+								`Using cached data for getLinkedB ${(b.data as any).id}:`,
+								cached.data.value
+							);
+							return (cached.data.value as PartialRow<SchemaB, TableB>[]).map((i) =>
 								this.structB.Generator(i)
 							);
 						}
@@ -1777,20 +1976,22 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 			}
 
 			const res = await this.supabase
-				.from(this.linkingTable)
-				.select(`*, ${this.structB.name}.*`)
-				.filter(`${this.structA.name}_id`, 'eq', b.data.id as any);
+				.schema(this.schema)
+				.from(String(this.linkingTable))
+				.select(`*, ${this.structB.table}.*`)
+				.filter(`${this.structA.table}_id`, 'eq', (b.data as any).id);
 
 			if (res.error) {
 				console.error(
-					`Failed to fetch linked ${this.structB.name} for ${this.structA.name} with id ${b.data.id}:`,
+					`Failed to fetch linked ${this.structB.table} for ${this.structA.table} with id ${(b.data as any).id}:`,
 					res.error
 				);
 				return [];
 			}
 
-			const rows: PartialRow<TableB>[] =
-				res.data?.map((item) => (item as any)[this.structB.name] as PartialRow<TableB>) || [];
+			const rows: PartialRow<SchemaB, TableB>[] =
+				res.data?.map((item) => (item as any)[this.structB.table] as PartialRow<SchemaB, TableB>) ||
+				[];
 
 			if (browser && config.expires && rows.length) {
 				SupaCache.new({
@@ -1811,7 +2012,7 @@ export class SupaLinkingStruct<Link extends Names, TableA extends Names, TableB 
 			});
 		}
 
-		const arr: WritableArray<SupaStructData<TableB>> = this.structB.arr();
+		const arr: WritableArray<SupaStructData<SchemaB, TableB>> = this.structB.arr();
 		get().then((data) => arr.set(data));
 		return arr;
 	}

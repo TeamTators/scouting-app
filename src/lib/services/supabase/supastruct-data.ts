@@ -1,7 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { WritableBase } from '../writables';
 import { SupaStaging } from './supastaging';
-import { type Names, type PartialRow, type Row, SupaStruct, SupaStatus } from './supastruct';
+import {
+	type PartialRow,
+	type Row,
+	SupaStruct,
+	SupaStatus,
+	type RowTableName,
+	type RowSchemaName
+} from './supastruct';
 
 /**
  * Reactive wrapper around a single table row.
@@ -18,7 +25,10 @@ import { type Names, type PartialRow, type Row, SupaStruct, SupaStatus } from '.
  * const row = usersStruct.Generator({ id: 'u_1', email: 'a@b.com' });
  * const id = row.id;
  */
-export class SupaStructData<Name extends Names> extends WritableBase<PartialRow<Name>> {
+export class SupaStructData<
+	RowSchema extends RowSchemaName,
+	Name extends RowTableName<RowSchema>
+> extends WritableBase<PartialRow<RowSchema, Name>> {
 	/**
 	 * Creates a reactive row wrapper.
 	 *
@@ -26,8 +36,8 @@ export class SupaStructData<Name extends Names> extends WritableBase<PartialRow<
 	 * @param data - Initial row snapshot.
 	 */
 	constructor(
-		public readonly struct: SupaStruct<Name>,
-		data: PartialRow<Name>
+		public readonly struct: SupaStruct<RowSchema, Name>,
+		data: PartialRow<RowSchema, Name>
 	) {
 		super(data);
 	}
@@ -38,7 +48,7 @@ export class SupaStructData<Name extends Names> extends WritableBase<PartialRow<
 	 * @returns Current `id` value from row data, if present.
 	 */
 	get id() {
-		return this.data.id;
+		return (this.data as any).id as string | undefined;
 	}
 
 	/**
@@ -47,11 +57,15 @@ export class SupaStructData<Name extends Names> extends WritableBase<PartialRow<
 	 * @returns Current `archived` value from row data, if present.
 	 */
 	get archived() {
-		return this.data.archived;
+		return (this.data as any).archived as boolean | undefined;
+	}
+
+	get created() {
+		return new Date(String((this.data as any).created_at));
 	}
 
 	private _log(...args: unknown[]) {
-		this.struct['log'](`Data with id ${this.data.id}:`, ...args);
+		this.struct['log'](`Data with id ${this.id}:`, ...args);
 	}
 
 	/**
@@ -81,14 +95,15 @@ export class SupaStructData<Name extends Names> extends WritableBase<PartialRow<
 	 * @throws Does not throw synchronously unless `fn` throws. Errors are captured
 	 * into the returned `SupaStatus`.
 	 */
-	update(fn: (data: PartialRow<Name>) => PartialRow<Name>) {
-		const status = new SupaStatus<PartialRow<Name>>();
+	update(fn: (data: PartialRow<RowSchema, Name>) => PartialRow<RowSchema, Name>) {
+		const status = new SupaStatus<PartialRow<RowSchema, Name>>();
 		try {
 			const updateData = fn(this.data);
 			this.supabase
-				.from(this.struct.name)
+				.schema(this.struct.schema)
+				.from(this.struct.table)
 				.update(updateData as any)
-				.filter('id', 'eq', this.data.id as any)
+				.filter('id', 'eq', this.id)
 				.select('*')
 				.then((res) => {
 					const transactionResult = this.struct.runTransaction(
@@ -103,7 +118,7 @@ export class SupaStructData<Name extends Names> extends WritableBase<PartialRow<
 						status.set({
 							pending: false,
 							error: new Error(
-								`Failed to update row in table ${this.struct.name}: ` +
+								`Failed to update row in table ${this.struct.table}: ` +
 									transactionResult.error.message
 							)
 						});
@@ -134,9 +149,10 @@ export class SupaStructData<Name extends Names> extends WritableBase<PartialRow<
 	delete() {
 		const status = new SupaStatus<null>();
 		this.supabase
-			.from(this.struct.name)
+			.schema(this.struct.schema)
+			.from(this.struct.table)
 			.delete()
-			.filter('id', 'eq', this.data.id as any)
+			.filter('id', 'eq', this.id)
 			.then((res) => {
 				const transactionResult = this.struct.runTransaction(
 					{
@@ -150,7 +166,7 @@ export class SupaStructData<Name extends Names> extends WritableBase<PartialRow<
 					status.set({
 						pending: false,
 						error: new Error(
-							`Failed to delete row in table ${this.struct.name}: ` +
+							`Failed to delete row in table ${this.struct.table}: ` +
 								transactionResult.error.message
 						)
 					});
@@ -189,8 +205,10 @@ export class SupaStructData<Name extends Names> extends WritableBase<PartialRow<
 	 * const emailState = row.derivedProperty('email');
 	 * const un = emailState.subscribe((email) => console.log(email));
 	 */
-	derivedProperty(name: keyof Row<Name>) {
-		const state = new WritableBase<Row<Name>[keyof Row<Name>] | undefined>(this.data[name]);
+	derivedProperty(name: keyof Row<RowSchema, Name>) {
+		const state = new WritableBase<Row<RowSchema, Name>[keyof Row<RowSchema, Name>] | undefined>(
+			this.data[name]
+		);
 		let currentValue = this.data[name];
 		state.on(
 			'all-unsubscribe',
@@ -202,5 +220,26 @@ export class SupaStructData<Name extends Names> extends WritableBase<PartialRow<
 			})
 		);
 		return state;
+	}
+
+	/**
+	 * Sets the `archived` flag to `true` for this row.
+	 * @returns Writable status that resolves to the updated row payload on success.
+	 *
+	 * @example
+	 * const status = row.archive();
+	 * status.subscribe((result) => {
+	 *   if (result.error) {
+	 *     console.error('Failed to archive:', result.error);
+	 *   } else {
+	 *     console.log('Row archived successfully:', result.result);
+	 *   }
+	 * });
+	 */
+	archive() {
+		return this.update((current) => ({
+			...current,
+			archived: true as any
+		}));
 	}
 }

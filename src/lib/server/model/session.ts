@@ -57,7 +57,7 @@ export class Session {
 	constructor(
 		public readonly config: {
 			session: S;
-			customSession: SupaStructData<'session'>;
+			customSession: SupaStructData<'core', 'session'>;
 			client: Client;
 			debug?: boolean;
 		}
@@ -256,7 +256,7 @@ class SessionFactory {
 		public readonly config: {
 			client: Client;
 			debug?: boolean;
-			session: SupaStruct<'session'>;
+			session: SupaStruct<'core', 'session'>;
 		}
 	) {}
 
@@ -287,7 +287,7 @@ class SessionFactory {
 	 * @returns {Session} New Session instance.
 	 * @private
 	 */
-	Generator(session: S, customSession: SupaStructData<'session'>) {
+	Generator(session: S, customSession: SupaStructData<'core', 'session'>) {
 		return new Session({
 			session,
 			customSession,
@@ -320,7 +320,7 @@ class SessionFactory {
 				.parse(JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString()));
 
 			const sessionId = payload.session_id;
-			let session: SupaStructData<'session'>;
+			let session: SupaStructData<'core', 'session'>;
 			const res = await this.config.session
 				.upsert({
 					id: sessionId,
@@ -380,7 +380,8 @@ export const getSessionFactory = (
 	const factory = new SessionFactory({
 		client,
 		session: SupaStruct.get({
-			name: 'session',
+			table: 'session',
+			schema: 'core',
 			client: supabase,
 			...config
 		})
