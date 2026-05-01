@@ -61,7 +61,7 @@ export class SupaStructData<
 	}
 
 	get created() {
-		return (this.data as any).created as string | undefined;
+		return new Date(String((this.data as any).created_at));
 	}
 
 	private _log(...args: unknown[]) {

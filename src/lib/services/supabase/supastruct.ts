@@ -149,7 +149,7 @@ export type ReadReturnType<Schema extends RowSchemaName, RowName extends RowTabl
 export type ReadConfig<T extends ReadType> = {
 	type: T;
 	expires?: Date;
-	archived?: boolean;
+	includeArchived?: boolean;
 } & (T extends 'all'
 	? {}
 	: T extends 'paginated'
@@ -202,7 +202,6 @@ export class SupaStruct<
 	public static get<Schema extends RowSchemaName, Name extends RowTableNames<Schema>>(
 		config: SupaConfig<Schema, Name>
 	): SupaStruct<Schema, Name> {
-		console.log(`Getting struct for table ${String(config.table)} in schema ${config.schema}`);
 		// const existing = SupaStruct.structs.get(config.name);
 		// if (existing) return existing as unknown as SupaStruct<Name>;
 		return new SupaStruct(config);
@@ -250,7 +249,6 @@ export class SupaStruct<
 		this.channel = this.supabase.channel(`struct.${this.schema}.${this.table}`);
 		// SupaStruct.structs.set(this.config.name, this as any);
 		this.log(`Initialized struct for schema ${this.schema} table ${this.table}`);
-		console.log(schemas, config.schema);
 		if (!Object.keys(schemas).includes(this.schema)) {
 			throw new Error(
 				`Schema ${this.schema} not found in generated types. Please ensure your Supabase schema is correctly represented in your zod definitions.`
@@ -627,11 +625,18 @@ export class SupaStruct<
 				}
 			}
 
-			const transaction = await this.supabase
+			let query = this.supabase
 				.schema(this.schema)
 				.from(this.table)
 				.select('*') //,
-				.filter('archived', 'eq', config.archived ?? false);
+				.filter('archived', 'eq', config.includeArchived ?? false);
+			
+
+			if (config.includeArchived !== true) {
+				query = query.filter('archived', 'eq', false);
+			}
+
+			const transaction = await query;
 
 			const res = this.runTransaction(
 				{
@@ -1003,7 +1008,7 @@ export class SupaStruct<
 				query = query.filter(key, 'eq', value);
 			}
 
-			if (!config.archived) {
+			if (config.includeArchived !== true) {
 				query = query.filter('archived', 'eq', false);
 			}
 
@@ -1146,7 +1151,7 @@ export class SupaStruct<
 				query = query.or(`${key}.eq.${(data as any)[key]}`);
 			}
 
-			if (!config.archived) {
+			if (config.includeArchived !== true) {
 				query = query.filter('archived', 'eq', false);
 			}
 
@@ -1334,7 +1339,7 @@ export class SupaStruct<
 
 			let queryBuilder = buildQuery(main, query);
 
-			if (!config.archived) {
+			if (config.includeArchived !== true) {
 				queryBuilder = queryBuilder.filter('archived', 'eq', false);
 			}
 
@@ -1526,12 +1531,19 @@ export class SupaStruct<
 				}
 			}
 
-			const res = await this.supabase
+			let query = this.supabase
 				.schema(this.schema)
 				.from(this.table)
 				.select('*')
-				.in('id', ids as any)
-				.filter('archived', 'eq', config.archived ?? false);
+				.in('id', ids as any);
+
+
+			if (config.includeArchived !== true) {
+				query = query.filter('archived', 'eq', false);
+			}
+
+			const res = await query;
+
 			const transactionResult = this.runTransaction(
 				{
 					data: res.data as any,
