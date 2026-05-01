@@ -42,7 +42,8 @@
 		"sb:push": "pnpm sb:db db push",
 		"sb:pull": "pnpm script supabase/sb-pull",
 		"sb:diff": "npx supabase db diff",
-		"sb:status": "npx supabase status"
+		"sb:status": "npx supabase status",
+		"sb:migration": "npx supabase migration new"
 	},
 	"packageManager": "pnpm@10.30.0",
 	"engines": {
