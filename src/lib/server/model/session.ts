@@ -3,8 +3,7 @@
  * Provides Session class for managing individual session state, and SessionFactory for creating and retrieving sessions.
  * All async operations return typed Results via attemptAsync for consistent error handling.
  */
-import { SupaStruct, type Client } from '$lib/services/supabase/supastruct';
-import { SupaStructData } from '$lib/services/supabase/supastruct-data';
+import { SupaStruct, type Client, SupaStructData } from '$lib/services/supabase/supastruct.svelte';
 import { type Provider, type Session as S } from '@supabase/supabase-js';
 import { attemptAsync } from 'ts-utils';
 import { getAccountFactory } from '$lib/model/account';
@@ -327,7 +326,6 @@ class SessionFactory {
 					account_id: data.session.user.id,
 					prev_url: setUrl
 				})
-				.await()
 				.unwrap();
 			if ('error' in res) {
 				throw res.error;

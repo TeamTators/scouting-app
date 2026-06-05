@@ -14,9 +14,9 @@ import {
 	type SearchQuery,
 	type ReadReturnType,
 	SupaStructArray,
-	SupaLinkingStruct
-} from '$lib/services/supabase/supastruct';
-import { SupaStructData } from '$lib/services/supabase/supastruct-data';
+	SupaLinkingStruct,
+	SupaStructData
+} from '$lib/services/supabase/supastruct.svelte';
 import { WritableArray, WritableBase } from '$lib/services/writables';
 // import { TempMap } from '$lib/utils/temp-map';
 import type { Session } from '@supabase/supabase-js';
