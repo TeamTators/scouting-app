@@ -1,13 +1,97 @@
+// Professional, modern default text styles
+p {
+	font-size: 1rem;
+	line-height: 1.5;
+	margin-bottom: 0.75em;
+	color: inherit;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	font-weight: 600;
+	line-height: 1.2;
+	color: inherit;
+	margin-top: 1.2em;
+	margin-bottom: 0.5em;
+}
+h1 {
+	font-size: 2rem;
+}
+h2 {
+	font-size: 1.5rem;
+}
+h3 {
+	font-size: 1.25rem;
+}
+h4 {
+	font-size: 1.125rem;
+}
+h5 {
+	font-size: 1rem;
+}
+h6 {
+	font-size: 0.875rem;
+}
+small {
+	font-size: 0.8125rem;
+	color: var(--text-layer-2, #6c757d);
+}
 // Overwrite Bootstrap padding and margin
 
+// Tighter, more professional spacers
 $spacers: (
 	0: 0,
-	1: 0.125rem,
-	2: 0.25rem,
-	3: 0.5rem,
-	4: 0.75rem,
-	5: 1rem
+	1: 0.08rem,
+	2: 0.18rem,
+	3: 0.32rem,
+	4: 0.5rem,
+	5: 0.75rem,
+	6: 1rem
 );
+// Font size utilities (GitHub-like scale)
+.fs-xs {
+	font-size: 0.8125rem !important;
+} // 13px
+.fs-sm {
+	font-size: 0.875rem !important;
+} // 14px
+.fs-base {
+	font-size: 1rem !important;
+} // 16px
+.fs-md {
+	font-size: 1.125rem !important;
+} // 18px
+.fs-lg {
+	font-size: 1.25rem !important;
+} // 20px
+.fs-xl {
+	font-size: 1.5rem !important;
+} // 24px
+
+// Font weight utilities
+.fw-normal {
+	font-weight: 400 !important;
+}
+.fw-semibold {
+	font-weight: 500 !important;
+}
+.fw-bold {
+	font-weight: 600 !important;
+}
+
+// Line height utilities
+.lh-tight {
+	line-height: 1.2 !important;
+}
+.lh-normal {
+	line-height: 1.5 !important;
+}
+.lh-loose {
+	line-height: 1.75 !important;
+}
 
 @each $spacer, $value in $spacers {
 	.p-#{$spacer} {

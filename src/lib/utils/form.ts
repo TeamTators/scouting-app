@@ -764,9 +764,14 @@ export class Form<T extends { [key: string]: Input<keyof Inputs> }> {
 		[key in keyof T]: InputReturnType<T[key]['type']>;
 	} {
 		const values: Record<string, string | string[]> = {};
+		const liveRendered =
+			this._rendered?.id && typeof document !== 'undefined'
+				? (document.getElementById(this._rendered.id) ?? this._rendered)
+				: this._rendered;
+		const scope: ParentNode = liveRendered ?? document;
 
 		for (const [name, input] of Object.entries(this.inputs)) {
-			const elements = document.querySelectorAll(`[name="${name}"]`);
+			const elements = scope.querySelectorAll(`[name="${name}"]`);
 
 			if (input.type === 'checkbox' || input.type === 'radio') {
 				const selectedValues: string[] = [];
@@ -778,8 +783,12 @@ export class Form<T extends { [key: string]: Input<keyof Inputs> }> {
 				});
 				values[name] = selectedValues;
 			} else {
-				const inputEl = elements[0] as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
-				values[name] = inputEl.value;
+				const inputEl = elements[0] as
+					| HTMLInputElement
+					| HTMLTextAreaElement
+					| HTMLSelectElement
+					| undefined;
+				values[name] = inputEl?.value ?? '';
 			}
 		}
 
@@ -911,6 +920,7 @@ export class Form<T extends { [key: string]: Input<keyof Inputs> }> {
 								formEl.addEventListener('submit', submit);
 								self.eventListeners.push({ element: formEl, type: 'submit', listener: submit });
 								form = formEl;
+								self._rendered = formEl;
 								return () => self.destroy();
 							}
 						})),

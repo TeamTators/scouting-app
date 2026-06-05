@@ -1,6 +1,6 @@
 import { WritableBase } from '../writables';
-import { type Row, SupaStruct, type RowSchemaName, type RowTableName } from './supastruct';
-import { SupaStructData } from './supastruct-data';
+import { type Row, SupaStruct, type RowSchemaName, type RowTableName } from './supastruct.svelte';
+import { SupaStructData } from './supastruct-data.svelte';
 
 /**
  * Reactive pagination state for a struct-backed query.

@@ -243,11 +243,11 @@ export class WritableBase<T> implements Writable<T> {
 	 * source.set(42); // target will update to "Number is: 42"
 	 * ```
 	 */
-	pipeData<Target>(target: Writable<Target>, transform: (data: Target) => T): void {
+	pipeData<Target>(target: Writable<Target>, transform: (data: Target) => T | Promise<T>): void {
 		this.on(
 			'all-unsubscribe',
 			target.subscribe(async (data) => {
-				this.data = transform(data);
+				this.data = await transform(data);
 			})
 		);
 	}
@@ -396,6 +396,7 @@ export class WritableBase<T> implements Writable<T> {
 		derived.pipeData(this, transform);
 		return derived;
 	}
+
 
 	/**
 	 * Creates a new WritableBase that derives its value from this WritableBase using an async transform function. The derived WritableBase will automatically update whenever this WritableBase changes, applying the transform function to produce the new value.
@@ -582,14 +583,6 @@ export class WritableArray<T> extends WritableBase<T[]> {
 	_sort = (_a: T, _b: T): number => 0;
 
 	/**
-	 * Internal filter function (passes all by default)
-	 *
-	 * @private
-	 * @type {(item: T, index: number, array: T[]) => boolean}
-	 */
-	_filter = (_item: T, _index: number, _array: T[]): boolean => true;
-
-	/**
 	 * Internal reverse flag
 	 *
 	 * @private
@@ -626,20 +619,19 @@ export class WritableArray<T> extends WritableBase<T[]> {
 	}
 
 	/**
-	 * Sets the filter function for the array display
-	 *
-	 * @param {(item: T, index: number, array: T[]) => boolean} fn - Predicate function for filtering
-	 * @returns {void}
+	 * Creates a new WritableArray containing only the elements that satisfy the provided predicate function. The filtered WritableArray will automatically update whenever this WritableArray changes, applying the filter function to produce the new array.
+	 * @param {(item: T, index: number, array: T[]) => boolean} fn - Predicate function to determine which elements to include in the filtered array
+	 * @return {WritableArray<T>} A new WritableArray instance that contains only the elements that satisfy the predicate function
 	 * @example
 	 * ```typescript
-	 * // Only show even numbers
-	 * store.filter((n, index, array) => n % 2 === 0);
+	 * const store = new WritableArray([1, 2, 3, 4]);
+	 * const evens = store.filter(n => n % 2 === 0); // evens will contain [2, 4] and update reactively when store changes
 	 * ```
 	 */
 	filter(fn: (item: T, index: number, array: T[]) => boolean) {
-		this._filter = fn;
-		this.inform();
-		return this;
+		const arr = new WritableArray<T>(this.data.filter(fn));
+		arr.pipeData(this, (data) => data.filter(fn));
+		return arr;
 	}
 
 	/**
@@ -648,7 +640,7 @@ export class WritableArray<T> extends WritableBase<T[]> {
 	 * @returns {void}
 	 */
 	inform(): void {
-		const sortedAndFiltered = this.data.filter(this._filter).sort(this._sort);
+		const sortedAndFiltered = this.data.sort(this._sort);
 
 		if (this._reverse) {
 			sortedAndFiltered.reverse();
@@ -685,7 +677,7 @@ export class WritableArray<T> extends WritableBase<T[]> {
 		if (config && config.reactive === false) reactive = false;
 		if (reactive) {
 			mapped.pipeData(this, (arr) => {
-				const sortedAndFiltered = arr.filter(this._filter).sort(this._sort);
+				const sortedAndFiltered = arr.sort(this._sort);
 
 				if (this._reverse) {
 					sortedAndFiltered.reverse();

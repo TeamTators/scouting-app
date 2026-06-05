@@ -10,9 +10,9 @@ import {
 import { schemas } from '$lib/types/supabase-zod';
 import { z } from 'zod';
 import { browser } from '$app/environment';
-import { SupaStructData } from './supastruct-data';
-import { SupaPagination } from './supa-pagination';
-import { SupaCache } from './supacache';
+import { SupaStructData } from './supastruct-data.svelte';
+import { SupaPagination } from './supa-pagination.svelte';
+// import { SupaCache } from './supacache';
 import { type Database, type DatabasePivoted, type SchemaName } from '$lib/types/supabase';
 
 export type Client = SupabaseClient<Database>;
@@ -54,15 +54,6 @@ export type Table<
 	Schema extends SchemaName,
 	Name extends keyof Database[Schema]['Tables']
 > = Database[Schema]['Tables'][Name];
-
-/**
- * Partial row shape for patch operations, filters, and loose cache payloads.
- *
- * @template Name - Table name from {@link TableNames}.
- */
-export type PartialRow<Schema extends SchemaName, Name extends RowTableNames<Schema>> = Partial<
-	Row<Schema, Name>
->;
 
 /**
  * Writable status container for async operations.
@@ -328,6 +319,7 @@ export class SupaStruct<
 							break;
 						case 'UPDATE':
 							data = this.Generator(payload.new);
+							data.set(data.data);
 							this.log('Received updated data:', data);
 							this.emit('update', data, payload.old as any);
 							break;
@@ -355,6 +347,7 @@ export class SupaStruct<
 						if (satisfies(data.data)) {
 							if (!has) {
 								array.push(data);
+								array.pipe(data);
 							}
 						} else {
 							if (has) {
@@ -449,7 +442,7 @@ export class SupaStruct<
 		string,
 		{
 			array: SupaStructArray<Schema, RowName>;
-			satisfies: (data: PartialRow<Schema, RowName>) => boolean;
+			satisfies: (data: Row<Schema, RowName>) => boolean;
 		}
 	>();
 
@@ -488,7 +481,7 @@ export class SupaStruct<
 	registerArray(
 		name: string,
 		array: SupaStructArray<Schema, RowName>,
-		satisfies: (data: PartialRow<Schema, RowName>) => boolean
+		satisfies: (data: Row<Schema, RowName>) => boolean
 	) {
 		if (browser) {
 			this.log(`Registering array ${name} with realtime listeners`);
@@ -537,7 +530,7 @@ export class SupaStruct<
 				return has;
 			}
 		}
-		const data = new SupaStructData(this, validated as PartialRow<Schema, RowName>);
+		const data = new SupaStructData(this, validated as Row<Schema, RowName>);
 		if (browser) this.cache.set(String(validated.id), data);
 		return data;
 	}
@@ -604,33 +597,32 @@ export class SupaStruct<
 		if (has) return has.array;
 
 		const get = async () => {
-			if (browser) {
-				const cache = await SupaCache.get(
-					{ table: this.table, key: 'all' },
-					{
-						pagination: false
-					}
-				);
+			// if (browser) {
+			// 	const cache = await SupaCache.get(
+			// 		{ table: this.table, key: 'all' },
+			// 		{
+			// 			pagination: false
+			// 		}
+			// 	);
 
-				if (cache.isOk()) {
-					const [cached] = cache.value.data;
-					if (cached) {
-						if (new Date() >= cached.data.expires) {
-							cached.delete();
-						} else {
-							this.log('Using cached data for all query:', cached.data.value);
-							return cached.data.value.map((i) => this.Generator(i));
-						}
-					}
-				}
-			}
+			// 	if (cache.isOk()) {
+			// 		const [cached] = cache.value.data;
+			// 		if (cached) {
+			// 			if (new Date() >= cached.data.expires) {
+			// 				cached.delete();
+			// 			} else {
+			// 				this.log('Using cached data for all query:', cached.data.value);
+			// 				return cached.data.value.map((i) => this.Generator(i));
+			// 			}
+			// 		}
+			// 	}
+			// }
 
 			let query = this.supabase
 				.schema(this.schema)
 				.from(this.table)
 				.select('*') //,
 				.filter('archived', 'eq', config.includeArchived ?? false);
-			
 
 			if (config.includeArchived !== true) {
 				query = query.filter('archived', 'eq', false);
@@ -650,14 +642,14 @@ export class SupaStruct<
 				return [];
 			}
 
-			if (browser && config.expires && res.value.length) {
-				SupaCache.new({
-					table: this.table,
-					key: 'all',
-					value: res.value,
-					expires: config.expires
-				});
-			}
+			// if (browser && config.expires && res.value.length) {
+			// 	SupaCache.new({
+			// 		table: this.table,
+			// 		key: 'all',
+			// 		value: res.value,
+			// 		expires: config.expires
+			// 	});
+			// }
 
 			return res.value;
 		};
@@ -863,28 +855,28 @@ export class SupaStruct<
 	 */
 	fromId(id: string, config?: { expires?: Date }) {
 		return attemptAsync(async () => {
-			if (browser) {
-				const cache = await SupaCache.get(
-					{ table: this.table, key: `id:${id}` },
-					{ pagination: false }
-				);
-				if (cache.isOk()) {
-					const [cached] = cache.value.data;
-					if (cached) {
-						if (new Date() >= cached.data.expires) {
-							cached.delete();
-						} else {
-							const [data] = cached.data.value;
-							if (data) {
-								this.log(`Using cached data for id ${id}:`, data);
-								return this.Generator(data);
-							} else {
-								cached.delete();
-							}
-						}
-					}
-				}
-			}
+			// if (browser) {
+			// 	const cache = await SupaCache.get(
+			// 		{ table: this.table, key: `id:${id}` },
+			// 		{ pagination: false }
+			// 	);
+			// 	if (cache.isOk()) {
+			// 		const [cached] = cache.value.data;
+			// 		if (cached) {
+			// 			if (new Date() >= cached.data.expires) {
+			// 				cached.delete();
+			// 			} else {
+			// 				const [data] = cached.data.value;
+			// 				if (data) {
+			// 					this.log(`Using cached data for id ${id}:`, data);
+			// 					return this.Generator(data);
+			// 				} else {
+			// 					cached.delete();
+			// 				}
+			// 			}
+			// 		}
+			// 	}
+			// }
 
 			const res = await this.supabase
 				.schema(this.schema)
@@ -905,14 +897,14 @@ export class SupaStruct<
 			}
 			this.log(`Fetched fromId ${id} from ${this.table}:`, transactionResult.value);
 
-			if (browser && transactionResult.value && config?.expires) {
-				SupaCache.new({
-					table: this.table,
-					key: `id:${id}`,
-					value: [transactionResult.value],
-					expires: config?.expires || new Date(Date.now() + 5 * 60 * 1000) // Cache for 5 minutes
-				});
-			}
+			// if (browser && transactionResult.value && config?.expires) {
+			// 	SupaCache.new({
+			// 		table: this.table,
+			// 		key: `id:${id}`,
+			// 		value: [transactionResult.value],
+			// 		expires: config?.expires || new Date(Date.now() + 5 * 60 * 1000) // Cache for 5 minutes
+			// 	});
+			// }
 
 			return this.Generator(transactionResult.value);
 		});
@@ -972,36 +964,36 @@ export class SupaStruct<
 		const arr = this.arr();
 
 		const get = async () => {
-			if (browser) {
-				const cache = await SupaCache.get(
-					{ table: this.table, key: cacheKey },
-					{ pagination: false }
-				);
-				if (cache.isOk()) {
-					const [cached] = cache.value.data;
-					if (cached) {
-						if (new Date() >= cached.data.expires) {
-							cached.delete();
-						} else {
-							if (config.type === 'single') {
-								const [data] = cached.data.value;
-								if (data) {
-									this.log(`Using cached data for get query ${JSON.stringify(data)}:`, data);
-									return [this.Generator(data)];
-								} else {
-									return [];
-								}
-							} else {
-								this.log(
-									`Using cached data for get query ${JSON.stringify(data)}:`,
-									cached.data.value
-								);
-								return cached.data.value.map((i) => this.Generator(i));
-							}
-						}
-					}
-				}
-			}
+			// if (browser) {
+			// 	const cache = await SupaCache.get(
+			// 		{ table: this.table, key: cacheKey },
+			// 		{ pagination: false }
+			// 	);
+			// 	if (cache.isOk()) {
+			// 		const [cached] = cache.value.data;
+			// 		if (cached) {
+			// 			if (new Date() >= cached.data.expires) {
+			// 				cached.delete();
+			// 			} else {
+			// 				if (config.type === 'single') {
+			// 					const [data] = cached.data.value;
+			// 					if (data) {
+			// 						this.log(`Using cached data for get query ${JSON.stringify(data)}:`, data);
+			// 						return [this.Generator(data)];
+			// 					} else {
+			// 						return [];
+			// 					}
+			// 				} else {
+			// 					this.log(
+			// 						`Using cached data for get query ${JSON.stringify(data)}:`,
+			// 						cached.data.value
+			// 					);
+			// 					return cached.data.value.map((i) => this.Generator(i));
+			// 				}
+			// 			}
+			// 		}
+			// 	}
+			// }
 
 			let query = this.supabase.schema(this.schema).from(this.table).select('*');
 			for (const [key, value] of Object.entries(data)) {
@@ -1028,14 +1020,14 @@ export class SupaStruct<
 				return [];
 			}
 
-			if (browser && config.expires && res.data?.length) {
-				SupaCache.new({
-					table: this.table,
-					key: cacheKey,
-					value: transactionResult.value,
-					expires: config.expires
-				});
-			}
+			// if (browser && config.expires && res.data?.length) {
+			// 	SupaCache.new({
+			// 		table: this.table,
+			// 		key: cacheKey,
+			// 		value: transactionResult.value,
+			// 		expires: config.expires
+			// 	});
+			// }
 
 			return transactionResult.value;
 		};
@@ -1114,36 +1106,36 @@ export class SupaStruct<
 		if (has) return has.array;
 
 		const get = async () => {
-			if (browser) {
-				const cache = await SupaCache.get(
-					{ table: this.table, key: cacheKey },
-					{ pagination: false }
-				);
-				if (cache.isOk()) {
-					const [cached] = cache.value.data;
-					if (cached) {
-						if (new Date() >= cached.data.expires) {
-							cached.delete();
-						} else {
-							if (config.type === 'single') {
-								const [data] = cached.data.value;
-								if (data) {
-									this.log(`Using cached data for getOR query ${JSON.stringify(data)}:`, data);
-									return [this.Generator(data)];
-								} else {
-									return [];
-								}
-							} else {
-								this.log(
-									`Using cached data for getOR query ${JSON.stringify(data)}:`,
-									cached.data.value
-								);
-								return cached.data.value.map((i) => this.Generator(i));
-							}
-						}
-					}
-				}
-			}
+			// if (browser) {
+			// 	const cache = await SupaCache.get(
+			// 		{ table: this.table, key: cacheKey },
+			// 		{ pagination: false }
+			// 	);
+			// 	if (cache.isOk()) {
+			// 		const [cached] = cache.value.data;
+			// 		if (cached) {
+			// 			if (new Date() >= cached.data.expires) {
+			// 				cached.delete();
+			// 			} else {
+			// 				if (config.type === 'single') {
+			// 					const [data] = cached.data.value;
+			// 					if (data) {
+			// 						this.log(`Using cached data for getOR query ${JSON.stringify(data)}:`, data);
+			// 						return [this.Generator(data)];
+			// 					} else {
+			// 						return [];
+			// 					}
+			// 				} else {
+			// 					this.log(
+			// 						`Using cached data for getOR query ${JSON.stringify(data)}:`,
+			// 						cached.data.value
+			// 					);
+			// 					return cached.data.value.map((i) => this.Generator(i));
+			// 				}
+			// 			}
+			// 		}
+			// 	}
+			// }
 
 			let query = this.supabase.schema(this.schema).from(this.table).select('*');
 			const keys = Object.keys(data);
@@ -1171,14 +1163,14 @@ export class SupaStruct<
 				return [];
 			}
 
-			if (browser && config.expires && res.data?.length) {
-				SupaCache.new({
-					table: this.table,
-					key: cacheKey,
-					value: transactionResult.value,
-					expires: config.expires
-				});
-			}
+			// if (browser && config.expires && res.data?.length) {
+			// 	SupaCache.new({
+			// 		table: this.table,
+			// 		key: cacheKey,
+			// 		value: transactionResult.value,
+			// 		expires: config.expires
+			// 	});
+			// }
 
 			return transactionResult.value;
 		};
@@ -1217,8 +1209,24 @@ export class SupaStruct<
 	 *
 	 * @returns Empty `SupaStructArray`.
 	 */
-	arr() {
-		return new SupaStructArray<Schema, RowName>([]);
+	arr(
+		data?: (Row<Schema, RowName> | SupaStructData<Schema, RowName>)[],
+		satisfies?: (data: Row<Schema, RowName>) => boolean
+	) {
+		const arr = new SupaStructArray<Schema, RowName>(
+			data?.map((item) => (item instanceof SupaStructData ? item : this.Generator(item))) ?? []
+		);
+
+		if (satisfies) {
+			this.registerArray(`arr:${String(satisfies)}`, arr, satisfies);
+		}
+
+		if (data) {
+			for (const item of arr.data) {
+				arr.pipe(item);
+			}
+		}
+		return arr;
 	}
 
 	/**
@@ -1306,36 +1314,36 @@ export class SupaStruct<
 		};
 
 		const get = async () => {
-			if (browser) {
-				const cache = await SupaCache.get(
-					{ table: this.table, key: cacheKey },
-					{ pagination: false }
-				);
-				if (cache.isOk()) {
-					const [cached] = cache.value.data;
-					if (cached) {
-						if (new Date() >= cached.data.expires) {
-							cached.delete();
-						} else {
-							if (config.type === 'single') {
-								const [data] = cached.data.value;
-								if (data) {
-									this.log(`Using cached data for search query ${JSON.stringify(query)}:`, data);
-									return [this.Generator(data)];
-								} else {
-									return [];
-								}
-							} else {
-								this.log(
-									`Using cached data for search query ${JSON.stringify(query)}:`,
-									cached.data.value
-								);
-								return cached.data.value.map((i) => this.Generator(i));
-							}
-						}
-					}
-				}
-			}
+			// if (browser) {
+			// 	const cache = await SupaCache.get(
+			// 		{ table: this.table, key: cacheKey },
+			// 		{ pagination: false }
+			// 	);
+			// 	if (cache.isOk()) {
+			// 		const [cached] = cache.value.data;
+			// 		if (cached) {
+			// 			if (new Date() >= cached.data.expires) {
+			// 				cached.delete();
+			// 			} else {
+			// 				if (config.type === 'single') {
+			// 					const [data] = cached.data.value;
+			// 					if (data) {
+			// 						this.log(`Using cached data for search query ${JSON.stringify(query)}:`, data);
+			// 						return [this.Generator(data)];
+			// 					} else {
+			// 						return [];
+			// 					}
+			// 				} else {
+			// 					this.log(
+			// 						`Using cached data for search query ${JSON.stringify(query)}:`,
+			// 						cached.data.value
+			// 					);
+			// 					return cached.data.value.map((i) => this.Generator(i));
+			// 				}
+			// 			}
+			// 		}
+			// 	}
+			// }
 
 			let queryBuilder = buildQuery(main, query);
 
@@ -1359,14 +1367,14 @@ export class SupaStruct<
 				return [];
 			}
 
-			if (browser && config.expires && res.data?.length) {
-				SupaCache.new({
-					table: this.table,
-					key: cacheKey,
-					value: transactionResult.value,
-					expires: config.expires
-				});
-			}
+			// if (browser && config.expires && res.data?.length) {
+			// 	SupaCache.new({
+			// 		table: this.table,
+			// 		key: cacheKey,
+			// 		value: transactionResult.value,
+			// 		expires: config.expires
+			// 	});
+			// }
 
 			return transactionResult.value;
 		};
@@ -1439,23 +1447,23 @@ export class SupaStruct<
 		if (has) return has.array;
 		const arr = this.arr();
 		const get = async () => {
-			if (browser) {
-				const cache = await SupaCache.get(
-					{ table: this.table, key: cacheKey },
-					{ pagination: false }
-				);
-				if (cache.isOk()) {
-					const [cached] = cache.value.data;
-					if (cached) {
-						if (new Date() >= cached.data.expires) {
-							cached.delete();
-						} else {
-							this.log('Using cached data for archived query:', cached.data.value);
-							return cached.data.value.map((i) => this.Generator(i));
-						}
-					}
-				}
-			}
+			// if (browser) {
+			// 	const cache = await SupaCache.get(
+			// 		{ table: this.table, key: cacheKey },
+			// 		{ pagination: false }
+			// 	);
+			// 	if (cache.isOk()) {
+			// 		const [cached] = cache.value.data;
+			// 		if (cached) {
+			// 			if (new Date() >= cached.data.expires) {
+			// 				cached.delete();
+			// 			} else {
+			// 				this.log('Using cached data for archived query:', cached.data.value);
+			// 				return cached.data.value.map((i) => this.Generator(i));
+			// 			}
+			// 		}
+			// 	}
+			// }
 
 			const res = await this.supabase
 				.schema(this.schema)
@@ -1474,16 +1482,16 @@ export class SupaStruct<
 				return [];
 			}
 
-			if (browser) {
-				if (res.data?.length) {
-					SupaCache.new({
-						table: this.table,
-						key: cacheKey,
-						value: transactionResult.value,
-						expires: new Date(Date.now() + 5 * 60 * 1000) // Cache for 5 minutes
-					});
-				}
-			}
+			// if (browser) {
+			// 	if (res.data?.length) {
+			// 		SupaCache.new({
+			// 			table: this.table,
+			// 			key: cacheKey,
+			// 			value: transactionResult.value,
+			// 			expires: new Date(Date.now() + 5 * 60 * 1000) // Cache for 5 minutes
+			// 		});
+			// 	}
+			// }
 
 			return transactionResult.value;
 		};
@@ -1513,30 +1521,29 @@ export class SupaStruct<
 		if (has) return has.array;
 		const arr = this.arr();
 		const get = async () => {
-			if (browser) {
-				const cache = await SupaCache.get(
-					{ table: this.table, key: cacheKey },
-					{ pagination: false }
-				);
-				if (cache.isOk()) {
-					const [cached] = cache.value.data;
-					if (cached) {
-						if (new Date() >= cached.data.expires) {
-							cached.delete();
-						} else {
-							this.log(`Using cached data for fromIds query ${ids}:`, cached.data.value);
-							return cached.data.value.map((i) => this.Generator(i));
-						}
-					}
-				}
-			}
+			// if (browser) {
+			// 	const cache = await SupaCache.get(
+			// 		{ table: this.table, key: cacheKey },
+			// 		{ pagination: false }
+			// 	);
+			// 	if (cache.isOk()) {
+			// 		const [cached] = cache.value.data;
+			// 		if (cached) {
+			// 			if (new Date() >= cached.data.expires) {
+			// 				cached.delete();
+			// 			} else {
+			// 				this.log(`Using cached data for fromIds query ${ids}:`, cached.data.value);
+			// 				return cached.data.value.map((i) => this.Generator(i));
+			// 			}
+			// 		}
+			// 	}
+			// }
 
 			let query = this.supabase
 				.schema(this.schema)
 				.from(this.table)
 				.select('*')
 				.in('id', ids as any);
-
 
 			if (config.includeArchived !== true) {
 				query = query.filter('archived', 'eq', false);
@@ -1556,16 +1563,16 @@ export class SupaStruct<
 				return [];
 			}
 
-			if (browser) {
-				if (res.data?.length) {
-					SupaCache.new({
-						table: this.table,
-						key: cacheKey,
-						value: transactionResult.value,
-						expires: new Date(Date.now() + 5 * 60 * 1000) // Cache for 5 minutes
-					});
-				}
-			}
+			// if (browser) {
+			// 	if (res.data?.length) {
+			// 		SupaCache.new({
+			// 			table: this.table,
+			// 			key: cacheKey,
+			// 			value: transactionResult.value,
+			// 			expires: new Date(Date.now() + 5 * 60 * 1000) // Cache for 5 minutes
+			// 		});
+			// 	}
+			// }
 
 			return transactionResult.value;
 		};
@@ -1628,7 +1635,11 @@ export type SearchQuery<Schema extends RowSchemaName, Name extends RowTableNames
 export class SupaStructArray<
 	Schema extends RowSchemaName,
 	Name extends RowTableNames<Schema>
-> extends WritableArray<SupaStructData<Schema, Name>> {}
+> extends WritableArray<SupaStructData<Schema, Name>> {
+	safe() {
+		return this.data.map((d) => d.data);
+	}
+}
 
 /**
  * Helper for many-to-many style linking tables between two structs.
@@ -1840,31 +1851,31 @@ export class SupaLinkingStruct<
 	):
 		| WritableArray<SupaStructData<SchemaA, TableA>>
 		| ResultPromise<SupaStructData<SchemaA, TableA> | null> {
-		const cacheKey = `getLinkedA:${(b.data as any).id}`;
+		// const cacheKey = `getLinkedA:${(b.data as any).id}`;
 
 		const get = async (): Promise<SupaStructData<SchemaA, TableA>[]> => {
-			if (browser) {
-				const cache = await SupaCache.get(
-					{ table: String(this.linkingTable), key: cacheKey },
-					{ pagination: false }
-				);
-				if (cache.isOk()) {
-					const [cached] = cache.value.data;
-					if (cached) {
-						if (new Date() >= cached.data.expires) {
-							cached.delete();
-						} else {
-							this.log(
-								`Using cached data for getLinkedA ${(b.data as any).id}:`,
-								cached.data.value
-							);
-							return (cached.data.value as PartialRow<SchemaA, TableA>[]).map((i) =>
-								this.structA.Generator(i)
-							);
-						}
-					}
-				}
-			}
+			// if (browser) {
+			// 	const cache = await SupaCache.get(
+			// 		{ table: String(this.linkingTable), key: cacheKey },
+			// 		{ pagination: false }
+			// 	);
+			// 	if (cache.isOk()) {
+			// 		const [cached] = cache.value.data;
+			// 		if (cached) {
+			// 			if (new Date() >= cached.data.expires) {
+			// 				cached.delete();
+			// 			} else {
+			// 				this.log(
+			// 					`Using cached data for getLinkedA ${(b.data as any).id}:`,
+			// 					cached.data.value
+			// 				);
+			// 				return (cached.data.value as Row<SchemaA, TableA>[]).map((i) =>
+			// 					this.structA.Generator(i)
+			// 				);
+			// 			}
+			// 		}
+			// 	}
+			// }
 
 			const res = await this.supabase
 				.schema(this.schema)
@@ -1880,18 +1891,17 @@ export class SupaLinkingStruct<
 				return [];
 			}
 
-			const rows: PartialRow<SchemaA, TableA>[] =
-				res.data?.map((item) => (item as any)[this.structA.table] as PartialRow<SchemaA, TableA>) ||
-				[];
+			const rows: Row<SchemaA, TableA>[] =
+				res.data?.map((item) => (item as any)[this.structA.table] as Row<SchemaA, TableA>) || [];
 
-			if (browser && config.expires && rows.length) {
-				SupaCache.new({
-					table: String(this.linkingTable),
-					key: cacheKey,
-					value: rows,
-					expires: config.expires
-				});
-			}
+			// if (browser && config.expires && rows.length) {
+			// 	SupaCache.new({
+			// 		table: String(this.linkingTable),
+			// 		key: cacheKey,
+			// 		value: rows,
+			// 		expires: config.expires
+			// 	});
+			// }
 
 			return rows.map((i) => this.structA.Generator(i));
 		};
@@ -1949,31 +1959,31 @@ export class SupaLinkingStruct<
 	):
 		| WritableArray<SupaStructData<SchemaB, TableB>>
 		| ResultPromise<SupaStructData<SchemaB, TableB> | null> {
-		const cacheKey = `getLinkedB:${(b.data as any).id}`;
+		// const cacheKey = `getLinkedB:${(b.data as any).id}`;
 
 		const get = async (): Promise<SupaStructData<SchemaB, TableB>[]> => {
-			if (browser) {
-				const cache = await SupaCache.get(
-					{ table: String(this.linkingTable), key: cacheKey },
-					{ pagination: false }
-				);
-				if (cache.isOk()) {
-					const [cached] = cache.value.data;
-					if (cached) {
-						if (new Date() >= cached.data.expires) {
-							cached.delete();
-						} else {
-							this.log(
-								`Using cached data for getLinkedB ${(b.data as any).id}:`,
-								cached.data.value
-							);
-							return (cached.data.value as PartialRow<SchemaB, TableB>[]).map((i) =>
-								this.structB.Generator(i)
-							);
-						}
-					}
-				}
-			}
+			// if (browser) {
+			// 	const cache = await SupaCache.get(
+			// 		{ table: String(this.linkingTable), key: cacheKey },
+			// 		{ pagination: false }
+			// 	);
+			// 	if (cache.isOk()) {
+			// 		const [cached] = cache.value.data;
+			// 		if (cached) {
+			// 			if (new Date() >= cached.data.expires) {
+			// 				cached.delete();
+			// 			} else {
+			// 				this.log(
+			// 					`Using cached data for getLinkedB ${(b.data as any).id}:`,
+			// 					cached.data.value
+			// 				);
+			// 				return (cached.data.value as Row<SchemaB, TableB>[]).map((i) =>
+			// 					this.structB.Generator(i)
+			// 				);
+			// 			}
+			// 		}
+			// 	}
+			// }
 
 			const res = await this.supabase
 				.schema(this.schema)
@@ -1989,18 +1999,17 @@ export class SupaLinkingStruct<
 				return [];
 			}
 
-			const rows: PartialRow<SchemaB, TableB>[] =
-				res.data?.map((item) => (item as any)[this.structB.table] as PartialRow<SchemaB, TableB>) ||
-				[];
+			const rows: Row<SchemaB, TableB>[] =
+				res.data?.map((item) => (item as any)[this.structB.table] as Row<SchemaB, TableB>) || [];
 
-			if (browser && config.expires && rows.length) {
-				SupaCache.new({
-					table: String(this.linkingTable),
-					key: cacheKey,
-					value: rows,
-					expires: config.expires
-				});
-			}
+			// if (browser && config.expires && rows.length) {
+			// 	SupaCache.new({
+			// 		table: String(this.linkingTable),
+			// 		key: cacheKey,
+			// 		value: rows,
+			// 		expires: config.expires
+			// 	});
+			// }
 
 			return rows.map((i) => this.structB.Generator(i));
 		};

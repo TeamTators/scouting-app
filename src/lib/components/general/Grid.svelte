@@ -48,7 +48,7 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		ModuleRegistry,
 		ClientSideRowModelModule,
 		type GridOptions,
-		themeQuartz,
+		themeBalham,
 		PaginationModule,
 		type GridApi,
 		type Module,
@@ -64,7 +64,7 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		type ICellRendererParams
 	} from 'ag-grid-community';
 	import { EventEmitter } from 'ts-utils/event-emitter';
-	import type { Readable } from 'svelte/store';
+	import type { Readable, Unsubscriber } from 'svelte/store';
 	import {
 		CheckBoxSelectRenderer,
 		HeaderCheckboxRenderer
@@ -146,7 +146,7 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 
 	// Create a custom dark theme using Theming API
 	const gridTheme = $derived(
-		themeQuartz.withParams({
+		themeBalham.withParams({
 			backgroundColor: `var(--layer-${layer})`,
 			chromeBackgroundColor: {
 				ref: 'foregroundColor',
@@ -162,6 +162,7 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 	let grid: GridApi<T>;
 	let filterText: string = $state('');
 	let filterTimeout: ReturnType<typeof setTimeout> | null = null;
+	let dataUnsub: Unsubscriber | null = null;
 
 	const onDataFilter = () => {
 		if (filterTimeout) {
@@ -239,14 +240,33 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		grid = createGrid(gridDiv, gridOptions);
 		em.emit('ready', grid);
 
-		const dataUnsub = data.subscribe((r) => {
+		return () => {
+			if (dataUnsub) {
+				dataUnsub();
+				dataUnsub = null;
+			}
+			grid.destroy();
+		};
+	});
+
+	$effect(() => {
+		if (!grid) return;
+
+		if (dataUnsub) {
+			dataUnsub();
+			dataUnsub = null;
+		}
+
+		dataUnsub = data.subscribe((r) => {
 			grid.setGridOption('rowData', r);
 			onDataFilter();
 		});
 
 		return () => {
-			dataUnsub();
-			grid.destroy();
+			if (dataUnsub) {
+				dataUnsub();
+				dataUnsub = null;
+			}
 		};
 	});
 </script>

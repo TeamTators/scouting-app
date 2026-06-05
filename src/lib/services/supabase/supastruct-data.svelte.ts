@@ -1,14 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { WritableBase } from '../writables';
-import { SupaStaging } from './supastaging';
+import { SupaStaging } from './supastaging.svelte';
 import {
-	type PartialRow,
 	type Row,
 	SupaStruct,
 	SupaStatus,
 	type RowTableName,
 	type RowSchemaName
-} from './supastruct';
+} from './supastruct.svelte';
 
 /**
  * Reactive wrapper around a single table row.
@@ -28,7 +27,7 @@ import {
 export class SupaStructData<
 	RowSchema extends RowSchemaName,
 	Name extends RowTableName<RowSchema>
-> extends WritableBase<PartialRow<RowSchema, Name>> {
+> extends WritableBase<Row<RowSchema, Name>> {
 	/**
 	 * Creates a reactive row wrapper.
 	 *
@@ -37,7 +36,7 @@ export class SupaStructData<
 	 */
 	constructor(
 		public readonly struct: SupaStruct<RowSchema, Name>,
-		data: PartialRow<RowSchema, Name>
+		data: Row<RowSchema, Name>
 	) {
 		super(data);
 	}
@@ -95,8 +94,8 @@ export class SupaStructData<
 	 * @throws Does not throw synchronously unless `fn` throws. Errors are captured
 	 * into the returned `SupaStatus`.
 	 */
-	update(fn: (data: PartialRow<RowSchema, Name>) => PartialRow<RowSchema, Name>) {
-		const status = new SupaStatus<PartialRow<RowSchema, Name>>();
+	update(fn: (data: Row<RowSchema, Name>) => Row<RowSchema, Name>) {
+		const status = new SupaStatus<Row<RowSchema, Name>>();
 		try {
 			const updateData = fn(this.data);
 			this.supabase
