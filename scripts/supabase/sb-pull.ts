@@ -1,7 +1,42 @@
 import env from '../../src/lib/server/utils/env';
 import sbDb from './sb-db';
+import fs from 'fs/promises';
+import path from 'path';
+import { runTask } from '../../src/lib/server/utils/task';
+
+const BLOCK_START = '-- sb-pull: realtime and rls start';
+const BLOCK_END = '-- sb-pull: realtime and rls end';
+
+const upsertManagedBlock = async (filePath: string, body: string) => {
+	let content = '';
+
+	try {
+		content = await fs.readFile(filePath, 'utf-8');
+	} catch {
+		content = '';
+	}
+
+	const block = [BLOCK_START, body.trim(), BLOCK_END].join('\n');
+
+	if (content.includes(BLOCK_START) && content.includes(BLOCK_END)) {
+		const start = content.indexOf(BLOCK_START);
+		const end = content.indexOf(BLOCK_END, start);
+		const head = content.slice(0, start).trimEnd();
+		const tail = content.slice(end + BLOCK_END.length).trimStart();
+		const merged = [head, block, tail].filter(Boolean).join('\n\n');
+
+		await fs.writeFile(filePath, `${merged}\n`);
+		return;
+	}
+
+	const appended = [content.trimEnd(), block].filter(Boolean).join('\n\n');
+	await fs.writeFile(filePath, `${appended}\n`);
+};
 
 export default async (...args: string[]) => {
+	const migrationsDir = path.resolve(process.cwd(), 'supabase', 'migrations');
+	const migrationFilesBefore = new Set(await fs.readdir(migrationsDir));
+
 	const schemas = Array.from(
 		new Set([
 			...env.SB_SCHEMAS,
@@ -9,11 +44,136 @@ export default async (...args: string[]) => {
 		])
 	);
 
-	await sbDb(
-		'db',
-		'pull',
-		'--schema',
-		schemas.join(','),
-		...args
-	);
+	try {
+		await sbDb(
+			'db',
+			'pull',
+			'--schema',
+			schemas.join(','),
+			...args
+		);
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		if (!message.includes('No schema changes found')) {
+			throw error;
+		}
+
+		console.log('No schema changes found; continuing with schema/role/publication dumps.');
+	}
+
+	const migrationFilesAfter = await fs.readdir(migrationsDir);
+	const newMigrationFiles = migrationFilesAfter
+		.filter((file) => !migrationFilesBefore.has(file))
+		.sort();
+
+	const newMigrationPath = newMigrationFiles.length
+		? path.join(migrationsDir, newMigrationFiles[newMigrationFiles.length - 1])
+		: null;
+
+	const publicationSql = await runTask(
+		{
+			PGAPPNAME: 'sb-pull-publications'
+		},
+		'psql',
+		'-d',
+		env.SB_DB_URL,
+		'-At',
+		'-c',
+		[
+			"WITH pubs AS (",
+			"\tSELECT p.pubname, p.puballtables, pg_get_userbyid(p.pubowner) AS owner",
+			"\tFROM pg_publication p",
+			"\tWHERE p.pubname = 'supabase_realtime'",
+			"),",
+			"pub_owner AS (",
+			"\tSELECT 10 AS ord, format('ALTER PUBLICATION %I OWNER TO %I;', pubname, owner) AS line",
+			"\tFROM pubs",
+			"),",
+			"pub_tables AS (",
+			"\tSELECT 20 AS ord, format('ALTER PUBLICATION %I ADD TABLE ONLY %I.%I;', t.pubname, t.schemaname, t.tablename) AS line",
+			"\tFROM pg_publication_tables t",
+			"\tJOIN pubs p ON p.pubname = t.pubname",
+			"\tWHERE NOT p.puballtables",
+			")",
+			"SELECT line",
+			"FROM (",
+			"\tSELECT ord, line FROM pub_owner",
+			"\tUNION ALL",
+			"\tSELECT ord, line FROM pub_tables",
+			") AS publication_sql",
+			"ORDER BY ord, line;"
+		].join(' ')
+	).unwrap();
+
+	const rlsSql = await runTask(
+		{
+			PGAPPNAME: 'sb-pull-rls'
+		},
+		'psql',
+		'-d',
+		env.SB_DB_URL,
+		'-At',
+		'-c',
+		[
+			"WITH target_tables AS (",
+			"\tSELECT n.nspname AS schemaname, c.relname AS tablename, c.relrowsecurity, c.relforcerowsecurity",
+			"\tFROM pg_class c",
+			"\tJOIN pg_namespace n ON n.oid = c.relnamespace",
+			`\tWHERE c.relkind IN ('r', 'p') AND n.nspname = ANY(ARRAY[${schemas.map((schema) => `'${schema}'`).join(', ')}])`,
+			"),",
+			"policy_sql AS (",
+			"\tSELECT 20 AS ord, format(",
+			"\t\t'CREATE POLICY %I ON %I.%I%s%s%s%s;',",
+			"\t\tpolicyname,",
+			"\t\tschemaname,",
+			"\t\ttablename,",
+			"\t\tCASE WHEN permissive = 'PERMISSIVE' THEN '' ELSE ' AS RESTRICTIVE' END,",
+			"\t\tCASE WHEN cmd = 'ALL' THEN '' ELSE format(' FOR %s', cmd) END,",
+			"\t\tCASE",
+			"\t\t\tWHEN roles = ARRAY['public']::name[] THEN ''",
+			"\t\t\tELSE format(' TO %s', array_to_string(ARRAY(SELECT format('%I', r) FROM unnest(roles) AS r), ', '))",
+			"\t\tEND,",
+			"\t\tconcat(",
+			"\t\t\tCASE WHEN qual IS NOT NULL THEN format(' USING (%s)', qual) ELSE '' END,",
+			"\t\t\tCASE WHEN with_check IS NOT NULL THEN format(' WITH CHECK (%s)', with_check) ELSE '' END",
+			"\t\t)",
+			"\t) AS line",
+			"\tFROM pg_policies",
+			`\tWHERE schemaname = ANY(ARRAY[${schemas.map((schema) => `'${schema}'`).join(', ')}])`,
+			")",
+			"SELECT line",
+			"FROM (",
+			"\tSELECT 10 AS ord, format('ALTER TABLE %I.%I ENABLE ROW LEVEL SECURITY;', schemaname, tablename) AS line",
+			"\tFROM target_tables",
+			"\tWHERE relrowsecurity",
+			"\tUNION ALL",
+			"\tSELECT 11 AS ord, format('ALTER TABLE %I.%I FORCE ROW LEVEL SECURITY;', schemaname, tablename) AS line",
+			"\tFROM target_tables",
+			"\tWHERE relforcerowsecurity",
+			"\tUNION ALL",
+			"\tSELECT ord, line FROM policy_sql",
+			") AS rls_sql",
+			"ORDER BY ord, line;"
+		].join(' ')
+	).unwrap();
+
+	const publicationBlock = publicationSql.trim();
+	const rlsBlock = rlsSql.trim();
+
+	const managedBody = [
+		'-- Auto-generated by scripts/supabase/sb-pull.ts',
+		'-- This block is source-controlled so CI gets realtime + RLS changes.',
+		publicationBlock || '-- No supabase_realtime publication found.',
+		rlsBlock
+			? rlsBlock
+			: '-- No RLS policy statements found in database catalogs.'
+	].join('\n');
+
+	if (newMigrationPath) {
+		await upsertManagedBlock(newMigrationPath, managedBody);
+		return;
+	}
+
+	const seedMigrationPath = path.resolve(process.cwd(), 'supabase', 'seed', 'migration.sql');
+	await upsertManagedBlock(seedMigrationPath, managedBody);
 };
