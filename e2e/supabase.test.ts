@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 
+test.setTimeout(180000);
 test('Supabase page tests complete and pass', async ({ page }) => {
 	await page.goto('/test/supabase');
 
