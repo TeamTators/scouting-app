@@ -13,18 +13,18 @@ test('Supabase page tests complete and pass', async ({ page }) => {
 
 	const container = page.locator('#supabase-tests');
 	await expect(container).toBeVisible();
-
+	const rows = page.locator('tbody tr');
+	const rowCount = await rows.count();
+	for (let i = 0; i < rowCount; i++) {
+		const name = await rows.nth(i).locator('td:nth-child(1)').textContent();
+		const result = await rows.nth(i).locator('td:nth-child(2)').textContent();
+		const detail = await rows.nth(i).locator('td:nth-child(3)').textContent();
+		console.log(`Test: ${name?.trim()} | Result: ${result?.trim()} | Detail: ${detail?.trim()}`);
+	}
 
 	const failedRows = page.locator('tbody tr td:nth-child(2)', {
 		hasText: 'fail'
 	});
-	const failedRowsData = await failedRows.allTextContents();
-	if (failedRowsData.length > 0) {
-		console.error('Failed test rows:');
-		failedRowsData.forEach((text, index) => {
-			console.error(`Row ${index + 1}: ${text}`);
-		});
-	}
 	await expect(failedRows).toHaveCount(0);
 
 	
