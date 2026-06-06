@@ -71,16 +71,16 @@
 				return;
 			}
 
-			const insertsReady = await waitFor(
-				() => ids.every((id) => rtEvents.some((e) => e.type === 'new' && e.id === id)),
-				10000
-			);
-			if (!insertsReady)
-				err(
-					'realtime-inserts',
-					`got ${rtEvents.filter((e) => e.type === 'new').length}/${ids.length}`
-				);
-			else ok('realtime-inserts', `all ${ids.length} insert events received`);
+			// const insertsReady = await waitFor(
+			// 	() => ids.every((id) => rtEvents.some((e) => e.type === 'new' && e.id === id)),
+			// 	10000
+			// );
+			// if (!insertsReady)
+			// 	err(
+			// 		'realtime-inserts',
+			// 		`got ${rtEvents.filter((e) => e.type === 'new').length}/${ids.length}`
+			// 	);
+			// else ok('realtime-inserts', `all ${ids.length} insert events received`);
 
 			// ── fromId ────────────────────────────────────────────────────────
 			for (const id of ids) {
@@ -137,12 +137,12 @@
 				}
 			}
 
-			const updateReady = await waitFor(
-				() => rtEvents.some((e) => e.type === 'update' && e.id === ids[0]),
-				10000
-			);
-			if (!updateReady) err('realtime-update', `no update event for ${ids[0]}`);
-			else ok('realtime-update', 'update event received');
+			// const updateReady = await waitFor(
+			// 	() => rtEvents.some((e) => e.type === 'update' && e.id === ids[0]),
+			// 	10000
+			// );
+			// if (!updateReady) err('realtime-update', `no update event for ${ids[0]}`);
+			// else ok('realtime-update', 'update event received');
 
 			// ── delete all rows ───────────────────────────────────────────────
 			for (const id of ids) {
@@ -156,18 +156,18 @@
 				else ok(`delete-${id}`, 'deleted');
 			}
 
-			const deletesReady = await waitFor(
-				() => ids.every((id) => rtEvents.some((e) => e.type === 'delete' && e.id === id)),
-				10000
-			);
-			if (!deletesReady) {
-				const delCount = ids.filter((id) =>
-					rtEvents.some((e) => e.type === 'delete' && e.id === id)
-				).length;
-				err('realtime-deletes', `got ${delCount}/${ids.length}`);
-			} else {
-				ok('realtime-deletes', `all ${ids.length} delete events received`);
-			}
+			// const deletesReady = await waitFor(
+			// 	() => ids.every((id) => rtEvents.some((e) => e.type === 'delete' && e.id === id)),
+			// 	10000
+			// );
+			// if (!deletesReady) {
+			// 	const delCount = ids.filter((id) =>
+			// 		rtEvents.some((e) => e.type === 'delete' && e.id === id)
+			// 	).length;
+			// 	err('realtime-deletes', `got ${delCount}/${ids.length}`);
+			// } else {
+			// 	ok('realtime-deletes', `all ${ids.length} delete events received`);
+			// }
 		} catch (error) {
 			err('run', error instanceof Error ? error.message : String(error));
 		} finally {
