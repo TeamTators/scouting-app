@@ -7,17 +7,12 @@ test('Supabase page tests complete and pass', async ({ page }) => {
 		console.log(`Console message: [${msg.type()}] ${msg.text()}`);
 	});
 
+	const complete = page.locator('#data-complete');
+	await complete.waitFor({ state: 'visible', timeout: 120000 });
+
 	const container = page.locator('#supabase-tests');
 	await expect(container).toBeVisible();
 
-	console.log('Container data:', await container.allTextContents());
-
-	await expect(container).toHaveAttribute('data-complete', 'true', {
-		timeout: 120000
-	});
-	await expect(container).toHaveAttribute('data-pass', 'true', {
-		timeout: 120000
-	});
 
 	const failedRows = page.locator('tbody tr td:nth-child(2)', {
 		hasText: 'fail'
@@ -30,4 +25,9 @@ test('Supabase page tests complete and pass', async ({ page }) => {
 		});
 	}
 	await expect(failedRows).toHaveCount(0);
+
+	
+	await expect(container).toHaveAttribute('data-pass', 'true', {
+		timeout: 120000
+	});
 });

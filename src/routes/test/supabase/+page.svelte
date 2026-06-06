@@ -182,6 +182,7 @@
 
 <div id="supabase-tests" data-complete={done} data-pass={pass}>
 	<h2>Supabase Tests — {done ? (pass ? 'PASS' : 'FAIL') : 'running…'}</h2>
+	<div id="data-complete" style="display: {done ? 'block' : 'none'};">Tests complete!</div>
 	<table>
 		<thead><tr><th>Test</th><th>Result</th><th>Detail</th></tr></thead>
 		<tbody>
