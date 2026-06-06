@@ -14,10 +14,17 @@ test('Supabase page tests complete and pass', async ({ page }) => {
 		timeout: 120000
 	});
 
-	await expect(container).toHaveAttribute('data-pass', 'true');
 
 	const failedRows = page.locator('tbody tr td:nth-child(2)', {
 		hasText: 'fail'
 	});
+	const failedRowsData = await failedRows.allTextContents();
+	if (failedRowsData.length > 0) {
+		console.error('Failed test rows:');
+		failedRowsData.forEach((text, index) => {
+			console.error(`Row ${index + 1}: ${text}`);
+		});
+	}
 	await expect(failedRows).toHaveCount(0);
+	await expect(container).toHaveAttribute('data-pass', 'true');
 });
