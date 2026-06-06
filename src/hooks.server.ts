@@ -6,7 +6,6 @@ import '$lib/server/utils/files';
 import createTree from '../scripts/create-route-tree';
 // import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
-import { getSessionFactory } from '$lib/server/model/session';
 import env from '$lib/server/utils/env';
 import type { Database } from '$lib/types/supabase';
 
@@ -28,18 +27,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	});
 
-	// TODO: only save pages
-	const sessionFactory = getSessionFactory(event.locals.supabase, {
-		debug: false
-	});
-
-	const res = await sessionFactory.getSelf(event.url.pathname);
-	if (res.isErr()) {
-		terminal.error('Error getting session:', res.error);
-		event.locals.session = null;
-	} else {
-		event.locals.session = res.value;
-	}
 	try {
 		const res = await resolve(event);
 		return res;

@@ -3,11 +3,9 @@
  * Provides Session class for managing individual session state, and SessionFactory for creating and retrieving sessions.
  * All async operations return typed Results via attemptAsync for consistent error handling.
  */
-import { SupaStruct, type Client } from '$lib/services/supabase/supastruct';
-import { SupaStructData } from '$lib/services/supabase/supastruct-data';
+import { SupaStruct, type Client, SupaStructData } from '$lib/services/supabase/supastruct.svelte';
 import { type Provider, type Session as S } from '@supabase/supabase-js';
 import { attemptAsync } from 'ts-utils';
-import { getAccountFactory } from '$lib/model/account';
 import supabase from '../services/supabase';
 // import { TempMap } from "$lib/utils/temp-map";
 import { domain } from '../utils/env-utils';
@@ -22,20 +20,19 @@ import { z } from 'zod';
  */
 const getUser = (usernameOrEmail: string) => {
 	return attemptAsync(async () => {
-		const factory = getAccountFactory(supabase);
-		const profile = await factory.profile
-			.getOR(
-				{
-					username: usernameOrEmail,
-					email: usernameOrEmail
-				},
-				{
-					type: 'single'
-				}
-			)
+		const profileStruct = SupaStruct.get({
+			table: 'profile',
+			schema: 'core',
+			client: supabase
+		});
+		const [profile] = await profileStruct
+			.getOR({
+				username: usernameOrEmail,
+				email: usernameOrEmail
+			})
 			.unwrap();
 		if (!profile) return null;
-		const { data, error } = await supabase.auth.admin.getUserById(String(profile.data.id));
+		const { data, error } = await supabase.auth.admin.getUserById(String(profile.raw.id));
 		if (error) throw error;
 		return data.user;
 	});
@@ -69,7 +66,7 @@ export class Session {
 	 * @readonly
 	 */
 	get id() {
-		return String(this.config.customSession.data.id);
+		return String(this.config.customSession.raw.id);
 	}
 
 	/**
@@ -78,7 +75,7 @@ export class Session {
 	 * @readonly
 	 */
 	get accountId() {
-		return this.config.customSession.data.account_id;
+		return this.config.customSession.raw.account_id;
 	}
 
 	/**
@@ -87,7 +84,7 @@ export class Session {
 	 * @readonly
 	 */
 	get prevUrl() {
-		return this.config.customSession.data.prev_url;
+		return this.config.customSession.raw.prev_url;
 	}
 
 	/**
@@ -100,27 +97,6 @@ export class Session {
 			console.log('[Session]', ...args);
 		}
 	}
-
-	/**
-	 * Retrieves the Account object associated with this session.
-	 * @async
-	 * @returns {ResultPromise<Account|null, Error>} Account instance if user authenticated, null otherwise.
-	 * @example
-	 * const res = await session.getAccount().unwrap();
-	 * if (res) {
-	 *   console.log('Account ID:', res.id);
-	 * }
-	 */
-	getAccount() {
-		return attemptAsync(async () => {
-			const accountFactory = getAccountFactory(this.config.client, {
-				debug: this.config.debug
-			});
-			const self = await accountFactory.getSelf().unwrap();
-			return self;
-		});
-	}
-
 	/**
 	 * Retrieves the Supabase User object for this session.
 	 * @async
@@ -320,22 +296,13 @@ class SessionFactory {
 				.parse(JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString()));
 
 			const sessionId = payload.session_id;
-			let session: SupaStructData<'core', 'session'>;
-			const res = await this.config.session
+			const session = await this.config.session
 				.upsert({
 					id: sessionId,
 					account_id: data.session.user.id,
 					prev_url: setUrl
 				})
-				.await()
 				.unwrap();
-			if ('error' in res) {
-				throw res.error;
-			} else if ('result' in res) {
-				session = res.result[0];
-			} else {
-				throw new Error('Unexpected response from session upsert');
-			}
 
 			if (!session) {
 				throw new Error('Failed to create or retrieve session');

@@ -3,8 +3,7 @@
  */
 import { fail } from '@sveltejs/kit';
 import { domain } from '$lib/server/utils/env-utils';
-import { getAccountFactory } from '$lib/model/account';
-import serverSB from '$lib/server/services/supabase';
+import { SupaStruct } from '$lib/services/supabase/supastruct.svelte';
 
 // export const load = async (event) => {
 // 	const res = await event.locals.getSession();
@@ -39,19 +38,16 @@ export const actions = {
 			};
 		}
 
-		const accountFactory = getAccountFactory(serverSB, {
-			debug: true
+		const profileStruct = SupaStruct.get({
+			schema: 'core',
+			table: 'profile',
+			client: supabase
 		});
 
-		const exists = await accountFactory.profile.getOR(
-			{
-				username,
-				email
-			},
-			{
-				type: 'single'
-			}
-		);
+		const exists = await profileStruct.getOR({
+			username,
+			email
+		});
 
 		if (exists.isErr()) {
 			return {
@@ -60,7 +56,7 @@ export const actions = {
 			};
 		}
 
-		if (exists.value) {
+		if (exists.value.length) {
 			return {
 				success: false,
 				message: 'An account with that email or username already exists.'
@@ -82,15 +78,13 @@ export const actions = {
 		}
 
 		if (data.user) {
-			const res = await accountFactory.profile
-				.new({
-					username,
-					first_name: firstName,
-					last_name: lastName,
-					id: data.user.id,
-					email
-				})
-				.await();
+			const res = await profileStruct.new({
+				username,
+				first_name: firstName,
+				last_name: lastName,
+				id: data.user.id,
+				email
+			});
 
 			if (res.isErr()) {
 				throw fail(500, {

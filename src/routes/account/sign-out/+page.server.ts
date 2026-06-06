@@ -9,7 +9,7 @@ import { ServerCode } from 'ts-utils/status';
 
 export const load = async (event) => {
 	if (!event.locals.session) return;
-	const account = await event.locals.session.getAccount();
+	const account = await event.locals.session.getUser();
 	if (account.isErr()) return;
 	if (!account.value) throw redirect(ServerCode.seeOther, '/account/sign-in');
 };

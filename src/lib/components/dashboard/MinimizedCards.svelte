@@ -11,7 +11,7 @@ Row of minimized dashboard cards for quick restore.
 ```
 -->
 <script lang="ts">
-	import { Dashboard } from '$lib/utils/dashboard';
+	import { Dashboard } from '$lib/utils/dashboard.svelte';
 
 	interface Props {
 		dashboard: Dashboard.Dashboard;
@@ -22,10 +22,10 @@ Row of minimized dashboard cards for quick restore.
 	const cards = $derived(dashboard.hiddenCards);
 </script>
 
-{#if $cards.size > 0}
+{#if cards.size > 0}
 	<div class="w-100 d-flex align-items-center">
 		<p class="m-0">Minimized:</p>
-		{#each $cards.values() as card}
+		{#each cards.values() as card}
 			<button class="btn btn-small" onclick={() => card.show()}>
 				{#if card.config.icon.type === 'bootstrap'}
 					<i class="bi bi-{card.config.icon.name}"></i>

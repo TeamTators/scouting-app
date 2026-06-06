@@ -1,7 +1,7 @@
 /**
  * @fileoverview OAuth sign-up endpoint at `/api/oauth/sign-up`.
  */
-import { SupaStruct } from '$lib/services/supabase/supastruct.js';
+import { SupaStruct } from '$lib/services/supabase/supastruct.svelte';
 import { error, redirect } from '@sveltejs/kit';
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
@@ -43,18 +43,13 @@ export const GET = async (event) => {
 			table: 'profile'
 		});
 
-		const exists = await profile.get(
-			{
-				email: String(info.data.email)
-			},
-			{
-				type: 'single'
-			}
-		);
+		const exists = await profile.get({
+			email: String(info.data.email)
+		});
 		if (exists.isErr()) {
 			throw error(ServerCode.internalServerError, 'Failed to check if user exists');
 		}
-		if (exists.value) {
+		if (exists.value.length) {
 			throw error(ServerCode.conflict, 'User already exists');
 		}
 
@@ -90,16 +85,13 @@ export const GET = async (event) => {
 			throw error(ServerCode.internalServerError, 'Failed to send password reset email');
 		}
 
-		const res = await profile
-			.new({
-				id: signUpData.user.id,
-				email: String(info.data.email),
-				first_name: String(info.data.name).split(' ')[0],
-				last_name: String(info.data.name).split(' ').slice(1).join(' '),
-				username: String(info.data.email).split('@')[0]
-			})
-			.await();
-
+		const res = await profile.new({
+			id: signUpData.user.id,
+			email: String(info.data.email),
+			first_name: String(info.data.name).split(' ')[0],
+			last_name: String(info.data.name).split(' ').slice(1).join(' '),
+			username: String(info.data.email).split('@')[0]
+		});
 		if (res.isErr()) {
 			terminal.error('Failed to create user profile:', res.error);
 			throw error(ServerCode.internalServerError, 'Failed to create user profile');

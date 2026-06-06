@@ -3,7 +3,7 @@
 Range component test page at `/test/component/range`.
 -->
 <script lang="ts">
-	import { RangeSlider } from '$lib/utils/form';
+	import { RangeSlider } from '$lib/utils/form.svelte';
 	import { onMount } from 'svelte';
 	let target: HTMLDivElement;
 

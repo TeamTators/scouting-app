@@ -14,7 +14,7 @@ Side navigation offcanvas that renders sections from the navbar registry.
 ```
 -->
 <script lang="ts">
-	import { Navbar } from '$lib/nav';
+	import { Navbar } from '$lib/nav/index.svelte';
 	import { onMount } from 'svelte';
 	// import { Analytics } from '$lib/model/analytics';
 	// import { getTitle } from '$lib/utils/pages';
@@ -66,7 +66,7 @@ Side navigation offcanvas that renders sections from the navbar registry.
 	</div>
 	<div class="offcanvas-body layer-2">
 		<ul class="list-unstyled">
-			{#each $sections as section}
+			{#each sections as section}
 				<li class="mb-3">
 					<h4 class="text-secondary">{section.name}</h4>
 					<ul class="list-unstyled">

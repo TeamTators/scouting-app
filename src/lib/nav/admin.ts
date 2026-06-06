@@ -1,4 +1,4 @@
-import { Navbar } from '$lib/nav';
+import { Navbar } from '$lib/nav/index.svelte';
 
 export default () => {
 	Navbar.addSection({

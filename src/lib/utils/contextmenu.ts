@@ -30,27 +30,85 @@ const ensureContextMenuStyles = () => {
 	style.id = 'contextmenu-styles';
 	style.textContent = `
 		.contextmenu {
-			background: color-mix(in srgb, var(--layer-3, #1f2937) 92%, transparent);
-			border: 1px solid rgba(255, 255, 255, 0.06);
-			border-radius: 12px;
-			box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-			backdrop-filter: blur(6px);
+			background: color-mix(in srgb, var(--layer-2, #25252a) 94%, transparent);
+			border: 1px solid color-mix(in srgb, var(--layer-4, #373740) 70%, transparent);
+			border-radius: 10px;
+			box-shadow:
+				0 12px 32px rgba(0, 0, 0, 0.28),
+				0 2px 8px rgba(0, 0, 0, 0.2);
+			backdrop-filter: blur(10px);
+			overflow: hidden;
+			animation: contextmenu-enter 120ms cubic-bezier(0.2, 0.9, 0.2, 1);
+		}
+		@keyframes contextmenu-enter {
+			from {
+				opacity: 0;
+				transform: translateY(4px) scale(0.985);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0) scale(1);
+			}
+		}
+		.contextmenu .contextmenu-list {
+			scrollbar-width: thin;
+			scrollbar-color: color-mix(in srgb, var(--layer-4, #373740) 85%, transparent)
+				color-mix(in srgb, var(--layer-1, #1f1f23) 80%, transparent);
 		}
 		.contextmenu .contextmenu-item {
-			transition: background-color 0.12s ease, color 0.12s ease;
+			position: relative;
+			min-height: 32px;
+			padding: 0.35rem 0.6rem;
+			font-size: 0.82rem;
+			line-height: 1.15;
+			color: var(--text-layer-1, #e4e4e7);
+			background: transparent;
+			transition:
+				background-color 120ms ease,
+				color 120ms ease,
+				transform 80ms ease;
 		}
 		.contextmenu .contextmenu-item:hover {
-			background: color-mix(in srgb, var(--layer-2, #2b3441) 70%, transparent);
+			background: color-mix(in srgb, var(--layer-4, #373740) 45%, transparent);
+			color: var(--text-layer-0, #ffffff);
+		}
+		.contextmenu .contextmenu-item:active {
+			transform: translateY(0.5px);
+		}
+		.contextmenu .contextmenu-item:focus-visible {
+			outline: none;
+			box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-layer-1, #e4e4e7) 30%, transparent);
+			background: color-mix(in srgb, var(--layer-4, #373740) 55%, transparent);
+		}
+		.contextmenu .contextmenu-icon {
+			width: 18px;
+			height: 18px;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			color: color-mix(in srgb, var(--text-layer-2, #cfcfd4) 92%, transparent);
+			font-size: 0.95rem;
+			flex: 0 0 18px;
+		}
+		.contextmenu .contextmenu-label {
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
 		}
 		.contextmenu .contextmenu-title {
-			font-weight: 600;
-			letter-spacing: 0.2px;
+			padding: 0.4rem 0.65rem 0.35rem;
+			font-size: 0.69rem;
+			font-weight: 700;
+			letter-spacing: 0.05em;
+			text-transform: uppercase;
+			color: var(--text-layer-3, #b8b8bf);
+			border-bottom: 1px solid color-mix(in srgb, var(--layer-4, #373740) 50%, transparent);
 		}
 		.contextmenu .contextmenu-divider {
 			height: 1px;
-			background: rgba(255, 255, 255, 0.08);
+			background: color-mix(in srgb, var(--layer-4, #373740) 55%, transparent);
 			border: 0;
-			margin: 4px 0;
+			margin: 3px 0;
 		}
 	`;
 	document.head.appendChild(style);
@@ -111,7 +169,7 @@ export const contextmenu = (
 	body.style.overflow = 'hidden';
 	el.appendChild(body);
 	const list = create('ul');
-	list.classList.add('list-group', 'list-group-flush', 'border-0', 'p-0');
+	list.classList.add('list-group', 'list-group-flush', 'border-0', 'p-0', 'contextmenu-list');
 	list.style.maxHeight = `calc(100vh - ${margin * 4}px)`;
 	list.style.overflowY = 'auto';
 	body.appendChild(list);
@@ -125,7 +183,7 @@ export const contextmenu = (
 			list.appendChild(hr);
 		} else if (typeof o === 'string') {
 			const p = create('p');
-			p.classList.add('text-muted', 'p-2', 'm-0', 'contextmenu-title');
+			p.classList.add('m-0', 'contextmenu-title');
 			p.textContent = o;
 			li.appendChild(p);
 			list.appendChild(li);
@@ -166,7 +224,7 @@ export const contextmenu = (
 			}
 			button.appendChild(icon);
 			const span = create('span');
-			span.classList.add('ms-2');
+			span.classList.add('contextmenu-label');
 			span.textContent = o.name;
 			button.appendChild(span);
 			button.addEventListener('click', o.action);

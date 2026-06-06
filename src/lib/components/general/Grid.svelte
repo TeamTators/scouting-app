@@ -48,7 +48,7 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		ModuleRegistry,
 		ClientSideRowModelModule,
 		type GridOptions,
-		themeQuartz,
+		themeBalham,
 		PaginationModule,
 		type GridApi,
 		type Module,
@@ -64,7 +64,6 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		type ICellRendererParams
 	} from 'ag-grid-community';
 	import { EventEmitter } from 'ts-utils/event-emitter';
-	import type { Readable } from 'svelte/store';
 	import {
 		CheckBoxSelectRenderer,
 		HeaderCheckboxRenderer
@@ -73,7 +72,7 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 	interface Props {
 		filter?: boolean;
 		opts: Omit<GridOptions<T>, 'rowData'>;
-		data: Readable<T[]>;
+		data: T[];
 		style?: string;
 		rowNumbers?:
 			| boolean
@@ -146,7 +145,7 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 
 	// Create a custom dark theme using Theming API
 	const gridTheme = $derived(
-		themeQuartz.withParams({
+		themeBalham.withParams({
 			backgroundColor: `var(--layer-${layer})`,
 			chromeBackgroundColor: {
 				ref: 'foregroundColor',
@@ -185,7 +184,7 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		const gridOptions: GridOptions<T> = {
 			theme: gridTheme,
 			...opts,
-			rowData: $data,
+			rowData: data,
 			columnDefs: [
 				...(rowNumbers
 					? [
@@ -239,13 +238,7 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		grid = createGrid(gridDiv, gridOptions);
 		em.emit('ready', grid);
 
-		const dataUnsub = data.subscribe((r) => {
-			grid.setGridOption('rowData', r);
-			onDataFilter();
-		});
-
 		return () => {
-			dataUnsub();
 			grid.destroy();
 		};
 	});

@@ -10,7 +10,6 @@
  * });
  */
 import type { Icon } from '$lib/types/icons';
-import { WritableArray } from '$lib/services/writables';
 
 /**
  * Navbar section registry.
@@ -39,18 +38,9 @@ export namespace Navbar {
 	};
 
 	/**
-	 * Internal sections store.
-	 */
-	class Sections extends WritableArray<Section> {
-		public constructor() {
-			super([]);
-		}
-	}
-
-	/**
 	 * Internal singleton store of sections.
 	 */
-	const sections = new Sections();
+	const sections = $state<Section[]>([]);
 
 	/**
 	 * Adds or replaces a section and maintains sort order.
@@ -66,17 +56,28 @@ export namespace Navbar {
 	 * });
 	 */
 	export const addSection = (section: Section) => {
-		sections.update((s) => {
-			const has = s.some((s) => s.name === section.name);
-			if (!has) s.push(section);
-			else {
-				console.warn(`Navbar: Section ${section.name} already exists, overriding...`);
-				const index = s.findIndex((s) => s.name === section.name);
-				s[index] = section;
-			}
-			s.sort((a, b) => a.priority - b.priority);
-			return s;
-		});
+		// sections.update((s) => {
+		// 	const has = s.some((s) => s.name === section.name);
+		// 	if (!has) s.push(section);
+		// 	else {
+		// 		console.warn(`Navbar: Section ${section.name} already exists, overriding...`);
+		// 		const index = s.findIndex((s) => s.name === section.name);
+		// 		s[index] = section;
+		// 	}
+		// 	s.sort((a, b) => a.priority - b.priority);
+		// 	return s;
+		// });
+
+		if (sections.some((s) => s.name === section.name)) {
+			console.warn(`Navbar: Section ${section.name} already exists, overriding...`);
+			sections.splice(
+				sections.findIndex((s) => s.name === section.name),
+				1,
+				section
+			);
+		} else sections.push(section);
+
+		sections.sort((a, b) => a.priority - b.priority);
 	};
 
 	/**
@@ -93,11 +94,10 @@ export namespace Navbar {
 	 * @returns {void}
 	 */
 	export const removeSection = (section: Section) => {
-		sections.update((s) => {
-			const index = s.findIndex((s) => s.name === section.name);
-			if (index !== -1) s.splice(index, 1);
-			return s;
-		});
+		sections.splice(
+			sections.findIndex((s) => s.name === section.name),
+			1
+		);
 	};
 
 	/**
@@ -105,5 +105,5 @@ export namespace Navbar {
 	 *
 	 * @returns {void}
 	 */
-	export const clear = () => sections.clear();
+	export const clear = () => sections.splice(0, sections.length);
 }
