@@ -119,6 +119,10 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		restore: [SupaStructData<Schema, RowName>];
 		realtime: [REALTIME_SUBSCRIBE_STATES];
 	}>();
+	public readonly on = this.em.on.bind(this.em);
+	public readonly off = this.em.off.bind(this.em);
+	public readonly once = this.em.once.bind(this.em);
+
 	private readonly queryCache = $state(new SvelteMap<string, SupaQuery<Schema, RowName>>());
 
 	/**

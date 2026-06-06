@@ -25,7 +25,8 @@
 		SupaStruct.get({
 			client: data.supabase,
 			table: 'test',
-			schema: 'test'
+			schema: 'test',
+			debug: true,
 		});
 
 	const now = () => Date.now();
