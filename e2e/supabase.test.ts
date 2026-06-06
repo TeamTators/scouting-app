@@ -10,6 +10,7 @@ test('Supabase page tests complete and pass', async ({ page }) => {
 	const container = page.locator('#supabase-tests');
 	await expect(container).toBeVisible();
 
+	console.log('Container data:', await container.allTextContents());
 
 
 	const failedRows = page.locator('tbody tr td:nth-child(2)', {
