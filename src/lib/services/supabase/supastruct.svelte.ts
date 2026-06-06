@@ -289,13 +289,7 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 			)
 			.subscribe((status) => {
 				this.log('Realtime subscription status:', status);
-				if (status === 'SUBSCRIBED') {
-					this.em.emit('realtime', REALTIME_SUBSCRIBE_STATES.SUBSCRIBED);
-				} else if (status === REALTIME_SUBSCRIBE_STATES.TIMED_OUT) {
-					this.em.emit('realtime', REALTIME_SUBSCRIBE_STATES.TIMED_OUT);
-				} else if (status === REALTIME_SUBSCRIBE_STATES.CLOSED) {
-					this.em.emit('realtime', REALTIME_SUBSCRIBE_STATES.CLOSED);
-				}
+				this.em.emit('realtime', status);
 			});
 
 		return () => {
@@ -351,7 +345,11 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 
 		const rowData = new SupaStructData<Schema, RowName>(this, validated);
 		if (browser) {
-			this.cache.set(String(validated.id), rowData);
+			try {
+				this.cache.set(String(validated.id), rowData);
+			} catch {
+				//
+			}
 		}
 		return rowData;
 	}
@@ -689,16 +687,15 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 				.schema(this.config.schema)
 				.from(this.table)
 				.insert(data as any)
-				.select('*')
-				.single();
+				.select('*');
 			const result = this.runTransaction(
 				{
 					data: res.data as any,
 					error: res.error
 				},
-				'single'
+				'array'
 			).unwrap();
-			return this.Generator(result);
+			return result.map((row) => this.Generator(row));
 		});
 	}
 

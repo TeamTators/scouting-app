@@ -15,7 +15,9 @@ test('Supabase page tests complete and pass', async ({ page }) => {
 	});
 
 	await expect(container).toHaveAttribute('data-pass', 'true');
-	await expect(container).toHaveAttribute('data-crud', 'true');
-	await expect(container).toHaveAttribute('data-all-paginated', 'true');
-	await expect(container).toHaveAttribute('data-realtime', 'true');
+
+	const failedRows = page.locator('tbody tr td:nth-child(2)', {
+		hasText: 'fail'
+	});
+	await expect(failedRows).toHaveCount(0);
 });

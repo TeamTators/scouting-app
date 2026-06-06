@@ -32,7 +32,11 @@ describe('CRUD Tests', () => {
 		}
 		expect(createdResult.isErr()).toBe(false);
 
-		const created = createdResult.unwrap();
+		const createdRows = createdResult.unwrap();
+		const created = Array.isArray(createdRows) ? createdRows[0] : createdRows;
+		if (!created) {
+			throw new Error('Creation returned no rows');
+		}
 		expect(created.raw.name).toBe(uniqueName);
 		expect(created.raw.age).toBe(age);
 		expect(created.raw.archived).toBe(false);
