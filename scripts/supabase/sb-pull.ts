@@ -174,6 +174,6 @@ export default async (...args: string[]) => {
 		return;
 	}
 
-	const seedMigrationPath = path.resolve(process.cwd(), 'supabase', 'seed', 'migration.sql');
+	const seedMigrationPath = path.resolve(process.cwd(), 'supabase', 'seeds', 'migration.sql');
 	await upsertManagedBlock(seedMigrationPath, managedBody);
 };
