@@ -12,12 +12,11 @@
  * const dash = new Dashboard.Dashboard({ name: 'Main', id: 'main', cards: [card] });
  */
 import { browser } from '$app/environment';
-import { writable } from 'svelte/store';
 import { EventEmitter } from 'ts-utils/event-emitter';
 import { attempt } from 'ts-utils/check';
 import { z } from 'zod';
 import type { Icon } from '$lib/types/icons';
-import { WritableArray, WritableBase } from '$lib/services/writables';
+import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
 /**
  * Dashboard data models and helpers.
@@ -123,8 +122,9 @@ export namespace Dashboard {
 	/**
 	 * Dashboard container managing a collection of cards.
 	 */
-	export class Dashboard extends WritableArray<Card> {
-		private readonly listeners = new Set<() => void>();
+	export class Dashboard {
+		private readonly listeners = new SvelteSet<() => void>();
+		public cards: Card[] = $state([]);
 
 		/**
 		 * Creates a dashboard.
@@ -132,23 +132,27 @@ export namespace Dashboard {
 		 * @param config - Dashboard configuration.
 		 */
 		constructor(public readonly config: DashboardConfig) {
-			super(config.cards);
 			const hidden = this.pull();
-			this.hiddenCards.set(hidden);
+			this.hiddenCards = hidden;
 			for (const card of config.cards) {
 				if (hidden.has(card)) {
 					card.hide();
 				}
 				this.listeners.add(
 					card.localOn('show', (show) => {
-						this.hiddenCards.update((cards) => {
-							if (show) {
-								cards.delete(card);
-							} else {
-								cards.add(card);
-							}
-							return cards;
-						});
+						// this.hiddenCards.update((cards) => {
+						// 	if (show) {
+						// 		cards.delete(card);
+						// 	} else {
+						// 		cards.add(card);
+						// 	}
+						// 	return cards;
+						// });
+						if (show) {
+							this.hiddenCards.delete(card);
+						} else {
+							this.hiddenCards.add(card);
+						}
 						this.save();
 					})
 				);
@@ -165,29 +169,13 @@ export namespace Dashboard {
 			return this.config.name;
 		}
 
-		/** Managed card instances. */
-		get cards() {
-			return this.config.cards;
-		}
-
 		/** Cards sorted by order. */
 		get orderedCards() {
-			const a = new WritableArray(
-				[...this.config.cards].sort((a, b) => a.getOrder() - b.getOrder())
-			);
-
-			a.on(
-				'all-unsubscribe',
-				this.subscribe(() => {
-					a.set([...this.config.cards].sort((a, b) => a.getOrder() - b.getOrder()));
-				})
-			);
-
-			return a;
+			return this.cards.slice().sort((a, b) => a.getOrder() - b.getOrder());
 		}
 
 		/** Set of currently hidden cards. */
-		public hiddenCards = writable(new Set<Card>());
+		public hiddenCards = $state(new SvelteSet<Card>());
 
 		/** Persists hidden card ids to localStorage. */
 		save() {
@@ -202,15 +190,15 @@ export namespace Dashboard {
 
 		/** Restores hidden cards from localStorage. */
 		pull() {
-			if (!browser) return new Set<Card>();
+			if (!browser) return new SvelteSet<Card>();
 			const hidden = localStorage.getItem(`v1-dashboard-cards-${this.id}`);
-			if (!hidden) return new Set<Card>();
+			if (!hidden) return new SvelteSet<Card>();
 			const arr = z.array(z.string()).safeParse(JSON.parse(hidden));
 			if (!arr.success) {
 				console.error(arr.error);
-				return new Set<Card>();
+				return new SvelteSet<Card>();
 			}
-			return new Set<Card>(
+			return new SvelteSet<Card>(
 				arr.data.map((id) => Card.cards.get(id)).filter((card): card is Card => !!card)
 			);
 		}
@@ -219,7 +207,7 @@ export namespace Dashboard {
 		init() {
 			if (!browser) return;
 			document.addEventListener('resize', () => {
-				this.inform();
+				this.cards = [...this.cards]; // trigger reactive updates
 			});
 		}
 	}
@@ -227,10 +215,10 @@ export namespace Dashboard {
 	/**
 	 * Dashboard card state and configuration.
 	 */
-	export class Card extends WritableBase<CardData> {
-		public static readonly cards = new Map<string, Card>();
+	export class Card {
+		public static readonly cards = new SvelteMap<string, Card>();
 
-		public state: CardData;
+		public state: CardData = $state({} as CardData);
 
 		private readonly localEm = new EventEmitter<{
 			show: boolean;
@@ -248,12 +236,12 @@ export namespace Dashboard {
 		 * @param config - Card configuration.
 		 */
 		constructor(public readonly config: CardConfig) {
-			super({
+			this.state = {
 				show: true,
 				maximized: false,
 				width: config.size.width,
 				height: config.size.height
-			});
+			};
 			if (!Number.isInteger(config.size.width) || !Number.isInteger(config.size.height)) {
 				throw new Error('Width and height must be integers');
 			}
@@ -321,43 +309,34 @@ export namespace Dashboard {
 
 		/** Shows the card and emits a `show` event. */
 		show() {
-			this.update((state) => ({
-				...state,
-				show: true,
-				maximized: false
-			}));
+			this.state.show = true;
+			this.state.maximized = false;
 			this.localEmit('show', true);
 		}
 
 		/** Hides the card and emits a `show` event. */
 		hide() {
-			this.update((state) => ({
-				...state,
-				show: false,
-				maximized: false
-			}));
+			this.state.show = false;
+			this.state.maximized = false;
 			this.localEmit('show', false);
 		}
 
 		/** Clears the maximized state and emits `maximized`. */
 		minimize() {
-			this.update((state) => ({ ...state, maximized: false }));
+			this.state.maximized = false;
 			this.localEmit('maximized', false);
 		}
 
 		/** Sets the maximized state and emits `maximized`. */
 		maximize() {
-			this.update((state) => ({ ...state, maximized: true }));
+			this.state.maximized = true;
 			this.localEmit('maximized', true);
 		}
 
 		/** Recomputes size based on the current breakpoint. */
 		resize() {
-			this.update((state) => ({
-				...state,
-				width: this.getSize().width,
-				height: this.getSize().height
-			}));
+			this.state.width = this.getSize().width;
+			this.state.height = this.getSize().height;
 		}
 	}
 }

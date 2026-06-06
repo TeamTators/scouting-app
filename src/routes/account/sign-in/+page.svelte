@@ -5,7 +5,7 @@ Sign-in page at `/account/sign-in`.
 <script lang="ts">
 	import '$lib/styles/gsi.css';
 	import Password from '$lib/components/forms/Password.svelte';
-	import { Form } from '$lib/utils/form';
+	import { Form } from '$lib/utils/form.svelte.js';
 	import { goto } from '$app/navigation';
 	import supabase from '$lib/services/supabase/index.js';
 

@@ -9,7 +9,6 @@ import Modal from '../components/bootstrap/Modal.svelte';
 import { createRawSnippet, mount } from 'svelte';
 import { modalTarget, createButtons, clearModals } from './prompts';
 import { attemptAsync } from 'ts-utils/check';
-import { WritableBase } from '../services/writables';
 
 type Option =
 	| string
@@ -172,12 +171,13 @@ type Input<T extends keyof Inputs> = {
  * console.log(result.value); // { username: string, email: string }
  */
 export class Form<T extends { [key: string]: Input<keyof Inputs> }> {
-	private eventListeners: { element: HTMLElement; type: string; listener: EventListener }[] = [];
-	private _rendered: HTMLFormElement | undefined;
-	private _initialValues: Record<string, string | string[]> = {};
-	private _currentValues: Record<string, string | string[]> = {};
-	private _errors: FieldError[] = [];
-	private _isDirty = false;
+	private eventListeners: { element: HTMLElement; type: string; listener: EventListener }[] =
+		$state([]);
+	private _rendered: HTMLFormElement | undefined = $state(undefined);
+	private _initialValues: Record<string, string | string[]> = $state({});
+	private _currentValues: Record<string, string | string[]> = $state({});
+	private _errors: FieldError[] = $state([]);
+	private _isDirty = $state(false);
 
 	/**
 	 * Create a new form builder
@@ -977,10 +977,10 @@ export class Form<T extends { [key: string]: Input<keyof Inputs> }> {
  * });
  * slider.render();
  */
-export class RangeSlider extends WritableBase<{
-	min: number;
-	max: number;
-}> {
+export class RangeSlider {
+	min = $state(0);
+	max = $state(100);
+
 	constructor(
 		private readonly config: {
 			min: number;
@@ -992,15 +992,12 @@ export class RangeSlider extends WritableBase<{
 			handleColor?: string;
 		}
 	) {
-		super({
-			min: config.init ? config.init[0] : config.min,
-			max: config.init ? config.init[1] : config.max
-		});
-
 		// check if step is valid (both min and max should be divisible by step)
 		if (config.min % config.step !== 0 || config.max % config.step !== 0) {
 			throw new Error('RangeSlider: min and max must both be divisible by step');
 		}
+		this.min = config.init ? config.init[0] : config.min;
+		this.max = config.init ? config.init[1] : config.max;
 	}
 
 	/**
@@ -1091,7 +1088,9 @@ export class RangeSlider extends WritableBase<{
 		wrapper.appendChild(svg);
 
 		const setValue = (range: { min?: number; max?: number }) => {
-			this.set({ ...this.data, min: range.min ?? this.data.min, max: range.max ?? this.data.max });
+			this.min = range.min ?? this.min;
+			this.max = range.max ?? this.max;
+			// console.log('Range updated:', this.min, this.max);
 		};
 
 		let startDragging = false;
@@ -1100,7 +1099,7 @@ export class RangeSlider extends WritableBase<{
 		let dragStartValue = 0;
 
 		const applyStartValue = (value: number, width: number) => {
-			const clamped = clamp(value, this.config.min, this.data.max);
+			const clamped = clamp(value, this.config.min, this.max);
 			const steppedValue = Math.round(clamped / this.config.step) * this.config.step;
 			const startPos = valueToPos(steppedValue, width);
 			start.setAttribute('cx', startPos.toString());
@@ -1110,7 +1109,7 @@ export class RangeSlider extends WritableBase<{
 		};
 
 		const applyEndValue = (value: number, width: number) => {
-			const clamped = clamp(value, this.data.min, this.config.max);
+			const clamped = clamp(value, this.min, this.config.max);
 			const steppedValue = Math.round(clamped / this.config.step) * this.config.step;
 			const endPos = valueToPos(steppedValue, width);
 			end.setAttribute('cx', endPos.toString());
@@ -1123,7 +1122,7 @@ export class RangeSlider extends WritableBase<{
 			e.preventDefault();
 			startDragging = true;
 			dragStartX = e.clientX;
-			dragStartValue = this.data.min;
+			dragStartValue = this.min;
 			start.style.cursor = 'grabbing';
 		};
 
@@ -1145,7 +1144,7 @@ export class RangeSlider extends WritableBase<{
 			e.preventDefault();
 			startDragging = true;
 			dragStartX = e.touches[0].clientX;
-			dragStartValue = this.data.min;
+			dragStartValue = this.min;
 		};
 
 		const startTouchMove = (e: TouchEvent) => {
@@ -1165,7 +1164,7 @@ export class RangeSlider extends WritableBase<{
 			e.preventDefault();
 			endDragging = true;
 			dragStartX = e.clientX;
-			dragStartValue = this.data.max;
+			dragStartValue = this.max;
 			end.style.cursor = 'grabbing';
 		};
 
@@ -1187,15 +1186,15 @@ export class RangeSlider extends WritableBase<{
 			e.preventDefault();
 			endDragging = true;
 			dragStartX = e.touches[0].clientX;
-			dragStartValue = this.data.max;
+			dragStartValue = this.max;
 		};
 
 		const handleKey = (e: KeyboardEvent, type: 'start' | 'end') => {
 			const isStart = type === 'start';
-			const current = isStart ? this.data.min : this.data.max;
+			const current = isStart ? this.min : this.max;
 			const minBound = this.config.min;
 			const maxBound = this.config.max;
-			const sibling = isStart ? this.data.max : this.data.min;
+			const sibling = isStart ? this.max : this.min;
 			const step = this.config.step;
 			const bigStep = step * 10;
 
@@ -1274,7 +1273,7 @@ export class RangeSlider extends WritableBase<{
 		const animate = () => {
 			if (!doAnimate) return;
 
-			const { min, max } = this.data;
+			const { min, max } = this;
 
 			const rect = wrapper.getBoundingClientRect();
 			svg.setAttribute('viewBox', `0 0 ${rect.width} 50`);
@@ -1328,9 +1327,7 @@ export class RangeSlider extends WritableBase<{
 	 * slider.revert();
 	 */
 	revert() {
-		this.set({
-			min: this.config.init ? this.config.init[0] : this.config.min,
-			max: this.config.init ? this.config.init[1] : this.config.max
-		});
+		this.min = this.config.init ? this.config.init[0] : this.config.min;
+		this.max = this.config.init ? this.config.init[1] : this.config.max;
 	}
 }

@@ -31,7 +31,7 @@
 	});
 </script>
 
-<Navbar title={__APP_ENV__.name} />
+<Navbar title={__APP_ENV__.name} notifications={[]} />
 <div class="container layer-2">
 	<div bind:this={html}></div>
 </div>

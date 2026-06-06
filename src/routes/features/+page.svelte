@@ -14,7 +14,7 @@
 	});
 </script>
 
-<Navbar title={__APP_ENV__.name} />
+<Navbar title={__APP_ENV__.name} notifications={[]} />
 <div class="container layer-2">
 	<div class="row mb-3">
 		<div class="col">

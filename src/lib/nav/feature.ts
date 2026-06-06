@@ -1,4 +1,4 @@
-import { Navbar } from '$lib/nav';
+import { Navbar } from '$lib/nav/index.svelte';
 import * as remote from '$lib/remotes/features.remote';
 
 export default async () => {

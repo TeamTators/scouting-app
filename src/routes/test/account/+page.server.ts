@@ -1,4 +1,6 @@
 import terminal from '$lib/server/utils/terminal.js';
+import { SupaStruct } from '$lib/services/supabase/supastruct.svelte';
+import { fail } from '@sveltejs/kit';
 
 /**
  * @fileoverview Server load for `/test/account`.
@@ -11,7 +13,7 @@ export const load = async (event) => {
 			success: false,
 			account: null
 		};
-	const account = await event.locals.session.getAccount();
+	const account = await event.locals.session.getUser();
 	if (account.isErr()) {
 		terminal.error('Error retrieving account:', account.error);
 		return {
@@ -31,10 +33,27 @@ export const load = async (event) => {
 			account: null
 		};
 	}
+
+	const struct = SupaStruct.get({
+		client: event.locals.supabase,
+		schema: 'core',
+		table: 'profile'
+	});
+
+	const profileResult = await struct.fromId(account.value.id);
+	if (profileResult.isErr()) {
+		throw fail(500, {
+			message: 'Error retrieving profile',
+			error: true,
+			success: false,
+			account: null
+		});
+	}
+
 	return {
 		message: 'Account retrieved successfully',
 		error: false,
 		success: true,
-		account: account.value.data.profile
+		account: profileResult.value.raw
 	};
 };

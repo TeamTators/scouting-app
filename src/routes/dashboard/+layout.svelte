@@ -12,7 +12,7 @@ layout isolates dashboard-specific UI from the public site layout.
 </script>
 
 <main class="dashboard">
-	<Navbar title={__APP_ENV__.name} />
+	<Navbar title={__APP_ENV__.name} notifications={[]} />
 
 	{@render children()}
 </main>

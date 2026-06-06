@@ -11,16 +11,15 @@ Username change input with availability checks.
 ```
 -->
 <script lang="ts">
-	import { Account } from '$lib/model/account';
-	import { after } from 'ts-utils';
+	import { SupaStructData } from '$lib/services/supabase/supastruct.svelte';
 
 	interface Props {
-		account: Account;
+		account: SupaStructData<'core', 'profile'>;
 	}
 
 	const { account }: Props = $props();
 
-	let username = $derived(account.username || '');
+	let username = $derived(account.raw.username || '');
 	let usernameState: 'exists' | 'available' | 'checking' | 'yours' | 'error' = $state('yours');
 	let testTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -28,21 +27,19 @@ Username change input with availability checks.
 		if (testTimeout) clearTimeout(testTimeout);
 
 		testTimeout = setTimeout(() => {
-			account.factory
-				.search(
-					{
-						field: 'username',
-						operator: 'eq',
-						value: username
-					},
-					{
-						type: 'single',
-						expires: after(5 * 60 * 1000)
-					}
-				)
+			account.struct
+				.search({
+					field: 'username',
+					operator: 'eq',
+					value: username
+				})
 				.unwrap()
 				.then((result) => {
-					if (username === account.username || (result && result.id === account.id)) {
+					if (result.length === 0) {
+						usernameState = 'available';
+						return;
+					}
+					if (username === account.raw.username || (result && result[0].id === account.id)) {
 						usernameState = 'yours';
 					} else if (result) {
 						usernameState = 'exists';

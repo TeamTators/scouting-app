@@ -64,7 +64,6 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		type ICellRendererParams
 	} from 'ag-grid-community';
 	import { EventEmitter } from 'ts-utils/event-emitter';
-	import type { Readable, Unsubscriber } from 'svelte/store';
 	import {
 		CheckBoxSelectRenderer,
 		HeaderCheckboxRenderer
@@ -73,7 +72,7 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 	interface Props {
 		filter?: boolean;
 		opts: Omit<GridOptions<T>, 'rowData'>;
-		data: Readable<T[]>;
+		data: T[];
 		style?: string;
 		rowNumbers?:
 			| boolean
@@ -162,7 +161,6 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 	let grid: GridApi<T>;
 	let filterText: string = $state('');
 	let filterTimeout: ReturnType<typeof setTimeout> | null = null;
-	let dataUnsub: Unsubscriber | null = null;
 
 	const onDataFilter = () => {
 		if (filterTimeout) {
@@ -186,7 +184,7 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		const gridOptions: GridOptions<T> = {
 			theme: gridTheme,
 			...opts,
-			rowData: $data,
+			rowData: data,
 			columnDefs: [
 				...(rowNumbers
 					? [
@@ -241,32 +239,7 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		em.emit('ready', grid);
 
 		return () => {
-			if (dataUnsub) {
-				dataUnsub();
-				dataUnsub = null;
-			}
 			grid.destroy();
-		};
-	});
-
-	$effect(() => {
-		if (!grid) return;
-
-		if (dataUnsub) {
-			dataUnsub();
-			dataUnsub = null;
-		}
-
-		dataUnsub = data.subscribe((r) => {
-			grid.setGridOption('rowData', r);
-			onDataFilter();
-		});
-
-		return () => {
-			if (dataUnsub) {
-				dataUnsub();
-				dataUnsub = null;
-			}
 		};
 	});
 </script>

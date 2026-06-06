@@ -13,34 +13,21 @@ Top navigation bar with stack controls, theme toggle, account menu, and notifica
 <script lang="ts">
 	import SideNav from './SideNav.svelte';
 	import Notifications from './Notifications.svelte';
-	import { getAccountFactory } from '$lib/model/account';
 	import { Stack } from '$lib/utils/stack';
 	import ThemeSwitch from './ThemeSwitch.svelte';
-	import supabase from '$lib/services/supabase';
-	import { Account } from '$lib/model/account';
-	import { onMount } from 'svelte';
+	import { SupaStructData } from '$lib/services/supabase/supastruct.svelte';
 
 	interface Props {
 		title: string;
+		account?: SupaStructData<'core', 'profile'>;
+		notifications: SupaStructData<'core', 'account_notification'>[];
 	}
 
 	const prev = $state(Stack.prev);
 	const next = $state(Stack.next);
 
-	const { title }: Props = $props();
+	const { title, account, notifications }: Props = $props();
 	let notifs = $state(0);
-
-	const accounts = getAccountFactory(supabase);
-	let self: Account | null = $state(null);
-	onMount(() => {
-		accounts.getSelf().then((res) => {
-			if (res.isOk()) {
-				self = res.value;
-			} else {
-				console.error('Error fetching account in Navbar:', res.error);
-			}
-		});
-	});
 </script>
 
 <nav class="navbar navbar-expand-lg layer-2">
@@ -88,14 +75,14 @@ Top navigation bar with stack controls, theme toggle, account menu, and notifica
 					width:	min-content;
 				"
 				>
-					{#if !self || self.username === 'guest'}
+					{#if !account}
 						<li><a class="dropdown-item" href="/account/sign-in">Sign In</a></li>
 					{:else}
 						<li><a class="dropdown-item" href="/account/sign-out">Sign Out</a></li>
 					{/if}
 				</ul>
 			</div>
-			{#if self}
+			{#if account}
 				<button
 					class="me-5 btn position-relative"
 					type="button"
@@ -119,8 +106,8 @@ Top navigation bar with stack controls, theme toggle, account menu, and notifica
 </nav>
 <SideNav id="pages" />
 
-{#if self}
-	<Notifications bind:notifs account={self} />
+{#if account}
+	<Notifications {notifications} />
 {/if}
 
 <style>

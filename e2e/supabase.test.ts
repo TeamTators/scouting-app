@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 test('Supabase page tests complete and pass', async ({ page }) => {
-	await page.goto('http://127.0.0.1:4173/test/supabase');
+	await page.goto('/test/supabase');
 
 	page.on('console', (msg) => {
 		console.log(`Console message: [${msg.type()}] ${msg.text()}`);
@@ -15,4 +15,7 @@ test('Supabase page tests complete and pass', async ({ page }) => {
 	});
 
 	await expect(container).toHaveAttribute('data-pass', 'true');
+	await expect(container).toHaveAttribute('data-crud', 'true');
+	await expect(container).toHaveAttribute('data-all-paginated', 'true');
+	await expect(container).toHaveAttribute('data-realtime', 'true');
 });

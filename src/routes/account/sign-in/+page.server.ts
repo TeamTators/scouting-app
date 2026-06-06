@@ -2,11 +2,11 @@
  * @fileoverview Server load/actions for `/account/sign-in`.
  */
 import { fail } from '@sveltejs/kit';
-import { getAccountFactory } from '$lib/model/account.js';
 import { ServerCode } from 'ts-utils/status';
 import { z } from 'zod';
 import terminal from '$lib/server/utils/terminal';
 import serverSB from '$lib/server/services/supabase';
+import { SupaStruct } from '$lib/services/supabase/supastruct.svelte';
 
 export const actions = {
 	login: async (event) => {
@@ -28,18 +28,18 @@ export const actions = {
 			});
 		}
 
+		const profileStruct = SupaStruct.get({
+			schema: 'core',
+			table: 'profile',
+			client: serverSB
+		});
+
 		let email = res.data.username;
 		// is a username
 		if (!email.includes('@')) {
-			const factory = getAccountFactory(serverSB);
-			const profile = await factory.profile.get(
-				{
-					username: email
-				},
-				{
-					type: 'single'
-				}
-			);
+			const profile = await profileStruct.get({
+				username: email
+			});
 			if (profile.isErr()) {
 				terminal.error(profile.error);
 				throw fail(ServerCode.internalServerError, {
@@ -47,8 +47,8 @@ export const actions = {
 					user: res.data.username
 				});
 			} else {
-				if (profile.value && profile.value.data.email) {
-					email = profile.value.data.email;
+				if (profile.value.length && profile.value[0].raw.email) {
+					email = profile.value[0].raw.email;
 				} else {
 					return fail(ServerCode.unauthorized, {
 						message: 'Invalid username/email or password',

@@ -2,7 +2,6 @@
 import { render, fireEvent, cleanup } from '@testing-library/svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createRawSnippet, tick } from 'svelte';
-import { writable } from 'svelte/store';
 import ButtonGroup from '$lib/components/bootstrap/ButtonGroup.svelte';
 import Card from '$lib/components/bootstrap/Card.svelte';
 import DateInput from '$lib/components/forms/DateInput.svelte';
@@ -12,7 +11,7 @@ import Select from '$lib/components/forms/Select.svelte';
 import Grid from '$lib/components/general/Grid.svelte';
 import DashboardComponent from '$lib/components/dashboard/Dashboard.svelte';
 import MinimizedCards from '$lib/components/dashboard/MinimizedCards.svelte';
-import { Dashboard } from '$lib/utils/dashboard';
+import { Dashboard } from '$lib/utils/dashboard.svelte';
 import { sleep } from 'ts-utils';
 
 vi.mock('ag-grid-community', () => {
@@ -38,6 +37,7 @@ vi.mock('ag-grid-community', () => {
 		EventApiModule: {},
 		RowStyleModule: {},
 		CellStyleModule: {},
+		themeBalham: { withParams: vi.fn((params) => ({ params })) },
 		themeQuartz: { withParams: vi.fn((params) => ({ params })) }
 	};
 });
@@ -246,7 +246,7 @@ describe('Select', () => {
 
 describe('Grid', () => {
 	it('emits filter event when filtering input changes', async () => {
-		const data = writable([{ id: 1 }, { id: 2 }]);
+		const data = [{ id: 1 }, { id: 2 }];
 		const onFilter = vi.fn();
 
 		const { container, component } = render(Grid, {
@@ -269,7 +269,7 @@ describe('Grid', () => {
 	});
 
 	it('getSelection returns selected nodes', async () => {
-		const data = writable([{ id: 1 }, { id: 2 }]);
+		const data = [{ id: 1 }, { id: 2 }];
 		const { component } = render(Grid, {
 			props: {
 				height: 200,
@@ -367,6 +367,6 @@ describe('Dashboard components', () => {
 		const button = container.querySelector('button');
 		expect(button).toBeTruthy();
 		await fireEvent.click(button as HTMLButtonElement);
-		expect(card.data.show).toBe(true);
+		expect(card.state.show).toBe(true);
 	});
 });

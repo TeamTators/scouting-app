@@ -17,12 +17,8 @@ Account search input with debounced query results.
 ```
 -->
 <script lang="ts">
-	import { getAccountFactory } from '$lib/model/account';
 	import supabase from '$lib/services/supabase';
-	import type { SupaStructData } from '$lib/services/supabase/supastruct-data';
-	import { after } from 'ts-utils';
-
-	const factory = getAccountFactory(supabase);
+	import { SupaStructData, SupaStruct } from '$lib/services/supabase/supastruct.svelte';
 
 	interface Props {
 		onselect: (account: SupaStructData<'core', 'profile'>) => void;
@@ -32,28 +28,38 @@ Account search input with debounced query results.
 
 	const { onselect, onsearch, filter }: Props = $props();
 
+	const struct = $state(
+		SupaStruct.get({
+			client: supabase,
+			schema: 'core',
+			table: 'profile'
+		})
+	);
+
 	let query = $state('');
 
 	let timeout: ReturnType<typeof setTimeout>;
 
-	let results = $state(factory.profile.arr());
+	let results: SupaStructData<'core', 'profile'>[] = $state([]);
 
 	export const search = (username: string) => {
 		if (timeout) clearTimeout(timeout);
-		timeout = setTimeout(() => {
-			results = factory.search(
-				{
-					field: 'username',
-					operator: 'ilike',
-					value: `%${username}%`
-				},
-				{
-					type: 'all',
-					expires: after(5 * 60 * 1000)
-				}
-			);
-			if (filter) results.filter(filter);
-			if (onsearch) onsearch(results.data);
+		timeout = setTimeout(async () => {
+			const res = await struct.search({
+				field: 'username',
+				operator: 'ilike',
+				value: `%${username}%`
+			});
+
+			if (res.isErr()) {
+				console.error('Search error:', res.error);
+				results = [];
+				return;
+			}
+
+			results = res.value;
+			if (filter) results = results.filter(filter);
+			if (onsearch) onsearch(results);
 		}, 300);
 	};
 
@@ -74,15 +80,15 @@ Account search input with debounced query results.
 	{#if query}
 		<div class="search-results card mt-1">
 			<ul class="list-group list-group-flush">
-				{#each $results as account (account.data.id)}
+				{#each results as account (account.raw.id)}
 					<li class="list-group-item list-group-item-action">
 						<button type="button" class="btn" onclick={() => select(account)}>
-							{account.data.username} - {account.data.first_name}
-							{account.data.last_name}
+							{account.raw.username} - {account.raw.first_name}
+							{account.raw.last_name}
 						</button>
 					</li>
 				{/each}
-				{#if $results.length === 0}
+				{#if results.length === 0}
 					<li class="list-group-item text-muted">No results found.</li>
 				{/if}
 			</ul>

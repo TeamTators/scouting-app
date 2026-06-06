@@ -11,7 +11,7 @@ Notification card with read/unread and delete actions.
 ```
 -->
 <script lang="ts">
-	import type { SupaStructData } from '$lib/services/supabase/supastruct-data';
+	import type { SupaStructData } from '$lib/services/supabase/supastruct.svelte';
 
 	interface Props {
 		notification: SupaStructData<'core', 'account_notification'>;
@@ -20,17 +20,15 @@ Notification card with read/unread and delete actions.
 	const { notification }: Props = $props();
 
 	const read = () => {
-		notification.update((d) => ({
-			...d,
+		notification.update({
 			read: true
-		}));
+		});
 	};
 
 	const unread = () => {
-		notification.update((d) => ({
-			...d,
+		notification.update({
 			read: false
-		}));
+		});
 	};
 
 	const remove = () => {
@@ -38,29 +36,29 @@ Notification card with read/unread and delete actions.
 	};
 </script>
 
-<div class="card mb-3 {!$notification.read ? 'border-' + $notification.severity : ''}">
+<div class="card mb-3 {!notification.raw.read ? 'border-' + notification.raw.severity : ''}">
 	<div class="card-body layer-2">
 		<div class="d-flex align-items-center mb-2">
-			{#if $notification.icon}
-				<i class="material-icons text-{$notification.severity} pe-2">{$notification.icon}</i>
+			{#if notification.raw.icon}
+				<i class="material-icons text-{notification.raw.severity} pe-2">{notification.raw.icon}</i>
 			{/if}
-			<h5 class="card-title mb-0">{$notification.title}</h5>
+			<h5 class="card-title mb-0">{notification.raw.title}</h5>
 
-			{#if $notification.link}
+			{#if notification.raw.link}
 				<a
-					href={$notification.link}
+					href={notification.raw.link}
 					onclick={read}
 					target="_blank"
-					class="btn btn-outline-{$notification.severity} btn-sm ms-auto"
+					class="btn btn-outline-{notification.raw.severity} btn-sm ms-auto"
 				>
 					<i class="material-icons"> open_in_new </i>
 					Open Link
 				</a>
 			{/if}
 		</div>
-		<p class="card-text">{$notification.message}</p>
+		<p class="card-text">{notification.raw.message}</p>
 		<div class="d-flex justify-content-between align-items-center">
-			{#if $notification.read}
+			{#if notification.raw.read}
 				<button class="btn btn-outline-secondary btn-sm" onclick={unread}>
 					<i class="material-icons">mark_email_unread</i> Mark as Unread
 				</button>

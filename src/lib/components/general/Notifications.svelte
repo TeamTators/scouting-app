@@ -11,69 +11,19 @@ Notifications offcanvas panel with unread count binding.
 ```
 -->
 <script lang="ts">
-	import { Account } from '$lib/model/account';
-	import { mount, onMount } from 'svelte';
+	import { mount } from 'svelte';
 	import Notification from '../account/Notification.svelte';
 	import { rawModal } from '$lib/utils/prompts';
 	import NotificationHistory from '../account/NotificationHistory.svelte';
-	import { after } from 'ts-utils';
+	import { SupaStructData } from '$lib/services/supabase/supastruct.svelte';
 
 	const id = 'notifications';
 
 	interface Props {
-		notifs: number;
-		account: Account;
+		notifications: SupaStructData<'core', 'account_notification'>[];
 	}
 
-	let _limit = $state(10);
-	let _page = $state(0);
-	let { notifs = $bindable(), account }: Props = $props();
-
-	const notifications = $derived(
-		account.getNotifications({
-			expires: after(60 * 1000)
-		})
-		// Account.AccountNotification.arr([
-		// 	// Account.AccountNotification.Generator({
-		// 	// 	accountId: 'string',
-		// 	// 	title: 'string',
-		// 	// 	severity: 'danger',
-		// 	// 	message: 'string',
-		// 	// 	icon: 'string',
-		// 	// 	link: 'string',
-		// 	// 	read: false,
-		// 	//     id: 'string',
-		// 	//     created: 'string',
-		// 	//     updated: 'string',
-		// 	//     archived: false,
-		// 	//     universes: 'string',
-		// 	//     attributes: 'string',
-		// 	//     lifetime: 0,
-		// 	// })
-		// ])
-	);
-
-	onMount(() => {
-		const unsub = notifications.subscribe((d) => {
-			notifs = d.filter((n) => !n.data.read).length;
-		});
-
-		return () => {
-			unsub();
-		};
-	});
-
-	// const test = () => {
-	// 	Account.AccountNotification.new({
-	// 		accountId: Account.self.get().data.id || 'guest',
-	// 		title: 'Test Notification',
-	// 		icon: 'info',
-	// 		message: 'This is a test notification.',
-	// 		severity: 'info',
-	// 		link: '/test',
-	// 		read: false
-	// 	});
-	// };
+	let { notifications }: Props = $props();
 </script>
 
 <div class="offcanvas offcanvas-end" tabindex="-1" {id} aria-labelledby="{id}Label">
@@ -83,7 +33,7 @@ Notifications offcanvas panel with unread count binding.
 	</div>
 	<div class="offcanvas-body layer-1">
 		<ul class="list-unstyled">
-			{#each $notifications as notification}
+			{#each notifications as notification}
 				<Notification {notification} />
 			{/each}
 			<li class="w-100">

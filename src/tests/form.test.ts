@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { Form } from '$lib/utils/form';
+import { Form } from '$lib/utils/form.svelte';
 
 describe('Form utilities', () => {
 	test('renders inputs and validates values', () => {

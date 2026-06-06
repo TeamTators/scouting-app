@@ -3,7 +3,7 @@
  */
 
 import supabase from '$lib/server/services/supabase';
-import { SupaStruct } from '$lib/services/supabase/supastruct';
+import { SupaStruct } from '$lib/services/supabase/supastruct.svelte';
 import { describe, it, expect } from 'vitest';
 
 describe('CRUD Tests', () => {
@@ -14,38 +14,58 @@ describe('CRUD Tests', () => {
 		debug: true
 	});
 
-	struct.setupListeners();
-
-	it('Should run the create-update-delete flow', async () => {
+	it('runs create, read, update, and delete flow', async () => {
 		const age = Math.round(Math.random() * 100);
-		const created = await struct
-			.new({
-				name: 'CRUD Test',
-				age
-			})
-			.await()
-			.unwrap();
-		if (created.pending) throw new Error('Creation is pending');
-		if ('error' in created) throw new Error('Creation failed: ' + created.error.message);
+		const uniqueName = `CRUD Test ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+		const id = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
+		const createdAt = new Date().toISOString();
 
-		const [data] = created.result;
-		expect(data).toBeDefined();
-		if (!data) throw new Error('Data is not defined'); // should never happen but for type safety
-		expect(data.data.name).toBe('CRUD Test');
-		expect(data.data.age).toBe(age);
+		const createdResult = await struct.new({
+			id,
+			name: uniqueName,
+			age,
+			archived: false,
+			created_at: createdAt
+		});
+		if (createdResult.isErr()) {
+			throw new Error(`Creation failed: ${createdResult.error.message}`);
+		}
+		expect(createdResult.isErr()).toBe(false);
 
-		const updated = await data
-			.update((data) => ({
-				...data,
-				age: age + 1
-			}))
-			.await()
-			.unwrap();
-		if (updated.pending) throw new Error('Update is pending');
-		if ('error' in updated) throw new Error('Update failed: ' + updated.error.message);
+		const created = createdResult.unwrap();
+		expect(created.raw.name).toBe(uniqueName);
+		expect(created.raw.age).toBe(age);
+		expect(created.raw.archived).toBe(false);
 
-		const deleted = await data.delete().await().unwrap();
-		if (deleted.pending) throw new Error('Delete is pending');
-		if ('error' in deleted) throw new Error('Delete failed: ' + deleted.error.message);
+		const readResult = await struct.fromId(created.id);
+		expect(readResult.isErr()).toBe(false);
+		if (readResult.isErr()) {
+			throw new Error(`Read failed: ${readResult.error.message}`);
+		}
+
+		const read = readResult.unwrap();
+		expect(read.id).toBe(created.id);
+		expect(read.raw.name).toBe(uniqueName);
+
+		const updateResult = await created.update({
+			name: `${uniqueName} Updated`,
+			age: age + 1
+		});
+		expect(updateResult.isErr()).toBe(false);
+		if (updateResult.isErr()) {
+			throw new Error(`Update failed: ${updateResult.error.message}`);
+		}
+
+		expect(created.raw.name).toBe(`${uniqueName} Updated`);
+		expect(created.raw.age).toBe(age + 1);
+
+		const deleteResult = await created.delete();
+		expect(deleteResult.isErr()).toBe(false);
+		if (deleteResult.isErr()) {
+			throw new Error(`Delete failed: ${deleteResult.error.message}`);
+		}
+
+		const afterDeleteResult = await struct.fromId(created.id);
+		expect(afterDeleteResult.isErr()).toBe(true);
 	}, 30000);
 });

@@ -20,7 +20,7 @@ Dashboard card container with maximize and hide controls.
 <script lang="ts">
 	import { onMount, type Snippet } from 'svelte';
 	import { capitalize } from 'ts-utils/text';
-	import { Dashboard } from '$lib/utils/dashboard';
+	import { Dashboard } from '$lib/utils/dashboard.svelte';
 	import { browser } from '$app/environment';
 
 	const CARD_HEIGHT = 300; // in pixels
@@ -56,9 +56,9 @@ Dashboard card container with maximize and hide controls.
 	});
 </script>
 
-{#if $card.show}
+{#if card.state.show}
 	<!-- Overlay for graying out the background when card is maximized -->
-	{#if $card.maximized}
+	{#if card.state.maximized}
 		<div
 			class="overlay"
 			role="button"
@@ -71,10 +71,10 @@ Dashboard card container with maximize and hide controls.
 
 	<div
 		class="card animate__animated animate__fadeIn"
-		class:maximized={$card.maximized}
+		class:maximized={card.state.maximized}
 		style="
-			grid-column: span {$card.width};
-			grid-row: span {$card.height};
+			grid-column: span {card.width};
+			grid-row: span {card.height};
 			height: {height}px;
 			{style}
 		"
@@ -102,22 +102,24 @@ Dashboard card container with maximize and hide controls.
 				<div class="ms-auto">
 					<button
 						class="btn btn-sm px-1"
-						onclick={() =>
-							card.update((c) => ({
-								...c,
-								maximized: !c.maximized
-							}))}
+						onclick={() => {
+							if (card.state.maximized) {
+								card.minimize();
+							} else {
+								card.maximize();
+							}
+						}}
 						aria-label="Maximize"
 					>
-						{#if $card.maximized}
+						{#if card.state.maximized}
 							<i class="material-icons h4 mb-0">close_fullscreen</i>
 						{:else}
 							<i class="material-icons h4 mb-0">open_in_full</i>
 						{/if}
 					</button>
-					{#if !$card.maximized}
+					{#if !card.state.maximized}
 						<button class="btn btn-sm px-1" onclick={() => card.hide()} aria-label="Close">
-							{#if $card.show}
+							{#if card.state.show}
 								<i class="material-icons h4 mb-0">close</i>
 							{:else}
 								<i class="material-icons h4 mb-0">open_in_full</i>
