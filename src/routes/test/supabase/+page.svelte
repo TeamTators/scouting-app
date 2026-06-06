@@ -19,7 +19,7 @@
 
 		const prefix = `t-${Math.random().toString(36).slice(2, 7)}`;
 		const listener = SupaStruct.get({ client: data.supabase, table: 'test', schema: 'test' });
-		const writer = SupaStruct.get({ client: data.supabase, table: 'test', schema: 'test' });
+		const writer = SupaStruct.get({ client: data.supabase, table: 'test', schema: 'test', debug: true, });
 
 		// Collect realtime events as they arrive
 		const rtEvents: { type: string; id: string }[] = [];
