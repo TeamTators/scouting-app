@@ -8,7 +8,10 @@ export default () => {
 	const add = Math.floor(Math.random() * 10000);
 	console.log(`Adding ${add} to Supabase ports...`);
 
-	const files = [path.join(process.cwd(), 'supabase', 'config.toml')];
+	const files = [
+		path.join(process.cwd(), 'supabase', 'config.toml'),
+		path.join(process.cwd(), '.env')
+	];
 
 	for (const file of files) {
 		let content = fs.readFileSync(file, 'utf-8');
