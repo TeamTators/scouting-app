@@ -16,6 +16,7 @@ extra_search_path = ["public", "extensions", "core", "test"]
 # The maximum number of rows returns from a view, table, or stored procedure. Limits payload size
 # for accidental or malicious requests.
 max_rows = 1000
+external_url = "env(API_EXTERNAL_URL)"
 
 [api.tls]
 # Enable HTTPS endpoints locally using a self-signed certificate.
@@ -153,7 +154,7 @@ enabled = true
 # in emails.
 site_url = "env(SITE_URL)"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["env(ADDITIONAL_REDIRECT_URLS)"]
+additional_redirect_urls = ["env(SB_ADDITIONAL_REDIRECT_URLS)"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to the local API URL (http://127.0.0.1:<port>/auth/v1).
@@ -227,15 +228,15 @@ admin_email = "env(SMTP_ADMIN_EMAIL)"
 sender_name = "env(APP_NAME)"
 
 # Uncomment to customize email template
-[auth.email.template.invite]
-subject = "You have been invited"
-content_path = "./supabase/templates/invite.html"
+# [auth.email.template.invite]
+# subject = "You have been invited"
+# content_path = "./supabase/templates/invite.html"
 
 # Uncomment to customize notification email template
-[auth.email.notification.password_changed]
-enabled = true
-subject = "Your password has been changed"
-content_path = "./templates/password_changed_notification.html"
+# [auth.email.notification.password_changed]
+# enabled = true
+# subject = "Your password has been changed"
+# content_path = "./templates/password_changed_notification.html"
 
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.

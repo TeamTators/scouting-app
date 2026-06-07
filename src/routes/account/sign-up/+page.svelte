@@ -36,15 +36,19 @@ Sign-up page at `/account/sign-up`.
 </script>
 
 <main>
-	<div class="container pt-5">
+	<div class="container layer-1 mt-5 py-5">
 		<div class="row">
 			<h1>
 				{__APP_ENV__.name}: Sign Up
 			</h1>
 		</div>
-		<div class="row mb-3">
-			<a href="/account/sign-in" class="link-primary">Sign In</a>
+		<div class="row mb-3 pb-3">
+			<div class="d-flex">
+			<a href="/account/sign-in" class="btn btn-primary">Sign In</a>
+
+			</div>
 		</div>
+			<hr />
 		<div class="row mb-3">
 			<form action="?/register" method="post">
 				<div class="container">
@@ -167,6 +171,7 @@ Sign-up page at `/account/sign-up`.
 						</div>
 					</div>
 				</div>
+			<hr />
 				<button type="submit" class="btn btn-primary" id="signUpButton"> Sign Up </button>
 			</form>
 		</div>

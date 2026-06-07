@@ -10,7 +10,7 @@ export const load = async (event) => {
 		? createBrowserClient(__APP_ENV__.supabase.url, __APP_ENV__.supabase.public_key, {
 				global: {
 					fetch: event.fetch
-				}
+				},
 			})
 		: createServerClient(__APP_ENV__.supabase.url, __APP_ENV__.supabase.public_key, {
 				global: {
@@ -18,7 +18,7 @@ export const load = async (event) => {
 				},
 				cookies: {
 					getAll: () => event.data.cookies || []
-				}
+				},
 			});
 
 	const {

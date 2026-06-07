@@ -105,9 +105,11 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 	public static get<Schema extends RowSchemaName, Name extends RowTableNames<Schema>>(
 		config: SupaConfig<Schema, Name>
 	): SupaStruct<Schema, Name> {
-		// const existing = SupaStruct.structs.get(config.name);
-		// if (existing) return existing as unknown as SupaStruct<Name>;
-		return new SupaStruct(config);
+		const existing = SupaStruct.structs.get(`${config.schema}.${String(config.table)}`);
+		if (existing) return existing as unknown as SupaStruct<Schema, Name>;
+		const instance = new SupaStruct(config);
+		SupaStruct.structs.set(`${config.schema}.${String(config.table)}`, instance as any);
+		return instance;
 	}
 
 	public readonly cache = $state(new SvelteMap<string, SupaStructData<Schema, RowName>>());
@@ -123,7 +125,9 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 	public readonly off = this.em.off.bind(this.em);
 	public readonly once = this.em.once.bind(this.em);
 
-	private readonly queryCache = $state(new SvelteMap<string, SupaQuery<Schema, RowName>>());
+	private readonly queryCache = $state(new WeakMap<
+		(data: SupaStructData<Schema, RowName>) => boolean
+		, SupaQuery<Schema, RowName>>());
 
 	/**
 	 * Creates a typed table struct.
@@ -171,24 +175,29 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 	): Result<Row<Schema, RowName>[] | Row<Schema, RowName> | null> {
 		return attempt(() => {
 			if (transaction.error) {
-				throw transaction.error;
+				this.log('Transaction error:', transaction.error);
+				throw new Error(`Supabase transaction failed: ${transaction.error.message}`);
 			}
 			if (expect === 'array') {
 				if (!Array.isArray(transaction.data)) {
+					this.log('Expected array, received', typeof transaction.data);
 					throw new Error(`Expected an array but got ${typeof transaction.data}`);
 				}
 				return transaction.data;
 			} else if (expect === 'single') {
 				if (Array.isArray(transaction.data)) {
+					this.log('Expected single object, received array');
 					throw new Error(`Expected a single object but got an array`);
 				}
 				if (transaction.data === null) {
+					this.log('Expected single object, received null');
 					throw new Error(`Expected a single object but got null`);
 				}
 				return transaction.data;
 			} else {
 				// expect === 'null'
 				if (transaction.data !== null) {
+					this.log('Expected null, received', typeof transaction.data);
 					throw new Error(`Expected null but got ${typeof transaction.data}`);
 				}
 				return null;
@@ -364,14 +373,14 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 	 * const rows = await q;
 	 */
 	get(queryData: Partial<Row<Schema, RowName>>) {
-		const cacheKey = `get:${JSON.stringify(queryData)}`;
-		const cached = this.queryCache.get(cacheKey);
-		if (cached) return cached;
 
 		const satisfies = (data: SupaStructData<Schema, RowName>) =>
 			Object.entries(queryData).every(
 				([key, value]) => data.raw[key as keyof Row<Schema, RowName>] === value
 			);
+
+		const cached = this.queryCache.get(satisfies);
+		if (cached) return cached;
 
 		const allQuery = async () => {
 			let query = this.supabase.schema(this.config.schema).from(this.table).select('*');
@@ -421,7 +430,7 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		};
 
 		const newQuery = new SupaQuery(this, satisfies, allQuery, paginateQuery);
-		this.queryCache.set(cacheKey, newQuery);
+		this.queryCache.set(satisfies, newQuery);
 		return newQuery;
 	}
 
@@ -434,14 +443,14 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 	 * const q = struct.getOR({ archived: true, severity: 'warn' } as Partial<Row<Schema, RowName>>);
 	 */
 	getOR(queryData: Partial<Row<Schema, RowName>>) {
-		const cacheKey = `getOR:${JSON.stringify(queryData)}`;
-		const cached = this.queryCache.get(cacheKey);
-		if (cached) return cached;
-
-		const entries = Object.entries(queryData);
 
 		const satisfies = (data: SupaStructData<Schema, RowName>) =>
 			entries.some(([key, value]) => data.raw[key as keyof Row<Schema, RowName>] === value);
+
+		const cached = this.queryCache.get(satisfies);
+		if (cached) return cached;
+
+		const entries = Object.entries(queryData);
 
 		const allQuery = async () => {
 			if (!entries.length) {
@@ -500,7 +509,7 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		};
 
 		const newQuery = new SupaQuery(this, satisfies, allQuery, paginateQuery);
-		this.queryCache.set(cacheKey, newQuery);
+		this.queryCache.set(satisfies, newQuery);
 		return newQuery;
 	}
 
@@ -513,22 +522,6 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 	 * const q = struct.search({ field: 'archived', operator: 'eq', value: false } as SearchQuery<Schema, RowName>);
 	 */
 	search(query: SearchQuery<Schema, RowName>) {
-		const cacheKey = `search:${JSON.stringify(query)}`;
-		const cached = this.queryCache.get(cacheKey);
-		if (cached) return cached;
-
-		const normalizePattern = (
-			operator: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'like' | 'ilike',
-			value: unknown
-		) => {
-			if ((operator === 'like' || operator === 'ilike') && typeof value === 'string') {
-				if (!value.includes('%') && !value.includes('_')) {
-					return `%${value}%`;
-				}
-			}
-			return value;
-		};
-
 		const satisfies = (data: SupaStructData<Schema, RowName>): boolean => {
 			const evaluate = (q: SearchQuery<Schema, RowName>): boolean => {
 				if ('field' in q) {
@@ -572,6 +565,22 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 			};
 			return evaluate(query);
 		};
+		const cached = this.queryCache.get(satisfies);
+		if (cached) return cached;
+
+		const normalizePattern = (
+			operator: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'like' | 'ilike',
+			value: unknown
+		) => {
+			if ((operator === 'like' || operator === 'ilike') && typeof value === 'string') {
+				if (!value.includes('%') && !value.includes('_')) {
+					return `%${value}%`;
+				}
+			}
+			return value;
+		};
+
+
 
 		const main = this.supabase.schema(this.schema).from(this.table).select('*');
 
@@ -642,7 +651,7 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		};
 
 		const newQuery = new SupaQuery(this, satisfies, allQuery, paginateQuery);
-		this.queryCache.set(cacheKey, newQuery);
+		this.queryCache.set(satisfies, newQuery);
 		return newQuery;
 	}
 
@@ -671,6 +680,54 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 			).unwrap();
 			return this.Generator(result);
 		});
+	}
+
+	fromIds(ids: string[]) {
+		const satisfies = (data: SupaStructData<Schema, RowName>) => ids.includes(data.id);
+		const cached = this.queryCache.get(satisfies);
+		if (cached) return cached;
+
+		const allQuery = async () => {
+			const res = await this.supabase
+				.schema(this.config.schema)
+				.from(this.table)				.select('*')
+				.filter('id', 'in', `(${ids.join(',')})`);
+			const result = this.runTransaction(
+				{
+					data: res.data as any,
+					error: res.error
+				},
+				'array'
+			).unwrap();
+			return result.map((row) => this.Generator(row));
+		};
+
+		const paginateQuery = async (page: number, size: number) => {
+			const from = (page - 1) * size;
+			const to = from + size - 1;
+			const res = await this.supabase
+				.schema(this.config.schema)
+				.from(this.table)
+				.select('*', { count: 'exact' })
+				.filter('id', 'in', `(${ids.join(',')})`)
+				.range(from, to);
+			const transactionResult = this.runTransaction(
+				{
+					data: res.data as any,
+					error: res.error
+				},
+				'array'
+			).unwrap();
+
+			return {
+				data: transactionResult.map((row) => this.Generator(row)),
+				count: res.count ?? 0
+			};
+		};
+
+		const newQuery = new SupaQuery(this, satisfies, allQuery, paginateQuery);
+		this.queryCache.set(satisfies, newQuery);
+		return newQuery;
 	}
 
 	/**
@@ -707,22 +764,27 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 	 * @example
 	 * const row = await struct.upsert({ id: '1' } as Insert<Schema, Extract<RowName, InsertTableNames<Schema>>>);
 	 */
-	upsert(data: Insert<Schema, Extract<RowName, InsertTableNames<Schema>>>) {
+	upsert(data: Insert<Schema, Extract<RowName, InsertTableNames<Schema>>>[], config?: {
+		onConflict: keyof Row<Schema, RowName>;
+		ignoreDuplicates?: boolean;
+	}) {
 		return attemptAsync(async () => {
 			const res = await this.supabase
 				.schema(this.config.schema)
 				.from(this.table)
-				.upsert(data as any)
-				.select('*')
-				.single();
+				.upsert(data as any, config ?{
+					onConflict: String(config.onConflict),
+					ignoreDuplicates: config.ignoreDuplicates ?? true
+				} : undefined)
+				.select('*');
 			const result = this.runTransaction(
 				{
 					data: res.data as any,
 					error: res.error
 				},
-				'single'
+				'array'
 			).unwrap();
-			return this.Generator(result);
+			return result.map((row) => this.Generator(row));
 		});
 	}
 
@@ -735,11 +797,11 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 	 * const rows = await q;
 	 */
 	all() {
-		const cacheKey = `all`;
-		const cached = this.queryCache.get(cacheKey);
-		if (cached) return cached;
 
 		const satisfies = (_: SupaStructData<Schema, RowName>) => true;
+		const cached = this.queryCache.get(satisfies);
+		if (cached) return cached;
+
 
 		const allQuery = async () => {
 			const res = await this.supabase.schema(this.config.schema).from(this.table).select('*');
@@ -777,7 +839,24 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		};
 
 		const newQuery = new SupaQuery(this, satisfies, allQuery, paginateQuery);
-		this.queryCache.set(cacheKey, newQuery);
+		this.queryCache.set(satisfies, newQuery);
+		return newQuery;
+	}
+
+	Arr(satisfies: (data: SupaStructData<Schema, RowName>) => boolean) {
+		const cached = this.queryCache.get(satisfies);
+		if (cached) return cached;
+
+		const allQuery = async () => {
+			throw new Error('Custom Struct Arrays are purely reactive and do not support direct fetching');
+		}
+
+		const paginateQuery = async (_page: number, _size: number) => {
+			throw new Error('Custom Struct Arrays are purely reactive and do not support paginated fetching');
+		}
+
+		const newQuery = new SupaQuery(this, satisfies, allQuery, paginateQuery);
+		this.queryCache.set(satisfies, newQuery);
 		return newQuery;
 	}
 }
@@ -888,7 +967,9 @@ class SupaQuery<Schema extends RowSchemaName, RowName extends RowTableNames<Sche
 			})
 			.catch((err) => {
 				this._loading = false;
-				const result = new Err(err instanceof Error ? err : new Error(String(err))) as Result<
+				let message = 'An unknown error occurred';
+				if (typeof err === 'object' && err && 'message' in err && typeof err.message === 'string') message = err.message;
+				const result = new Err(new Error(message)) as Result<
 					SupaStructData<Schema, RowName>[],
 					Error
 				>;

@@ -8,6 +8,7 @@ Sign-in page at `/account/sign-in`.
 	import { Form } from '$lib/utils/form.svelte.js';
 	import { goto } from '$app/navigation';
 	import supabase from '$lib/services/supabase/index.js';
+	import { alert } from '$lib/utils/prompts.js';
 
 	const { form } = $props();
 
@@ -19,12 +20,10 @@ Sign-in page at `/account/sign-in`.
 
 	const requestPasswordReset = () => {
 		new Form()
-			// '/account/sign-in?/request-password-reset',
-			// 'POST',
 			.input('user', {
-				type: 'text',
-				placeholder: 'Username or Email',
-				label: 'Username or Email',
+				type: 'email',
+				placeholder: 'Email',
+				label: 'Email',
 				required: true
 			})
 			.prompt({
@@ -36,25 +35,37 @@ Sign-in page at `/account/sign-in`.
 					return console.error(val.error);
 				}
 
-				const { error } = await supabase.auth.resetPasswordForEmail(val.value.value.user);
+				const { error } = await supabase.auth.resetPasswordForEmail(val.value.value.user, {
+					redirectTo: `${window.location.origin}/account/recover`
+				});
 
 				if (error) {
+					alert('There was an error sending the password reset email. Please try again later');
 					return console.error(error);
 				}
+
+				alert('If an account with that email exists, a password reset email has been sent.');
 			});
 	};
 </script>
 
 <main>
-	<div class="container pt-5">
+	<div class="container layer-1 py-5 mt-5">
 		<div class="row">
 			<h1>
 				{__APP_ENV__.name}: Sign In
 			</h1>
 		</div>
 		<div class="row mb-3">
-			<a href="/account/sign-up" class="link-primary">Sign Up</a>
+		<div class="d-">
+			
+			<a href="/account/sign-up" class="btn btn-primary pb-3">Sign Up</a>
+			<button class="btn btn-secondary" onclick={requestPasswordReset}>
+				Request Password Reset
+			</button>
 		</div>
+		</div>
+			<hr />
 		<div class="row mb-3">
 			<form action="?/login" method="post">
 				<div class="mb-3 form-floating">
@@ -80,13 +91,15 @@ Sign-in page at `/account/sign-in`.
 				</div>
 
 				<hr />
-				<button type="submit" class="btn btn-primary" id="signInButton"> Sign In </button>
+				<div class="d-flex">
+					<button type="submit" class="btn btn-primary" id="signInButton"> Sign In </button>
+				</div>
 			</form>
 		</div>
 		{#if form?.message}
 			<div class="row mb-3">
 				<div class="col">
-					<div class="alert alert-info" role="alert">
+					<div class="alert alert-warning" role="alert">
 						{form.message}
 					</div>
 				</div>
@@ -139,11 +152,6 @@ Sign-in page at `/account/sign-in`.
 					</div>
 				</button>
 			</div> -->
-			<div class="col">
-				<button class="btn btn-secondary" onclick={requestPasswordReset}>
-					Request Password Reset
-				</button>
-			</div>
 		</div>
 	</div>
 </main>

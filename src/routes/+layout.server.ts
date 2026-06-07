@@ -1,3 +1,5 @@
+import terminal from '$lib/server/utils/terminal.js';
+
 export const load = async (event) => {
 	const session = event.locals.session;
 	if (!session) {
@@ -7,17 +9,18 @@ export const load = async (event) => {
 			cookies: event.cookies.getAll()
 		};
 	}
-	const user = await session.getUser();
-	if (user.isErr()) {
+
+	const { data: userData, error: userError } = await event.locals.supabase.auth.getUser();
+	if (userError) {
+		terminal.error('Error getting user from session:', userError);
 		return {
-			session: session.config.session,
 			user: null,
 			cookies: event.cookies.getAll()
 		};
 	}
+
 	return {
-		session: session.config.session,
-		user: user.unwrap(),
+		user: userData?.user || null,
 		cookies: event.cookies.getAll()
 	};
 };

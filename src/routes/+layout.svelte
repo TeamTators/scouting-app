@@ -14,6 +14,7 @@ Root layout wrapper for all routes. Acts as middleware for global bootstrapping.
 				invalidate('supabase:auth');
 			}
 		});
+		Object.assign(window, { supabase: data.supabase });
 		return res.data.subscription.unsubscribe();
 	});
 </script>

@@ -42,7 +42,7 @@ export const actions = {
 			});
 			if (profile.isErr()) {
 				terminal.error(profile.error);
-				throw fail(ServerCode.internalServerError, {
+				return fail(ServerCode.internalServerError, {
 					message: 'An error occurred while logging in',
 					user: res.data.username
 				});
@@ -58,10 +58,24 @@ export const actions = {
 			}
 		}
 
+		const { error } = await event.locals.supabase.auth.signInWithPassword({
+			email: email,
+			password: res.data.password
+		});
+
+		if (error) {
+			terminal.error('Error signing in:', error);
+			return fail(ServerCode.unauthorized, {
+				message: 'Invalid username/email or password',
+				user: res.data.username
+			});
+		}
+
+
 		return {
 			message: 'Logged in',
 			user: res.data.username,
-			redirect: event.locals.session?.prevUrl,
+			redirect: event.locals.session?.raw.prev_url,
 			success: true
 		};
 	}
