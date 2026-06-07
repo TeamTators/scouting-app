@@ -9,23 +9,24 @@ import { ServerCode } from 'ts-utils/status';
 
 export const load = async (event) => {
 	if (!event.locals.session) return;
-	const account = await event.locals.session.getUser();
-	if (account.isErr()) return;
-	if (!account.value) throw redirect(ServerCode.seeOther, '/account/sign-in');
+	const { data: account, error } = await event.locals.supabase.auth.getUser();
+	if (error) return;
+	if (!account) throw redirect(ServerCode.seeOther, '/account/sign-in');
 };
 
 export const actions = {
 	'sign-out': async (event) => {
-		const session = event.locals.session;
-		if (!session) {
-			return {
-				success: false,
-				message: 'An error occurred while signing out. Please try again later.'
-			};
-		}
+		// const session = event.locals.session;
+		// if (!session) {
+		// 	return {
+		// 		success: false,
+		// 		message: 'An error occurred while signing out. Please try again later.'
+		// 	};
+		// }
 
-		const signOutRes = await session.signOut();
-		if (signOutRes.isErr()) {
+		const { error } = await event.locals.supabase.auth.signOut();
+
+		if (error) {
 			return {
 				success: false,
 				message: 'An error occurred while signing out. Please try again later.'

@@ -2,12 +2,12 @@ import { type Handle } from '@sveltejs/kit';
 import { ServerCode } from 'ts-utils/status';
 import terminal from '$lib/server/utils/terminal';
 import '$lib/server/utils/files';
-// import { signFingerprint } from '$lib/server/utils/fingerprint';
 import createTree from '../scripts/create-route-tree';
-// import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
 import env from '$lib/server/utils/env';
 import type { Database } from '$lib/types/supabase';
+import { SupaStruct } from '$lib/services/supabase/supastruct.svelte';
+import supabase from '$lib/server/services/supabase';
 
 (async () => {
 	await createTree();
@@ -26,6 +26,38 @@ export const handle: Handle = async ({ event, resolve }) => {
 			}
 		}
 	});
+	const SessionStruct = SupaStruct.get({
+		schema: 'core',
+		table: 'session',
+		client: supabase
+	});
+
+	const cookie = event.cookies.get('ssid');
+	if (cookie) {
+		const sessionRes = await SessionStruct.fromId(cookie);
+		if (sessionRes.isErr()) {
+			terminal.error('Error getting session from cookie:', sessionRes.error);
+			event.locals.session = null;
+		} else {
+			event.locals.session = sessionRes.value;
+		}
+	} else {
+		const res = await SessionStruct.new({
+			prev_url: event.url.pathname,	
+		});
+
+		if (res.isErr()) {
+			terminal.error('Error creating new session:', res.error);
+		} else {
+			event.locals.session = res.value[0];
+			event.cookies.set('ssid', res.value[0].raw.id, {
+				httpOnly: true,
+				path: '/'
+			});
+		}
+	}
+	
+
 
 	try {
 		const res = await resolve(event);

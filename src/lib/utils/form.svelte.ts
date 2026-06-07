@@ -951,6 +951,17 @@ export class Form<T extends { [key: string]: Input<keyof Inputs> }> {
 					}
 				});
 
+				modal.once('show', () => {
+					console.log('Modal shown, focusing first input');
+					const firstInput = form.querySelector('input, textarea, select') as HTMLElement | null;
+					console.log('First input:', firstInput);
+					if (firstInput) {
+						setTimeout(() => {
+							firstInput.focus();
+						}, 500);
+					}
+				});
+
 				modal.show();
 				modal.once('hide', () => {
 					self.destroy();

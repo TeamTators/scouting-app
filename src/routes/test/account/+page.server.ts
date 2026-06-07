@@ -1,6 +1,7 @@
 import terminal from '$lib/server/utils/terminal.js';
 import { SupaStruct } from '$lib/services/supabase/supastruct.svelte';
-import { fail } from '@sveltejs/kit';
+// import { fail } from '@sveltejs/kit';
+import supabase from '$lib/server/services/supabase';
 
 /**
  * @fileoverview Server load for `/test/account`.
@@ -13,47 +14,49 @@ export const load = async (event) => {
 			success: false,
 			account: null
 		};
-	const account = await event.locals.session.getUser();
-	if (account.isErr()) {
-		terminal.error('Error retrieving account:', account.error);
-		return {
-			message: 'Account retrieval error',
-			error: true,
-			success: false,
-			account: null
-		};
-	}
 
-	if (!account.value) {
-		terminal.error('No account found in session');
+	const parent = await event.parent();
+
+	const ProfileStruct = SupaStruct.get({
+		client: supabase,
+		schema: 'core',
+		table: 'profile'
+	});
+
+	if (!parent.user) {
 		return {
-			message: 'No account found',
+			message: 'No user found in session',
 			error: false,
 			success: false,
 			account: null
 		};
 	}
 
-	const struct = SupaStruct.get({
-		client: event.locals.supabase,
-		schema: 'core',
-		table: 'profile'
-	});
+	const profileRes = await ProfileStruct.fromId(parent.user.id);
 
-	const profileResult = await struct.fromId(account.value.id);
-	if (profileResult.isErr()) {
-		throw fail(500, {
-			message: 'Error retrieving profile',
+	if (profileRes.isErr()) {
+		terminal.error('Error fetching profile:', profileRes.error);
+		return {
+			message: 'Error fetching profile',
 			error: true,
 			success: false,
 			account: null
-		});
+		};
+	}
+
+	if (!profileRes.value) {
+		return {
+			message: 'No profile found for user',
+			error: false,
+			success: false,
+			account: null
+		};
 	}
 
 	return {
-		message: 'Account retrieved successfully',
+		message: 'Profile retrieved successfully',
 		error: false,
 		success: true,
-		account: profileResult.value.raw
-	};
+		account: profileRes.value.raw
+	};	
 };

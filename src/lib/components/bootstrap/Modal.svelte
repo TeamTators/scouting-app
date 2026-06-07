@@ -158,7 +158,7 @@ Bootstrap modal wrapper rendered via a portal.
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		padding: 18px 24px 12px 24px;
+		padding: 8px 16px 8px 16px;
 		border-bottom: 1px solid var(--layer-2);
 		background: var(--layer-2);
 		color: var(--text-layer-0);
@@ -186,7 +186,7 @@ Bootstrap modal wrapper rendered via a portal.
 		color: var(--text-layer-0);
 	}
 	.custom-modal-body {
-		padding: 20px 24px 16px 24px;
+		padding: 8px 16px 8px 16px;
 		color: var(--text-layer-1);
 		font-size: 1rem;
 		background: var(--layer-1);
@@ -195,7 +195,7 @@ Bootstrap modal wrapper rendered via a portal.
 		display: flex;
 		justify-content: flex-end;
 		gap: 8px;
-		padding: 12px 24px 18px 24px;
+		padding: 8px 16px 8px 16px;
 		border-top: 1px solid var(--layer-2);
 		background: var(--layer-2);
 		color: var(--text-layer-0);

@@ -2,8 +2,7 @@
 
 import type { createServerClient } from '@supabase/ssr';
 import type { DB } from '$lib/types/supabase';
-import { Session } from '$lib/server/model/session';
-import type { Connection } from '$lib/server/services/sse';
+import type { SupaStructData } from '$lib/services/supabase/supastruct.svelte';
 
 // for information about these interfaces
 declare global {
@@ -12,8 +11,7 @@ declare global {
 		interface Locals {
 			start: number;
 			supabase: ReturnType<typeof createServerClient<DB>>;
-			session: Session | null;
-			sse: Connection | null;
+			session: SupaStructData<'core', 'session'> | null;
 		}
 		// interface PageData {}
 		// interface PageState {}
