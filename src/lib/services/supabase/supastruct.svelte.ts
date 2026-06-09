@@ -120,7 +120,7 @@ export type ReadConfig<
 	Name extends RowTableNames<Schema>,
 	Required extends keyof Row<Schema, Name> = keyof Row<Schema, Name>
 > = {
-	required?: readonly Required[];
+	only?: readonly Required[];
 };
 
 export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNames<Schema>> {
@@ -512,11 +512,11 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		queryData: Partial<Row<Schema, RowName>>,
 		config?: ReadConfig<Schema, RowName, Required>
 	) {
-		const required = this.getEffectiveRequiredFields(config?.required) as readonly (
+		const required = this.getEffectiveRequiredFields(config?.only) as readonly (
 			| Required
 			| 'id'
 		)[];
-		const selectClause = this.buildSelectClause(config?.required);
+		const selectClause = this.buildSelectClause(config?.only);
 
 		const satisfies = (data: SupaStructData<Schema, RowName, Required | 'id'>) =>
 			Object.entries(queryData).every(
@@ -602,11 +602,11 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		queryData: Partial<Row<Schema, RowName>>,
 		config?: ReadConfig<Schema, RowName, Required>
 	) {
-		const required = this.getEffectiveRequiredFields(config?.required) as readonly (
+		const required = this.getEffectiveRequiredFields(config?.only) as readonly (
 			| Required
 			| 'id'
 		)[];
-		const selectClause = this.buildSelectClause(config?.required);
+		const selectClause = this.buildSelectClause(config?.only);
 
 		const satisfies = (data: SupaStructData<Schema, RowName, Required | 'id'>) =>
 			entries.some(([key, value]) => data.raw[key as keyof Row<Schema, RowName>] === value);
@@ -701,11 +701,11 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		query: SearchQuery<Schema, RowName>,
 		config?: ReadConfig<Schema, RowName, Required>
 	) {
-		const required = this.getEffectiveRequiredFields(config?.required) as readonly (
+		const required = this.getEffectiveRequiredFields(config?.only) as readonly (
 			| Required
 			| 'id'
 		)[];
-		const selectClause = this.buildSelectClause(config?.required);
+		const selectClause = this.buildSelectClause(config?.only);
 
 		const satisfies = (data: SupaStructData<Schema, RowName, Required | 'id'>): boolean => {
 			const evaluate = (q: SearchQuery<Schema, RowName>): boolean => {
@@ -874,11 +874,11 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		id: string,
 		config?: ReadConfig<Schema, RowName, Required>
 	) {
-		const required = this.getEffectiveRequiredFields(config?.required) as readonly (
+		const required = this.getEffectiveRequiredFields(config?.only) as readonly (
 			| Required
 			| 'id'
 		)[];
-		const selectClause = this.buildSelectClause(config?.required);
+		const selectClause = this.buildSelectClause(config?.only);
 
 		return attemptAsync<SupaStructData<Schema, RowName, Required | 'id'>>(async () => {
 			const res = await this.supabase
@@ -903,11 +903,11 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		ids: string[],
 		config?: ReadConfig<Schema, RowName, Required>
 	) {
-		const required = this.getEffectiveRequiredFields(config?.required) as readonly (
+		const required = this.getEffectiveRequiredFields(config?.only) as readonly (
 			| Required
 			| 'id'
 		)[];
-		const selectClause = this.buildSelectClause(config?.required);
+		const selectClause = this.buildSelectClause(config?.only);
 
 		const satisfies = (data: SupaStructData<Schema, RowName, Required | 'id'>) =>
 			ids.includes(String(data.id));
@@ -1053,11 +1053,11 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 	all<Required extends keyof Row<Schema, RowName> = keyof Row<Schema, RowName>>(
 		config?: ReadConfig<Schema, RowName, Required>
 	) {
-		const required = this.getEffectiveRequiredFields(config?.required) as readonly (
+		const required = this.getEffectiveRequiredFields(config?.only) as readonly (
 			| Required
 			| 'id'
 		)[];
-		const selectClause = this.buildSelectClause(config?.required);
+		const selectClause = this.buildSelectClause(config?.only);
 
 		const satisfies = (_: SupaStructData<Schema, RowName, Required | 'id'>) => true;
 		const cached = this.queryCache.get(
