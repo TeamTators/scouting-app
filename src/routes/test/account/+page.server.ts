@@ -58,5 +58,5 @@ export const load = async (event) => {
 		error: false,
 		success: true,
 		account: profileRes.value.raw
-	};	
+	};
 };

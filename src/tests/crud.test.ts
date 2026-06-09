@@ -41,7 +41,7 @@ describe('CRUD Tests', () => {
 		expect(created.raw.age).toBe(age);
 		expect(created.raw.archived).toBe(false);
 
-		const readResult = await struct.fromId(created.id);
+		const readResult = await struct.fromId(String(created.id));
 		expect(readResult.isErr()).toBe(false);
 		if (readResult.isErr()) {
 			throw new Error(`Read failed: ${readResult.error.message}`);
@@ -69,7 +69,7 @@ describe('CRUD Tests', () => {
 			throw new Error(`Delete failed: ${deleteResult.error.message}`);
 		}
 
-		const afterDeleteResult = await struct.fromId(created.id);
+		const afterDeleteResult = await struct.fromId(String(created.id));
 		expect(afterDeleteResult.isErr()).toBe(true);
 	}, 30000);
 });

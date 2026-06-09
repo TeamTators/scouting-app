@@ -27,7 +27,6 @@ test('Supabase page tests complete and pass', async ({ page }) => {
 	});
 	await expect(failedRows).toHaveCount(0);
 
-	
 	await expect(container).toHaveAttribute('data-pass', 'true', {
 		timeout: 120000
 	});

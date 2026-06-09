@@ -3,21 +3,21 @@ import { attemptAsync } from 'ts-utils';
 import supabase from '$lib/server/services/supabase';
 
 export const hasRole = (client: Client, role: SupaStructData<'core', 'role'>) => {
-    return attemptAsync(async () => {
-        const RoleAccountStruct = SupaStruct.get({
-            client: supabase,
-            table: 'role_account',
-            schema: 'core',
-        });
+	return attemptAsync(async () => {
+		const RoleAccountStruct = SupaStruct.get({
+			client: supabase,
+			table: 'role_account',
+			schema: 'core'
+		});
 
-        const { data: userData, error } = await supabase.auth.getUser();
+		const { data: userData, error } = await supabase.auth.getUser();
 
-        if (error || !userData.user) {
-            throw new Error('Not authenticated');
-        }
+		if (error || !userData.user) {
+			throw new Error('Not authenticated');
+		}
 
-        const res = await RoleAccountStruct.get({ account: userData.user.id, role: role.id }).unwrap();
+		const res = await RoleAccountStruct.get({ account: userData.user.id, role: role.id }).unwrap();
 
-        return res.length > 0;
-    });
+		return res.length > 0;
+	});
 };

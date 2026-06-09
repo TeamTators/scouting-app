@@ -44,11 +44,10 @@ Sign-up page at `/account/sign-up`.
 		</div>
 		<div class="row mb-3 pb-3">
 			<div class="d-flex">
-			<a href="/account/sign-in" class="btn btn-primary">Sign In</a>
-
+				<a href="/account/sign-in" class="btn btn-primary">Sign In</a>
 			</div>
 		</div>
-			<hr />
+		<hr />
 		<div class="row mb-3">
 			<form action="?/register" method="post">
 				<div class="container">
@@ -171,7 +170,7 @@ Sign-up page at `/account/sign-up`.
 						</div>
 					</div>
 				</div>
-			<hr />
+				<hr />
 				<button type="submit" class="btn btn-primary" id="signUpButton"> Sign Up </button>
 			</form>
 		</div>
