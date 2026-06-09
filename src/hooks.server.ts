@@ -43,7 +43,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	} else {
 		const res = await SessionStruct.new({
-			prev_url: event.url.pathname,	
+			prev_url: event.url.pathname
 		});
 
 		if (res.isErr()) {
@@ -56,8 +56,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 			});
 		}
 	}
-	
-
 
 	try {
 		const res = await resolve(event);

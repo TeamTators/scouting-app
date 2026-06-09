@@ -20,7 +20,12 @@
 
 		const prefix = `t-${Math.random().toString(36).slice(2, 7)}`;
 		const listener = SupaStruct.get({ client: data.supabase, table: 'test', schema: 'test' });
-		const writer = SupaStruct.get({ client: data.supabase, table: 'test', schema: 'test', debug: true, });
+		const writer = SupaStruct.get({
+			client: data.supabase,
+			table: 'test',
+			schema: 'test',
+			debug: true
+		});
 
 		// Collect realtime events as they arrive
 		const rtEvents: { type: string; id: string }[] = [];
@@ -30,9 +35,9 @@
 				subscribed = true;
 			}
 		});
-		listener.on('new', (r) => rtEvents.push({ type: 'new', id: r.id }));
-		listener.on('update', (r) => rtEvents.push({ type: 'update', id: r.id }));
-		listener.on('delete', (r) => rtEvents.push({ type: 'delete', id: r.id }));
+		listener.on('new', (r) => rtEvents.push({ type: 'new', id: String(r.id) }));
+		listener.on('update', (r) => rtEvents.push({ type: 'update', id: String(r.id) }));
+		listener.on('delete', (r) => rtEvents.push({ type: 'delete', id: String(r.id) }));
 		const stop = listener.initRealtime();
 
 		const waitFor = async (predicate: () => boolean, timeoutMs: number) => {
@@ -61,7 +66,7 @@
 			} else {
 				const rows = res.unwrap();
 				rows.forEach((row, i) => {
-					const id: string = row.id;
+					const id = String(row.id);
 					ids.push(id);
 					ok(`create-${i}`, `id=${id}`);
 				});

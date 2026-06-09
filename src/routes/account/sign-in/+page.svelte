@@ -57,15 +57,14 @@ Sign-in page at `/account/sign-in`.
 			</h1>
 		</div>
 		<div class="row mb-3">
-		<div class="d-">
-			
-			<a href="/account/sign-up" class="btn btn-primary pb-3">Sign Up</a>
-			<button class="btn btn-secondary" onclick={requestPasswordReset}>
-				Request Password Reset
-			</button>
+			<div class="d-">
+				<a href="/account/sign-up" class="btn btn-primary pb-3">Sign Up</a>
+				<button class="btn btn-secondary" onclick={requestPasswordReset}>
+					Request Password Reset
+				</button>
+			</div>
 		</div>
-		</div>
-			<hr />
+		<hr />
 		<div class="row mb-3">
 			<form action="?/login" method="post">
 				<div class="mb-3 form-floating">

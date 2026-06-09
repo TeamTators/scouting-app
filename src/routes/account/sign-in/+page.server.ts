@@ -71,7 +71,6 @@ export const actions = {
 			});
 		}
 
-
 		return {
 			message: 'Logged in',
 			user: res.data.username,
