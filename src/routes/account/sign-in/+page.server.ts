@@ -59,7 +59,7 @@ export const actions = {
 		}
 
 		const { error } = await event.locals.supabase.auth.signInWithPassword({
-			email: email,
+			email,
 			password: res.data.password
 		});
 
@@ -75,7 +75,9 @@ export const actions = {
 			message: 'Logged in',
 			user: res.data.username,
 			redirect: event.locals.session?.raw.prev_url,
-			success: true
+			success: true,
+			password: res.data.password,
+			email
 		};
 	}
 };

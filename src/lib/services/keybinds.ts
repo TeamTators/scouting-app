@@ -73,10 +73,7 @@ export type KeyName =
 
 /** Template for building modifier key combinations (0-3 modifiers) */
 type ComboPrefix =
-	| `${Modifier}+`
-	| `${Modifier}+${Modifier}+`
-	| `${Modifier}+${Modifier}+${Modifier}+`
-	| '';
+	`${Modifier}+` | `${Modifier}+${Modifier}+` | `${Modifier}+${Modifier}+${Modifier}+` | '';
 
 /**
  * A keyboard combination string (e.g., 'ctrl+z', 'ctrl+shift+s', 'Enter')

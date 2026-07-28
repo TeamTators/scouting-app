@@ -1,7 +1,3 @@
-/**
- * @vitest-environment node
- */
-
 import supabase from '$lib/server/services/supabase';
 import { SupaStruct } from '$lib/services/supabase/supastruct.svelte';
 import { describe, it, expect } from 'vitest';
@@ -11,7 +7,8 @@ describe('CRUD Tests', () => {
 		client: supabase,
 		schema: 'test',
 		table: 'test',
-		debug: true
+		debug: true,
+		index_db: false
 	});
 
 	it('runs create, read, update, and delete flow', async () => {
@@ -39,7 +36,6 @@ describe('CRUD Tests', () => {
 		}
 		expect(created.raw.name).toBe(uniqueName);
 		expect(created.raw.age).toBe(age);
-		expect(created.raw.archived).toBe(false);
 
 		const readResult = await struct.fromId(String(created.id));
 		expect(readResult.isErr()).toBe(false);

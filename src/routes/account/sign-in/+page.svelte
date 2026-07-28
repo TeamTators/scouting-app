@@ -10,11 +10,22 @@ Sign-in page at `/account/sign-in`.
 	import supabase from '$lib/services/supabase/index.js';
 	import { alert } from '$lib/utils/prompts.js';
 
-	const { form } = $props();
+	const { form, data } = $props();
 
 	$effect(() => {
-		if (form?.redirect) {
-			goto(form.redirect);
+		if (form?.email && form?.password) {
+			data.supabase.auth
+				.signInWithPassword({
+					email: form.email,
+					password: form.password
+				})
+				.then(({ error }) => {
+					if (error) {
+						alert('There was an error signing in. Please try again later.');
+						return console.error(error);
+					}
+					goto(form.redirect || '/');
+				});
 		}
 	});
 

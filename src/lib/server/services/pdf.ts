@@ -18,7 +18,7 @@ import path from 'path';
 import crypto from 'crypto';
 import type { LaunchOptions, PDFOptions, Page } from 'puppeteer';
 
-type WaitUntil = 'load' | 'domcontentloaded' | 'networkidle0' | 'networkidle2';
+type WaitUntil = 'load' | 'domcontentloaded';
 
 /**
  * Configurable rendering options for HTML/URL to PDF conversion.
@@ -176,7 +176,7 @@ export interface PDFResponseOptions {
  * const pdf = result.unwrap();
  */
 export class PDF {
-	private static readonly DEFAULT_WAIT_UNTIL: WaitUntil = 'networkidle0';
+	private static readonly DEFAULT_WAIT_UNTIL: WaitUntil = 'load';
 
 	/**
 	 * Create a PDF from raw HTML markup.

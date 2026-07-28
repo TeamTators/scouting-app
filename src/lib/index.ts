@@ -4,6 +4,7 @@ import { fingerprint } from './utils/fingerprint';
 
 import { Requests } from './utils/requests';
 import { browser } from '$app/environment';
+import '$lib/imports';
 
 fingerprint();
 

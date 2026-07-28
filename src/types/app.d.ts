@@ -10,7 +10,7 @@ declare global {
 		// interface Error {}
 		interface Locals {
 			start: number;
-			supabase: ReturnType<typeof createServerClient<DB>>;
+			supabase: ReturnType<typeof createServerClient<DB>> & { serviceRole: boolean };
 			session: SupaStructData<'core', 'session'> | null;
 		}
 		// interface PageData {}
@@ -23,7 +23,7 @@ declare global {
 		name: string;
 		indexed_db: {
 			enabled: boolean;
-			db_name: string;
+			name: string;
 			version: number;
 			debug: boolean;
 			debounce_interval_ms: number;

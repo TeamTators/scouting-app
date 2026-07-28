@@ -71,5 +71,8 @@ export default ts.config(
 			'svelte/prefer-writable-derived': 'warn',
 			'svelte/prefer-svelte-reactivity': 'warn'
 		}
+	},
+	{
+		ignores: ['supabase/**', 'node_modules/**', 'dist/**', 'build/**', 'coverage/**']
 	}
 );

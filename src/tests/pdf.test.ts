@@ -68,7 +68,7 @@ describe('PDF service', () => {
 		expect(pdf.name).toBe('invoice.pdf');
 		expect(pdf.sizeBytes).toBeGreaterThan(5);
 		expect(puppeteerMocks.setContent).toHaveBeenCalledWith('<html><body>ok</body></html>', {
-			waitUntil: 'networkidle0',
+			waitUntil: 'load',
 			timeout: undefined
 		});
 		expect(puppeteerMocks.pagePdf).toHaveBeenCalledWith({

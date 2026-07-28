@@ -7,6 +7,7 @@
  */
 import { browser } from '$app/environment';
 import { writable } from 'svelte/store';
+import { Color } from 'colors/color';
 
 /**
  * Writable theme store.
@@ -36,3 +37,28 @@ if (browser) {
 		setTheme(prefersDark ? 'dark' : 'light');
 	}
 }
+
+export const getPallette = () => {
+	if (!browser)
+		return {
+			primary: Color.fromHex('#0d6efd'),
+			secondary: Color.fromHex('#6c757d'),
+			success: Color.fromHex('#198754'),
+			danger: Color.fromHex('#dc3545'),
+			warning: Color.fromHex('#ffc107'),
+			info: Color.fromHex('#0dcaf0'),
+			light: Color.fromHex('#f8f9fa'),
+			dark: Color.fromHex('#212529')
+		};
+	const styles = getComputedStyle(document.documentElement);
+	return {
+		primary: Color.fromHex(styles.getPropertyValue('--bs-primary').trim()),
+		secondary: Color.fromHex(styles.getPropertyValue('--bs-secondary').trim()),
+		success: Color.fromHex(styles.getPropertyValue('--bs-success').trim()),
+		danger: Color.fromHex(styles.getPropertyValue('--bs-danger').trim()),
+		warning: Color.fromHex(styles.getPropertyValue('--bs-warning').trim()),
+		info: Color.fromHex(styles.getPropertyValue('--bs-info').trim()),
+		light: Color.fromHex(styles.getPropertyValue('--bs-light').trim()),
+		dark: Color.fromHex(styles.getPropertyValue('--bs-dark').trim())
+	};
+};

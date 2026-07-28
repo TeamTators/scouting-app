@@ -784,10 +784,7 @@ export class Form<T extends { [key: string]: Input<keyof Inputs> }> {
 				values[name] = selectedValues;
 			} else {
 				const inputEl = elements[0] as
-					| HTMLInputElement
-					| HTMLTextAreaElement
-					| HTMLSelectElement
-					| undefined;
+					HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | undefined;
 				values[name] = inputEl?.value ?? '';
 			}
 		}

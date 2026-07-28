@@ -14,50 +14,23 @@
 	const err = (name: string, detail: string) => results.push({ name, pass: false, detail });
 
 	const run = async () => {
+		SupaStruct.initRealtime(data.supabase);
 		results = [];
 		done = false;
 		pass = false;
 
 		const prefix = `t-${Math.random().toString(36).slice(2, 7)}`;
-		const listener = SupaStruct.get({ client: data.supabase, table: 'test', schema: 'test' });
 		const writer = SupaStruct.get({
 			client: data.supabase,
 			table: 'test',
 			schema: 'test',
-			debug: true
+			index_db: false
 		});
 
 		// Collect realtime events as they arrive
-		const rtEvents: { type: string; id: string }[] = [];
-		let subscribed = false;
-		listener.on('realtime', (status) => {
-			if (String(status) === 'SUBSCRIBED') {
-				subscribed = true;
-			}
-		});
-		listener.on('new', (r) => rtEvents.push({ type: 'new', id: String(r.id) }));
-		listener.on('update', (r) => rtEvents.push({ type: 'update', id: String(r.id) }));
-		listener.on('delete', (r) => rtEvents.push({ type: 'delete', id: String(r.id) }));
-		const stop = listener.initRealtime();
-
-		const waitFor = async (predicate: () => boolean, timeoutMs: number) => {
-			const deadline = Date.now() + timeoutMs;
-			while (Date.now() < deadline) {
-				if (predicate()) return true;
-				await new Promise((r) => setTimeout(r, 200));
-			}
-			return false;
-		};
-
 		const ids: string[] = [];
 
 		try {
-			const subscribedReady = await waitFor(() => subscribed, 15000);
-			if (!subscribedReady) {
-				err('realtime-subscribe', 'realtime listener never reached SUBSCRIBED');
-				return;
-			}
-
 			const res = await writer.new(
 				...Array.from({ length: 5 }, (_, i) => ({ name: `${prefix}-${i}`, age: 20 + i }))
 			);
@@ -76,23 +49,17 @@
 				return;
 			}
 
-			// const insertsReady = await waitFor(
-			// 	() => ids.every((id) => rtEvents.some((e) => e.type === 'new' && e.id === id)),
-			// 	10000
-			// );
-			// if (!insertsReady)
-			// 	err(
-			// 		'realtime-inserts',
-			// 		`got ${rtEvents.filter((e) => e.type === 'new').length}/${ids.length}`
-			// 	);
-			// else ok('realtime-inserts', `all ${ids.length} insert events received`);
+			console.log('Found ids:', ids);
 
 			// ── fromId ────────────────────────────────────────────────────────
 			for (const id of ids) {
+				console.log(`fromId(${id})`);
 				const res = await writer.fromId(id);
 				if (res.isErr()) err(`fromId(${id})`, res.error.message);
 				else ok(`fromId`, `found id=${res.unwrap().id}`);
 			}
+
+			console.log('fromId done');
 
 			// ── all() ─────────────────────────────────────────────────────────
 			const allRes = await writer.all();

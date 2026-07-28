@@ -647,10 +647,23 @@
 	aspect-ratio: 1/1 !important;
 }
 
+.material-symbols-outlined,
+.material-symbols,
 .material-icons,
-.material-symbols {
+.mi {
+	font-family: 'Material Symbols Outlined' !important;
+	font-weight: normal;
+	font-style: normal;
+	font-size: 24px; /* Preferred icon size */
+	display: inline-block;
+	line-height: 1;
+	text-transform: none;
+	letter-spacing: normal;
+	word-wrap: normal;
+	white-space: nowrap;
+	direction: ltr;
 	vertical-align: middle;
-	line-height: 0 !important;
+	/* line-height: 0 !important; */
 	position: relative;
 }
 
@@ -697,7 +710,8 @@
 input[type='range'].vertical {
 	writing-mode: vertical-lr;
 	direction: rtl;
-	appearance: slider-vertical;
+	writing-mode: vertical-lr;
+	direction: rtl;
 	/* width: 16px; */
 	vertical-align: bottom;
 }

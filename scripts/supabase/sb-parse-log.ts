@@ -55,20 +55,20 @@ export const parseSupabaseStartLog = (contents: string) => {
 	}
 
 	const zod = z.object({
-		development_tools_studio: z.string(),
-		development_tools_mailpit: z.string(),
-		development_tools_mcp: z.string(),
-		apis_project_url: z.string(),
-		apis_rest: z.string(),
-		apis_graphql: z.string(),
-		apis_edge_functions: z.string(),
-		database_url: z.string(),
-		authentication_keys_publishable: z.string(),
-		authentication_keys_secret: z.string(),
-		storage_s3_url: z.string(),
-		storage_s3_access_key: z.string(),
-		storage_s3_secret_key: z.string(),
-		storage_s3_region: z.string()
+		development_tools_studio: z.string().optional().default(''),
+		development_tools_mailpit: z.string().optional().default(''),
+		development_tools_mcp: z.string().optional().default(''),
+		apis_project_url: z.string().optional().default(''),
+		apis_rest: z.string().optional().default(''),
+		apis_graphql: z.string().optional().default(''),
+		apis_edge_functions: z.string().optional().default(''),
+		database_url: z.string().optional().default(''),
+		authentication_keys_publishable: z.string().optional().default(''),
+		authentication_keys_secret: z.string().optional().default(''),
+		storage_s3_url: z.string().optional().default(''),
+		storage_s3_access_key: z.string().optional().default(''),
+		storage_s3_secret_key: z.string().optional().default(''),
+		storage_s3_region: z.string().optional().default('')
 	});
 
 	return zod.parse(params);

@@ -45,7 +45,13 @@ export default defineConfig({
 		__APP_ENV__: JSON.stringify({
 			environment: env.ENVIRONMENT,
 			name: env.APP_NAME,
-			indexed_db: env.INDEXED_DB_ENABLED,
+			indexed_db: {
+				enabled: env.INDEXED_DB_ENABLED,
+				debug: env.INDEXED_DB_DEBUG,
+				name: env.INDEXED_DB_NAME,
+				version: env.INDEXED_DB_VERSION,
+				debounce_interval_ms: env.INDEXED_DB_DEBOUNCE_INTERVAL_MS
+			},
 			struct_cache: env.STRUCT_CACHE_ENABLED,
 			supabase: {
 				url: env.SB_PUBLIC_URL,

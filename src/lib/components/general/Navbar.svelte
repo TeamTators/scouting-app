@@ -13,9 +13,10 @@ Top navigation bar with stack controls, theme toggle, account menu, and notifica
 <script lang="ts">
 	import SideNav from './SideNav.svelte';
 	import Notifications from './Notifications.svelte';
-	import { Stack } from '$lib/utils/stack';
+	// import { Stack } from '$lib/utils/stack';
 	import ThemeSwitch from './ThemeSwitch.svelte';
 	import { SupaStructData } from '$lib/services/supabase/supastruct.svelte';
+	import Online from '$lib/components/general/Online.svelte';
 
 	interface Props {
 		title: string;
@@ -23,8 +24,8 @@ Top navigation bar with stack controls, theme toggle, account menu, and notifica
 		notifications: SupaStructData<'core', 'account_notification'>[];
 	}
 
-	const prev = $state(Stack.prev);
-	const next = $state(Stack.next);
+	// const prev = $state(Stack.prev);
+	// const next = $state(Stack.next);
 
 	const { title, account, notifications }: Props = $props();
 	let notifs = $state(0);
@@ -50,12 +51,13 @@ Top navigation bar with stack controls, theme toggle, account menu, and notifica
 			>
 		</div>
 		<div class="end d-flex align-items-center">
-			<button type="button" class="btn stack-btn" disabled={!$prev} onclick={() => Stack.undo()}>
+			<!-- <button type="button" class="btn stack-btn" disabled={!$prev} onclick={() => Stack.undo()}>
 				<i class="material-icons">undo</i>
 			</button>
 			<button type="button" class="btn stack-btn" disabled={!$next} onclick={() => Stack.redo()}>
 				<i class="material-icons">redo</i>
-			</button>
+			</button> -->
+			<Online />
 			<ThemeSwitch />
 			<div class="dropdown">
 				<button
@@ -110,7 +112,7 @@ Top navigation bar with stack controls, theme toggle, account menu, and notifica
 	<Notifications {notifications} />
 {/if}
 
-<style>
+<!-- <style>
 	.stack-btn {
 		background: transparent;
 		border: none;
@@ -124,4 +126,4 @@ Top navigation bar with stack controls, theme toggle, account menu, and notifica
 		opacity: 0.5;
 		cursor: not-allowed;
 	}
-</style>
+</style> -->

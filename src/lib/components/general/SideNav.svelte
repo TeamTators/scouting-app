@@ -33,6 +33,9 @@ Side navigation offcanvas that renders sections from the navbar registry.
 				const instance = bs.Offcanvas.getOrCreateInstance(oc);
 				instance.hide();
 			});
+			document.querySelectorAll('.offcanvas-backdrop').forEach((ob) => {
+				ob.remove();
+			});
 		});
 	};
 
@@ -59,16 +62,19 @@ Side navigation offcanvas that renders sections from the navbar registry.
 	tabindex="-1"
 	{id}
 	aria-labelledby="{id}Label"
+	style="
+	--bs-offcanvas-bg: var(--layer-2);
+	"
 >
-	<div class="offcanvas-header layer-2">
-		<h5 class="offcanvas-title" id="{id}Label">{__APP_ENV__.name}</h5>
+	<div class="offcanvas-header pb-0">
+		<h4 class="offcanvas-title text-muted" id="{id}Label">{__APP_ENV__.name}</h4>
 		<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
 	</div>
-	<div class="offcanvas-body layer-2">
+	<div class="offcanvas-body pt-0">
 		<ul class="list-unstyled">
 			{#each sections as section}
 				<li class="mb-3">
-					<h4 class="text-secondary">{section.name}</h4>
+					<h5>{section.name}</h5>
 					<ul class="list-unstyled">
 						{#each section.links as link}
 							<li class="ps-3 mb-2">

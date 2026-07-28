@@ -124,6 +124,18 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 
 	export const getGrid = () => grid;
 
+	export const getSortedNodes = (): T[] => {
+		const nodes: T[] = [];
+		if (!grid) return nodes;
+
+		// Get all rendered nodes in their current order
+		grid.forEachNodeAfterFilterAndSort((node) => {
+			if (node.data) nodes.push(node.data);
+		});
+
+		return nodes;
+	};
+
 	export const getSelection = (): T[] => {
 		if (!grid) return [];
 		const selected: T[] = [];

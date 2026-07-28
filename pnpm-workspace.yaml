@@ -1,0 +1,12 @@
+onlyBuiltDependencies:
+  - colors
+  - drizzle-struct
+  - esbuild
+  - html-constructor
+  - math
+  - msgpackr-extract
+  - puppeteer
+  - ts-utils
+
+overrides:
+  esbuild: 0.21.5

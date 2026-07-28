@@ -44,7 +44,9 @@ button,
 }
 
 .card {
-	/* padding: 0 !important; */
+	border: none !important;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+	border-radius: var(--border-radius) !important;
 }
 
 :root {
@@ -52,4 +54,17 @@ button,
 	--bs-btn-padding-y: 0.5rem;
 	--bs-btn-padding-x: 1rem;
 	--bs-btn-border-radius: 0.3rem;
+}
+
+.offcanvas-backdrop {
+	/* blur */
+	position: fixed;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	padding: 1.5rem;
+	background: color-mix(in oklab, var(--layer-3) 50%, transparent);
+	backdrop-filter: blur(5px);
+	opacity: 0;
+	transition: opacity 180ms ease;
 }

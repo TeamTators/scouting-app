@@ -7,11 +7,11 @@
  * @example
  * import '$lib/server';
  */
+import { SupaStruct } from '$lib/services/supabase/supastruct.svelte';
+import supabase from '$lib/server/services/supabase';
 
-/**
- * Executes tasks that should run after all structs have been built.
- *
- * - Starts the lifetime cleanup loop.
- * - Ensures the configured admin account exists and is verified.
- */
-export const postBuild = async () => {};
+try {
+	SupaStruct.initRealtime(supabase);
+} catch {
+	//
+}

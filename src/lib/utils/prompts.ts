@@ -20,10 +20,34 @@
  */
 import { browser } from '$app/environment';
 import { type BootstrapColor } from 'colors/color';
-import Modal from '../components/bootstrap/Modal.svelte';
+import Modal from '$lib/components/bootstrap/Modal.svelte';
 import { createRawSnippet, mount, unmount } from 'svelte';
 import Alert from '$lib/components/bootstrap/Alert.svelte';
 import { writable } from 'svelte/store';
+import { type Client } from '$lib/services/supabase/supastruct.svelte';
+import Dashboard from '@uppy/svelte/dashboard';
+import Uppy, {
+	type Body,
+	type Meta,
+	type UppyOptions,
+	type BasePlugin,
+	type PluginOpts
+} from '@uppy/core';
+import '@uppy/core/css/style.min.css';
+import '@uppy/dashboard/css/style.min.css';
+import '@uppy/image-editor/css/style.min.css';
+import { attemptAsync } from 'ts-utils';
+
+const MODAL_OVERLAY_SELECTOR = '.custom-modal-overlay';
+const MODAL_BODY_SELECTOR = '.custom-modal-body';
+
+const getTopModalBody = (): HTMLDivElement | null => {
+	const overlays = Array.from(document.querySelectorAll<HTMLElement>(MODAL_OVERLAY_SELECTOR));
+	const activeOverlay = overlays.at(-1);
+	if (!activeOverlay) return null;
+
+	return activeOverlay.querySelector<HTMLDivElement>(MODAL_BODY_SELECTOR);
+};
 
 /**
  * Global modal container element where all modal dialogs are rendered.
@@ -45,6 +69,9 @@ export const modalTarget = (() => {
  */
 export const clearModals = async () => {
 	if (modalTarget) {
+		// Modal content is portaled to <body>, so clear rendered overlay nodes as well.
+		document.querySelectorAll(MODAL_OVERLAY_SELECTOR).forEach((node) => node.remove());
+
 		const remove = () => {
 			const modal = modalTarget.lastChild;
 			if (modal) {
@@ -149,7 +176,7 @@ export const prompt = async (message: string, config?: PromptConfig) => {
 	return new Promise<string | null>((res, rej) => {
 		if (!modalTarget) return rej('Cannot show prompt in non-browser environment');
 
-		let value = '';
+		let value = config?.default || '';
 		let valid = true;
 		let input: HTMLInputElement | HTMLTextAreaElement | null = null;
 
@@ -228,7 +255,9 @@ export const prompt = async (message: string, config?: PromptConfig) => {
 		});
 
 		const onshow = () => {
-			input?.focus();
+			setTimeout(() => {
+				input?.focus();
+			}, 100);
 		};
 
 		modal.on('show', onshow);
@@ -236,8 +265,8 @@ export const prompt = async (message: string, config?: PromptConfig) => {
 		modal.show();
 		modal.once('hide', () => {
 			res(null);
-			clearModals();
 			modal.off('show', onshow);
+			unmount(modal);
 		});
 	});
 };
@@ -341,14 +370,16 @@ export const select = async <T>(message: string, options: T[], config?: SelectCo
 		document.addEventListener('keydown', onkeydown);
 
 		modal.on('show', () => {
-			input?.focus();
+			setTimeout(() => {
+				input?.focus();
+			}, 100);
 		});
 
 		modal.show();
 		modal.once('hide', () => {
 			res(null);
-			clearModals();
 			document.removeEventListener('keydown', onkeydown);
+			unmount(modal);
 		});
 	});
 };
@@ -484,8 +515,8 @@ export const choose = async <A, B>(
 
 		modal.once('hide', () => {
 			res(null);
-			clearModals();
 			document.removeEventListener('keydown', onkeydown);
+			unmount(modal);
 		});
 	});
 };
@@ -562,8 +593,8 @@ export const confirm = async (message: string, config?: ConfirmConfig) => {
 		document.addEventListener('keydown', onkeydown);
 		modal.once('hide', () => {
 			res(false);
-			clearModals();
 			document.removeEventListener('keydown', onkeydown);
+			unmount(modal);
 		});
 	});
 };
@@ -619,8 +650,8 @@ export const alert = async (message: string, config?: AlertConfig) => {
 
 		modal.once('hide', () => {
 			res();
-			clearModals();
 			document.removeEventListener('keydown', onkeydown);
+			unmount(modal);
 		});
 	});
 };
@@ -730,7 +761,7 @@ export const colorPicker = async (message: string, config?: ColorPickerConfig) =
 		modal.once('hide', () => {
 			document.removeEventListener('keydown', onkeydown);
 			res(null);
-			clearModals();
+			unmount(modal);
 		});
 	});
 };
@@ -813,9 +844,34 @@ export const notify = (config: NotificationConfig) => {
 export const rawModal = (
 	title: string,
 	buttons: ButtonConfig[],
-	onMount: (body: HTMLDivElement) => ReturnType<typeof mount>
+	onMount: (body: HTMLDivElement) => ReturnType<typeof mount>,
+	config?: {
+		width?: string;
+		blur?: boolean;
+		resizable?: boolean;
+		overlay?: boolean;
+	}
 ) => {
 	if (!modalTarget) throw new Error('Cannot show modal in non-browser environment');
+	let mountedBody: ReturnType<typeof mount> | null = null;
+	let raf = 0;
+
+	const tryMountBody = (attempt = 0) => {
+		if (mountedBody) return;
+
+		const body = getTopModalBody()?.querySelector<HTMLDivElement>('.body-content');
+		if (body) {
+			mountedBody = onMount(body);
+			return;
+		}
+
+		if (attempt >= 30) {
+			throw new Error('Modal body not found');
+		}
+
+		raf = requestAnimationFrame(() => tryMountBody(attempt + 1));
+	};
+
 	const modal = mount(Modal, {
 		target: modalTarget,
 		props: {
@@ -823,14 +879,17 @@ export const rawModal = (
 			body: createRawSnippet(() => ({
 				render: () => `<div class="body-content"></div>`
 			})),
-			buttons: createButtons(buttons)
+			buttons: createButtons(buttons),
+			width: config?.width,
+			blur: config?.blur,
+			resizable: config?.resizable,
+			overlay: config?.overlay
 		}
 	});
 
-	const body = modalTarget.querySelector('.body-content');
-	if (!body) throw new Error('Modal body not found');
-
-	onMount(body as HTMLDivElement);
+	modal.on('show', () => {
+		tryMountBody();
+	});
 
 	const onkeydown = (e: KeyboardEvent) => {
 		if (e.key === 'Escape') {
@@ -841,8 +900,14 @@ export const rawModal = (
 
 	document.addEventListener('keydown', onkeydown);
 	modal.on('hide', () => {
+		if (raf) {
+			cancelAnimationFrame(raf);
+		}
+		if (mountedBody) {
+			mountedBody = null;
+		}
 		document.removeEventListener('keydown', onkeydown);
-		clearModals();
+		unmount(modal);
 	});
 
 	return {
@@ -858,3 +923,129 @@ export const rawModal = (
  * Contains an array of notification IDs for tracking active notifications
  */
 export const notifs = writable<number[]>([]);
+
+type PluginClass<M extends Meta, B extends Body> = new (
+	uppy: Uppy<M, B>,
+	opts?: Record<string, unknown>
+) => BasePlugin<PluginOpts, M, B>;
+type PluginConfig<M extends Meta, B extends Body> = {
+	plugin: PluginClass<M, B>;
+	opts?: Record<string, unknown>;
+};
+type PluginEntry<M extends Meta, B extends Body> = PluginClass<M, B> | PluginConfig<M, B>;
+type PictureUploadConfig<M extends Meta, B extends Body, O extends UppyOptions<M, B>> = {
+	bucket: string;
+	client: Client;
+	opts: Partial<O>;
+	plugins?: PluginEntry<M, B>[];
+};
+
+export const upload = <M extends Meta, B extends Body, O extends UppyOptions<M, B>>(
+	config: PictureUploadConfig<M, B, O>
+) => {
+	return attemptAsync(
+		() =>
+			new Promise<
+				{
+					id: string;
+					path: string;
+					fullPath: string;
+				}[]
+			>((resolve, rej) => {
+				const uppy = new Uppy({
+					...config.opts
+				});
+
+				if (config.plugins) {
+					const uppyWithDynamicPlugins = uppy as unknown as {
+						use: (plugin: PluginClass<M, B>, opts?: Record<string, unknown>) => void;
+					};
+
+					for (const pluginEntry of config.plugins) {
+						if (typeof pluginEntry === 'function') {
+							uppyWithDynamicPlugins.use(pluginEntry);
+							continue;
+						}
+
+						uppyWithDynamicPlugins.use(pluginEntry.plugin, pluginEntry.opts);
+					}
+				}
+
+				uppy.addUploader(async (files) => {
+					const res = await Promise.all(
+						files.map(async (file_id) => {
+							const file = uppy.getFile(file_id);
+							if (!file) return null;
+							const object_path = [config.opts?.meta?.path, Date.now() + '_' + file.name]
+								.filter(Boolean)
+								.join('/');
+							const content_type = file.type || 'application/octet-stream';
+
+							try {
+								const { data, error } = await config.client.storage
+									.from(config.bucket)
+									.upload(object_path, file.data as Blob, {
+										contentType: content_type,
+										upsert: true
+									});
+
+								if (error) {
+									throw error;
+								}
+								return data;
+							} catch (err) {
+								console.error('Upload error:', err);
+								uppy.emit('error', new Error(`Failed to upload ${file.name}: ${err}`));
+								alert(`Failed to upload ${file.name}: ${err}`);
+								return null;
+							}
+						})
+					);
+
+					if (res.length === 0) {
+						rej('No files were uploaded.');
+						return;
+					}
+
+					resolve(res.filter(Boolean));
+					uppy.clear();
+					modal.hide();
+				});
+
+				const modal = rawModal(
+					'Upload Picture',
+					[
+						{
+							text: 'Cancel',
+							onClick: () => {
+								modal.hide();
+								uppy.cancelAll();
+							},
+							color: 'gray'
+						}
+					],
+					(body) => {
+						return mount(Dashboard, {
+							target: body,
+							props: {
+								props: {
+									theme: 'dark',
+									proudlyDisplayPoweredByUppy: false,
+									inline: true,
+									disabled: false
+								},
+								uppy
+							}
+						});
+					}
+				);
+
+				modal.show();
+
+				modal.on('hide', () => {
+					uppy.cancelAll();
+					resolve([]);
+				});
+			})
+	);
+};

@@ -19,6 +19,8 @@ export type ContextMenuOptions = (
 			action: (e: MouseEvent) => void;
 			name: string;
 			icon: Icon;
+			show?: boolean; // default true
+			disabled?: boolean; // default false
 	  }
 	| null
 	| string
@@ -102,13 +104,13 @@ const ensureContextMenuStyles = () => {
 			letter-spacing: 0.05em;
 			text-transform: uppercase;
 			color: var(--text-layer-3, #b8b8bf);
-			border-bottom: 1px solid color-mix(in srgb, var(--layer-4, #373740) 50%, transparent);
+			border-bottom: 1px solid color-mix(in srgb, var(--text-layer-4, #373740) 50%, transparent);
 		}
 		.contextmenu .contextmenu-divider {
-			height: 1px;
-			background: color-mix(in srgb, var(--layer-4, #373740) 55%, transparent);
+			height: 2px;
+			margin: 0px;
+			background: color-mix(in srgb, var(--text-layer-2, #373740) 55%, transparent);
 			border: 0;
-			margin: 3px 0;
 		}
 	`;
 	document.head.appendChild(style);
@@ -188,7 +190,12 @@ export const contextmenu = (
 			li.appendChild(p);
 			list.appendChild(li);
 		} else {
+			if (o.show === false) continue;
 			const button = create('button');
+			if (o.disabled) {
+				button.disabled = true;
+				button.classList.add('disabled');
+			}
 			button.classList.add(
 				'btn',
 				'btn-dark',

@@ -1,6 +1,6 @@
 // Professional, modern default text styles
 p {
-	font-size: 1rem;
+	font-size: 0.8rem;
 	line-height: 1.5;
 	margin-bottom: 0.75em;
 	color: inherit;
@@ -14,29 +14,22 @@ h6 {
 	font-weight: 600;
 	line-height: 1.2;
 	color: inherit;
-	margin-top: 1.2em;
+	margin-top: 0.5em;
 	margin-bottom: 0.5em;
 }
-h1 {
-	font-size: 2rem;
-}
-h2 {
-	font-size: 1.5rem;
-}
-h3 {
-	font-size: 1.25rem;
-}
-h4 {
-	font-size: 1.125rem;
-}
-h5 {
-	font-size: 1rem;
-}
-h6 {
-	font-size: 0.875rem;
-}
+// h1 {
+// }
+// h2 {
+// }
+// h3 {
+// }
+// h4 {
+// }
+// h5 {
+// }
+// h6 {
+// }
 small {
-	font-size: 0.8125rem;
 	color: var(--text-layer-2, #6c757d);
 }
 // Overwrite Bootstrap padding and margin
