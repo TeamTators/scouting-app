@@ -1,4 +1,5 @@
 FROM node:24.13.1-alpine
+RUN apk add --no-cache git
 
 # Install pnpm globally
 RUN npm install -g pnpm@latest
@@ -13,7 +14,6 @@ RUN pnpm install
 
 COPY ./build ./build
 COPY ./.svelte-kit ./.svelte-kit
-COPY ./cli ./cli
 COPY ./config ./config
 COPY ./drizzle ./drizzle
 COPY ./mjml ./mjml
