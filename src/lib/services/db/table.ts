@@ -459,8 +459,7 @@ export class DexieQuery<Name extends string, Schema extends z.ZodTypeAny> {
 
 	then(
 		onfulfilled?:
-			| ((value: Result<DexieData<Name, Schema>[], Error>) => void | PromiseLike<void>)
-			| null
+			((value: Result<DexieData<Name, Schema>[], Error>) => void | PromiseLike<void>) | null
 	) {
 		return this.fetchAll()
 			.then((res) => {

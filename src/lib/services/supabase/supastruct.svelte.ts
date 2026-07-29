@@ -187,7 +187,7 @@ const QueryCache = new DexieTable({
 		table: z.string(),
 		version: z.number(),
 		required: z.string(),
-		last_sync: z.number(),
+		last_sync: z.number()
 	})
 });
 
@@ -347,8 +347,7 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		channel
 			.on('postgres_changes', { event: '*', schema: '*', table: '*' }, (payload) => {
 				const struct = SupaStruct.structs.get(`${payload.schema}.${payload.table}`) as
-					| SupaStruct<any, any>
-					| undefined;
+					SupaStruct<any, any> | undefined;
 				if (struct) {
 					struct.handleRealtimePayload(payload);
 				}
@@ -511,7 +510,6 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		const dexie = this.getDexie(this.getSchemaDefinition().Row as any, false);
 		if (dexie) {
 			this.log('Initializing cache from IndexedDB for table', this.table);
-			
 		}
 	}
 
@@ -611,7 +609,6 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 			});
 		}
 	}
-
 
 	/**
 	 * Validates a raw Supabase transaction payload against an expected cardinality.
@@ -858,8 +855,7 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 
 	Hydrate<
 		Required extends keyof RowWithoutArchived<Schema, RowName> =
-			| 'id'
-			| keyof RowWithoutArchived<Schema, RowName>
+			'id' | keyof RowWithoutArchived<Schema, RowName>
 	>(
 		rows: PartialRow<Schema, RowName, Required | 'id'>[],
 		required?: readonly Required[],
@@ -952,12 +948,10 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		const whereB = config?.whereB ?? {};
 
 		const requiredA = this.getEffectiveRequiredFields(config?.requiredA) as readonly (
-			| RequiredA
-			| 'id'
+			RequiredA | 'id'
 		)[];
 		const requiredB = other.getEffectiveRequiredFields(config?.requiredB) as readonly (
-			| RequiredB
-			| 'id'
+			RequiredB | 'id'
 		)[];
 
 		// Ensure selected fields include id for stable hydration.
@@ -1843,7 +1837,7 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 						({
 							created_at: new SvelteDate().toISOString(),
 							id: crypto.randomUUID(),
-							...d,
+							...d
 						}) as any
 				)
 			);
@@ -1909,7 +1903,7 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 						({
 							created_at: new SvelteDate().toISOString(),
 							id: d.id ?? crypto.randomUUID(),
-							...d,
+							...d
 						}) as any
 				)
 			);
@@ -2148,7 +2142,7 @@ class SupaQuery<
 		private readonly required: readonly (Required | 'id')[] = ['id'] as const,
 		private readonly key?: string,
 		private readonly hydrateLocal?: () => Promise<void>,
-		default_data: SupaStructData<Schema, RowName, Required> | null = null,
+		default_data: SupaStructData<Schema, RowName, Required> | null = null
 	) {
 		this._default = default_data;
 	}
@@ -2500,7 +2494,6 @@ class SupaQuery<
 					required: Array.from(required).join(',')
 				};
 
-
 				if (has.value.raw.version !== QUERY_CACHE_VERSION) {
 					updatePayload.version = QUERY_CACHE_VERSION;
 				}
@@ -2516,7 +2509,7 @@ class SupaQuery<
 					this.trace('sync cache write -> updated existing row', {
 						key: this.key,
 						now,
-						requestedTtl: ttl,
+						requestedTtl: ttl
 					});
 				}
 				return;
@@ -2852,7 +2845,9 @@ class SupaQuery<
 
 	_default: SupaStructData<Schema, RowName, Required> | null = $state(null);
 
-	default(value: InsertWithoutArchived<Schema, Extract<RowName, InsertTableNames<Schema>>>): SupaQuery<Schema, RowName, Required | 'id', true> {
+	default(
+		value: InsertWithoutArchived<Schema, Extract<RowName, InsertTableNames<Schema>>>
+	): SupaQuery<Schema, RowName, Required | 'id', true> {
 		const data = new SupaStructData<Schema, RowName, Required>(
 			this.struct,
 			{

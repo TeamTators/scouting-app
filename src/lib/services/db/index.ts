@@ -24,13 +24,7 @@ export const DB = new Dexie(__APP_ENV__.indexed_db.name);
  * Supported schema field types.
  */
 export type SchemaFieldType =
-	| 'string'
-	| 'number'
-	| 'boolean'
-	| 'date'
-	| 'array'
-	| 'object'
-	| 'unknown';
+	'string' | 'number' | 'boolean' | 'date' | 'array' | 'object' | 'unknown';
 
 /**
  * Maps schema field types to their runtime value types.
