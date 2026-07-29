@@ -336,7 +336,7 @@ export class DexieTable<Name extends string, Schema extends z.ZodTypeAny> {
 			const now = new Date();
 			const row: Row<Name, Schema> = {
 				...(data as object),
-				created_at: this.ensureDate(data.created_at, now).toISOString()
+				created_at: this.ensureDate(data.created_at, now)
 			} as Row<Name, Schema>;
 			await this.tableDef().add(row);
 			return this.Generator(row);
@@ -459,7 +459,8 @@ export class DexieQuery<Name extends string, Schema extends z.ZodTypeAny> {
 
 	then(
 		onfulfilled?:
-			((value: Result<DexieData<Name, Schema>[], Error>) => void | PromiseLike<void>) | null
+			| ((value: Result<DexieData<Name, Schema>[], Error>) => void | PromiseLike<void>)
+			| null
 	) {
 		return this.fetchAll()
 			.then((res) => {

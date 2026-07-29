@@ -24,7 +24,13 @@ export const DB = new Dexie(__APP_ENV__.indexed_db.name);
  * Supported schema field types.
  */
 export type SchemaFieldType =
-	'string' | 'number' | 'boolean' | 'date' | 'array' | 'object' | 'unknown';
+	| 'string'
+	| 'number'
+	| 'boolean'
+	| 'date'
+	| 'array'
+	| 'object'
+	| 'unknown';
 
 /**
  * Maps schema field types to their runtime value types.
@@ -185,7 +191,7 @@ export const _init = async () => {
 	initPromise = new Promise<typeof DB>((resolve, reject) => {
 		if (timeout) clearTimeout(timeout);
 		timeout = setTimeout(() => {
-			if (!browser) throw new Error('IndexedDB initialization is only available in the browser');
+			if (!browser) reject(new Error('IndexedDB is only available in the browser'));
 
 			const signature = schemaSignature();
 			if (initialized && DB.isOpen() && openedSchemaSignature === signature) {
