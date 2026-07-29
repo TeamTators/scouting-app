@@ -104,6 +104,10 @@ jobs:
           BRANCH_NAME="update-template-to-$LATEST_TAG"
           CLONE_DIR="target-repo"
 
+          # Create basic ./.svelte-kit/tsconfig.json file
+          mkdir -p ./.svelte-kit
+          echo '{ "exclude": "../node_modules/**" }' > ./.svelte-kit/tsconfig.json
+
           echo "Running premerge scripts"
           pnpm script premerge-render ${{ matrix.templates }} --force
 

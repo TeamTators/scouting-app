@@ -1,24 +1,20 @@
-import { select } from '../cli/utils';
 import { sleep } from 'ts-utils';
 import fs from 'fs/promises';
 import path from 'path';
+import cli_select from 'cli-select';
 
 export default async (...args: string[]) => {
 	if (!args.includes('--force')) {
-		const answer = await select({
-			message:
-				'This script will cause many changes to your repository to prepare for merging into its sub repositories. Are you sure you want to proceed?',
-			options: [
-				{
-					name: 'No - exit',
-					value: 'no'
-				},
-				{
-					name: 'Yes - proceed',
-					value: 'yes'
+		const res = await cli_select({
+			values: ['yes', 'no'],
+			valueRenderer: (value, selected) => {
+				if (selected) {
+					return `> ${value} <`;
 				}
-			]
-		}).unwrap();
+				return value;
+			},
+		});
+		const answer = res.value;
 		if (answer === 'no' || !answer) {
 			console.log('Exiting script');
 			return;
