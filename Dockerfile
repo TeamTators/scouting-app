@@ -1,28 +1,27 @@
 FROM node:24.13.1-alpine
-RUN apk add --no-cache git
 
-# Install pnpm globally
-RUN npm install -g pnpm@latest
+RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN apk add --no-cache git
 RUN npm install -g typescript@latest
 
 WORKDIR /app
 
-# Copy only package files first for caching
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install
-
-
-COPY ./build ./build
-COPY ./.svelte-kit ./.svelte-kit
 COPY ./config ./config
-COPY ./drizzle ./drizzle
-COPY ./mjml ./mjml
-COPY ./private ./private
-COPY ./scripts ./scripts
-COPY ./src ./src
-COPY ./static ./static
 
-RUN touch .env
+# --- FORCE PNPM TO ALLOW BUILDING THE GIT DEPENDENCY ---
+RUN pnpm config set --global allowBuilds true
+# Alternatively, if you want to target just that package:
+# RUN pnpm config set --global onlyBuiltDependencies '["ts-utils"]'
+
+COPY . .
+COPY ./.env.example .env
+
+# Use standard install without frozen lockfile to avoid overrides mismatch
+RUN pnpm install --no-frozen-lockfile
+RUN pnpm --filter ts-utils build
+
+# RUN pnpm build
 
 EXPOSE 3000
 CMD ["pnpm", "start"]

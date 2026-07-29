@@ -6,7 +6,7 @@ const isTest = Boolean(process.env.VITEST);
 
 export default defineConfig({
 	optimizeDeps: {
-		include: ['ts-utils/**', 'drizzle-struct/**']
+		exclude: ['ts-utils']
 	},
 	plugins: [sveltekit()],
 	resolve: isTest
@@ -21,7 +21,7 @@ export default defineConfig({
 		environment: 'jsdom'
 	},
 	ssr: {
-		noExternal: ['node-html-parser']
+		noExternal: ['node-html-parser', 'ts-utils', 'math', 'colors']
 	},
 	server: {
 		port: env.PORT,

@@ -1,4 +1,5 @@
 onlyBuiltDependencies:
+  - '@parcel/watcher'
   - colors
   - drizzle-struct
   - esbuild

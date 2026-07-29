@@ -9,23 +9,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    depends_on:
-      - redis
     ports:
       - '${PORT}:${PORT}'
     volumes:
       - appdata:/app
-
-  redis:
-    container_name: redis
-    image: redis:7
-    restart: always
-    ports:
-      - '6379:6379'
-    volumes:
-      - redisdata:/data
-
+      - /app/node_modules
+      - /app/.svelte-kit
+      - /app/build
 volumes:
-  pgdata:
-  redisdata:
   appdata:
