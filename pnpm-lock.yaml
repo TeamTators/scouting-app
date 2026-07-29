@@ -140,12 +140,18 @@ importers:
       cli-progress:
         specifier: ^3.12.0
         version: 3.12.0
+      cli-select:
+        specifier: ^1.1.2
+        version: 1.1.2
       colors:
         specifier: github:tsaxking/colors#134c0967104167b345b104ebd4b0d6e89b0e623e
         version: https://codeload.github.com/tsaxking/colors/tar.gz/134c0967104167b345b104ebd4b0d6e89b0e623e
       comment-json:
         specifier: ^4.5.0
         version: 4.6.2
+      csv:
+        specifier: ^6.6.1
+        version: 6.6.1
       dexie:
         specifier: ^4.2.1
         version: 4.4.4
@@ -2375,6 +2381,10 @@ packages:
     resolution: {integrity: sha512-/6w/C21Pm1A7aZitlI5Ni/2J6FFQN8i1Cvz3kHABAAbw93v/NlvKdVOqz7CCWz/3iv/JplRSEEZ83XION15ovw==}
     engines: {node: '>=6'}
 
+  ansi-escapes@3.2.0:
+    resolution: {integrity: sha512-cBhpre4ma+U0T1oM5fXg7Dy1Jw7zzwv7lt/GoCpr+hDQJoYnKVPLL4dCvSEFMmQurOQvSrwT7SL/DAlhBI97RQ==}
+    engines: {node: '>=4'}
+
   ansi-escapes@4.3.2:
     resolution: {integrity: sha512-gKXj5ALrKWQLsYG9jlTRmR/xKluxHV+Z9QEwNIgCfM1/uwPMCuzVVnh5mwTd+OuBZcwSIMbqssNWRm1lE51QaQ==}
     engines: {node: '>=8'}
@@ -2670,6 +2680,9 @@ packages:
     resolution: {integrity: sha512-tRkV3HJ1ASwm19THiiLIXLO7Im7wlTuKnvkYaTkyoAPefqjNg7W7DHKUlGRxy9vxDvbyCYQkQozvptuMkGCg8A==}
     engines: {node: '>=4'}
 
+  cli-select@1.1.2:
+    resolution: {integrity: sha512-PSvWb8G0PPmBNDcz/uM2LkZN3Nn5JmhUl465tTfynQAXjKzFpmHbxStM6X/+awKp5DJuAaHMzzMPefT0suGm1w==}
+
   cli-spinners@2.9.2:
     resolution: {integrity: sha512-ywqV+5MmyL4E7ybXgKys4DugZbX0FC6LnwrhjuykIjnK9k8OQacQ7axGKnjDXWNhns0xot3bZI5h55H8yo9cJg==}
     engines: {node: '>=6'}
@@ -2839,6 +2852,19 @@ packages:
 
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
+
+  csv-generate@4.6.1:
+    resolution: {integrity: sha512-eELl9K716LSSeP2/YcCjch525JztnnERe3jEARWw2v1FN9ukUYfZTNYZ4Rq2Jj/MFKMauffOy9VCaqQTpFThDQ==}
+
+  csv-parse@7.0.1:
+    resolution: {integrity: sha512-+2z7Ar0APQ7Uu6fX4cn+pitRmxjZ1WPBcGmZFKmA74FCyi7Et/XZx8cjNQ5CjbZ4HCOxXCOpRBYvYH08Qa003A==}
+
+  csv-stringify@6.8.1:
+    resolution: {integrity: sha512-tZ6X6TKQyQgCo5OptXcyAbfN1pwmoxEqELPQ7KFazNErx7kiVsDK8o+VYRXhfMl4N9vvOOLXuioquR2MeP847A==}
+
+  csv@6.6.1:
+    resolution: {integrity: sha512-QKTUoSvOaJQGL23LxlGqQiy1n0g2Eg/T72tzsKqtX7APrchpwBpf0SJMX2fzrrXj87wkDAPQBgvoSAVKqKAYHA==}
+    engines: {node: '>= 0.1.90'}
 
   custom-error-instance@2.1.1:
     resolution: {integrity: sha512-p6JFxJc3M4OTD2li2qaHkDCw9SfMw82Ldr6OC9Je1aXiGfhx2W8p3GaoeaGrPJTUN9NirTM/KTxHWMUdR1rsUg==}
@@ -4797,6 +4823,9 @@ packages:
 
   std-env@3.10.0:
     resolution: {integrity: sha512-5GS12FdOZNliM5mAOxFRg7Ir0pWz8MdpYm6AY6VPkGpbA7ZzmbzNcBJQ0GPvvyWgcY7QAhCgf9Uy89I03faLkg==}
+
+  stream-transform@3.5.1:
+    resolution: {integrity: sha512-TTDX+qKFr7GGRXATn66rprmlFPx08W0UBIccE/rMPgW2sT7GovduZYP4xcdJ7Nu2YigF17U+CNFxYY11+W1oPw==}
 
   streamx@2.28.0:
     resolution: {integrity: sha512-1Yowhzjf0ivGMrTIkY9hav5TxobO9qIVqUE41fiCGMGgc3CLlf4MY+9AHmZqBWgDTue0fY9zWjYFVyf6Diuobw==}
@@ -7486,6 +7515,8 @@ snapshots:
 
   ansi-colors@4.1.3: {}
 
+  ansi-escapes@3.2.0: {}
+
   ansi-escapes@4.3.2:
     dependencies:
       type-fest: 0.21.3
@@ -7777,6 +7808,10 @@ snapshots:
     dependencies:
       string-width: 4.2.3
 
+  cli-select@1.1.2:
+    dependencies:
+      ansi-escapes: 3.2.0
+
   cli-spinners@2.9.2: {}
 
   cli-truncate@5.2.0:
@@ -7934,6 +7969,19 @@ snapshots:
       lru-cache: 11.5.2
 
   csstype@3.2.3: {}
+
+  csv-generate@4.6.1: {}
+
+  csv-parse@7.0.1: {}
+
+  csv-stringify@6.8.1: {}
+
+  csv@6.6.1:
+    dependencies:
+      csv-generate: 4.6.1
+      csv-parse: 7.0.1
+      csv-stringify: 6.8.1
+      stream-transform: 3.5.1
 
   custom-error-instance@2.1.1: {}
 
@@ -10216,6 +10264,8 @@ snapshots:
   statuses@2.0.2: {}
 
   std-env@3.10.0: {}
+
+  stream-transform@3.5.1: {}
 
   streamx@2.28.0:
     dependencies:

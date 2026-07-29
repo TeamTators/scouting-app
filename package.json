@@ -43,7 +43,9 @@
 		"sb:pull": "pnpm script supabase/sb-pull",
 		"sb:diff": "npx supabase db diff",
 		"sb:status": "npx supabase status",
-		"sb:migration": "npx supabase migration new"
+		"sb:migration": "npx supabase migration new",
+		"sb:backup": "pnpm script supabase/sb-backup",
+		"sb:restore": "pnpm script supabase/sb-restore"
 	},
 	"packageManager": "pnpm@10.30.0",
 	"engines": {
@@ -139,8 +141,10 @@
 		"check-password-strength": "^2.0.10",
 		"chevrotain": "^12.0.0",
 		"cli-progress": "^3.12.0",
+		"cli-select": "^1.1.2",
 		"colors": "github:tsaxking/colors#134c0967104167b345b104ebd4b0d6e89b0e623e",
 		"comment-json": "^4.5.0",
+		"csv": "^6.6.1",
 		"dexie": "^4.2.1",
 		"dotenv": "^16.6.1",
 		"express": "^5.1.0",
