@@ -19,5 +19,5 @@ export default async () => {
 		SB_PUBLIC_URL: parsed.apis_project_url.replace('127.0.0.1', 'localhost'),
 		SB_POSTGRES_PASSWORD: 'postgres',
 		SB_TENANT_ID: ''
-	}).unwrap();
+	});
 };
