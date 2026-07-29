@@ -5,7 +5,7 @@
  * import { downloadText } from '$lib/utils/downloads';
  * await downloadText('Hello', 'hello.txt');
  */
-import { attempt, attemptAsync } from 'ts-utils/check';
+import { attempt, attemptAsync } from 'ts-utils';
 
 /**
  * Download a file from a URL

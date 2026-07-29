@@ -8,7 +8,7 @@
 import Modal from '../components/bootstrap/Modal.svelte';
 import { createRawSnippet, mount } from 'svelte';
 import { modalTarget, createButtons, clearModals } from './prompts';
-import { attemptAsync } from 'ts-utils/check';
+import { attemptAsync } from 'ts-utils';
 
 type Option =
 	| string

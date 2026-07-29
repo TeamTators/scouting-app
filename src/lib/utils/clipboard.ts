@@ -5,7 +5,7 @@
  * import { copy } from '$lib/utils/clipboard';
  * copy('Hello', true);
  */
-import { attemptAsync } from 'ts-utils/check';
+import { attemptAsync } from 'ts-utils';
 import { notify as notif } from './prompts';
 
 /**

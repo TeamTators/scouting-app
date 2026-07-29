@@ -29,9 +29,9 @@ Bootstrap modal wrapper rendered via a portal.
 ```
 -->
 <script lang="ts">
-	import { Random } from 'ts-utils/math';
+	import { Random } from 'ts-utils';
 	import { onMount, type Snippet } from 'svelte';
-	import { SimpleEventEmitter } from 'ts-utils/event-emitter';
+	import { SimpleEventEmitter } from 'ts-utils';
 	import Portal from 'svelte-portal';
 
 	const id = Random.uuid();

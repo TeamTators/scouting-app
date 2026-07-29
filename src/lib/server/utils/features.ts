@@ -1,4 +1,4 @@
-import { attemptAsync } from 'ts-utils/check';
+import { attemptAsync } from 'ts-utils';
 import fs from 'fs';
 import path from 'path';
 import { z } from 'zod';

@@ -88,7 +88,5 @@ export default () => {
 	const cleanedContents = contents.replace(/\x1b\[\d+m/g, '');
 	fs.writeFileSync(absolutePath, cleanedContents, 'utf8');
 
-
-
 	return parseSupabaseStartLog(cleanedContents);
 };

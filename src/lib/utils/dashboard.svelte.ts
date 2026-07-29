@@ -12,8 +12,8 @@
  * const dash = new Dashboard.Dashboard({ name: 'Main', id: 'main', cards: [card] });
  */
 import { browser } from '$app/environment';
-import { EventEmitter } from 'ts-utils/event-emitter';
-import { attempt } from 'ts-utils/check';
+import { EventEmitter } from 'ts-utils';
+import { attempt } from 'ts-utils';
 import { z } from 'zod';
 import type { Icon } from '$lib/types/icons';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';

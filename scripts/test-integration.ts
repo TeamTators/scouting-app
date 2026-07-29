@@ -1,4 +1,4 @@
-import { sleep } from 'ts-utils/sleep';
+import { sleep } from 'ts-utils';
 import { config } from '../src/lib/server/utils/env';
 
 export default async () => {

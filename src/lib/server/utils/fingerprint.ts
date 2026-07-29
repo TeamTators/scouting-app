@@ -6,7 +6,7 @@
  * const sig = await signFingerprint({ fingerprint: 'abc', userAgent: 'ua', language: 'en' }).unwrap();
  */
 import crypto from 'crypto';
-import { attemptAsync } from 'ts-utils/check';
+import { attemptAsync } from 'ts-utils';
 import env from './env';
 
 /**

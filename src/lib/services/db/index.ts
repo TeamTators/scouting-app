@@ -12,7 +12,7 @@
  */
 import { browser } from '$app/environment';
 import Dexie from 'dexie';
-import { ComplexEventEmitter } from 'ts-utils/event-emitter';
+import { ComplexEventEmitter } from 'ts-utils';
 import { z } from 'zod';
 
 /**

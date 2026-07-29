@@ -9,7 +9,7 @@
 import { browser } from '$app/environment';
 import { writable } from 'svelte/store';
 import { Keyboard } from '../services/keybinds';
-import { EventEmitter } from 'ts-utils/event-emitter';
+import { EventEmitter } from 'ts-utils';
 
 /**
  * Represents a single state in the undo/redo stack.

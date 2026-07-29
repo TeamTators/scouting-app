@@ -12,7 +12,7 @@
 import { config as dotenv } from 'dotenv';
 import fs from 'fs';
 import path from 'path';
-import { attempt, attemptAsync } from 'ts-utils/check';
+import { attempt, attemptAsync } from 'ts-utils';
 import { z } from 'zod';
 dotenv();
 

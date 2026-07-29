@@ -10,7 +10,7 @@
  */
 import path from 'path';
 import fs from 'fs';
-import { attemptAsync, attempt } from 'ts-utils/check';
+import { attemptAsync, attempt } from 'ts-utils';
 import { z } from 'zod';
 import { parse } from 'comment-json';
 

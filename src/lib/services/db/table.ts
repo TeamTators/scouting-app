@@ -8,7 +8,7 @@
  * - `TablePagination`: page state and paginated fetch orchestration.
  * - `TableData`: row wrapper with update/delete helpers.
  */
-import { attemptAsync, type ResultPromise } from 'ts-utils/check';
+import { attemptAsync, type ResultPromise } from 'ts-utils';
 import { Err, Ok, type Result } from 'ts-utils';
 import { _define, _init } from '.';
 import { browser } from '$app/environment';

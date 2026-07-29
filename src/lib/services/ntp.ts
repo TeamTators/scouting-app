@@ -9,9 +9,9 @@
  * await TimeService.init();
  * console.log(TimeService.getTime());
  */
-import { attemptAsync } from 'ts-utils/check';
+import { attemptAsync } from 'ts-utils';
 import { z } from 'zod';
-import { EventEmitter } from 'ts-utils/event-emitter';
+import { EventEmitter } from 'ts-utils';
 
 /**
  * Time synchronization utilities.

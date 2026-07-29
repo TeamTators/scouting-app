@@ -1,4 +1,4 @@
-import { resolveAll } from 'ts-utils/check';
+import { resolveAll } from 'ts-utils';
 import { runTask } from '../src/lib/server/utils/task';
 import fs from 'fs';
 import path from 'path';

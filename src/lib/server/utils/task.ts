@@ -5,7 +5,7 @@
  * import { runTask, runTs } from '$lib/server/utils/task';
  * const out = await runTask('echo', 'hello').unwrap();
  */
-import { attemptAsync } from 'ts-utils/check';
+import { attemptAsync } from 'ts-utils';
 import { exec, execFile } from 'child_process';
 import path from 'path';
 // import * as tsNode from 'ts-node';

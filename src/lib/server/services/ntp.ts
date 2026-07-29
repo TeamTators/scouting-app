@@ -9,7 +9,7 @@
  * await TimeService.init();
  * console.log(TimeService.getTime());
  */
-// import { attemptAsync } from 'ts-utils/check';
+// import { attemptAsync } from 'ts-utils';
 // import { z } from 'zod';
 // import redis from './redis';
 // import env from '../utils/env';

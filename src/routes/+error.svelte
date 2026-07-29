@@ -5,7 +5,7 @@ Root error page rendered on routing or server failures.
 <script lang="ts">
 	import { page } from '$app/state';
 	import codes from 'http-status-codes';
-	import { toSnakeCase } from 'ts-utils/text';
+	import { toSnakeCase } from 'ts-utils';
 </script>
 
 <div class="container d-flex flex-column align-items-center justify-content-center vh-100">

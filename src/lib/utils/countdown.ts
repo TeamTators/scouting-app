@@ -7,7 +7,7 @@
  * const stop = countdown.start();
  */
 import { type Writable } from 'svelte/store';
-import { Loop } from 'ts-utils/loop';
+import { Loop } from 'ts-utils';
 
 /**
  * Snapshot of countdown state.

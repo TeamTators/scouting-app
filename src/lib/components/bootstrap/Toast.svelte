@@ -27,7 +27,7 @@ Toast notification rendered in a portal.
 	/* eslint-disable @typescript-eslint/no-explicit-any */
 	import type { BootstrapColor } from 'colors/color';
 	import { onMount, type Snippet } from 'svelte';
-	import { sleep } from 'ts-utils/sleep';
+	import { sleep } from 'ts-utils';
 	import Portal from 'svelte-portal';
 
 	interface Props {

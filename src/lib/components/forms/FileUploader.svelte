@@ -24,7 +24,7 @@ File upload modal backed by Uppy dashboard.
 <script lang="ts" generics="M extends Meta, B extends Body">
 	import Uppy, { type Body, type Meta, type UppyOptions } from '@uppy/core';
 	import Dashboard from '@uppy/svelte/dashboard';
-	import { EventEmitter } from 'ts-utils/event-emitter';
+	import { EventEmitter } from 'ts-utils';
 
 	import '@uppy/core/css/style.min.css';
 	import '@uppy/dashboard/css/style.min.css';

@@ -1,5 +1,5 @@
 import { select } from '../cli/utils';
-import { sleep } from 'ts-utils/sleep';
+import { sleep } from 'ts-utils';
 import fs from 'fs/promises';
 import path from 'path';
 

@@ -6,7 +6,7 @@
  * await fingerprint();
  */
 import { getCurrentBrowserFingerPrint } from '@rajesh896/broprint.js';
-import { attemptAsync } from 'ts-utils/check';
+import { attemptAsync } from 'ts-utils';
 import { browser } from '$app/environment';
 
 /**

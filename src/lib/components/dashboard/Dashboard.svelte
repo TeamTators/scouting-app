@@ -18,7 +18,7 @@ Dashboard layout wrapper that renders cards grid.
 ```
 -->
 <script lang="ts">
-	import { capitalize } from 'ts-utils/text';
+	import { capitalize } from 'ts-utils';
 	import { onMount, type Snippet } from 'svelte';
 	import MinimizedCards from './MinimizedCards.svelte';
 	import { Dashboard } from '$lib/utils/dashboard.svelte';

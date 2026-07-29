@@ -8,8 +8,8 @@
  * const stack = new EventStack();
  * stack.init();
  */
-import { attemptAsync } from 'ts-utils/check';
-import { StateStack } from 'ts-utils/statestack';
+import { attemptAsync } from 'ts-utils';
+import { StateStack } from 'ts-utils';
 import { Keyboard, type KeyCombo } from './keybinds';
 
 /**

@@ -6,8 +6,8 @@
  * const uploader = new FileUploader('/api/files', { method: 'POST' });
  * const { on, abort } = await uploader.sendFile(file, 'file').unwrap();
  */
-import { attemptAsync } from 'ts-utils/check';
-import { EventEmitter } from 'ts-utils/event-emitter';
+import { attemptAsync } from 'ts-utils';
+import { EventEmitter } from 'ts-utils';
 import { z } from 'zod';
 
 /**

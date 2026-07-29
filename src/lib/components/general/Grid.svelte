@@ -63,7 +63,7 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		type ValueGetterParams,
 		type ICellRendererParams
 	} from 'ag-grid-community';
-	import { EventEmitter } from 'ts-utils/event-emitter';
+	import { EventEmitter } from 'ts-utils';
 	import {
 		CheckBoxSelectRenderer,
 		HeaderCheckboxRenderer

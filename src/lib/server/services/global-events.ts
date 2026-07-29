@@ -7,7 +7,7 @@
  * import events from '$lib/server/services/global-events';
  * events.on('some-event' as never, (payload) => console.log(payload));
  */
-import { ComplexEventEmitter } from 'ts-utils/event-emitter';
+import { ComplexEventEmitter } from 'ts-utils';
 
 /**
  * Map of event names to payload types.

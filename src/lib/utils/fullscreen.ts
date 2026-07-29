@@ -6,7 +6,7 @@
  * const exit = fullscreen();
  */
 import { browser } from '$app/environment';
-import { attempt } from 'ts-utils/check';
+import { attempt } from 'ts-utils';
 
 /**
  * Creates a fullscreen request
