@@ -5,13 +5,12 @@
  * @fileoverview Server load/actions for `/account/sign-out`.
  */
 import { redirect } from '@sveltejs/kit';
-import { ServerCode } from 'ts-utils/status';
 
 export const load = async (event) => {
 	if (!event.locals.session) return;
 	const { data: account, error } = await event.locals.supabase.auth.getUser();
 	if (error) return;
-	if (!account) throw redirect(ServerCode.seeOther, '/account/sign-in');
+	if (!account) throw redirect(303, '/account/sign-in');
 };
 
 export const actions = {
@@ -33,6 +32,6 @@ export const actions = {
 			};
 		}
 
-		throw redirect(ServerCode.seeOther, '/account/sign-in');
+		throw redirect(303, '/account/sign-in');
 	}
 };

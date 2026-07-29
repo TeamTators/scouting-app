@@ -1,5 +1,4 @@
 import { type Handle } from '@sveltejs/kit';
-import { ServerCode } from 'ts-utils/status';
 import terminal from '$lib/server/utils/terminal';
 import '$lib/server/utils/files';
 import createTree from '../scripts/create-route-tree';
@@ -99,9 +98,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 		terminal.error(error);
 		// redirect to error page
 		return new Response('Redirect', {
-			status: ServerCode.seeOther,
+			status: 500,
 			headers: {
-				location: `/status/${ServerCode.internalServerError}`
+				location: `/status/500`
 			}
 		});
 	}

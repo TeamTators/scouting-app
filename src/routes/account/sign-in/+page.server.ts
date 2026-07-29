@@ -2,7 +2,6 @@
  * @fileoverview Server load/actions for `/account/sign-in`.
  */
 import { fail } from '@sveltejs/kit';
-import { ServerCode } from 'ts-utils/status';
 import { z } from 'zod';
 import terminal from '$lib/server/utils/terminal';
 import serverSB from '$lib/server/services/supabase';
@@ -22,7 +21,7 @@ export const actions = {
 			});
 		if (!res.success) {
 			terminal.error(res.error);
-			return fail(ServerCode.badRequest, {
+			return fail(400, {
 				message: 'Invalid form data',
 				user: data.get('user')
 			});
@@ -42,7 +41,7 @@ export const actions = {
 			});
 			if (profile.isErr()) {
 				terminal.error(profile.error);
-				return fail(ServerCode.internalServerError, {
+				return fail(500, {
 					message: 'An error occurred while logging in',
 					user: res.data.username
 				});
@@ -50,7 +49,7 @@ export const actions = {
 				if (profile.value.length && profile.value[0].raw.email) {
 					email = profile.value[0].raw.email;
 				} else {
-					return fail(ServerCode.unauthorized, {
+					return fail(401, {
 						message: 'Invalid username/email or password',
 						user: res.data.username
 					});
@@ -65,7 +64,7 @@ export const actions = {
 
 		if (error) {
 			terminal.error('Error signing in:', error);
-			return fail(ServerCode.unauthorized, {
+			return fail(401, {
 				message: 'Invalid username/email or password',
 				user: res.data.username
 			});

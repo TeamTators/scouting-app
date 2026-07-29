@@ -4,7 +4,7 @@ services:
     pull_policy: never
     container_name: myapp_container
     env_file:
-      - .docker.env
+      - .env
     restart: always
     build:
       context: .
