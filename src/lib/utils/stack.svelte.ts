@@ -7,9 +7,8 @@
  * Stack.use(stack);
  */
 import { browser } from '$app/environment';
-import { writable } from 'svelte/store';
 import { Keyboard } from '../services/keybinds';
-import { EventEmitter } from 'ts-utils';
+import { EventEmitter } from 'ts-utils/event-emitter';
 
 /**
  * Represents a single state in the undo/redo stack.
@@ -33,6 +32,7 @@ type State =
 			do: () => void;
 	  };
 
+
 /**
  * A global undo/redo stack manager that supports multiple stack instances.
  * Only one stack can be active at a time, controlled via Stack.use().
@@ -52,8 +52,14 @@ type State =
  * - 'error': When an error occurs during operations
  */
 export class Stack {
-	/** The currently active stack instance */
-	public static current?: Stack;
+	public static get current() {
+		return current;
+	}
+
+	public static set current(stack: Stack | null) {
+		current = stack;
+		Stack.setState();
+	}
 
 	/**
 	 * Global event emitter for stack operations.
@@ -70,6 +76,8 @@ export class Stack {
 		push: State;
 		/** Fired when any stack is cleared */
 		clear: undefined;
+		/** Fired when the current state changes */
+		change: State;
 	}>();
 
 	/** Internal method to emit events - do not use directly */
@@ -128,11 +136,21 @@ export class Stack {
 		Stack.setState();
 	}
 
-	/** Svelte store indicating if redo is available (true = can redo) */
-	public static readonly next = writable(false);
+	public static get prev() {
+		return prev;
+	}
 
-	/** Svelte store indicating if undo is available (true = can undo) */
-	public static readonly prev = writable(false);
+	public static set prev(value: boolean) {
+		prev = value;
+	}
+
+	public static get next() {
+		return next;
+	}
+
+	public static set next(value: boolean) {
+		next = value;
+	}
 
 	/**
 	 * Updates the prev/next stores based on current stack state.
@@ -144,15 +162,35 @@ export class Stack {
 			const index = Stack.current.index;
 
 			// prev (undo) is available when there are items to undo (index >= 0)
-			this.prev.set(index >= 0);
+			// this.prev.set(index >= 0);
+			Stack.prev = index >= 0;
 
 			// next (redo) is available when there are items to redo (index < items - 1)
-			this.next.set(index < items - 1);
+			Stack.next = index < items - 1;
 		} else {
-			this.prev.set(false);
-			this.next.set(false);
+			Stack.prev = false;
+			Stack.next = false;
 		}
 	}
+
+	private readonly em = new EventEmitter<{
+		/** Fired when a state is undone (includes the undone state) */
+		undo: State;
+		/** Fired when a state is redone (includes the redone state) */
+		redo: State;
+		/** Fired when an error occurs during stack operations */
+		error: Error;
+		/** Fired when a new state is pushed to this stack (includes the new state) */
+		push: State;
+		/** Fired when this stack is cleared */
+		clear: undefined;
+		/** Fired when the current state changes */
+		change: State;
+	}>();
+
+	public readonly on = this.em.on.bind(this.em);
+	public readonly off = this.em.off.bind(this.em);
+	public readonly once = this.em.once.bind(this.em);
 
 	/**
 	 * Creates a new Stack instance
@@ -168,10 +206,10 @@ export class Stack {
 	) {}
 
 	/** Internal array of state items */
-	private _items: State[] = [];
+	private _items: State[] = $state([]);
 
 	/** Current position in the stack (-1 = no items, 0+ = index of current item) */
-	private index = -1;
+	private index = $state(-1);
 
 	/**
 	 * Read-only access to the items array
@@ -204,6 +242,8 @@ export class Stack {
 
 		Stack.setState();
 		Stack.emit('push', state);
+		this.em.emit('push', state);
+		this.em.emit('change', state);
 	}
 
 	/**
@@ -217,6 +257,8 @@ export class Stack {
 			this.index--;
 			Stack.setState();
 			Stack.emit('undo', this.items[this.index + 1]);
+			this.em.emit('undo', this.items[this.index + 1]);
+			this.em.emit('change', this.items[this.index + 1]);
 		}
 	}
 
@@ -233,6 +275,8 @@ export class Stack {
 			else item.redo();
 			Stack.setState();
 			Stack.emit('redo', item);
+			this.em.emit('redo', item);
+			this.em.emit('change', item);
 		}
 	}
 
@@ -245,6 +289,7 @@ export class Stack {
 		this.index = -1;
 		Stack.setState();
 		Stack.emit('clear', undefined);
+		this.em.emit('clear', undefined);
 	}
 
 	/**
@@ -274,3 +319,7 @@ Keyboard.on('ctrl+y', () => Stack.redo());
 if (browser) {
 	Object.assign(window, { Stack });
 }
+
+let current: Stack | null = $state(null);
+let prev: boolean = $state(false);
+let next: boolean = $state(false);

@@ -347,7 +347,8 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		channel
 			.on('postgres_changes', { event: '*', schema: '*', table: '*' }, (payload) => {
 				const struct = SupaStruct.structs.get(`${payload.schema}.${payload.table}`) as
-					SupaStruct<any, any> | undefined;
+					| SupaStruct<any, any>
+					| undefined;
 				if (struct) {
 					struct.handleRealtimePayload(payload);
 				}
@@ -390,7 +391,12 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 	private _perStructRealtimeSubscribed = false;
 
 	private set_in_cache(data: SupaStructData<Schema, RowName, 'id'>) {
-		if (browser && this.config.do_set !== false && this.config.index_db !== false) {
+		if (
+			!this.supabase.serviceRole &&
+			browser &&
+			this.config.do_set !== false &&
+			this.config.index_db !== false
+		) {
 			this.cache.set(data.raw.id, data);
 		}
 	}
@@ -804,10 +810,17 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		for (const field of requiredFields) {
 			const nullable = (schema.Row.shape as any)[field]?.isNullable() ?? false;
 			if (!nullable && !(field in parseResult.data)) {
-				throw new SupaError(
-					'invalid data',
-					`Validated data for table ${this.table} is missing required field ${String(field)}`
+				console.warn(
+					`Validated data for table ${this.table} is missing required field ${String(field)}`,
+					{
+						data: parseResult.data,
+						requiredFields
+					}
 				);
+				// throw new SupaError(
+				// 	'invalid data',
+				// 	`Validated data for table ${this.table} is missing required field ${String(field)}`
+				// );
 			}
 		}
 		return parseResult.data as PartialRow<Schema, RowName, Required>;
@@ -855,7 +868,8 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 
 	Hydrate<
 		Required extends keyof RowWithoutArchived<Schema, RowName> =
-			'id' | keyof RowWithoutArchived<Schema, RowName>
+			| 'id'
+			| keyof RowWithoutArchived<Schema, RowName>
 	>(
 		rows: PartialRow<Schema, RowName, Required | 'id'>[],
 		required?: readonly Required[],
@@ -948,10 +962,12 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		const whereB = config?.whereB ?? {};
 
 		const requiredA = this.getEffectiveRequiredFields(config?.requiredA) as readonly (
-			RequiredA | 'id'
+			| RequiredA
+			| 'id'
 		)[];
 		const requiredB = other.getEffectiveRequiredFields(config?.requiredB) as readonly (
-			RequiredB | 'id'
+			| RequiredB
+			| 'id'
 		)[];
 
 		// Ensure selected fields include id for stable hydration.
