@@ -48,7 +48,14 @@ export const getPallette = () => {
 			warning: Color.fromHex('#ffc107'),
 			info: Color.fromHex('#0dcaf0'),
 			light: Color.fromHex('#f8f9fa'),
-			dark: Color.fromHex('#212529')
+			dark: Color.fromHex('#212529'),
+			gray: Color.fromHex('#6c757d'),
+
+			layer_1: Color.fromHex('#ffffff'),
+			layer_2: Color.fromHex('#f8f9fa'),
+			layer_3: Color.fromHex('#e9ecef'),
+			layer_4: Color.fromHex('#dee2e6'),
+			layer_5: Color.fromHex('#ced4da')
 		};
 	const styles = getComputedStyle(document.documentElement);
 	return {
@@ -59,6 +66,13 @@ export const getPallette = () => {
 		warning: Color.fromHex(styles.getPropertyValue('--bs-warning').trim()),
 		info: Color.fromHex(styles.getPropertyValue('--bs-info').trim()),
 		light: Color.fromHex(styles.getPropertyValue('--bs-light').trim()),
-		dark: Color.fromHex(styles.getPropertyValue('--bs-dark').trim())
+		dark: Color.fromHex(styles.getPropertyValue('--bs-dark').trim()),
+		gray: Color.fromHex(styles.getPropertyValue('--bs-gray').trim()),
+
+		layer_1: Color.parse(styles.getPropertyValue('--bs-layer-1').trim()),
+		layer_2: Color.parse(styles.getPropertyValue('--bs-layer-2').trim()),
+		layer_3: Color.parse(styles.getPropertyValue('--bs-layer-3').trim()),
+		layer_4: Color.parse(styles.getPropertyValue('--bs-layer-4').trim()),
+		layer_5: Color.parse(styles.getPropertyValue('--bs-layer-5').trim())
 	};
 };
