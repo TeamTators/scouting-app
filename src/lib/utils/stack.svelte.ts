@@ -8,7 +8,7 @@
  */
 import { browser } from '$app/environment';
 import { Keyboard } from '../services/keybinds';
-import { EventEmitter } from 'ts-utils/event-emitter';
+import { EventEmitter } from 'ts-utils';
 
 /**
  * Represents a single state in the undo/redo stack.
@@ -31,7 +31,6 @@ type State =
 			/** Function to execute this state (used for both initial action and redo) */
 			do: () => void;
 	  };
-
 
 /**
  * A global undo/redo stack manager that supports multiple stack instances.

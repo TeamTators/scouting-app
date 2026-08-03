@@ -314,6 +314,32 @@ export function union<T extends string>(
 ): T | undefined {
 	return get(key, { required, values, type: values.join('|'), comment });
 }
+export function enum_str<T extends string>(
+	key: string,
+	values: T[],
+	required: true,
+	comment?: string
+): T;
+export function enum_str<T extends string>(
+	key: string,
+	values: T[],
+	required: false,
+	comment?: string
+): T | undefined;
+export function enum_str<T extends string>(
+	key: string,
+	values: T[],
+	required: boolean,
+	comment?: string
+): T | undefined {
+	const parser = (val: string) => {
+		if (!values.includes(val as T)) {
+			throw new EnvironmentError(`Env var "${key}" is not a valid enum value`);
+		}
+		return val as T;
+	};
+	return get(key, { required, parser, type: 'enum', comment });
+}
 
 /**
  * Builds a public domain string from config.

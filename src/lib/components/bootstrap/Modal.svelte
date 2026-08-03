@@ -48,6 +48,7 @@ Bootstrap modal wrapper rendered via a portal.
 		blur?: boolean;
 		resizable?: boolean;
 		overlay?: boolean;
+		dialog_style?: string;
 	}
 
 	type ModalSize = NonNullable<Props['size']>;
@@ -65,7 +66,8 @@ Bootstrap modal wrapper rendered via a portal.
 		width,
 		blur,
 		resizable = false,
-		overlay = true
+		overlay = true,
+		dialog_style
 	}: Props = $props();
 
 	let isOpen = $state(false);
@@ -308,6 +310,7 @@ Bootstrap modal wrapper rendered via a portal.
 				style:transform={transformStyle}
 				style:width={widthStyle}
 				style:height={heightStyle}
+				style={dialog_style || ''}
 			>
 				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<div

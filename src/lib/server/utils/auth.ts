@@ -1,7 +1,7 @@
 import { type Client, SupaStruct, SupaStructData } from '$lib/services/supabase/supastruct.svelte';
 import { attemptAsync } from 'ts-utils';
 import supabase from '$lib/server/services/supabase';
-import { type User } from '@supabase/supabase-js';
+import { fail, redirect } from '@sveltejs/kit';
 
 export const hasRole = (client: Client, role: SupaStructData<'core', 'role'> | string) => {
 	return attemptAsync(async () => {
@@ -9,7 +9,7 @@ export const hasRole = (client: Client, role: SupaStructData<'core', 'role'> | s
 			const RoleStruct = SupaStruct.get({
 				client: supabase,
 				schema: 'core',
-				table: 'role',
+				table: 'role'
 			});
 
 			const res = await RoleStruct.get({ name: role }).first().unwrap();
@@ -38,7 +38,7 @@ export const hasRole = (client: Client, role: SupaStructData<'core', 'role'> | s
 
 export const grantRole = (
 	granter: Client,
-	grantee: User,
+	grantee_id: string,
 	role: SupaStructData<'core', 'role', 'id'>
 ) => {
 	return attemptAsync(async () => {
@@ -49,8 +49,44 @@ export const grantRole = (
 		});
 
 		return RoleAccountStruct.new({
-			account: grantee.id,
+			account: grantee_id,
 			role: role.id
 		}).unwrap();
 	});
 };
+
+export const pageAccess = async (client: Client, required_role: 'Mentor' | 'Admin' | 'Viewer' | 'Student') => {
+	const { data, error } = await client.auth.getUser();
+	if (error) throw error;
+	if (!data.user) {
+		throw new Error('Not signed in');
+	}
+
+	const RoleAccountStruct = SupaStruct.get({
+		client: supabase,
+		table: 'role_account',
+		schema: 'core'
+	});
+
+	const role = await SupaStruct.get({
+		client: supabase,
+		table: 'role',
+		schema: 'core'
+	}).get({ name: required_role }).first().unwrap();
+
+	const res = await RoleAccountStruct.get({ account: data.user.id, role: role.raw.id }).unwrap();
+
+	if (res.length === 0) {
+		throw fail(403, 'Forbidden');
+	}
+};
+
+export const signedInAccess = async (client: Client) => {
+	const { data, error } = await client.auth.getUser();
+	if (error) {
+		throw error;
+	}
+	if (!data.user) {
+		throw redirect(302, '/account/sign-in');
+	}
+}

@@ -3,6 +3,7 @@
  */
 import { isBrowser, createServerClient } from '@supabase/ssr';
 import browserClient from '$lib/services/supabase';
+import { SupaStruct } from '$lib/services/supabase/supastruct.svelte';
 
 export const load = async (event) => {
 	event.depends('supabase:auth');
@@ -29,8 +30,19 @@ export const load = async (event) => {
 	if (error) {
 		console.error('Error fetching session:', error);
 	}
+
+	const Profile = SupaStruct.get({
+		client: supabase,
+		schema: 'core',
+		table: 'profile'
+	});
+
 	return {
 		supabase,
-		session
+		session,
+		is_mentor: event.data.is_mentor,
+		is_student: event.data.is_student,
+		is_viewer: event.data.is_viewer,
+		profile: event.data.profile ? Profile.Generator(event.data.profile) : null
 	};
 };

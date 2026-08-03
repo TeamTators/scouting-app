@@ -2,13 +2,17 @@
 @component
 Root layout wrapper for all routes. Acts as middleware for global bootstrapping.
 -->
-<script>
+<script lang="ts">
+	import Footer from '$lib/components/general/Footer.svelte';
+	import Navbar from '$lib/components/general/Navbar.svelte';
+	import ScrollToTop from '$lib/components/general/ScrollToTop.svelte';
 	import '$lib/index';
-	const { children, data } = $props();
 	import { invalidate } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import Loading from '$lib/components/general/Loading.svelte';
-	import { setup_network_listener } from '$lib/services/supabase/supastruct.svelte';
+	import { setup_network_listener, SupaStruct } from '$lib/services/supabase/supastruct.svelte';
+
+	const { children, data } = $props();
 
 	onMount(() => {
 		const res = data.supabase.auth.onAuthStateChange((event, session) => {
@@ -16,7 +20,7 @@ Root layout wrapper for all routes. Acts as middleware for global bootstrapping.
 				invalidate('supabase:auth');
 			}
 		});
-		Object.assign(window, { supabase: data.supabase });
+		Object.assign(window, { supabase: data.supabase, SupaStruct });
 		const off_network_listener = setup_network_listener(data.supabase);
 		return () => {
 			res.data.subscription.unsubscribe();
@@ -26,6 +30,9 @@ Root layout wrapper for all routes. Acts as middleware for global bootstrapping.
 </script>
 
 <main>
+	<Navbar title={__APP_ENV__.name} notifications={[]} account={data.profile} />
 	{@render children()}
+	<ScrollToTop />
 	<Loading />
+	<Footer />
 </main>

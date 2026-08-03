@@ -1,5 +1,4 @@
 import { type Handle } from '@sveltejs/kit';
-import { ServerCode } from 'ts-utils/status';
 import terminal from '$lib/server/utils/terminal';
 import '$lib/server/utils/files';
 import createTree from '../scripts/create-route-tree';
@@ -21,7 +20,7 @@ ig.add([
 	'/account/recover',
 	'/api/**',
 	'/test/**',
-	'/examples/**',
+	'/examples/**'
 ]);
 
 const include_in_session = (pathname: string) => {
@@ -38,7 +37,7 @@ const include_in_session = (pathname: string) => {
 	const result = include.ignores(pathname);
 	// console.log('Path included in session:', result);
 	return result;
-}
+};
 
 (async () => {
 	await createTree().then((res) => {
@@ -56,7 +55,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 				setAll: (cookies) => {
 					try {
 						for (const cookie of cookies) {
-							event.cookies.set(cookie.name, cookie.value, cookie.options);
+							event.cookies.set(cookie.name, cookie.value, {
+								path: '/',
+								...cookie.options,
+							});
 							// terminal.log(`Set cookie: ${cookie.name}=${cookie.value}`);
 						}
 					} catch (error) {
@@ -72,7 +74,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const SessionStruct = SupaStruct.get({
 		schema: 'core',
 		table: 'session',
-		client: supabase,
+		client: supabase
 	});
 
 	const cookie = event.cookies.get('ssid');
@@ -96,7 +98,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 				event.locals.session = res.value[0];
 				event.cookies.set('ssid', res.value[0].raw.id, {
 					httpOnly: true,
-					path: '/',
+					path: '/'
 				});
 			}
 		}
@@ -107,13 +109,15 @@ export const handle: Handle = async ({ event, resolve }) => {
 			if (include) {
 				// console.log('Updating session with prev_url:', event.url.pathname);
 				// don't await so it's non-blocking'
-				sessionRes.value.update({
-					prev_url: event.url.pathname
-				}).then((res) => {
-					if (res.isErr()) {
-						terminal.error('Error updating session:', res.error);
-					}
-				});
+				sessionRes.value
+					.update({
+						prev_url: event.url.pathname
+					})
+					.then((res) => {
+						if (res.isErr()) {
+							terminal.error('Error updating session:', res.error);
+						}
+					});
 			}
 		}
 	} else {
@@ -123,6 +127,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		const res = await SessionStruct.new({
 			prev_url: event.url.pathname
 		});
+		// }
 
 		if (res.isErr()) {
 			terminal.error('Error creating new session:', res.error);
@@ -146,9 +151,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 		terminal.error(error);
 		// redirect to error page
 		return new Response('Redirect', {
-			status: ServerCode.seeOther,
+			status: 500,
 			headers: {
-				location: `/status/${ServerCode.internalServerError}`
+				location: `/status/500`
 			}
 		});
 	}

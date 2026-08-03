@@ -38,6 +38,7 @@ import '@uppy/dashboard/css/style.min.css';
 import '@uppy/image-editor/css/style.min.css';
 import { attemptAsync } from 'ts-utils';
 
+
 const MODAL_OVERLAY_SELECTOR = '.custom-modal-overlay';
 const MODAL_BODY_SELECTOR = '.custom-modal-body';
 
@@ -137,7 +138,7 @@ export const createButtons = (buttons: ButtonConfig[]) => {
  */
 const createModalBody = (message: string) =>
 	createRawSnippet(() => ({
-		render: () => `<p>${message}</p>`
+		render: () => `<p>${message.split('\n').join('<br>')}</p>`
 	}));
 
 /** Configuration options for prompt modals */
@@ -150,6 +151,8 @@ type PromptConfig = {
 	placeholder?: string;
 	/** Use textarea instead of input for multiline text */
 	multiline?: boolean;
+	/** Modal color */
+	color?: BootstrapColor;
 	/** Validation function that returns true if input is valid */
 	validate?: (value: string) => boolean;
 	/** HTML input type (text, password, number) */
@@ -250,7 +253,10 @@ export const prompt = async (message: string, config?: PromptConfig) => {
 							modal.hide();
 						}
 					}
-				])
+				]),
+				dialog_style: config?.color
+					? `background-color: var(--bs-${config.color}); color: contrast-color(var(--bs-${config.color}))`
+					: undefined
 			}
 		});
 
@@ -273,6 +279,7 @@ export const prompt = async (message: string, config?: PromptConfig) => {
 
 /** Configuration options for select modals */
 type SelectConfig<T> = {
+	color?: BootstrapColor;
 	/** Modal title (defaults to 'Select') */
 	title?: string;
 	/** Custom renderer function for option display */
@@ -348,7 +355,10 @@ export const select = async <T>(message: string, options: T[], config?: SelectCo
 							modal.hide();
 						}
 					}
-				])
+				]),
+				dialog_style: config?.color
+					? `background-color: var(--bs-${config.color}); color: contrast-color(var(--bs-${config.color}))`
+					: undefined
 			}
 		});
 
@@ -388,6 +398,8 @@ export const select = async <T>(message: string, options: T[], config?: SelectCo
 type ChooseConfig = {
 	/** Modal title (defaults to 'Choose') */
 	title?: string;
+	/** Modal color */
+	color?: BootstrapColor;
 };
 
 /**
@@ -489,7 +501,10 @@ export const choose = async <A, B>(
 							modal.hide();
 						}
 					}
-				])
+				]),
+				dialog_style: config?.color
+					? `background-color: var(--bs-${config.color}); color: contrast-color(var(--bs-${config.color}))`
+					: undefined
 			}
 		});
 		modal.show();
@@ -529,6 +544,7 @@ type ConfirmConfig = {
 	yes?: string;
 	/** Text for the 'no' button (defaults to 'No') */
 	no?: string;
+	color?: BootstrapColor;
 };
 
 /**
@@ -545,7 +561,7 @@ type ConfirmConfig = {
  * @returns Promise that resolves to true if confirmed, false if cancelled
  */
 export const confirm = async (message: string, config?: ConfirmConfig) => {
-	return new Promise<boolean>((res, rej) => {
+	return new Promise<boolean | null>((res, rej) => {
 		if (!modalTarget) return rej('Cannot show confirm in non-browser environment');
 
 		const modal = mount(Modal, {
@@ -573,15 +589,18 @@ export const confirm = async (message: string, config?: ConfirmConfig) => {
 				]),
 				setup: () => {
 					return () => {};
-				}
+				},
+				dialog_style: config?.color
+					? `background-color: var(--bs-${config.color}); color: contrast-color(var(--bs-${config.color}))`
+					: undefined
 			}
 		});
 		modal.show();
 		const onkeydown = (e: KeyboardEvent) => {
 			if (e.key === 'Escape') {
 				e.preventDefault();
-				res(false);
-				return modal.hide();
+				res(null);
+				modal.hide();
 			}
 			if (e.key === 'Enter') {
 				e.preventDefault();
@@ -592,7 +611,7 @@ export const confirm = async (message: string, config?: ConfirmConfig) => {
 
 		document.addEventListener('keydown', onkeydown);
 		modal.once('hide', () => {
-			res(false);
+			res(null);
 			document.removeEventListener('keydown', onkeydown);
 			unmount(modal);
 		});
@@ -603,6 +622,7 @@ export const confirm = async (message: string, config?: ConfirmConfig) => {
 type AlertConfig = {
 	/** Modal title (defaults to 'Alert') */
 	title?: string;
+	color?: BootstrapColor;
 };
 
 /**
@@ -633,7 +653,10 @@ export const alert = async (message: string, config?: AlertConfig) => {
 						modal.hide();
 						res();
 					}
-				})
+				}),
+				dialog_style: config?.color
+					? `background-color: var(--bs-${config.color}); color: contrast-color(var(--bs-${config.color}))`
+					: undefined
 			}
 		});
 		modal.show();

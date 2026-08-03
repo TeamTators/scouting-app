@@ -17,6 +17,8 @@ Flatpickr date input wrapper. For more information, go to: https://flatpickr.js.
 <script lang="ts">
 	import flatpickr from 'flatpickr';
 	import { onMount, onDestroy } from 'svelte';
+	import 'flatpickr/dist/flatpickr.min.css';
+	import 'flatpickr/dist/themes/dark.css';
 
 	interface Props {
 		value?: Date | null;
@@ -39,8 +41,8 @@ Flatpickr date input wrapper. For more information, go to: https://flatpickr.js.
 
 	onMount(() => {
 		fp = flatpickr(inputEl, {
-			...options,
 			defaultDate: value ?? undefined,
+			...options,
 			onChange: handleChange
 		});
 	});

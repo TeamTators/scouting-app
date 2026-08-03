@@ -17,15 +17,14 @@ Top navigation bar with stack controls, theme toggle, account menu, and notifica
 	import ThemeSwitch from './ThemeSwitch.svelte';
 	import { SupaStructData } from '$lib/services/supabase/supastruct.svelte';
 	import Online from '$lib/components/general/Online.svelte';
+	import { Navbar } from '$lib/nav/index.svelte';
 
 	interface Props {
 		title: string;
-		account?: SupaStructData<'core', 'profile'>;
+		account: SupaStructData<'core', 'profile'> | null;
 		notifications: SupaStructData<'core', 'account_notification'>[];
+		show_side_nav?: boolean;
 	}
-
-	// const prev = $state(Stack.prev);
-	// const next = $state(Stack.next);
 
 	const { title, account, notifications }: Props = $props();
 	let notifs = $state(0);
@@ -34,18 +33,21 @@ Top navigation bar with stack controls, theme toggle, account menu, and notifica
 <nav class="navbar navbar-expand-lg layer-2">
 	<div class="d-flex justify-content-between w-100">
 		<div class="start d-flex align-items-center">
-			<button
-				class="btn"
-				type="button"
-				data-bs-toggle="offcanvas"
-				data-bs-target="#pages"
-				aria-controls="pages"
-			>
-				<i class="material-icons"> menu </i>
-			</button>
+			{#if Navbar.getSections().length}
+				<button
+					class="btn"
+					type="button"
+					data-bs-toggle="offcanvas"
+					data-bs-target="#pages"
+					aria-controls="pages"
+				>
+					<i class="material-icons"> menu </i>
+				</button>
+			{/if}
 			<a
 				class="
 					navbar-brand
+					ps-3
 				"
 				href="/">{title}</a
 			>

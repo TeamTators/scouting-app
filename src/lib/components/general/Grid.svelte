@@ -149,9 +149,9 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		return selected;
 	};
 
-	export const rerender = () => {
+	export const rerender = (params?: { force?: boolean; suppressFlash?: boolean }) => {
 		if (grid) {
-			grid.refreshCells();
+			grid.refreshCells(params);
 		}
 	};
 
@@ -188,67 +188,74 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		}, 300);
 	};
 
+	const gridOptions: GridOptions<T> = $derived({
+		theme: gridTheme,
+		...opts,
+		rowData: data,
+		columnDefs: [
+			...(rowNumbers
+				? [
+						{
+							headerName: '',
+							valueGetter: (params: ValueGetterParams<T>) => {
+								if (typeof rowNumbers === 'object') {
+									return rowNumbers.start + (params.node?.rowIndex || 0);
+								} else {
+									return (params.node?.rowIndex || 0) + 1;
+								}
+							},
+							width: 50,
+							suppressMovable: true,
+							cellClass: 'text-center',
+							cellStyle: {
+								backgroundColor: 'var(--ag-chrome-background-color)'
+							},
+							cellRenderer: (params: ICellRendererParams<T>) => {
+								const div = document.createElement('div');
+								div.innerText = String(params.value);
+								div.style.cursor = 'pointer';
+
+								div.onclick = () => {
+									const node = params.node as any;
+									node.checkboxSelected = !node.checkboxSelected;
+									params.api.refreshCells({ rowNodes: [params.node], force: true });
+									params.api.refreshHeader();
+								};
+
+								return div;
+							}
+						}
+					]
+				: []),
+			...(multiSelect
+				? [
+						{
+							width: 50,
+							cellRenderer: CheckBoxSelectRenderer,
+							headerComponent: HeaderCheckboxRenderer
+						}
+					]
+				: []),
+			...(opts.columnDefs || [])
+		],
+		getRowClass: (params) => {
+			return (params.node as any).checkboxSelected ? 'row-checked' : '';
+		}
+	});
+
+	$effect(() => {
+		if (gridDiv) {
+			grid?.destroy();
+			grid = createGrid(gridDiv, gridOptions);
+			em.emit('ready', grid);
+		}
+	});
+
 	onMount(() => {
 		if (!opts.columnDefs) {
 			throw new Error('Column definitions are required');
 		}
 		em.emit('init', gridDiv);
-		const gridOptions: GridOptions<T> = {
-			theme: gridTheme,
-			...opts,
-			rowData: data,
-			columnDefs: [
-				...(rowNumbers
-					? [
-							{
-								headerName: '',
-								valueGetter: (params: ValueGetterParams<T>) => {
-									if (typeof rowNumbers === 'object') {
-										return rowNumbers.start + (params.node?.rowIndex || 0);
-									} else {
-										return (params.node?.rowIndex || 0) + 1;
-									}
-								},
-								width: 50,
-								suppressMovable: true,
-								cellClass: 'text-center',
-								cellStyle: {
-									backgroundColor: 'var(--ag-chrome-background-color)'
-								},
-								cellRenderer: (params: ICellRendererParams<T>) => {
-									const div = document.createElement('div');
-									div.innerText = String(params.value);
-									div.style.cursor = 'pointer';
-
-									div.onclick = () => {
-										const node = params.node as any;
-										node.checkboxSelected = !node.checkboxSelected;
-										params.api.refreshCells({ rowNodes: [params.node], force: true });
-										params.api.refreshHeader();
-									};
-
-									return div;
-								}
-							}
-						]
-					: []),
-				...(multiSelect
-					? [
-							{
-								width: 50,
-								cellRenderer: CheckBoxSelectRenderer,
-								headerComponent: HeaderCheckboxRenderer
-							}
-						]
-					: []),
-				...opts.columnDefs
-			],
-			getRowClass: (params) => {
-				return (params.node as any).checkboxSelected ? 'row-checked' : '';
-			}
-		};
-		grid = createGrid(gridDiv, gridOptions);
-		em.emit('ready', grid);
 
 		return () => {
 			grid.destroy();
