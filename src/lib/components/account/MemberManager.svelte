@@ -3,7 +3,6 @@
 	import Grid from '$lib/components/general/Grid.svelte';
 	import { CheckboxEditorModule } from 'ag-grid-community';
 	import { TooltipModule } from 'ag-grid-community';
-	import { getPallette } from '$lib/utils/theme';
 
 	interface Props {
 		accounts: SupaStructData<'core', 'profile'>[];
@@ -15,10 +14,6 @@
 	const { accounts, role_accounts, roles, RoleAccount }: Props = $props();
 
 	const admin = $derived(roles.find((r) => r.raw.name === 'Admin'));
-	const mentor = $derived(roles.find((r) => r.raw.name === 'Mentor'));
-	const student = $derived(roles.find((r) => r.raw.name === 'Student'));
-	const viewer = $derived(roles.find((r) => r.raw.name === 'Viewer'));
-	const pallette = $state(getPallette());
 
 	type AccountProxy = {
 		account: SupaStructData<'core', 'profile'>;
