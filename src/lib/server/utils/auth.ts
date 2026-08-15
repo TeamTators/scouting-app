@@ -55,7 +55,10 @@ export const grantRole = (
 	});
 };
 
-export const pageAccess = async (client: Client, required_role: 'Mentor' | 'Admin' | 'Viewer' | 'Student') => {
+export const pageAccess = async (
+	client: Client,
+	required_role: 'Mentor' | 'Admin' | 'Viewer' | 'Student'
+) => {
 	const { data, error } = await client.auth.getUser();
 	if (error) throw error;
 	if (!data.user) {
@@ -72,7 +75,10 @@ export const pageAccess = async (client: Client, required_role: 'Mentor' | 'Admi
 		client: supabase,
 		table: 'role',
 		schema: 'core'
-	}).get({ name: required_role }).first().unwrap();
+	})
+		.get({ name: required_role })
+		.first()
+		.unwrap();
 
 	const res = await RoleAccountStruct.get({ account: data.user.id, role: role.raw.id }).unwrap();
 
@@ -89,4 +95,4 @@ export const signedInAccess = async (client: Client) => {
 	if (!data.user) {
 		throw redirect(302, '/account/sign-in');
 	}
-}
+};

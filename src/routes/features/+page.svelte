@@ -1,6 +1,5 @@
 <script lang="ts">
 	import Icon from '$lib/components/general/Icon.svelte';
-	import Navbar from '$lib/components/general/Navbar.svelte';
 	import nav from '$lib/nav/feature.js';
 	import * as remote from '$lib/remotes/features.remote';
 	import type { Feature } from '$lib/types/features';
@@ -14,7 +13,6 @@
 	});
 </script>
 
-<Navbar title={__APP_ENV__.name} notifications={[]} />
 <div class="container layer-2">
 	<div class="row mb-3">
 		<div class="col">

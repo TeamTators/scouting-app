@@ -15,7 +15,7 @@ export default async (...args: string[]) => {
 	const Profile = SupaStruct.get({
 		client: supabase,
 		schema: 'core',
-		table: 'profile',
+		table: 'profile'
 	});
 
 	const user = await Profile.get({ username: id }).first().unwrap();

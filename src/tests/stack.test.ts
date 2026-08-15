@@ -1,5 +1,4 @@
 import { describe, expect, test, vi } from 'vitest';
-import { get } from 'svelte/store';
 
 vi.mock('$lib/services/keybinds', () => ({
 	Keyboard: { on: vi.fn() }
@@ -7,7 +6,7 @@ vi.mock('$lib/services/keybinds', () => ({
 
 describe('Stack utilities', () => {
 	test('push, undo, redo, clear update state', async () => {
-		const { Stack } = await import('$lib/utils/stack');
+		const { Stack } = await import('$lib/utils/stack.svelte');
 		const stack = new Stack({ name: 'test' });
 		Stack.use(stack);
 
@@ -23,21 +22,21 @@ describe('Stack utilities', () => {
 		});
 
 		expect(value).toBe(1);
-		expect(get(Stack.prev)).toBe(true);
-		expect(get(Stack.next)).toBe(false);
+		expect(Stack.prev).toBe(true);
+		expect(Stack.next).toBe(false);
 
 		stack.undo();
 		expect(value).toBe(0);
-		expect(get(Stack.prev)).toBe(false);
-		expect(get(Stack.next)).toBe(true);
+		expect(Stack.prev).toBe(false);
+		expect(Stack.next).toBe(true);
 
 		stack.redo();
 		expect(value).toBe(1);
-		expect(get(Stack.prev)).toBe(true);
+		expect(Stack.prev).toBe(true);
 
 		stack.clear();
 		expect(stack.items.length).toBe(0);
-		expect(get(Stack.prev)).toBe(false);
-		expect(get(Stack.next)).toBe(false);
+		expect(Stack.prev).toBe(false);
+		expect(Stack.next).toBe(false);
 	});
 });

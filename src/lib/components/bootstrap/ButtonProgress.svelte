@@ -4,15 +4,7 @@
 	import type { Snippet } from 'svelte';
 
 	type BootstrapColor =
-		| 'primary'
-		| 'secondary'
-		| 'success'
-		| 'danger'
-		| 'warning'
-		| 'info'
-		| 'light'
-		| 'dark'
-		| 'gray';
+		'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'light' | 'dark' | 'gray';
 
 	interface Props {
 		color: BootstrapColor;

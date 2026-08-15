@@ -1,19 +1,19 @@
 import { SupaStruct } from '$lib/services/supabase/supastruct.svelte.js';
 
 export const load = async (event) => {
-    const parent = await event.parent();
-    
-    const Test = SupaStruct.get({
-        client: parent.supabase,
-        schema: 'test',
-        table: 'test',
-    });
+	const parent = await event.parent();
 
-    const query = Test.all();
-    query.sync(1000 * 60 * 5); // Sync every 5 minutes
+	const Test = SupaStruct.get({
+		client: parent.supabase,
+		schema: 'test',
+		table: 'test'
+	});
 
-    return {
-        query,
-        Test,
-    }
+	const query = Test.all();
+	query.sync(1000 * 60 * 5); // Sync every 5 minutes
+
+	return {
+		query,
+		Test
+	};
 };

@@ -1,6 +1,5 @@
 <script lang="ts">
 	/* eslint-disable svelte/no-dom-manipulating */
-	import Navbar from '$lib/components/general/Navbar.svelte';
 	import { marked } from 'marked';
 	import { onMount } from 'svelte';
 	import nav from '$lib/nav/feature.js';
@@ -31,7 +30,6 @@
 	});
 </script>
 
-<Navbar title={__APP_ENV__.name} notifications={[]} />
 <div class="container layer-2">
 	<div bind:this={html}></div>
 </div>

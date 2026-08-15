@@ -57,7 +57,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 						for (const cookie of cookies) {
 							event.cookies.set(cookie.name, cookie.value, {
 								path: '/',
-								...cookie.options,
+								...cookie.options
 							});
 							// terminal.log(`Set cookie: ${cookie.name}=${cookie.value}`);
 						}

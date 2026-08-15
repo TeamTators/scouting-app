@@ -38,7 +38,6 @@ import '@uppy/dashboard/css/style.min.css';
 import '@uppy/image-editor/css/style.min.css';
 import { attemptAsync } from 'ts-utils';
 
-
 const MODAL_OVERLAY_SELECTOR = '.custom-modal-overlay';
 const MODAL_BODY_SELECTOR = '.custom-modal-body';
 

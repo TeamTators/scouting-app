@@ -29,7 +29,7 @@
 			return {
 				account,
 				is_admin: !!is_admin,
-				admin: is_admin,
+				admin: is_admin
 			};
 		})
 	);
@@ -59,32 +59,32 @@
 				width: 100
 			},
 			{
-                headerName: 'Admin',
-                editable: true,
-                cellEditor: 'agCheckboxCellEditor',
-                cellDataType: 'boolean',
-                valueGetter: (params) => !!params.data?.admin,
-                valueSetter: (params) => {
-                    if (!params.data) return false;
-                    return params.newValue;
-                },
-                onCellValueChanged: async (params) => {
-                    if (!params.data) return;
-                    console.log(params);
-                    const account = params.data.account;
+				headerName: 'Admin',
+				editable: true,
+				cellEditor: 'agCheckboxCellEditor',
+				cellDataType: 'boolean',
+				valueGetter: (params) => !!params.data?.admin,
+				valueSetter: (params) => {
+					if (!params.data) return false;
+					return params.newValue;
+				},
+				onCellValueChanged: async (params) => {
+					if (!params.data) return;
+					console.log(params);
+					const account = params.data.account;
 
-                    if (params.data.admin) {
-                        // Remove admin role
-                        await params.data.admin.delete();
-                    } else {
-                        // Add admin role
-                        await RoleAccount.new({
-                            account: account.raw.id,
-                            role: admin?.raw.id,
-                        });
-                    }
-                }
-			},
+					if (params.data.admin) {
+						// Remove admin role
+						await params.data.admin.delete();
+					} else {
+						// Add admin role
+						await RoleAccount.new({
+							account: account.raw.id,
+							role: admin?.raw.id
+						});
+					}
+				}
+			}
 			// {
 			// 	field: 'mentor',
 			// 	headerName: 'Mentor',

@@ -39,16 +39,15 @@ export const request = (url: string, options?: RequestInit) => {
 					.clone()
 					.json()
 					.catch(() => null);
-				const headers = Object.fromEntries(response.headers.entries());
 				if (response.ok)
 					await Requests.upsert(
 						[
 							{
 								url,
 								response: JSON.stringify(body),
-								headers: JSON.stringify(headers),
+								headers: JSON.stringify(response.headers),
 								ttl: 1000 * 60 * 60 * 24, // 1 day
-                                status: response.status,
+								status: response.status
 							}
 						],
 						{ onConflict: 'url' }

@@ -347,8 +347,7 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		channel
 			.on('postgres_changes', { event: '*', schema: '*', table: '*' }, (payload) => {
 				const struct = SupaStruct.structs.get(`${payload.schema}.${payload.table}`) as
-					| SupaStruct<any, any>
-					| undefined;
+					SupaStruct<any, any> | undefined;
 				if (struct) {
 					struct.handleRealtimePayload(payload);
 				}
@@ -868,8 +867,7 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 
 	Hydrate<
 		Required extends keyof RowWithoutArchived<Schema, RowName> =
-			| 'id'
-			| keyof RowWithoutArchived<Schema, RowName>
+			'id' | keyof RowWithoutArchived<Schema, RowName>
 	>(
 		rows: PartialRow<Schema, RowName, Required | 'id'>[],
 		required?: readonly Required[],
@@ -883,14 +881,15 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		if (satisfies) {
 			// if a value is in the cache and satisfies the provided function but is not in the hydrated results, remove it from the cache and delete it from dexie
 			const hydratedIds = new SvelteSet(hydrated.map((data) => String(data.raw.id)));
-			to_delete = Array.from(this.cache.values()).filter((data => satisfies(data as any) && !hydratedIds.has(String(data.raw.id)))).map(d => String(d.raw.id));
+			to_delete = Array.from(this.cache.values())
+				.filter((data) => satisfies(data as any) && !hydratedIds.has(String(data.raw.id)))
+				.map((d) => String(d.raw.id));
 
 			for (const data of to_delete) {
 				this.log(`Removing row with id ${data} from cache and IndexedDB for table ${this.table}`);
 				this.cache.delete(data);
 			}
 		}
-
 
 		const dexie = this.getDexie(this.getSchemaDefinition().Row as any);
 		if (dexie) {
@@ -977,12 +976,10 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		const whereB = config?.whereB ?? {};
 
 		const requiredA = this.getEffectiveRequiredFields(config?.requiredA) as readonly (
-			| RequiredA
-			| 'id'
+			RequiredA | 'id'
 		)[];
 		const requiredB = other.getEffectiveRequiredFields(config?.requiredB) as readonly (
-			| RequiredB
-			| 'id'
+			RequiredB | 'id'
 		)[];
 
 		// Ensure selected fields include id for stable hydration.
