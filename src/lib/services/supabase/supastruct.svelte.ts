@@ -878,16 +878,19 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		this.log(`Hydrating ${rows.length} rows into cache for table ${this.table}`, rows);
 		const hydrated = rows.map((row) => this.Generator(row, { required }));
 
+		let to_delete: string[] = [];
+
 		if (satisfies) {
-			// if a value is in the cache and satisfies the provided function but is not in the hydrated results, remove it from the cache
+			// if a value is in the cache and satisfies the provided function but is not in the hydrated results, remove it from the cache and delete it from dexie
 			const hydratedIds = new SvelteSet(hydrated.map((data) => String(data.raw.id)));
-			for (const [id, data] of this.cache) {
-				if (satisfies(data as any) && !hydratedIds.has(id)) {
-					this.log(`Removing stale cache entry with id ${id} for table ${this.table}`);
-					this.cache.delete(id);
-				}
+			to_delete = Array.from(this.cache.values()).filter((data => satisfies(data as any) && !hydratedIds.has(String(data.raw.id)))).map(d => String(d.raw.id));
+
+			for (const data of to_delete) {
+				this.log(`Removing row with id ${data} from cache and IndexedDB for table ${this.table}`);
+				this.cache.delete(data);
 			}
 		}
+
 
 		const dexie = this.getDexie(this.getSchemaDefinition().Row as any);
 		if (dexie) {
@@ -919,6 +922,18 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 						`Finished upserting ${hydrated.length} rows into IndexedDB for table ${this.table}`
 					);
 				});
+
+			dexie.delete_by_ids(to_delete).then((res) => {
+				if (res.isOk()) {
+					this.log(`Deleted ${res.value} rows from IndexedDB for table ${this.table}`);
+				} else {
+					this.log('Error deleting rows from IndexedDB:', res.error);
+				}
+				this.log(
+					`Finished deleting ${to_delete.length} rows from IndexedDB for table ${this.table}`
+				);
+				to_delete = [];
+			});
 		}
 
 		return hydrated;
@@ -2142,22 +2157,22 @@ class SupaQuery<
 	 *
 	 * @param {SupaStruct<Schema, RowName>} struct - Owning struct.
 	 * @param {(data: SupaStructData<Schema, RowName>) => boolean} satisfies - Client-side cache predicate.
-	 * @param {() => Promise<SupaStructData<Schema, RowName>[]>} fetchAll - Full fetch function.
-	 * @param {(page: number, size: number) => Promise<PaginatedResponse<SupaStructData<Schema, RowName>>>} paginateQuery - Paginated fetch function.
+	 * @param {() => Promise<SupaStructData<Schema, RowName>[]>} fetch_all - Full fetch function.
+	 * @param {(page: number, size: number) => Promise<PaginatedResponse<SupaStructData<Schema, RowName>>>} fetch_paginated - Paginated fetch function.
 	 * @example
 	 * const q = new SupaQuery(struct, () => true, fetchAll, paginate);
 	 */
 	constructor(
 		private readonly struct: SupaStruct<Schema, RowName>,
 		private readonly satisfies: (data: SupaStructData<Schema, RowName, Required>) => boolean,
-		private readonly fetchAll: () => Promise<SupaStructData<Schema, RowName, Required>[]>,
-		private readonly paginateQuery: (
+		private readonly fetch_all: () => Promise<SupaStructData<Schema, RowName, Required>[]>,
+		private readonly fetch_paginated: (
 			page: number,
 			size: number
 		) => Promise<PaginatedResponse<SupaStructData<Schema, RowName, Required>>>,
 		private readonly required: readonly (Required | 'id')[] = ['id'] as const,
 		private readonly key?: string,
-		private readonly hydrateLocal?: () => Promise<void>,
+		private readonly hydrate_local?: () => Promise<void>,
 		default_data: SupaStructData<Schema, RowName, Required> | null = null
 	) {
 		this._default = default_data;
@@ -2197,7 +2212,7 @@ class SupaQuery<
 	 */
 	get paginated() {
 		if (!this._paginatedInstance) {
-			this._paginatedInstance = new SupaPagination(this.struct, this.paginateQuery) as any;
+			this._paginatedInstance = new SupaPagination(this.struct, this.fetch_paginated) as any;
 		}
 		return this._paginatedInstance as SupaPagination<Schema, RowName>;
 	}
@@ -2319,8 +2334,8 @@ class SupaQuery<
 		});
 	}
 
-	private hydrate_local() {
-		if (!this.hydrateLocal) {
+	private async _hydrate_local() {
+		if (!this.hydrate_local) {
 			this.trace('hydrate_local -> skipped (no hydrateLocal function)', {
 				key: this.key,
 				unique: this.unique_key
@@ -2331,7 +2346,7 @@ class SupaQuery<
 			key: this.key,
 			unique: this.unique_key
 		});
-		return this.hydrateLocal().then(() => {
+		return this.hydrate_local().then(() => {
 			this.trace('hydrate_local -> complete', {
 				key: this.key,
 				unique: this.unique_key
@@ -2379,7 +2394,7 @@ class SupaQuery<
 			  ) => void | PromiseLike<void>)
 			| null
 	) {
-		return this.hydrate_local().then(() => {
+		return this._hydrate_local().then(() => {
 			const result = new Ok(this.reactive.sort((this._sort as any) ?? undefined)) as Result<
 				SupaStructData<Schema, RowName, Required>[],
 				SupaError
@@ -2412,8 +2427,8 @@ class SupaQuery<
 			| null
 	) {
 		this._loading = true;
-		const p = this.hydrate_local()
-			.then(() => this.fetchAll())
+		const p = this._hydrate_local()
+			.then(() => this.fetch_all())
 			.then((res) => {
 				this.log('Query completed successfully for key:', this.key, 'with', res.length, 'results');
 				this._loading = false;
@@ -2563,7 +2578,7 @@ class SupaQuery<
 	sync(ttl: number) {
 		this._ttl = ttl;
 		this.trace('sync start', { key: this.key, unique: this.unique_key, ttl });
-		const syncPromise = this.hydrate_local()
+		const syncPromise = this._hydrate_local()
 			.then(() => this.check_cache(ttl))
 			.then((cacheIsValidByMeta) => {
 				const cacheHasRequiredFields = cacheIsValidByMeta && this.cache_has_required_fields();
@@ -2699,7 +2714,7 @@ class SupaQuery<
 				key: this.key,
 				unique: this.unique_key
 			});
-			return this.hydrate_local()
+			return this._hydrate_local()
 				.then(() => this.check_cache(this._ttl))
 				.then((cacheIsValidByMeta) => {
 					const cacheHasRequiredFields = cacheIsValidByMeta && this.cache_has_required_fields();
@@ -2791,7 +2806,7 @@ class SupaQuery<
 	}
 
 	stream(config?: { pageSize?: number; concurrent?: number }) {
-		return new SupaStream(this.paginateQuery, {
+		return new SupaStream(this.fetch_paginated, {
 			pageSize: config?.pageSize ?? 50,
 			concurrent: config?.concurrent ?? 3
 		});
@@ -2879,11 +2894,11 @@ class SupaQuery<
 		return new SupaQuery<Schema, RowName, Required | 'id', true>(
 			this.struct,
 			this.satisfies,
-			this.fetchAll as any,
-			this.paginateQuery as any,
+			this.fetch_all as any,
+			this.fetch_paginated as any,
 			this.required,
 			this.key,
-			this.hydrateLocal,
+			this.hydrate_local,
 			data as any
 		);
 	}
