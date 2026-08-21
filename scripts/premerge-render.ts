@@ -12,7 +12,7 @@ export default async (...args: string[]) => {
 					return `> ${value} <`;
 				}
 				return value;
-			},
+			}
 		});
 		const answer = res.value;
 		if (answer === 'no' || !answer) {

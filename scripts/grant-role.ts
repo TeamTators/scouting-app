@@ -15,7 +15,7 @@ export default async (...args: string[]) => {
 	const Profile = SupaStruct.get({
 		client: supabase,
 		schema: 'core',
-		table: 'profile',
+		table: 'profile'
 	});
 
 	const user = await Profile.get({ username: id }).first().unwrap();
@@ -40,5 +40,5 @@ export default async (...args: string[]) => {
 
 	if (!role) throw new Error(`Role not found: ${role_name}`);
 
-	await grantRole(supabase, data.user, role);
+	await grantRole(supabase, data.user.id, role);
 };

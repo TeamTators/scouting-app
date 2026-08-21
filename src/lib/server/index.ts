@@ -7,11 +7,11 @@
  * @example
  * import '$lib/server';
  */
-import { SupaStruct } from '$lib/services/supabase/supastruct.svelte';
-import supabase from '$lib/server/services/supabase';
+// import { SupaStruct } from '$lib/services/supabase/supastruct.svelte';
+// import supabase from '$lib/server/services/supabase';
 
 try {
-	SupaStruct.initRealtime(supabase);
+	// SupaStruct.initRealtime(supabase);
 } catch {
 	//
 }

@@ -21,6 +21,12 @@ export default {
 	),
 	PORT: num('PORT', true, 'The port to run the server on'),
 	APP_NAME: str('APP_NAME', true, 'Application name to use as sender name in emails'),
+	ALLOWED_HOSTS: arr(
+		'ALLOWED_HOSTS',
+		'string',
+		true,
+		'Comma-separated list of allowed hosts for the application'
+	),
 
 	SB_PUBLIC_URL: str('SB_PUBLIC_URL', true, 'Public Supabase URL'),
 	SB_PROJECT_URL: str(

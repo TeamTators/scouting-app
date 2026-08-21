@@ -425,6 +425,17 @@ export class DexieTable<Name extends string, Schema extends z.ZodTypeAny> {
 			this.cache.clear();
 		});
 	}
+
+	delete_by_ids(ids: string[]) {
+		return attemptAsync(async () => {
+			this.log('Deleting rows with ids', ids);
+			await _init();
+			await this.tableDef().bulkDelete(ids);
+			for (const id of ids) {
+				this.cache.delete(id);
+			}
+		});
+	}
 }
 
 export class DexieQuery<Name extends string, Schema extends z.ZodTypeAny> {

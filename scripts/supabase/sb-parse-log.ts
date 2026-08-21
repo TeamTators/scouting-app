@@ -82,7 +82,7 @@ export default () => {
 		throw new Error(`Log file not found: ${absolutePath}`);
 	}
 
-	const contents = fs.readFileSync(absolutePath, 'utf8');
+	const contents = fs.readFileSync(absolutePath, 'utf-8');
 	// match all [<number>m
 	// eslint-disable-next-line no-control-regex
 	const cleanedContents = contents.replace(/\x1b\[\d+m/g, '');

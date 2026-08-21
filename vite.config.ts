@@ -26,7 +26,7 @@ export default defineConfig({
 	server: {
 		port: env.PORT,
 		host: '0.0.0.0',
-		allowedHosts: ['dev.tsaxking.com'],
+		allowedHosts: env.ALLOWED_HOSTS,
 		watch: {
 			ignored: [
 				'**/node_modules/**',
