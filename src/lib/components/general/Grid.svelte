@@ -83,6 +83,8 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		height: string | number;
 		modules?: Module[];
 		multiSelect?: boolean;
+		debug?: boolean;
+		redraw_on_update?: boolean;
 	}
 
 	const {
@@ -94,7 +96,9 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		layer = 1,
 		height,
 		modules = [],
-		multiSelect = false
+		multiSelect = false,
+		debug,
+		redraw_on_update,
 	}: Props = $props();
 
 	$effect(() =>
@@ -118,6 +122,12 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		init: HTMLDivElement;
 		ready: GridApi<T>;
 	}>();
+
+	const log = (...args: unknown[]) => {
+		if (debug) {
+			console.log('[Grid API]', ...args);
+		}
+	}
 
 	export const on = em.on.bind(em);
 	export const off = em.off.bind(em);
@@ -191,7 +201,8 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 	const gridOptions: GridOptions<T> = $derived({
 		theme: gridTheme,
 		...opts,
-		rowData: data,
+		rowData: [],
+		getRowId: (params) => getRowKey(params.data),
 		columnDefs: [
 			...(rowNumbers
 				? [
@@ -243,7 +254,76 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		}
 	});
 
+	const getRowKey = (row: T, index?: number) => {
+		const candidate = row as T & { id?: string | number; raw?: { id?: string | number } };
+		return String(candidate.id ?? candidate.raw?.id ?? index ?? '');
+	};
+
+	const redrawNode = (index: number) => {
+		if (!grid) return;
+		log('Redrawing node at index:', index);
+		const rowNode = grid.getRowNode(getRowKey(data[index], index));
+		if (rowNode) {
+			rowNode.setData(data[index]);
+			grid.refreshCells({ rowNodes: [rowNode], force: true });
+			return true;
+		}
+		return false;
+	}
+
+	// used to copy objects with circular references safely
+	const getCircularReplacer = (data: unknown) => {
+		const seen = new WeakSet();
+		return JSON.stringify(data, (_key: string, value: unknown) => {
+			if (typeof value === "object" && value !== null) {
+				if (seen.has(value)) {
+					return ''; // Drops the circular reference
+				}
+				seen.add(value);
+			}
+			return value;
+		});
+	};
+
+	const proxy_data = $derived(data.map(getCircularReplacer));
+
+	let prev_data: string[] = $state([]);
+
+	const applyData = () => {
+		if (!grid) return;
+		log('Applying data to the grid');
+		grid.setGridOption('rowData', data);
+	}
+
 	$effect(() => {
+		log('Applying data changes to the grid');
+		let rendered = false;
+		if (data.length !== prev_data.length) {
+			rendered = true;
+			applyData();
+		} else {
+			const max = Math.max(proxy_data.length, prev_data.length);
+			for (let i = 0; i < max; i++) {
+				if (proxy_data[i] !== prev_data[i]) {
+					if (redraw_on_update) {
+						applyData();
+						break;
+					}
+					rendered = redrawNode(i) || rendered;
+				}
+			}
+			if (!rendered) {
+				applyData();
+			}
+		}
+
+		if (rendered) {
+			prev_data = data.map(getCircularReplacer);
+		}
+	});
+
+	$effect(() => {
+		log('Grid options changed:', gridOptions);
 		if (gridDiv) {
 			grid?.destroy();
 			grid = createGrid(gridDiv, gridOptions);
