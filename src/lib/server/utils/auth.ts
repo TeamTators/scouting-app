@@ -13,6 +13,7 @@ export const hasRole = (client: Client, role: SupaStructData<'core', 'role'> | s
 			});
 
 			const res = await RoleStruct.get({ name: role }).first().unwrap();
+			if (!res) throw new Error(`Role "${role}" not found`);
 
 			role = res;
 			if (!role) return false;
@@ -79,6 +80,7 @@ export const pageAccess = async (
 		.get({ name: required_role })
 		.first()
 		.unwrap();
+	if (!role) throw new Error(`Role "${required_role}" not found`);
 
 	const res = await RoleAccountStruct.get({ account: data.user.id, role: role.raw.id }).unwrap();
 

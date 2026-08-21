@@ -40,5 +40,5 @@ export default async (...args: string[]) => {
 
 	if (!role) throw new Error(`Role not found: ${role_name}`);
 
-	await grantRole(supabase, data.user, role);
+	await grantRole(supabase, data.user.id, role);
 };

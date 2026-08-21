@@ -6,10 +6,17 @@ export const load = async (event) => {
 	const Test = SupaStruct.get({
 		client: parent.supabase,
 		schema: 'test',
-		table: 'test'
+		table: 'test',
+		debug: true
 	});
 
-	const query = Test.all();
+	const query = Test.search({
+		field: 'age',
+		operator: 'gt',
+		value: 10
+	})
+		.sort((a, b) => a.raw.age - b.raw.age)
+		.reverse();
 	query.sync(1000 * 60 * 5); // Sync every 5 minutes
 
 	return {

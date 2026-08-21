@@ -1,9 +1,15 @@
 <script lang="ts">
 	import Grid from '$lib/components/general/Grid.svelte';
+	import { onMount } from 'svelte';
 	const { data } = $props();
 
 	const Test = $derived(data.Test);
 	const all = $derived(data.query.reactive);
+
+	onMount(() => {
+		const unsubscribe = data.query.subscribe();
+		return () => unsubscribe();
+	});
 </script>
 
 <button
@@ -16,7 +22,7 @@
 		});
 	}}
 >
-	New
+	New ({all.length} + 1)
 </button>
 <Grid
 	data={all}

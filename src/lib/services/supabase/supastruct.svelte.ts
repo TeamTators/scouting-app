@@ -3,15 +3,35 @@
  * Typed Supabase data access helpers with reactive caching, realtime synchronization,
  * query composition, and pagination utilities for Svelte 5 runes-based state.
  *
- * This module exposes:
- * - `SupaStruct`: table-scoped data gateway.
- * - `SupaQuery`: lazy/eager query wrapper with reactive cache views.
- * - `SupaPagination`: page state and paginated fetch orchestration.
- * - `SupaStructData`: row wrapper with update/delete helpers.
+ * This module is the core data access layer for the app. It combines three ideas:
+ * - table-aware typed wrappers (`SupaStruct`) for schema validation and Supabase interaction
+ * - reactive, cache-aware query objects (`SupaQuery`) that can hydrate from Dexie, hit Supabase,
+ *   and resolve fast from the in-memory cache
+ * - row-level helpers (`SupaStructData`) for updating, deleting, and reacting to live data
+ *
+ * The goal is to keep business logic ergonomic: you create a table struct once, run typed
+ * queries against it, and receive `SupaStructData` records that behave like in-memory row models
+ * while still being backed by the database.
+ *
+ * @example
+ * const users = SupaStruct.get({
+ *   schema: 'core',
+ *   table: 'users',
+ *   client: supabase,
+ *   debug: true
+ * });
+ *
+ * const activeUsers = users.get({ archived: false });
+ * const first = await activeUsers.first();
+ *
+ * @see {@link SupaStruct}
+ * @see {@link SupaQuery}
+ * @see {@link SupaPagination}
+ * @see {@link SupaStructData}
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // import supabase from "$lib/services/supabase";
-import { attempt, attemptAsync, ComplexEventEmitter, type Result, Ok, Err, Stream } from 'ts-utils';
+import { attempt, attemptAsync, ComplexEventEmitter, type Result, Ok, Err } from 'ts-utils';
 import { REALTIME_SUBSCRIBE_STATES, type SupabaseClient } from '@supabase/supabase-js';
 import { schemas } from '$lib/types/supabase-zod';
 import { z } from 'zod';
@@ -21,7 +41,10 @@ import { browser } from '$app/environment';
 import { DexieTable } from '$lib/services/db/table';
 import { is_online, on_network_change } from '$lib/utils/online.svelte';
 import { stable_stringify } from '$lib/utils/json';
-
+import { type RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+/**
+ * Typed Supabase client for this app with a `serviceRole` flag used for privileged server-side work.
+ */
 export type Client = SupabaseClient<Database> & { serviceRole: boolean };
 
 /** Schema names that have generated row metadata. */
@@ -31,14 +54,50 @@ export type InsertSchemaName = keyof DatabasePivoted['Insert'];
 /** Schema names that have generated update metadata. */
 export type UpdateSchemaName = keyof DatabasePivoted['Update'];
 
+/**
+ * Table names available in a specific row schema.
+ *
+ * @template S - Schema whose row tables are being queried.
+ */
 export type RowTableName<S extends RowSchemaName> = keyof DatabasePivoted['Row'][S];
+/**
+ * Table names available for insert payloads in a specific schema.
+ *
+ * @template S - Schema whose insert tables are being queried.
+ */
 export type InsertTableName<S extends InsertSchemaName> = keyof DatabasePivoted['Insert'][S];
+/**
+ * Table names available for update payloads in a specific schema.
+ *
+ * @template S - Schema whose update tables are being queried.
+ */
 export type UpdateTableName<S extends UpdateSchemaName> = keyof DatabasePivoted['Update'][S];
 
+/**
+ * Generic row table names for a schema.
+ *
+ * @template Schema - Database schema to inspect.
+ */
 export type RowTableNames<Schema extends SchemaName = SchemaName> = RowTableName<Schema>;
+/**
+ * Generic insert table names for a schema.
+ *
+ * @template Schema - Database schema to inspect.
+ */
 export type InsertTableNames<Schema extends SchemaName = SchemaName> = InsertTableName<Schema>;
+/**
+ * Generic update table names for a schema.
+ *
+ * @template Schema - Database schema to inspect.
+ */
 export type UpdateTableNames<Schema extends SchemaName = SchemaName> = UpdateTableName<Schema>;
 
+/**
+ * Full typed row shape for a table, including metadata fields added by the schema.
+ *
+ * @template Schema - Active database schema.
+ * @template Name - Table within that schema.
+ */
 export type Row<
 	Schema extends SchemaName,
 	Name extends RowTableNames<Schema>
@@ -48,21 +107,45 @@ export type Row<
 	archived: boolean;
 };
 
+/**
+ * Typed row shape without the `archived` flag, useful for read and compare operations.
+ *
+ * @template Schema - Active database schema.
+ * @template Name - Table within that schema.
+ */
 export type RowWithoutArchived<
 	Schema extends SchemaName,
 	Name extends RowTableNames<Schema>
 > = Omit<Row<Schema, Name>, 'archived'>;
 
+/**
+ * Typed insert payload for a table.
+ *
+ * @template Schema - Active database schema.
+ * @template Name - Insert table variant.
+ */
 export type Insert<
 	Schema extends SchemaName,
 	Name extends InsertTableNames<Schema>
 > = DatabasePivoted['Insert'][Schema][Name];
 
+/**
+ * Insert payload without the `archived` field.
+ *
+ * @template Schema - Active database schema.
+ * @template Name - Insert table variant.
+ */
 export type InsertWithoutArchived<
 	Schema extends SchemaName,
 	Name extends InsertTableNames<Schema>
 > = Omit<Insert<Schema, Name>, 'archived'>;
 
+/**
+ * Typed update payload for a table.
+ *
+ * @template Schema - Active database schema.
+ * @template Name - Update table variant.
+ */
 export type Update<
 	Schema extends SchemaName,
 	Name extends UpdateTableNames<Schema>
@@ -70,11 +153,24 @@ export type Update<
 	archived?: boolean;
 };
 
+/**
+ * Update payload with common system fields removed.
+ *
+ * @template Schema - Active database schema.
+ * @template Name - Update table variant.
+ */
 export type UpdateWithoutArchived<
 	Schema extends SchemaName,
 	Name extends UpdateTableNames<Schema>
 > = Omit<Update<Schema, Name>, 'archived' | 'id' | 'created_at'>;
 
+/**
+ * Partial row object that guarantees a subset of required fields while allowing other values to be missing.
+ *
+ * @template Schema - Active database schema.
+ * @template Name - Table within that schema.
+ * @template RequiredFields - Fields that must be present in the partial object.
+ */
 export type PartialRow<
 	Schema extends SchemaName,
 	Name extends RowTableNames<Schema>,
@@ -97,29 +193,58 @@ export type Table<
 > = Database[Schema]['Tables'][Name];
 
 /**
- * Runtime configuration for a {@link SupaStruct} instance.
+ * Runtime configuration object passed to a struct instance.
  *
- * @template Name - Table name handled by the struct.
- * @property name - Table name in the active schema.
- * @property client - Typed Supabase client.
- * @property versionHistory - Reserved flag for historical row tracking.
- * @property debug - Enables scoped console logging for this struct.
- * @property do_set - Set the struct in the cache (default true)
+ * @template Schema - Active database schema.
+ * @template Name - Table handled by the struct.
  */
 export type SupaConfig<Schema extends RowSchemaName, Name extends RowTableNames<Schema>> = {
+	/**
+	 * Table name in the active schema.
+	 */
 	table: Name;
+	/**
+	 * Supabase client used for networking, realtime events, and offline replay.
+	 */
 	client: Client;
+	/**
+	 * Active database schema for the table.
+	 */
 	schema: Schema;
+	/**
+	 * Enables debug logging scoped to this struct instance.
+	 */
 	debug?: boolean;
+	/**
+	 * Enables IndexedDB-backed local persistence for this struct.
+	 */
 	index_db?: boolean;
+	/**
+	 * Controls whether the struct is registered in the shared in-memory registry.
+	 *
+	 * Defaults to `true` when not explicitly disabled.
+	 */
 	do_set?: boolean;
 };
 
+/**
+ * A readonly list of required row properties.
+ *
+ * @template Schema - Active database schema.
+ * @template Name - Table within that schema.
+ */
 export type RequiredList<
 	Schema extends RowSchemaName,
 	Name extends RowTableNames<Schema>
 > = readonly (keyof Row<Schema, Name>)[];
 
+/**
+ * Resolves the actual required fields for a query projection.
+ *
+ * @template Schema - Active database schema.
+ * @template Name - Table within that schema.
+ * @template Required - Requested field list, if any.
+ */
 export type ResolveRequiredFields<
 	Schema extends RowSchemaName,
 	Name extends RowTableNames<Schema>,
@@ -128,26 +253,47 @@ export type ResolveRequiredFields<
 	? Extract<K, keyof Row<Schema, Name>> | 'id'
 	: keyof Row<Schema, Name>;
 
+/**
+ * Type-level guard that ensures a field set includes a required subset.
+ */
 export type HasAtLeastRequiredFields<Have extends PropertyKey, Need extends PropertyKey> = [
 	Need
 ] extends [Have]
 	? true
 	: false;
 
+/**
+ * Type-level helper that narrows a field set to a valid required subset.
+ */
 export type EnsureHasAtLeastRequiredFields<Have extends PropertyKey, Need extends PropertyKey> = [
 	Need
 ] extends [Have]
 	? Have
 	: never;
 
+/**
+ * Fetch read options for a single query.
+ *
+ * @template Schema - Active database schema.
+ * @template Name - Table within that schema.
+ * @template Required - Field projection type.
+ */
 export type ReadConfig<
 	Schema extends RowSchemaName,
 	Name extends RowTableNames<Schema>,
 	Required extends keyof RowWithoutArchived<Schema, Name> = keyof RowWithoutArchived<Schema, Name>
 > = {
+	/**
+	 * Explicit field projection to include in the read result.
+	 *
+	 * If omitted, the query loads the table's default required fields.
+	 */
 	only?: readonly Required[];
 };
 
+/**
+ * Normalized error codes emitted by the Supabase layer.
+ */
 export type SupaErrorCode =
 	| 'invalid data'
 	| 'no schema'
@@ -156,9 +302,20 @@ export type SupaErrorCode =
 	| 'unknown'
 	| 'network'
 	| 'timeout'
-	| 'offline';
+	| 'offline'
+	| 'no dexie';
 
+/**
+ * Structured error wrapper for Supabase failures.
+ *
+ * @extends Error
+ * @example
+ * throw new SupaError('unauthorized', 'The current user cannot read this table');
+ */
 class SupaError extends Error {
+	/**
+	 * Error code describing the failure classification.
+	 */
 	constructor(
 		public readonly code: SupaErrorCode,
 		message?: string
@@ -167,6 +324,9 @@ class SupaError extends Error {
 	}
 }
 
+/**
+ * IndexedDB queue used to persist offline write actions until connectivity is restored.
+ */
 const OfflineUpdates = new DexieTable({
 	name: 'offline_updates',
 	schema: z.object({
@@ -178,7 +338,13 @@ const OfflineUpdates = new DexieTable({
 	})
 });
 
+/**
+ * Increment when the serialized query cache format changes.
+ */
 const QUERY_CACHE_VERSION = 1;
+/**
+ * IndexedDB table storing query sync metadata for TTL-based refresh behavior.
+ */
 const QueryCache = new DexieTable({
 	name: 'queries',
 	schema: z.object({
@@ -191,13 +357,30 @@ const QueryCache = new DexieTable({
 	})
 });
 
+/**
+ * Global guard to avoid registering duplicate offline listeners.
+ */
 let offline_setup = false;
 
-const is_test_runtime = () => {
+/**
+ * Returns true when running under test environments.
+ *
+ * @returns {boolean} Whether current runtime appears to be tests.
+ */
+const _is_test_runtime = () => {
 	if (typeof process === 'undefined') return false;
 	return process.env.VITEST === 'true' || process.env.NODE_ENV === 'test';
 };
 
+/**
+ * Initializes the offline queue replay listener for this Supabase client.
+ *
+ * When connectivity returns, the app replays queued local insert/update/delete operations
+ * stored in IndexedDB so the server state and the local cache converge.
+ *
+ * @param {Client} client - Supabase client used to replay queued actions.
+ * @returns {() => void} Cleanup callback that disables the listener.
+ */
 export const setup_network_listener = (client: Client) => {
 	if (offline_setup)
 		return () => {
@@ -297,7 +480,210 @@ export const setup_network_listener = (client: Client) => {
 	};
 };
 
+/**
+ * Supported field comparison operators for the legacy realtime filter syntax.
+ */
+type Condition = 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'like' | 'ilike';
+
+/**
+ * PostgREST filter template used by realtime subscriptions.
+ *
+ * @template S - Active schema.
+ * @template T - Target table within the schema.
+ */
+type Filter<S extends RowSchemaName, T extends RowTableNames<S>> =
+	| `${Extract<keyof Row<S, T>, string>}=${Condition}.${string}`
+	| `${Extract<keyof Row<S, T>, string>}=in.(${string})`
+	| '*';
+
+/**
+ * Realtime subscription descriptor for channel registration.
+ *
+ * @template S - Active schema.
+ * @template T - Target table within the schema.
+ */
+type Subscription<S extends RowSchemaName, T extends RowTableNames<S>> = {
+	/**
+	 * Realtime filter string or wildcard selector.
+	 */
+	filter: Filter<S, T> | string;
+	/**
+	 * Callback executed whenever a matching payload arrives.
+	 */
+	callback?: (payload: RealtimePostgresChangesPayload<RowWithoutArchived<S, T>>) => void;
+	/**
+	 * Struct associated with the subscription target table.
+	 */
+	struct: SupaStruct<S, T>;
+};
+
+/**
+ * Active subscriptions keyed by `schema.table`.
+ */
+const subscriptions = new SvelteMap<
+	`${string}.${string}`,
+	Subscription<RowSchemaName, RowTableNames<RowSchemaName>>
+>();
+
+/**
+ * Debounce timer used while rebuilding realtime channel bindings.
+ */
+let subscribe_timeout: ReturnType<typeof setTimeout> | null = null;
+/**
+ * Rebuilds the shared realtime channel from currently tracked subscriptions.
+ *
+ * @param {Client} client - Supabase client used for channel management.
+ * @returns {void}
+ */
+const reset_realtime = (client: Client) => {
+	if (subscribe_timeout) clearTimeout(subscribe_timeout);
+	subscribe_timeout = setTimeout(async () => {
+		// stop subscription and reset
+		const _responses = await client.removeAllChannels();
+
+		const channel = client.channel('table-db-changes');
+
+		for (const subscription of subscriptions.values()) {
+			channel.on(
+				'postgres_changes',
+				{
+					event: '*',
+					schema: subscription.struct.schema,
+					table: subscription.struct.table,
+					filter: subscription.filter === '*' ? undefined : subscription.filter
+				},
+				(payload) => {
+					subscription.struct.log('Recieved realtime payload:', payload);
+					subscription.callback?.(payload as any);
+					switch (payload.eventType) {
+						case 'INSERT':
+							{
+								subscription.struct.Generator(payload.new as any);
+							}
+							break;
+						case 'UPDATE':
+							{
+								subscription.struct.Generator(payload.new as any);
+							}
+							break;
+						case 'DELETE':
+							{
+								subscription.struct.cache.delete(String(payload.old.id));
+							}
+							break;
+					}
+				}
+			);
+		}
+
+		channel.subscribe((status, err) => {
+			if (status === 'SUBSCRIBED') {
+				console.log('Realtime subscription status: SUBSCRIBED');
+			} else {
+				console.log('Realtime subscription status:', status, 'Error:', err);
+			}
+		});
+	}, 0);
+};
+
+/**
+ * Recursive search descriptor used by `search`.
+ *
+ * Supports:
+ * - Atomic predicates (`field`, `operator`, `value`).
+ * - Composite predicates (`type: 'and' | 'or'`) with nested `conditions`.
+ *
+ * @template Name - Table name used to infer valid field keys and values.
+ *
+ * @example
+ * const q: SearchQuery<'users'> = {
+ *   type: 'or',
+ *   conditions: [
+ *     { field: 'email', operator: 'ilike', value: '%@example.com' },
+ *     { field: 'role', operator: 'eq', value: 'admin' }
+ *   ]
+ * };
+ */
+export type SearchQuery<Schema extends RowSchemaName, Name extends RowTableNames<Schema>> =
+	| {
+			/**
+			 * Field to compare.
+			 */
+			field: keyof RowWithoutArchived<Schema, Name>;
+			/**
+			 * Comparison operator used for the field match.
+			 */
+			operator: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'like' | 'ilike' | 'in';
+			/**
+			 * Expected value or list of values for the comparison.
+			 */
+			value:
+				| RowWithoutArchived<Schema, Name>[keyof RowWithoutArchived<Schema, Name>]
+				| RowWithoutArchived<Schema, Name>[keyof RowWithoutArchived<Schema, Name>][];
+	  }
+	| {
+			/**
+			 * Group operator used to combine child search nodes.
+			 */
+			type: 'and' | 'or';
+			/**
+			 * Child search nodes combined under this group.
+			 */
+			conditions: SearchQuery<Schema, Name>[];
+	  };
+
+/**
+ * Registers a realtime descriptor and refreshes channel bindings.
+ *
+ * @template S - Active schema.
+ * @template T - Target table.
+ * @param {Client} client - Supabase client used for channel registration.
+ * @param {Subscription<S, T>} subscription - Subscription descriptor to register.
+ * @returns {ReturnType<typeof attemptAsync<void>>} Async registration result.
+ */
+const add_subscription = <S extends RowSchemaName, T extends RowTableNames<S>>(
+	client: Client,
+	subscription: Subscription<S, T>
+) => {
+	return attemptAsync(async () => {
+		console.log('Adding subscription:', subscription);
+		subscriptions.set(
+			`${subscription.struct.schema}.${String(subscription.struct.table)}`,
+			subscription as any
+		);
+		reset_realtime(client);
+	});
+};
+
+/**
+ * Represents a typed table adapter for a Supabase schema/table pair.
+ *
+ * A `SupaStruct` owns:
+ * - the configured Supabase client and schema/table routing
+ * - a reactive in-memory cache for row objects
+ * - Dexie-backed hydration for local persistence
+ * - a set of query builders such as `get`, `getOR`, `search`, `all`, and `join`
+ * - row wrappers created via `Generator` and `Hydrate`
+ *
+ * Use a single struct per table to keep query creation consistent and cache keys stable.
+ *
+ * @template Schema - Database schema name.
+ * @template RowName - Table name within that schema.
+ *
+ * @example
+ * const profiles = SupaStruct.get({
+ *   schema: 'core',
+ *   table: 'profile',
+ *   client: supabase
+ * });
+ *
+ * const query = profiles.get({ archived: false, role: 'admin' });
+ * const admins = await query;
+ */
 export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNames<Schema>> {
+	/**
+	 * Shared registry of active table structs keyed by schema and table name.
+	 */
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	public static readonly structs = new Map<
 		string,
@@ -308,12 +694,14 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 	 * Creates a struct instance for a table.
 	 *
 	 * @template Name - Target table name.
+	 * @template Schema - Target schema name.
 	 * @param config - Struct runtime configuration.
 	 * @returns A new typed `SupaStruct` instance.
 	 *
 	 * @example
 	 * const users = SupaStruct.get({
-	 *   name: 'users',
+	 *   name: 'profile',
+	 *   schema: 'core',
 	 *   client: supabaseClient,
 	 *   debug: true
 	 * });
@@ -329,7 +717,6 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 			SupaStruct.structs.set(`${config.schema}.${String(config.table)}`, instance as any);
 		}
 		try {
-			instance.ensurePerStructRealtimeSubscription();
 			instance.initializeCache();
 		} catch {
 			//
@@ -337,34 +724,35 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		return instance;
 	}
 
-	private static _initializedRealtime = false;
-
+	/**
+	 * Initializes the shared realtime listener for the supplied client.
+	 *
+	 * @param {Client} client - Supabase client that should own the channel bindings.
+	 * @returns {void}
+	 */
 	public static initRealtime(client: Client) {
-		if (is_test_runtime()) return () => {};
-		if (SupaStruct._initializedRealtime) return () => {};
-		SupaStruct._initializedRealtime = true;
-		const channel = client.channel('postgres_changes');
-		channel
-			.on('postgres_changes', { event: '*', schema: '*', table: '*' }, (payload) => {
-				const struct = SupaStruct.structs.get(`${payload.schema}.${payload.table}`) as
-					SupaStruct<any, any> | undefined;
-				if (struct) {
-					struct.handleRealtimePayload(payload);
-				}
-			})
-			.subscribe((status) => {
-				SupaStruct.structs.forEach((struct) => {
-					struct.log('Realtime subscription status:', status);
-					struct.em.emit('realtime', status);
-				});
-			});
-
-		return () => {
-			channel.unsubscribe();
-		};
+		reset_realtime(client);
 	}
 
+	/**
+	 * Stops any queued realtime rebind and clears active channel subscriptions.
+	 *
+	 * @returns {void}
+	 */
+	public static stopRealtime() {
+		if (subscribe_timeout) {
+			clearTimeout(subscribe_timeout);
+			subscribe_timeout = null;
+		}
+	}
+
+	/**
+	 * In-memory cache for this table's wrapped row objects.
+	 */
 	public readonly cache = $state(new SvelteMap<string, SupaStructData<Schema, RowName, 'id'>>());
+	/**
+	 * Event emitter used to broadcast lifecycle and realtime notifications for this table.
+	 */
 	private readonly em = new ComplexEventEmitter<{
 		new: [SupaStructData<Schema, RowName>];
 		update: [SupaStructData<Schema, RowName>, Row<Schema, RowName>];
@@ -373,8 +761,17 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		restore: [SupaStructData<Schema, RowName>];
 		realtime: [REALTIME_SUBSCRIBE_STATES];
 	}>();
+	/**
+	 * Registers a listener for emitted row and realtime events.
+	 */
 	public readonly on = this.em.on.bind(this.em);
+	/**
+	 * Removes a listener from the event emitter.
+	 */
 	public readonly off = this.em.off.bind(this.em);
+	/**
+	 * Registers a one-time listener for emitted row and realtime events.
+	 */
 	public readonly once = this.em.once.bind(this.em);
 
 	/**
@@ -386,9 +783,12 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 	 */
 	constructor(public readonly config: SupaConfig<Schema, RowName>) {}
 
-	private readonly _seenRealtimeEvents = new SvelteMap<string, number>();
-	private _perStructRealtimeSubscribed = false;
-
+	/**
+	 * Stores a wrapped row in the in-memory cache when browser-mode caching is enabled.
+	 *
+	 * @param {SupaStructData<Schema, RowName, 'id'>} data - Row wrapper to cache.
+	 * @returns {void}
+	 */
 	private set_in_cache(data: SupaStructData<Schema, RowName, 'id'>) {
 		if (
 			!this.supabase.serviceRole &&
@@ -400,113 +800,15 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		}
 	}
 
-	private getRealtimeEventKey(payload: {
-		eventType?: string;
-		schema?: string;
-		table?: string;
-		commit_timestamp?: string;
-		new?: Record<string, unknown>;
-		old?: Record<string, unknown>;
-	}) {
-		return [
-			payload.schema ?? String(this.schema),
-			payload.table ?? String(this.table),
-			payload.eventType ?? 'unknown',
-			payload.commit_timestamp ?? 'no_ts',
-			String(payload.new?.id ?? payload.old?.id ?? 'no_id')
-		].join('|');
-	}
-
-	private shouldProcessRealtimePayload(payload: {
-		eventType?: string;
-		schema?: string;
-		table?: string;
-		commit_timestamp?: string;
-		new?: Record<string, unknown>;
-		old?: Record<string, unknown>;
-	}) {
-		const now = Date.now();
-		for (const [key, seenAt] of this._seenRealtimeEvents) {
-			if (now - seenAt > 10000) {
-				this._seenRealtimeEvents.delete(key);
-			}
-		}
-
-		const key = this.getRealtimeEventKey(payload);
-		const existing = this._seenRealtimeEvents.get(key);
-		if (existing && now - existing < 10000) {
-			return false;
-		}
-
-		this._seenRealtimeEvents.set(key, now);
-		return true;
-	}
-
-	private handleRealtimePayload(payload: {
-		eventType?: string;
-		new?: Record<string, unknown>;
-		old?: Record<string, unknown>;
-		schema?: string;
-		table?: string;
-		commit_timestamp?: string;
-	}) {
-		if (!this.shouldProcessRealtimePayload(payload)) {
-			this.log('Skipping duplicate realtime payload');
-			return;
-		}
-
-		this.log('Received realtime payload:', payload);
-		switch (payload.eventType) {
-			case 'INSERT': {
-				if (!payload.new) return;
-				const data = this.Generator(payload.new as any);
-				this.em.emit('new', data as any);
-				break;
-			}
-			case 'UPDATE': {
-				if (!payload.new) return;
-				const updated = this.Generator(payload.new as any);
-				this.em.emit('update', updated as any, (payload.old ?? {}) as any);
-				break;
-			}
-			case 'DELETE': {
-				const id = String(payload.old?.id ?? '');
-				if (!id) return;
-				const existing = this.cache.get(id);
-				if (existing) {
-					this.em.emit('delete', existing as any);
-				}
-				this.cache.delete(id);
-				break;
-			}
-		}
-	}
-
-	private ensurePerStructRealtimeSubscription() {
-		if (!browser) return;
-		if (is_test_runtime()) return;
-		if (this._perStructRealtimeSubscribed) return;
-		this._perStructRealtimeSubscribed = true;
-
-		const channel = this.supabase.channel(
-			`postgres_changes:${String(this.schema)}.${String(this.table)}`
-		);
-
-		channel
-			.on(
-				'postgres_changes',
-				{ event: '*', schema: String(this.schema), table: String(this.table) },
-				(payload) => {
-					this.handleRealtimePayload(payload as any);
-				}
-			)
-			.subscribe((status) => {
-				this.log('Per-struct realtime subscription status:', status);
-				this.em.emit('realtime', status);
-			});
-	}
-
+	/**
+	 * Indicates whether the local Dexie cache for this table has already been initialized.
+	 */
 	private _initializedCache = false;
+	/**
+	 * Initializes the local Dexie cache metadata for this table.
+	 *
+	 * @returns {void}
+	 */
 	private initializeCache() {
 		if (this._initializedCache) return;
 		if (!this.config.index_db) return;
@@ -518,7 +820,13 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		}
 	}
 
-	private getSchemaDefinition(): {
+	/**
+	 * Resolves the generated Zod schema definition for the struct's table.
+	 *
+	 * @returns {{ Row: z.ZodObject<z.ZodRawShape> }} The row schema definition.
+	 * @throws {Error} When no schema exists for the configured table.
+	 */
+	getSchemaDefinition(): {
 		Row: z.ZodObject<z.ZodRawShape>;
 	} {
 		const schema =
@@ -535,6 +843,11 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		return schema;
 	}
 
+	/**
+	 * Returns the non-null, non-optional row keys for this table in priority order.
+	 *
+	 * @returns {(keyof RowWithoutArchived<Schema, RowName>)[]} Required row keys, always including `id`.
+	 */
 	private getSchemaRowKeys(): (keyof RowWithoutArchived<Schema, RowName>)[] {
 		const schema = this.getSchemaDefinition();
 		const rowSchema = schema.Row as any;
@@ -563,6 +876,13 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		return required as (keyof RowWithoutArchived<Schema, RowName>)[];
 	}
 
+	/**
+	 * Normalizes a requested field list so it always contains the stable row id.
+	 *
+	 * @template Required - Requested field keys.
+	 * @param {readonly Required[]} [required] - Requested projection fields.
+	 * @returns {(Required | 'id')[] | (keyof RowWithoutArchived<Schema, RowName>)[]} Required field list with `id` forced in.
+	 */
 	private getEffectiveRequiredFields<Required extends keyof RowWithoutArchived<Schema, RowName>>(
 		required?: readonly Required[]
 	): (Required | 'id')[] | (keyof RowWithoutArchived<Schema, RowName>)[] {
@@ -581,6 +901,13 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		return normalized as (Required | 'id')[];
 	}
 
+	/**
+	 * Converts a requested field list into a PostgREST select clause string.
+	 *
+	 * @template Required - Requested field keys.
+	 * @param {readonly Required[]} [required] - Fields to project.
+	 * @returns {string} PostgREST-compatible select string.
+	 */
 	private buildSelectClause<Required extends keyof RowWithoutArchived<Schema, RowName>>(
 		required?: readonly Required[]
 	) {
@@ -591,6 +918,12 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		return fields.map((field) => String(field)).join(',');
 	}
 
+	/**
+	 * Escapes a raw value into a quoted PostgREST literal.
+	 *
+	 * @param {unknown} value - Value to serialize.
+	 * @returns {string} Serialized literal.
+	 */
 	private toPostgrestLiteral(value: unknown) {
 		if (value === null) return 'null';
 		if (typeof value === 'number' || typeof value === 'boolean') {
@@ -601,7 +934,14 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		return `"${str.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
 	}
 
-	private getDexie(schema: z.ZodType<RowWithoutArchived<Schema, RowName>>, initialize = false) {
+	/**
+	 * Returns the Dexie table instance for this struct, creating it when needed.
+	 *
+	 * @param {z.ZodType<RowWithoutArchived<Schema, RowName>>} schema - Row schema for the Dexie table.
+	 * @param {boolean} [initialize=false] - Whether to initialize cache state before returning.
+	 * @returns {ReturnType<typeof DexieTable.get> | undefined} Dexie table instance in browser mode.
+	 */
+	getDexie(schema: z.ZodType<RowWithoutArchived<Schema, RowName>>, initialize = false) {
 		if (this.config.index_db === false) return;
 		if (initialize) {
 			this.initializeCache();
@@ -686,6 +1026,7 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 
 			const requiredFields = this.getEffectiveRequiredFields(required);
 
+			// Validate each returned row includes required projected fields before hydration.
 			const validate = (item: unknown) => {
 				if (item === null || typeof item !== 'object') {
 					this.log('Expected array of objects, received item of type', typeof item);
@@ -734,11 +1075,9 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 	}
 
 	/**
-	 * Returns the typed table name used by this struct.
+	 * Returns the configured table name.
 	 *
-	 * @returns {Extract<RowName, string>} Table name.
-	 * @example
-	 * console.log(struct.table);
+	 * @returns {Extract<RowName, string>} String table name.
 	 */
 	get table(): Extract<RowName, string> {
 		return String(this.config.table) as Extract<RowName, string>;
@@ -865,6 +1204,22 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		return rowData;
 	}
 
+	/**
+	 * Hydrates raw row payloads into the struct cache and Dexie store.
+	 *
+	 * This method is the main normalization point for query results. It validates, wraps, and caches
+	 * rows so downstream code receives stable `SupaStructData` instances instead of raw objects.
+	 *
+	 * @template Required - Fields considered required during hydration.
+	 * @param {PartialRow<Schema, RowName, Required | 'id'>[]} rows - Row payloads to hydrate.
+	 * @param {readonly Required[]} [required] - Requested field projection for validation.
+	 * @param {(data: SupaStructData<Schema, RowName, Required | 'id'>) => boolean} [satisfies] - Optional predicate used to prune stale cache entries.
+	 * @returns {SupaStructData<Schema, RowName, Required | 'id'>[]} Wrapped rows in cache order.
+	 * @example
+	 * const hydrated = users.Hydrate([
+	 *   { id: '1', archived: false, email: 'a@example.com' }
+	 * ]);
+	 */
 	Hydrate<
 		Required extends keyof RowWithoutArchived<Schema, RowName> =
 			'id' | keyof RowWithoutArchived<Schema, RowName>
@@ -938,6 +1293,21 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		return hydrated;
 	}
 
+	/**
+	 * Joins this table with another struct using an inner relationship and returns a query wrapper.
+	 *
+	 * This method attempts to hydrate from the Dexie cache first and falls back to a Supabase join when needed.
+	 * It is useful for pulling rows from related tables with a stable left/right projection.
+	 *
+	 * @template OtherSchema - Foreign schema.
+	 * @template OtherRowName - Foreign table name.
+	 * @template RequiredA - Fields requested from the left table.
+	 * @template RequiredB - Fields requested from the right table.
+	 * @param {SupaStruct<OtherSchema, OtherRowName>} other - Target table to join against.
+	 * @param {{ requiredA?: readonly RequiredA[]; whereB?: Partial<RowWithoutArchived<OtherSchema, OtherRowName>>; joinOn?: { left: keyof RowWithoutArchived<Schema, RowName>; right: keyof RowWithoutArchived<OtherSchema, OtherRowName> }; pullB?: boolean; requiredB?: readonly RequiredB[]; }} [config] - Join configuration.
+	 * @returns {SupaQuery<Schema, RowName, RequiredA | 'id'>} Query wrapper for the joined result set.
+	 * @throws {Error} When the join spans different schemas.
+	 */
 	join<
 		OtherSchema extends RowSchemaName,
 		OtherRowName extends RowTableNames<OtherSchema>,
@@ -966,288 +1336,13 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 					requiredB?: never;
 			  }
 		)
-	): SupaQuery<Schema, RowName, RequiredA | 'id'> {
+	): JoinQuery<Schema, RowName, OtherSchema, OtherRowName, RequiredA, RequiredB> {
 		if (String(this.schema) !== String(other.schema)) {
 			throw new Error(
 				`Cannot join tables from different schemas: ${this.schema} and ${other.schema}`
 			);
 		}
-		const pullB = config?.pullB ?? true;
-		const whereB = config?.whereB ?? {};
-
-		const requiredA = this.getEffectiveRequiredFields(config?.requiredA) as readonly (
-			RequiredA | 'id'
-		)[];
-		const requiredB = other.getEffectiveRequiredFields(config?.requiredB) as readonly (
-			RequiredB | 'id'
-		)[];
-
-		// Ensure selected fields include id for stable hydration.
-		const requiredAWithJoin = (() => {
-			const list = requiredA.map((f) => String(f));
-			if (!list.includes('id')) list.push('id');
-			return list;
-		})();
-		const requiredBWithJoin = (() => {
-			const list = requiredB.map((f) => String(f));
-			for (const key of Object.keys(whereB)) {
-				if (!list.includes(key)) list.push(key);
-			}
-			if (!list.includes('id')) list.push('id');
-			return list;
-		})();
-		const requiredBForSelect = pullB
-			? requiredBWithJoin
-			: ['id', ...Object.keys(whereB).map(String)];
-
-		const selectA = requiredAWithJoin.map((field) => String(field)).join(',');
-		const selectB = requiredBForSelect.map((field) => String(field)).join(',');
-		const matchedLeftIds = new SvelteSet<string>();
-
-		const resolveJoinFields = () => {
-			if (config?.joinOn) {
-				return {
-					left: String(config.joinOn.left),
-					right: String(config.joinOn.right)
-				};
-			}
-
-			const leftKeys = new SvelteSet(this.getSchemaRowKeys().map((k) => String(k)));
-			const rightKeys = new SvelteSet(other.getSchemaRowKeys().map((k) => String(k)));
-
-			const candidates: Array<{ left: string; right: string }> = [
-				{ left: 'id', right: `${String(this.table)}_id` },
-				{ left: 'id', right: `${String(this.table)}Id` },
-				{ left: 'number', right: `${String(this.table)}_number` },
-				{ left: 'number', right: `${String(this.table)}Number` },
-				{ left: 'number', right: 'team_number' },
-				{ left: 'id', right: 'id' }
-			];
-
-			for (const candidate of candidates) {
-				if (leftKeys.has(candidate.left) && rightKeys.has(candidate.right)) {
-					return candidate;
-				}
-			}
-
-			return null;
-		};
-
-		const uniqueById = <T extends { id?: string }>(rows: T[]) => {
-			const byId = new SvelteMap<string, T>();
-			for (const row of rows) {
-				if (!row?.id) continue;
-				byId.set(String(row.id), row);
-			}
-			return Array.from(byId.values());
-		};
-
-		const setMatchedLeftIds = (leftRows: PartialRow<Schema, RowName, RequiredA | 'id'>[]) => {
-			matchedLeftIds.clear();
-			for (const row of leftRows) {
-				matchedLeftIds.add(String(row.id));
-			}
-		};
-
-		const hydrateJoin = (
-			leftRows: PartialRow<Schema, RowName, RequiredA | 'id'>[],
-			rightRows: PartialRow<OtherSchema, OtherRowName, RequiredB | 'id'>[],
-			source: 'dexie' | 'supabase'
-		) => {
-			setMatchedLeftIds(leftRows);
-			const hydratedLeft = this.Hydrate(
-				leftRows,
-				requiredAWithJoin as unknown as readonly RequiredA[]
-			);
-			const hydratedRight = pullB
-				? other.Hydrate(rightRows, requiredBWithJoin as unknown as readonly RequiredB[])
-				: ([] as SupaStructData<OtherSchema, OtherRowName, RequiredB | 'id'>[]);
-
-			this.log(`Hydrated join (${source}) between ${this.table} and ${other.table}:`, {
-				left: hydratedLeft.length,
-				right: hydratedRight.length
-			});
-
-			return {
-				left: hydratedLeft,
-				right: hydratedRight
-			};
-		};
-
-		const hydrateFromDexieFirst = async () => {
-			this.log(`Hydrating join from Dexie between ${this.table} and ${other.table}`);
-			const dexieA = this.getDexie(this.getSchemaDefinition().Row as any);
-			const dexieB = other.getDexie(other.getSchemaDefinition().Row as any);
-
-			if (!dexieA) {
-				this.log(`No Dexie instance for ${this.table}, skipping Dexie hydration`);
-				matchedLeftIds.clear();
-				return {
-					left: [] as SupaStructData<Schema, RowName, RequiredA | 'id'>[],
-					right: [] as SupaStructData<OtherSchema, OtherRowName, RequiredB | 'id'>[]
-				};
-			}
-
-			let rightRows: PartialRow<OtherSchema, OtherRowName, RequiredB | 'id'>[] = [];
-			if (dexieB) {
-				this.log(`Fetching right-side rows from Dexie for ${other.table} with whereB:`, whereB);
-				const rightResult = await dexieB.get(whereB as any);
-				if (rightResult.isOk()) {
-					this.log(
-						`Fetched ${rightResult.value.length} right-side rows from Dexie for ${other.table}`
-					);
-					rightRows = rightResult.value.map((r) => r.raw) as PartialRow<
-						OtherSchema,
-						OtherRowName,
-						RequiredB | 'id'
-					>[];
-				}
-			}
-
-			if (pullB && rightRows.length) {
-				this.log(`Hydrating right-side Dexie rows for ${other.table}`);
-				other.Hydrate(rightRows, requiredBWithJoin as unknown as readonly RequiredB[]);
-			}
-
-			if (!rightRows.length) {
-				matchedLeftIds.clear();
-				return {
-					left: [] as SupaStructData<Schema, RowName, RequiredA | 'id'>[],
-					right: [] as SupaStructData<OtherSchema, OtherRowName, RequiredB | 'id'>[]
-				};
-			}
-
-			const joinFields = resolveJoinFields();
-			if (!joinFields) {
-				this.log(
-					`No join key mapping found for Dexie join between ${this.table} and ${other.table}; using Supabase fallback`
-				);
-				matchedLeftIds.clear();
-				return {
-					left: [] as SupaStructData<Schema, RowName, RequiredA | 'id'>[],
-					right: [] as SupaStructData<OtherSchema, OtherRowName, RequiredB | 'id'>[]
-				};
-			}
-
-			const leftAll = await dexieA.all();
-			if (leftAll.isErr()) {
-				this.log(`Error fetching left-side Dexie rows for ${this.table}:`, leftAll.error);
-				matchedLeftIds.clear();
-				return {
-					left: [] as SupaStructData<Schema, RowName, RequiredA | 'id'>[],
-					right: [] as SupaStructData<OtherSchema, OtherRowName, RequiredB | 'id'>[]
-				};
-			}
-
-			const rightJoinValues = new SvelteSet(
-				rightRows
-					.map((row) => (row as any)?.[joinFields.right])
-					.filter((value) => value !== undefined && value !== null)
-					.map((value) => String(value))
-			);
-
-			const leftRows = leftAll.value
-				.map((item) => item.raw as PartialRow<Schema, RowName, RequiredA | 'id'>)
-				.filter((row) => {
-					const value = (row as any)?.[joinFields.left];
-					if (value === undefined || value === null) return false;
-					return rightJoinValues.has(String(value));
-				});
-
-			return hydrateJoin(uniqueById(leftRows), uniqueById(rightRows), 'dexie');
-		};
-
-		const fetchJoinFromSupabase = async () => {
-			this.log(
-				`Fetching join from Supabase between ${this.table} and ${other.table} with whereB:`,
-				whereB
-			);
-			let query = this.supabase
-				.schema(this.schema)
-				.from(this.table)
-				.select(`${selectA}, ${String(other.table)}!inner(${selectB})`)
-				.filter('archived', 'eq', false)
-				.filter(`${String(other.table)}.archived`, 'eq', false);
-
-			for (const [key, value] of Object.entries(whereB)) {
-				query = query.filter(`${String(other.table)}.${key}`, 'eq', value as any);
-			}
-
-			const res = await query;
-			if (res.error) {
-				throw new SupaError('unknown', `Join query failed: ${res.error.message}`);
-			}
-
-			const leftRows: PartialRow<Schema, RowName, RequiredA | 'id'>[] = [];
-			const rightRows: PartialRow<OtherSchema, OtherRowName, RequiredB | 'id'>[] = [];
-
-			for (const item of (res.data ?? []) as any[]) {
-				if (!item || typeof item !== 'object') continue;
-				const { [String(other.table)]: nestedRight, ...leftOnly } = item;
-
-				const rightCandidates = Array.isArray(nestedRight)
-					? nestedRight
-					: nestedRight
-						? [nestedRight]
-						: [];
-
-				if (!rightCandidates.length) continue;
-
-				leftRows.push(leftOnly as PartialRow<Schema, RowName, RequiredA | 'id'>);
-
-				for (const candidate of rightCandidates) {
-					if (!candidate || typeof candidate !== 'object') continue;
-					if ((candidate as any).archived === true) continue;
-					if ((leftOnly as any).archived === true) continue;
-					rightRows.push(candidate as PartialRow<OtherSchema, OtherRowName, RequiredB | 'id'>);
-				}
-			}
-
-			this.log(`Fetched join from Supabase between ${this.table} and ${other.table}:`, {
-				left: leftRows.length,
-				right: rightRows.length
-			});
-
-			return hydrateJoin(uniqueById(leftRows), uniqueById(rightRows), 'supabase');
-		};
-
-		const satisfies = (data: SupaStructData<Schema, RowName, RequiredA | 'id'>) => {
-			return matchedLeftIds.has(String(data.id));
-		};
-
-		const allQuery = async (): Promise<SupaStructData<Schema, RowName, RequiredA | 'id'>[]> => {
-			this.log(`Executing join query between ${this.table} and ${other.table}`);
-			await hydrateFromDexieFirst();
-			const joined = await fetchJoinFromSupabase();
-			return joined.left;
-		};
-
-		const paginateQuery = async (page: number, size: number) => {
-			const data = await allQuery();
-			const from = (page - 1) * size;
-			const to = from + size;
-			return {
-				data: data.slice(from, to),
-				count: data.length
-			};
-		};
-
-		return new SupaQuery<Schema, RowName, RequiredA | 'id'>(
-			this,
-			satisfies,
-			allQuery,
-			paginateQuery,
-			requiredA,
-			`join:${stable_stringify({
-				left: { schema: this.schema, table: this.table },
-				right: { schema: other.schema, table: other.table },
-				whereB,
-				pullB
-			})}`,
-			async () => {
-				await hydrateFromDexieFirst();
-			}
-		);
+		return new JoinQuery(this, other, config);
 	}
 
 	/**
@@ -1269,101 +1364,18 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		config?: ReadConfig<Schema, RowName, Required>
 	) {
 		const required = this.getEffectiveRequiredFields(config?.only) as readonly (Required | 'id')[];
-		const selectClause = this.buildSelectClause(config?.only);
+		const conditions = Object.entries(queryData)
+			.filter(([, value]) => value !== undefined)
+			.map(([field, value]) => ({
+				field: field as keyof RowWithoutArchived<Schema, RowName>,
+				operator: 'eq' as const,
+				value: value as any
+			}));
+		const search: SearchQuery<Schema, RowName> | '*' = conditions.length
+			? { type: 'and', conditions }
+			: '*';
 
-		const satisfies = (data: SupaStructData<Schema, RowName, Required | 'id'>) =>
-			Object.entries(queryData).every(
-				([key, value]) => data.raw[key as keyof RowWithoutArchived<Schema, RowName>] === value
-			);
-
-		const hydrateLocal = async () => {
-			const dexie = this.getDexie(this.getSchemaDefinition().Row as any);
-			if (!dexie) return;
-			const rows = await dexie.get(queryData as any);
-			if (rows.isOk()) {
-				this.Hydrate(
-					rows.value.map((r) => r.raw),
-					required as Required[]
-				);
-			}
-		};
-
-		const allQuery = async () => {
-			this.log('Executing query with criteria:', queryData);
-			let query = this.supabase.schema(this.config.schema).from(this.table).select(selectClause);
-
-			for (const [key, value] of Object.entries(queryData)) {
-				query = query.filter(key, 'eq', value);
-			}
-
-			query = query.filter('archived', 'eq', false);
-
-			const res = await query;
-			const result = this.runTransaction(
-				{
-					data: res.data as any,
-					error: res.error
-				},
-				'array',
-				required
-			).unwrap();
-
-			this.log('Fetched rows from Supabase for query:', queryData, result);
-
-			return this.Hydrate(result, required as Required[], satisfies);
-		};
-
-		const paginateQuery = async (page: number, size: number) => {
-			this.log(
-				`Executing paginated query for page ${page} with size ${size} and criteria:`,
-				queryData
-			);
-			const from = (page - 1) * size;
-			const to = from + size - 1;
-			let query = this.supabase
-				.schema(this.config.schema)
-				.from(this.table)
-				.select(selectClause, { count: 'exact' })
-				.range(from, to);
-
-			for (const [key, value] of Object.entries(queryData)) {
-				query = query.filter(key, 'eq', value);
-			}
-
-			query = query.filter('archived', 'eq', false);
-
-			const res = await query;
-			const result = this.runTransaction(
-				{
-					data: res.data as any,
-					error: res.error
-				},
-				'array',
-				required
-			).unwrap();
-
-			this.log(
-				`Fetched rows from Supabase for paginated query (page ${page}, size ${size}):`,
-				queryData,
-				result
-			);
-
-			return {
-				data: this.Hydrate(result, required as Required[]),
-				count: res.count ?? 0
-			};
-		};
-
-		const newQuery = new SupaQuery<Schema, RowName, Required | 'id'>(
-			this,
-			satisfies,
-			allQuery,
-			paginateQuery,
-			required,
-			`get:${stable_stringify({ query: queryData })}`,
-			hydrateLocal
-		);
-		return newQuery;
+		return new SupaQuery2(this, search, required);
 	}
 
 	/**
@@ -1384,114 +1396,18 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		config?: ReadConfig<Schema, RowName, Required>
 	) {
 		const required = this.getEffectiveRequiredFields(config?.only) as readonly (Required | 'id')[];
-		const selectClause = this.buildSelectClause(config?.only);
+		const conditions = Object.entries(queryData)
+			.filter(([, value]) => value !== undefined)
+			.map(([field, value]) => ({
+				field: field as keyof RowWithoutArchived<Schema, RowName>,
+				operator: 'eq' as const,
+				value: value as any
+			}));
+		const search: SearchQuery<Schema, RowName> | '*' = conditions.length
+			? { type: 'and', conditions }
+			: '*';
 
-		const satisfies = (data: SupaStructData<Schema, RowName, Required | 'id'>) =>
-			entries.some(
-				([key, value]) => data.raw[key as keyof RowWithoutArchived<Schema, RowName>] === value
-			);
-
-		const entries = Object.entries(queryData);
-		const hydrateLocal = async () => {
-			const dexie = this.getDexie(this.getSchemaDefinition().Row as any);
-			if (!dexie) return;
-			const rows = await dexie.getOR(queryData as any);
-			if (rows.isOk()) {
-				this.Hydrate(
-					rows.value.map((r) => r.raw),
-					required as Required[]
-				);
-			}
-		};
-
-		const allQuery = async () => {
-			this.log('Executing getOR query with criteria:', queryData);
-			if (!entries.length) {
-				return [];
-			}
-			let query = this.supabase.schema(this.config.schema).from(this.table).select(selectClause);
-
-			const orConditions = entries
-				.map(([key, value]) => `${key}.eq.${this.toPostgrestLiteral(value)}`)
-				.join(',');
-
-			query = query.or(orConditions);
-
-			query = query.filter('archived', 'eq', false);
-
-			const res = await query;
-			const result = this.runTransaction(
-				{
-					data: res.data as any,
-					error: res.error
-				},
-				'array',
-				required
-			).unwrap();
-
-			this.log('Fetched rows from Supabase for getOR query:', queryData, result);
-
-			return this.Hydrate(result, required as Required[], satisfies);
-		};
-
-		const paginateQuery = async (page: number, size: number) => {
-			this.log(
-				`Executing paginated getOR query for page ${page} with size ${size} and criteria:`,
-				queryData
-			);
-			if (!entries.length) {
-				return {
-					data: [],
-					count: 0
-				};
-			}
-			const from = (page - 1) * size;
-			const to = from + size - 1;
-			let query = this.supabase
-				.schema(this.config.schema)
-				.from(this.table)
-				.select(selectClause, { count: 'exact' })
-				.range(from, to);
-
-			const orConditions = entries
-				.map(([key, value]) => `${key}.eq.${this.toPostgrestLiteral(value)}`)
-				.join(',');
-
-			query = query.or(orConditions);
-
-			query = query.filter('archived', 'eq', false);
-
-			const res = await query;
-			const result = this.runTransaction(
-				{
-					data: res.data as any,
-					error: res.error
-				},
-				'array',
-				required
-			).unwrap();
-
-			this.log(
-				`Fetched rows from Supabase for paginated getOR query (page ${page}, size ${size}):`,
-				queryData,
-				result
-			);
-			return {
-				data: this.Hydrate(result, required as Required[]),
-				count: res.count ?? 0
-			};
-		};
-
-		const newQuery = new SupaQuery<Schema, RowName, Required | 'id'>(
-			this,
-			satisfies,
-			allQuery,
-			paginateQuery,
-			required,
-			`getOR:${stable_stringify({ query: queryData })}`,
-			hydrateLocal
-		);
-		return newQuery;
+		return new SupaQuery2(this, search, required);
 	}
 
 	/**
@@ -1509,182 +1425,7 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		>
 	>(query: SearchQuery<Schema, RowName>, config?: ReadConfig<Schema, RowName, Required>) {
 		const required = this.getEffectiveRequiredFields(config?.only) as readonly (Required | 'id')[];
-		const selectClause = this.buildSelectClause(config?.only);
-
-		const satisfies = (data: SupaStructData<Schema, RowName, Required | 'id'>): boolean => {
-			const evaluate = (q: SearchQuery<Schema, RowName>): boolean => {
-				if ('field' in q) {
-					const fieldValue = data.raw[q.field];
-					if (fieldValue === undefined || fieldValue === null) {
-						return false;
-					}
-					switch (q.operator) {
-						case 'eq':
-							return (fieldValue as any) === (q.value as any);
-						case 'neq':
-							return (fieldValue as any) !== (q.value as any);
-						case 'gt':
-							return ((fieldValue as any) > q.value) as any;
-						case 'gte':
-							return ((fieldValue as any) >= q.value) as any;
-						case 'lt':
-							return ((fieldValue as any) < q.value) as any;
-						case 'lte':
-							return ((fieldValue as any) <= q.value) as any;
-						case 'like':
-							return (
-								typeof fieldValue === 'string' &&
-								typeof q.value === 'string' &&
-								fieldValue.includes(q.value)
-							);
-						case 'ilike':
-							return (
-								typeof fieldValue === 'string' &&
-								typeof q.value === 'string' &&
-								fieldValue.toLowerCase().includes(q.value.toLowerCase())
-							);
-						default:
-							return false;
-					}
-				} else if ('type' in q) {
-					if (q.type === 'and') {
-						return q.conditions.every(evaluate);
-					} else if (q.type === 'or') {
-						return q.conditions.some(evaluate);
-					}
-				}
-				return false;
-			};
-			return evaluate(query);
-		};
-		const normalizePattern = (
-			operator: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'like' | 'ilike',
-			value: unknown
-		) => {
-			if ((operator === 'like' || operator === 'ilike') && typeof value === 'string') {
-				if (!value.includes('%') && !value.includes('_')) {
-					return `%${value}%`;
-				}
-			}
-			return value;
-		};
-
-		const main = this.supabase
-			.schema(this.schema)
-			.from(this.table)
-			.select(selectClause, { count: 'exact' })
-			.filter('archived', 'eq', false);
-
-		const buildQuery = (base: typeof main, q: SearchQuery<Schema, RowName>): typeof main => {
-			if ('field' in q) {
-				return base.filter(String(q.field), q.operator, normalizePattern(q.operator, q.value));
-			}
-			if (q.type === 'and') {
-				let current = base;
-				for (const condition of q.conditions) {
-					current = buildQuery(current, condition);
-				}
-				return current;
-			}
-			if (q.type === 'or') {
-				const orConditions = q.conditions
-					.map((condition) => {
-						if ('field' in condition) {
-							const value = normalizePattern(condition.operator, condition.value);
-							return `${String(condition.field)}.${condition.operator}.${this.toPostgrestLiteral(value)}`;
-						} else {
-							throw new Error('Nested OR conditions are not supported');
-						}
-					})
-					.join(',');
-				return base.or(orConditions);
-			}
-
-			return base;
-		};
-		const hydrateLocal = async () => {
-			const dexie = this.getDexie(this.getSchemaDefinition().Row as any);
-			if (!dexie) return;
-			const rows = await dexie.search(query as any);
-			if (rows.isOk()) {
-				this.Hydrate(
-					rows.value.map((r) => r.raw),
-					required as Required[]
-				);
-			}
-		};
-		const allQuery = async (): Promise<SupaStructData<Schema, RowName, Required | 'id'>[]> => {
-			this.log('Executing search query on table', this.table, 'with criteria', query);
-			const queryBuilder = buildQuery(main, query);
-
-			const res = await queryBuilder;
-			const result = this.runTransaction(
-				{
-					data: res.data as any,
-					error: res.error
-				},
-				'array',
-				required
-			).unwrap();
-
-			this.log('Fetched search results from Supabase for table', this.table, result);
-
-			return this.Hydrate(result, required as Required[], satisfies);
-		};
-
-		const paginateQuery = async (
-			page: number,
-			size: number
-		): Promise<{
-			data: SupaStructData<Schema, RowName, Required | 'id'>[];
-			count: number;
-		}> => {
-			this.log('Executing paginated search query on table', this.table, 'with criteria', query, {
-				page,
-				size
-			});
-			const from = (page - 1) * size;
-			const to = from + size - 1;
-
-			const queryBuilder = buildQuery(
-				this.supabase.schema(this.schema).from(this.table).select(selectClause, { count: 'exact' }),
-				query
-			)
-				.range(from, to)
-				.filter('archived', 'eq', false);
-
-			const res = await queryBuilder;
-			const result = this.runTransaction(
-				{
-					data: res.data as any,
-					error: res.error
-				},
-				'array',
-				required
-			).unwrap();
-
-			this.log('Fetched paginated search results from Supabase for table', this.table, result);
-
-			return {
-				data: this.Hydrate(result, required as Required[]),
-				count: res.count ?? 0
-			};
-		};
-
-		const newQuery = new SupaQuery<Schema, RowName, Required | 'id'>(
-			this,
-			satisfies,
-			allQuery,
-			paginateQuery,
-			required,
-			`search:${stable_stringify({ query })}`,
-			hydrateLocal
-		);
-		// this.queryCache.set(
-		// 	satisfies as (data: SupaStructData<Schema, RowName, 'id'>) => boolean,
-		// 	newQuery as unknown as SupaQuery<Schema, RowName, keyof RowWithoutArchived<Schema, RowName>>
-		// );
-		return newQuery;
+		return new SupaQuery2(this, query, required);
 	}
 
 	/**
@@ -1746,6 +1487,17 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		});
 	}
 
+	/**
+	 * Builds a query by a set of row ids.
+	 *
+	 * @template Required - Fields to project for each row.
+	 * @param {string[]} ids - Row ids to resolve.
+	 * @param {ReadConfig<Schema, RowName, Required>} [config] - Optional projection config.
+	 * @returns {SupaQuery<Schema, RowName, Required | 'id'>} Query that resolves matching rows.
+	 * @example
+	 * const query = users.fromIds(['a', 'b', 'c']);
+	 * const rows = await query;
+	 */
 	fromIds<
 		Required extends keyof RowWithoutArchived<Schema, RowName> = keyof RowWithoutArchived<
 			Schema,
@@ -1753,103 +1505,22 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		>
 	>(ids: string[], config?: ReadConfig<Schema, RowName, Required>) {
 		const required = this.getEffectiveRequiredFields(config?.only) as readonly (Required | 'id')[];
-		const selectClause = this.buildSelectClause(config?.only);
-
-		const satisfies = (data: SupaStructData<Schema, RowName, Required | 'id'>) =>
-			ids.includes(String(data.id));
-		const hydrateLocal = async () => {
-			const dexie = this.getDexie(this.getSchemaDefinition().Row as any);
-			if (!dexie) return;
-			const rows = await dexie.fromIds(ids);
-			if (rows.isOk()) {
-				this.Hydrate(
-					rows.value.map((r) => r.raw),
-					required as Required[]
-				);
-			}
+		const search: SearchQuery<Schema, RowName> = {
+			field: 'id' as keyof RowWithoutArchived<Schema, RowName>,
+			operator: 'in',
+			value: ids as any
 		};
-
-		const allQuery = async (): Promise<SupaStructData<Schema, RowName, Required | 'id'>[]> => {
-			this.log(`Fetching rows with ids ${ids.join(', ')} from table ${this.table}`);
-			const res = await this.supabase
-				.schema(this.config.schema)
-				.from(this.table)
-				.select(selectClause)
-				.filter('id', 'in', `(${ids.join(',')})`)
-				.filter('archived', 'eq', false);
-			const result = this.runTransaction(
-				{
-					data: res.data as any,
-					error: res.error
-				},
-				'array',
-				required
-			).unwrap();
-
-			this.log(
-				`Fetched ${result.length} rows from Supabase with ids ${ids.join(', ')} from table ${this.table}`,
-				result
-			);
-
-			return this.Hydrate(result, required as Required[], satisfies);
-		};
-
-		const paginateQuery = async (
-			page: number,
-			size: number
-		): Promise<{
-			data: SupaStructData<Schema, RowName, Required | 'id'>[];
-			count: number;
-		}> => {
-			this.log(
-				`Fetching page ${page} with size ${size} for rows with ids ${ids.join(', ')} from table ${this.table}`
-			);
-			const from = (page - 1) * size;
-			const to = from + size - 1;
-			const res = await this.supabase
-				.schema(this.config.schema)
-				.from(this.table)
-				.select(selectClause, { count: 'exact' })
-				.filter('id', 'in', `(${ids.join(',')})`)
-				.filter('archived', 'eq', false)
-				.range(from, to);
-			const result = this.runTransaction(
-				{
-					data: res.data as any,
-					error: res.error
-				},
-				'array',
-				required
-			).unwrap();
-
-			this.log(
-				`Fetched ${result.length} rows from Supabase with ids ${ids.join(', ')} for page ${page} with size ${size} from table ${this.table}`,
-				result
-			);
-
-			return {
-				data: this.Hydrate(result, required as Required[]),
-				count: res.count ?? 0
-			};
-		};
-
-		const newQuery = new SupaQuery<Schema, RowName, Required | 'id'>(
-			this,
-			satisfies,
-			allQuery,
-			paginateQuery,
-			required,
-			`fromIds:${stable_stringify({ ids })}`,
-			hydrateLocal
-		);
-		return newQuery;
+		return new SupaQuery2(this, search, required);
 	}
 
 	/**
-	 * Inserts a new row and returns the wrapped created row.
+	 * Inserts one or more rows and returns hydrated wrappers.
 	 *
-	 * @param {Insert<Schema, Extract<RowName, InsertTableNames<Schema>>>} data - Insert payload.
-	 * @returns {ReturnType<typeof attemptAsync<SupaStructData<Schema, RowName>>>} Async result wrapper.
+	 * Rows are first hydrated into local cache (and Dexie when enabled), then inserted
+	 * into Supabase when online. On insert failure, temporary local rows are removed.
+	 *
+	 * @param {...Insert<Schema, Extract<RowName, InsertTableNames<Schema>>>} data - Row insert payloads.
+	 * @returns {ReturnType<typeof attemptAsync<SupaStructData<Schema, RowName, 'id' | keyof RowWithoutArchived<Schema, RowName>>[], SupaError>>} Async inserted-row result.
 	 * @example
 	 * const created = await struct.new({ id: '1' } as Insert<Schema, Extract<RowName, InsertTableNames<Schema>>>);
 	 */
@@ -1997,990 +1668,1076 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		>
 	>(config?: ReadConfig<Schema, RowName, Required>) {
 		const required = this.getEffectiveRequiredFields(config?.only) as readonly (Required | 'id')[];
-		const selectClause = this.buildSelectClause(config?.only);
-
-		const satisfies = (_: SupaStructData<Schema, RowName, Required | 'id'>) => true;
-		const hydrateLocal = async () => {
-			const dexie = this.getDexie(this.getSchemaDefinition().Row as any);
-			if (!dexie) return;
-			const rows = await dexie.all();
-			this.log(`Fetched all rows from IndexedDB for table ${this.table}`, rows);
-			if (rows.isOk()) {
-				this.Hydrate(
-					rows.value.map((r) => r.raw),
-					required as Required[]
-				);
-			}
-		};
-
-		const allQuery = async () => {
-			this.log(
-				`Fetching all rows for table ${this.table} with required fields: ${required.join(', ')}`
-			);
-			const res = await this.supabase
-				.schema(this.config.schema)
-				.from(this.table)
-				.select(selectClause)
-				.filter('archived', 'eq', false);
-			const result = this.runTransaction(
-				{
-					data: res.data as any,
-					error: res.error
-				},
-				'array',
-				required
-			).unwrap();
-
-			this.log(`Fetched ${result.length} rows from Supabase for table ${this.table}`, result);
-
-			return this.Hydrate(result, required as Required[], satisfies);
-		};
-
-		const paginateQuery = async (page: number, size: number) => {
-			this.log(
-				`Fetching page ${page} (size ${size}) for table ${this.table} with required fields: ${required.join(', ')}`
-			);
-			const from = (page - 1) * size;
-			const to = from + size - 1;
-			const res = await this.supabase
-				.schema(this.config.schema)
-				.from(this.table)
-				.select(selectClause, { count: 'exact' })
-				.range(from, to)
-				.filter('archived', 'eq', false);
-			const result = this.runTransaction(
-				{
-					data: res.data as any,
-					error: res.error
-				},
-				'array',
-				required
-			).unwrap();
-
-			return {
-				data: this.Hydrate(result, required as Required[]),
-				count: res.count ?? 0
-			};
-		};
-
-		const newQuery = new SupaQuery<Schema, RowName, Required | 'id'>(
-			this,
-			satisfies,
-			allQuery,
-			paginateQuery,
-			required,
-			'all',
-			hydrateLocal
-		);
-		return newQuery;
-	}
-
-	Arr(satisfies: (data: SupaStructData<Schema, RowName>) => boolean) {
-		const allQuery = async () => {
-			throw new Error(
-				'Custom Struct Arrays are purely reactive and do not support direct fetching'
-			);
-		};
-
-		const paginateQuery = async (_page: number, _size: number) => {
-			throw new Error(
-				'Custom Struct Arrays are purely reactive and do not support paginated fetching'
-			);
-		};
-
-		const newQuery = new SupaQuery(this, satisfies, allQuery, paginateQuery);
-		return newQuery;
+		return new SupaQuery2(this, '*', required);
 	}
 }
 
-/**
- * Recursive search descriptor used by `search`.
- *
- * Supports:
- * - Atomic predicates (`field`, `operator`, `value`).
- * - Composite predicates (`type: 'and' | 'or'`) with nested `conditions`.
- *
- * @template Name - Table name used to infer valid field keys and values.
- *
- * @example
- * const q: SearchQuery<'users'> = {
- *   type: 'or',
- *   conditions: [
- *     { field: 'email', operator: 'ilike', value: '%@example.com' },
- *     { field: 'role', operator: 'eq', value: 'admin' }
- *   ]
- * };
- */
-export type SearchQuery<Schema extends RowSchemaName, Name extends RowTableNames<Schema>> =
-	| {
-			field: keyof RowWithoutArchived<Schema, Name>;
-			operator: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'like' | 'ilike';
-			value: RowWithoutArchived<Schema, Name>[keyof RowWithoutArchived<Schema, Name>];
-	  }
-	| {
-			type: 'and' | 'or';
-			conditions: SearchQuery<Schema, Name>[];
-	  };
-
 // Define a type for the paginated response that includes the total count
+/**
+ * Response shape for a single paginated fetch.
+ */
 type PaginatedResponse<T> = { data: T[]; count: number };
 
-// eslint-disable-next-line svelte/prefer-svelte-reactivity
-const in_flight_queries = new Map<string, Promise<unknown>>();
-
-class SupaQuery<
+/**
+ * Query wrapper for non-join table reads.
+ *
+ * It builds Supabase queries from `filters`, hydrates local cache from Dexie first,
+ * supports pagination/count/sync helpers, and resolves to wrapped row models.
+ *
+ * @template Schema - Active schema.
+ * @template RowName - Target table.
+ * @template Required - Required projected fields.
+ * @template HasDefault - Whether `default()` was called.
+ */
+class SupaQuery2<
 	Schema extends RowSchemaName,
 	RowName extends RowTableNames<Schema>,
 	Required extends keyof RowWithoutArchived<Schema, RowName> = keyof RowWithoutArchived<
 		Schema,
 		RowName
 	>,
-	Default extends boolean = false
+	HasDefault extends boolean = false
 > {
-	private _syncInFlight: Promise<{
-		source: 'cache' | 'supabase';
-		refreshing: boolean;
-		promise: Promise<Result<SupaStructData<Schema, RowName, Required>[], SupaError>>;
-	}> | null = null;
-	private _lastSyncSource: 'cache' | 'supabase' | null = null;
+	private _default: SupaStructData<Schema, RowName, Required> | null = null;
 
-	private _paginatedInstance: SupaPagination<Schema, RowName> | null = null;
+	private _sort: (
+		a: SupaStructData<Schema, RowName, Required>,
+		b: SupaStructData<Schema, RowName, Required>
+	) => number = $state((a, b) => {
+		if (String(a.id) < String(b.id)) return -1;
+		if (String(a.id) > String(b.id)) return 1;
+		return 0;
+	});
 
-	// We can track a loading state if we want UI feedback
-	private _loading = $state(false);
+	private _reverse = $state(false);
+
+	// private readonly em = new ComplexEventEmitter<{
+	// 	error: [SupaError];
+	// 	cache: [SupaStructData<Schema, RowName, Required>[]];
+	// 	fetch: [SupaStructData<Schema, RowName, Required>[]];
+	// 	dexie: [SupaStructData<Schema, RowName, Required>[]];
+	// }>();
 
 	/**
-	 * Creates a query wrapper for table-scoped cached and remote reads.
+	 * Creates a non-join query wrapper for a struct.
 	 *
-	 * @param {SupaStruct<Schema, RowName>} struct - Owning struct.
-	 * @param {(data: SupaStructData<Schema, RowName>) => boolean} satisfies - Client-side cache predicate.
-	 * @param {() => Promise<SupaStructData<Schema, RowName>[]>} fetch_all - Full fetch function.
-	 * @param {(page: number, size: number) => Promise<PaginatedResponse<SupaStructData<Schema, RowName>>>} fetch_paginated - Paginated fetch function.
-	 * @example
-	 * const q = new SupaQuery(struct, () => true, fetchAll, paginate);
+	 * @param {SupaStruct<Schema, RowName>} struct - Owning table struct.
+	 * @param {SearchQuery<Schema, RowName> | '*'} filters - Search filter tree or wildcard selector.
+	 * @param {readonly Required[]} required - Required projection fields for hydration.
 	 */
 	constructor(
-		private readonly struct: SupaStruct<Schema, RowName>,
-		private readonly satisfies: (data: SupaStructData<Schema, RowName, Required>) => boolean,
-		private readonly fetch_all: () => Promise<SupaStructData<Schema, RowName, Required>[]>,
-		private readonly fetch_paginated: (
-			page: number,
-			size: number
-		) => Promise<PaginatedResponse<SupaStructData<Schema, RowName, Required>>>,
-		private readonly required: readonly (Required | 'id')[] = ['id'] as const,
-		private readonly key?: string,
-		private readonly hydrate_local?: () => Promise<void>,
-		default_data: SupaStructData<Schema, RowName, Required> | null = null
-	) {
-		this._default = default_data;
-	}
+		public readonly struct: SupaStruct<Schema, RowName>,
+		public readonly filters: SearchQuery<Schema, RowName> | '*',
+		public readonly required: readonly Required[]
+	) {}
 
-	log(...args: any[]) {
-		if (this.struct.config.debug) {
-			this.struct.log('[SupaQuery]', this.key ? `(${this.key})` : '(unknown)', ...args);
-		}
-	}
+	/**
+	 * Evaluates whether a cached row matches the current search filter.
+	 *
+	 * @param {SupaStructData<Schema, RowName, Required>} data - Row wrapper to evaluate.
+	 * @returns {boolean} True when row satisfies current filters.
+	 */
+	private matches_filter(data: SupaStructData<Schema, RowName, Required>): boolean {
+		if (this.filters === '*') return true;
 
-	private trace(...args: any[]) {
-		if (!browser) return;
-		if (!this.struct.config.debug) return;
-		console.log('[SupaQueryTrace]', ...args);
+		const evaluate = (filter: SearchQuery<Schema, RowName>): boolean => {
+			if ('field' in filter) {
+				const value = data.raw[filter.field as keyof RowWithoutArchived<Schema, RowName>] as any;
+				if (value === undefined || value === null) return false;
+
+				switch (filter.operator) {
+					case 'eq':
+						return value === filter.value;
+					case 'neq':
+						return value !== filter.value;
+					case 'gt':
+						return Number(value) > Number(filter.value);
+					case 'lt':
+						return Number(value) < Number(filter.value);
+					case 'gte':
+						return Number(value) >= Number(filter.value);
+					case 'lte':
+						return Number(value) <= Number(filter.value);
+					case 'like': {
+						if (typeof value !== 'string' || typeof filter.value !== 'string') return false;
+						return value.includes(filter.value.replaceAll('%', ''));
+					}
+					case 'ilike': {
+						if (typeof value !== 'string' || typeof filter.value !== 'string') return false;
+						return value.toLowerCase().includes(filter.value.replaceAll('%', '').toLowerCase());
+					}
+					case 'in':
+						return Array.isArray(filter.value) && filter.value.includes(value as never);
+					default:
+						return false;
+				}
+			}
+
+			if (filter.type === 'and') {
+				return filter.conditions.every(evaluate);
+			}
+
+			return filter.conditions.some(evaluate);
+		};
+
+		return evaluate(this.filters);
 	}
 
 	/**
-	 * Returns a live filtered view of cached rows.
+	 * Escapes values for realtime PostgREST filter serialization.
 	 *
-	 * @returns {SupaStructData<Schema, RowName, Required>[]} Cached rows matching the query predicate.
-	 * @example
-	 * const rows = query.reactive;
+	 * @param {unknown} value - Value to normalize.
+	 * @returns {string} Serialized representation.
+	 */
+	private normalize_realtime_value(value: unknown) {
+		if (value === null) return 'null';
+		if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+		if (typeof value === 'string') return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+		return JSON.stringify(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+	}
+
+	/**
+	 * Converts nested filter objects into realtime filter strings.
+	 *
+	 * @param {SearchQuery<Schema, RowName> | '*'} filter - Query filter.
+	 * @returns {string} Realtime filter expression.
+	 */
+	private build_realtime_string(filter: SearchQuery<Schema, RowName> | '*'): string {
+		if (filter === '*') return '*';
+
+		const walk = (node: SearchQuery<Schema, RowName>): string => {
+			if ('field' in node) {
+				const value = Array.isArray(node.value)
+					? `(${node.value.map((v) => this.normalize_realtime_value(v)).join(',')})`
+					: this.normalize_realtime_value(node.value);
+
+				switch (node.operator) {
+					case 'in':
+						return `${String(node.field)}=in.(${Array.isArray(node.value) ? node.value.map((v) => this.normalize_realtime_value(v)).join(',') : this.normalize_realtime_value(node.value)})`;
+					case 'like':
+						return `${String(node.field)}=like.${value}`;
+					case 'ilike':
+						return `${String(node.field)}=ilike.${value}`;
+					default:
+						return `${String(node.field)}=${node.operator}.${value}`;
+				}
+			}
+
+			return `(${node.conditions.map(walk).join(',')})`;
+		};
+
+		return walk(filter);
+	}
+
+	/**
+	 * Reactive rows currently matching this query from in-memory cache.
+	 *
+	 * @returns {SupaStructData<Schema, RowName, Required>[]} Sorted matching rows.
 	 */
 	get reactive() {
-		return Array.from(this.struct.cache.values())
-			.filter(this.satisfies as (data: SupaStructData<Schema, RowName, 'id'>) => boolean)
-			.sort((this._sort as any) ?? undefined) as SupaStructData<Schema, RowName, Required>[];
+		const rows = Array.from(this.struct.cache.values()).filter((item) =>
+			this.matches_filter(item as any)
+		);
+		return rows.sort((a, b) => (this._reverse ? -1 : 1) * this._sort(a as any, b as any));
 	}
 
 	/**
-	 * Returns or lazily creates the pagination controller for this query.
+	 * First matching row or the configured default when present.
 	 *
-	 * @returns {SupaPagination<Schema, RowName>} Pagination state and controls.
-	 * @example
-	 * const page = query.paginated;
+	 * @returns {SupaStructData<Schema, RowName, Required> | null} Selected row.
+	 */
+	get single(): HasDefault extends true
+		? SupaStructData<Schema, RowName, Required>
+		: SupaStructData<Schema, RowName, Required> | null {
+		const [[first], last] = [this.reactive, this._default];
+		if (first) return first as any;
+		if (last) return last as any;
+		return null as any;
+	}
+
+	/**
+	 * Pagination adapter for on-demand page fetches.
+	 *
+	 * @returns {{ page: (page: number, size: number) => Promise<PaginatedResponse<SupaStructData<Schema, RowName, Required>>> }} Page fetch facade.
 	 */
 	get paginated() {
-		if (!this._paginatedInstance) {
-			this._paginatedInstance = new SupaPagination(this.struct, this.fetch_paginated) as any;
-		}
-		return this._paginatedInstance as SupaPagination<Schema, RowName>;
-	}
-
-	private check_cache(requestedTtl: number): Promise<boolean> {
-		return new Promise<boolean>((resolve) => {
-			return resolve(false); // disable cache for now
-			if (!browser) {
-				this.trace('check_cache -> false (not browser)', {
-					key: this.key,
-					unique: this.unique_key
-				});
-				return resolve(false);
+		return {
+			page: async (page: number, size: number) => {
+				const res = await this.fetch_paginated(page, size);
+				if (res.isErr()) throw res.error;
+				return res.value;
 			}
-			if (!this.key) {
-				this.trace('check_cache -> false (missing key)', { unique: this.unique_key });
-				return resolve(false);
-			}
-			this.log('Checking query cache for key:', this.key);
-			this.trace('check_cache start', {
-				key: this.key,
-				unique: this.unique_key,
-				required: this.required.map(String)
-			});
-			QueryCache.get({
-				query: this.key,
-				schema: this.struct.config.schema,
-				table: this.struct.table
-			})
-				.first()
-				.then(async (cached) => {
-					if (!this.key) {
-						this.trace('check_cache -> false (key disappeared)');
-						return resolve(false);
-					}
-					if (cached.isErr()) {
-						this.log('Error checking query cache:', cached.error);
-						this.trace('check_cache -> false (query cache read error)', {
-							error: String(cached.error)
-						});
-						return resolve(false);
-					}
-					if (!cached.value) {
-						this.log('No query cache found for key:', this.key);
-						this.trace('check_cache -> false (no query cache row)', {
-							key: this.key,
-							unique: this.unique_key
-						});
-						return resolve(false);
-					}
-
-					if (cached.value.raw.version !== QUERY_CACHE_VERSION) {
-						this.log('Query cache version mismatch, deleting stale row for key:', this.key);
-						const deleted = await cached.value.delete();
-						if (deleted.isErr()) {
-							this.trace('check_cache stale version delete failed', {
-								key: this.key,
-								error: String(deleted.error)
-							});
-						} else {
-							this.trace('check_cache stale version deleted', {
-								key: this.key,
-								cachedVersion: cached.value.raw.version,
-								expectedVersion: QUERY_CACHE_VERSION
-							});
-						}
-						return resolve(false);
-					}
-
-					// check if the query is past expiration
-					const now = Date.now();
-					if (now - cached.value.raw.last_sync > requestedTtl) {
-						this.log('Query cache expired for key:', this.key);
-						this.trace('check_cache -> false (expired)', {
-							key: this.key,
-							now,
-							last_sync: cached.value.raw.last_sync,
-							requestedTtl,
-							age: now - cached.value.raw.last_sync
-						});
-						return resolve(false);
-					} else {
-						const cached_required = new Set(cached.value.raw.required.split(','));
-						// check if the required fields have changed
-
-						// all required fields must be present in the cached query for it to be valid
-
-						const cacheSatisfies = this.required.every((field) =>
-							cached_required.has(String(field))
-						);
-
-						if (!cacheSatisfies) {
-							this.log('Query cache required fields missing:', this.key);
-							this.trace('check_cache -> false (required mismatch)', {
-								key: this.key,
-								cached_required: Array.from(cached_required),
-								required: this.required.map(String)
-							});
-							return resolve(false);
-						}
-						// cache is valid
-						this.log('Query cache valid for key:', this.key);
-						this.trace('check_cache -> true (valid)', {
-							key: this.key,
-							now,
-							last_sync: cached.value.raw.last_sync,
-							requestedTtl,
-							age: now - cached.value.raw.last_sync
-						});
-						return resolve(true);
-					}
-				})
-				.catch((error) => {
-					this.trace('check_cache -> false (unexpected throw)', {
-						error: String(error)
-					});
-					resolve(false);
-				});
-		});
-	}
-
-	private async _hydrate_local() {
-		if (!this.hydrate_local) {
-			this.trace('hydrate_local -> skipped (no hydrateLocal function)', {
-				key: this.key,
-				unique: this.unique_key
-			});
-			return Promise.resolve();
-		}
-		this.trace('hydrate_local -> start', {
-			key: this.key,
-			unique: this.unique_key
-		});
-		return this.hydrate_local().then(() => {
-			this.trace('hydrate_local -> complete', {
-				key: this.key,
-				unique: this.unique_key
-			});
-		});
-	}
-
-	private cache_has_required_fields() {
-		const rows = this.reactive;
-		if (!rows.length) {
-			this.trace('cache required check -> false (no matching rows in cache)', {
-				key: this.key,
-				unique: this.unique_key
-			});
-			return false;
-		}
-
-		for (const row of rows) {
-			for (const field of this.required) {
-				if (!(String(field) in row.raw)) {
-					this.trace('cache required check -> false (missing field on row)', {
-						key: this.key,
-						unique: this.unique_key,
-						rowId: row.id,
-						missingField: String(field)
-					});
-					return false;
-				}
-			}
-		}
-
-		this.trace('cache required check -> true (all required fields present)', {
-			key: this.key,
-			unique: this.unique_key,
-			rows: rows.length,
-			required: this.required.map(String)
-		});
-		return true;
-	}
-
-	private resolve_from_cache(
-		onfulfilled?:
-			| ((
-					value: Result<SupaStructData<Schema, RowName, Required>[], SupaError>
-			  ) => void | PromiseLike<void>)
-			| null
-	) {
-		return this._hydrate_local().then(() => {
-			const result = new Ok(this.reactive.sort((this._sort as any) ?? undefined)) as Result<
-				SupaStructData<Schema, RowName, Required>[],
-				SupaError
-			>;
-			onfulfilled?.(result);
-			return result;
-		});
-	}
-
-	private resolve_cache_snapshot(
-		onfulfilled?:
-			| ((
-					value: Result<SupaStructData<Schema, RowName, Required>[], SupaError>
-			  ) => void | PromiseLike<void>)
-			| null
-	) {
-		const result = new Ok(this.reactive.sort((this._sort as any) ?? undefined)) as Result<
-			SupaStructData<Schema, RowName, Required>[],
-			SupaError
-		>;
-		onfulfilled?.(result);
-		return Promise.resolve(result);
-	}
-
-	private run_fetch(
-		onfulfilled?:
-			| ((
-					value: Result<SupaStructData<Schema, RowName, Required>[], SupaError>
-			  ) => void | PromiseLike<void>)
-			| null
-	) {
-		this._loading = true;
-		const p = this._hydrate_local()
-			.then(() => this.fetch_all())
-			.then((res) => {
-				this.log('Query completed successfully for key:', this.key, 'with', res.length, 'results');
-				this._loading = false;
-				const result = new Ok(res.sort(this._sort ?? undefined));
-				onfulfilled?.(result);
-				return result;
-			})
-			.catch((err) => {
-				this._loading = false;
-				let message = 'An unknown error occurred';
-				let code: SupaErrorCode = 'unknown';
-				if (typeof err === 'object' && err && 'message' in err && typeof err.message === 'string') {
-					switch (true) {
-						case err.message.includes('network'):
-							message = 'Network error: Please check your internet connection.';
-							code = 'network';
-							break;
-						case err.message.includes('timeout'):
-							message = 'Request timed out: The server took too long to respond.';
-							code = 'timeout';
-							break;
-						case err.message.includes('permission'):
-							message = 'Permission denied: You do not have access to this resource.';
-							code = 'unauthorized';
-							break;
-						default:
-							message = `Error: ${err.message}`;
-							code = 'unknown';
-							break;
-					}
-				}
-				const result = new Err(new SupaError(code, message)) as Result<
-					SupaStructData<Schema, RowName, Required>[],
-					SupaError
-				>;
-				onfulfilled?.(result);
-				return result;
-			})
-			.finally(() => {
-				this._loading = false;
-			});
-
-		this.promise = p;
-		return p;
-	}
-
-	private persist_query_cache_after_fetch(
-		ttl: number,
-		res: Result<SupaStructData<Schema, RowName, Required>[], SupaError>
-	) {
-		return (async () => {
-			if (res.isErr()) {
-				this.log('Error syncing query cache:', res.error);
-				this.trace('sync cache write skipped due fetch error', {
-					key: this.key,
-					error: String(res.error)
-				});
-				return;
-			}
-
-			if (!this.key) return;
-
-			const now = Date.now();
-			const cacheRowId = `${this.struct.config.schema}:${this.struct.table}:${this.key}`;
-			const has = await QueryCache.get({
-				query: this.key,
-				schema: this.struct.config.schema,
-				table: this.struct.table
-			}).first();
-
-			if (has.isErr()) {
-				this.log('Error syncing query cache:', has.error);
-				this.trace('sync cache write -> read existing failed', {
-					key: this.key,
-					error: String(has.error)
-				});
-				return;
-			}
-
-			if (has.value) {
-				const required = new SvelteSet(has.value.raw.required.split(',') ?? []);
-
-				for (const field of this.required) {
-					required.add(String(field));
-				}
-
-				const updatePayload: {
-					last_sync: number;
-					required: string;
-					ttl?: number;
-					version?: number;
-				} = {
-					last_sync: now,
-					required: Array.from(required).join(',')
-				};
-
-				if (has.value.raw.version !== QUERY_CACHE_VERSION) {
-					updatePayload.version = QUERY_CACHE_VERSION;
-				}
-
-				const updated = await has.value.update(updatePayload);
-				if (updated.isErr()) {
-					this.log('Error updating query cache row:', updated.error);
-					this.trace('sync cache write -> update failed', {
-						key: this.key,
-						error: String(updated.error)
-					});
-				} else {
-					this.trace('sync cache write -> updated existing row', {
-						key: this.key,
-						now,
-						requestedTtl: ttl
-					});
-				}
-				return;
-			}
-
-			const created = await QueryCache.upsert({
-				query: this.key,
-				schema: this.struct.config.schema,
-				table: this.struct.table,
-				version: QUERY_CACHE_VERSION,
-				required: this.required.map(String).join(','),
-				last_sync: now,
-				created_at: new SvelteDate(),
-				id: cacheRowId
-			});
-			if (created.isErr()) {
-				this.log('Error creating query cache row:', created.error);
-				this.trace('sync cache write -> create failed', {
-					key: this.key,
-					error: String(created.error)
-				});
-			} else {
-				this.trace('sync cache write -> created row', {
-					key: this.key,
-					now,
-					ttl,
-					cacheRowId
-				});
-			}
-		})();
-	}
-
-	private _ttl: number = 0;
-
-	sync(ttl: number) {
-		this._ttl = ttl;
-		this.trace('sync start', { key: this.key, unique: this.unique_key, ttl });
-		const syncPromise = this._hydrate_local()
-			.then(() => this.check_cache(ttl))
-			.then((cacheIsValidByMeta) => {
-				const cacheHasRequiredFields = cacheIsValidByMeta && this.cache_has_required_fields();
-				const is_valid = cacheIsValidByMeta && cacheHasRequiredFields;
-				if (!is_valid) {
-					this._lastSyncSource = 'supabase';
-					this.trace('sync decision -> supabase', {
-						key: this.key,
-						unique: this.unique_key,
-						cacheIsValidByMeta,
-						cacheHasRequiredFields
-					});
-					let p = this.promise;
-					if (p) {
-						this.trace('sync reusing existing in-flight fetch', {
-							key: this.key,
-							unique: this.unique_key
-						});
-						return {
-							source: 'supabase' as const,
-							refreshing: this._loading,
-							promise: p
-						};
-					}
-					p = this.run_fetch();
-					p.then((res) => this.persist_query_cache_after_fetch(ttl, res));
-					return {
-						source: 'supabase' as const,
-						refreshing: true,
-						promise: p
-					};
-				}
-
-				this._lastSyncSource = 'cache';
-				this.log('Using hydrated local cache for key:', this.key);
-				this.trace('sync decision -> cache', {
-					key: this.key,
-					unique: this.unique_key,
-					cacheIsValidByMeta,
-					cacheHasRequiredFields
-				});
-				return {
-					source: 'cache' as const,
-					refreshing: false,
-					promise: this.resolve_cache_snapshot()
-				};
-			});
-
-		this._syncInFlight = syncPromise.finally(() => {
-			this.trace('sync complete', {
-				key: this.key,
-				unique: this.unique_key,
-				lastSyncSource: this._lastSyncSource
-			});
-			if (this._syncInFlight === syncPromise) {
-				this._syncInFlight = null;
-			}
-		});
-
-		return this._syncInFlight;
+		};
 	}
 
 	/**
-	 * Enables promise-like usage (`await query`) to execute a full fetch.
+	 * Sets custom sort comparator for `reactive` rows.
 	 *
-	 * @param {(value: Result<SupaStructData<Schema, RowName, Required>[], SupaError>) => void | PromiseLike<void> | null} [onfulfilled] - Fulfillment handler.
-	 * @returns {Promise<Result<SupaStructData<Schema, RowName, Required>[], SupaError>>} Query execution result.
-	 * @example
-	 * const result = await query;
+	 * @param {(a: SupaStructData<Schema, RowName, Required>, b: SupaStructData<Schema, RowName, Required>) => number} sort - Comparator.
+	 * @returns {SupaQuery2<Schema, RowName, Required, HasDefault>} Current query instance.
 	 */
-	then(
-		onfulfilled?:
-			| ((
-					value: Result<SupaStructData<Schema, RowName, Required>[], SupaError>
-			  ) => void | PromiseLike<void>)
-			| null
-	) {
-		this.trace('then invoked', {
-			key: this.key,
-			unique: this.unique_key,
-			hasSyncInFlight: !!this._syncInFlight,
-			lastSyncSource: this._lastSyncSource,
-			hasInflightFetch: !!this.promise
-		});
-		const existing = this.promise;
-		if (existing) {
-			this.log('Query already in flight, returning existing promise for key:', this.key);
-			this.trace('then -> existing in-flight fetch', {
-				key: this.key,
-				unique: this.unique_key
-			});
-			return existing.then((res) => {
-				onfulfilled?.(res);
-				return res;
-			});
-		}
-
-		if (this._syncInFlight) {
-			return this._syncInFlight.then((syncState) => {
-				this.trace('then observed sync completion', {
-					key: this.key,
-					unique: this.unique_key,
-					source: syncState.source,
-					refreshing: syncState.refreshing
-				});
-				if (syncState.source === 'cache') {
-					this.log('Skipping Supabase fetch after cache-valid sync for key:', this.key);
-					this.trace('then -> cache path after sync', {
-						key: this.key,
-						unique: this.unique_key
-					});
-					return this.resolve_from_cache(onfulfilled);
-				}
-
-				return syncState.promise.then((res) => {
-					onfulfilled?.(res);
-					return res;
-				});
-			});
-		}
-
-		if (this._lastSyncSource === 'cache') {
-			this.log('Serving query from local cache based on prior valid sync for key:', this.key);
-			this.trace('then -> cache path from prior sync', {
-				key: this.key,
-				unique: this.unique_key
-			});
-			return this.resolve_from_cache(onfulfilled);
-		}
-
-		if (browser && this.key) {
-			this.trace('then -> validating cache before fetch (no sync marker)', {
-				key: this.key,
-				unique: this.unique_key
-			});
-			return this._hydrate_local()
-				.then(() => this.check_cache(this._ttl))
-				.then((cacheIsValidByMeta) => {
-					const cacheHasRequiredFields = cacheIsValidByMeta && this.cache_has_required_fields();
-					const isValid = cacheIsValidByMeta && cacheHasRequiredFields;
-					if (isValid) {
-						this._lastSyncSource = 'cache';
-						this.trace('then -> cache path after direct validation', {
-							key: this.key,
-							unique: this.unique_key,
-							cacheIsValidByMeta,
-							cacheHasRequiredFields
-						});
-						return this.resolve_cache_snapshot(onfulfilled);
-					}
-					this.trace('then -> supabase fetch after direct cache validation miss', {
-						key: this.key,
-						unique: this.unique_key,
-						cacheIsValidByMeta,
-						cacheHasRequiredFields
-					});
-					return this.run_fetch(onfulfilled);
-				});
-		}
-
-		this.trace('then -> supabase fetch path (no valid sync marker)', {
-			key: this.key,
-			unique: this.unique_key
-		});
-		return this.run_fetch(onfulfilled);
-	}
-
-	get loading() {
-		return this._loading;
-	}
-
-	get unique_key() {
-		return `${this.struct.config.schema}:${this.struct.table}:${this.key ?? 'unknown'}`;
-	}
-
-	private get promise() {
-		const p = in_flight_queries.get(this.unique_key);
-		if (p) {
-			return p as Promise<Result<SupaStructData<Schema, RowName, Required>[], SupaError>>;
-		}
-		return undefined;
-	}
-
-	private set promise(
-		p: Promise<Result<SupaStructData<Schema, RowName, Required>[], SupaError>> | undefined
-	) {
-		const key = this.key;
-		if (key) {
-			if (p) {
-				in_flight_queries.set(this.unique_key, p);
-				p.finally(() => {
-					if (in_flight_queries.get(this.unique_key) === p) {
-						in_flight_queries.delete(this.unique_key);
-					}
-				});
-			} else {
-				in_flight_queries.delete(this.unique_key);
-			}
-		}
-	}
-
-	unwrap() {
-		return this.then().then((res) => res.unwrap());
-	}
-
-	unwrapOr(defaultValue: SupaStructData<Schema, RowName, Required>[]) {
-		return this.then().then((res) => res.unwrapOr(defaultValue));
-	}
-
-	private _sort:
-		| ((
-				a: SupaStructData<Schema, RowName, Required>,
-				b: SupaStructData<Schema, RowName, Required>
-		  ) => number)
-		| null = $state(null);
-
 	sort(
-		compareFn: (
+		sort: (
 			a: SupaStructData<Schema, RowName, Required>,
 			b: SupaStructData<Schema, RowName, Required>
 		) => number
 	) {
-		this._sort = compareFn;
+		this._sort = sort;
 		return this;
 	}
 
-	stream(config?: { pageSize?: number; concurrent?: number }) {
-		return new SupaStream(this.fetch_paginated, {
-			pageSize: config?.pageSize ?? 50,
-			concurrent: config?.concurrent ?? 3
+	/**
+	 * Toggles reverse ordering for `reactive` rows.
+	 *
+	 * @returns {SupaQuery2<Schema, RowName, Required, HasDefault>} Current query instance.
+	 */
+	reverse() {
+		this._reverse = !this._reverse;
+		return this;
+	}
+
+	/**
+	 * Pulls matching rows from Dexie and hydrates the in-memory cache.
+	 *
+	 * @returns {ReturnType<typeof attemptAsync<SupaStructData<Schema, RowName, Required>[]>>} Dexie hydration result.
+	 */
+	private pull_dexie() {
+		return attemptAsync(async () => {
+			const dexie = this.struct.getDexie(this.struct.getSchemaDefinition().Row as any);
+			if (!dexie) return [] as SupaStructData<Schema, RowName, Required>[];
+
+			const rows =
+				this.filters === '*' ? await dexie.all() : await dexie.search(this.filters as any);
+			if (rows.isErr()) return [] as SupaStructData<Schema, RowName, Required>[];
+
+			const hydrated = this.struct.Hydrate(
+				rows.value.map((row) => row.raw as any),
+				this.required as any
+			) as SupaStructData<Schema, RowName, Required>[];
+
+			return hydrated.filter((data) => this.matches_filter(data));
 		});
 	}
 
-	listen(
-		listener: (data: SupaStructData<Schema, RowName, Required>) => void,
-		config?: {
-			cache?: boolean;
-			fetch?: boolean;
-			new?: boolean;
-		}
-	) {
-		const done = new SvelteSet<string>();
-		// iterate through all current
-		if (config?.cache !== false) {
-			// default to true if not specified
-			for (const item of this.reactive) {
-				if (!done.has(String(item.raw.id))) {
-					done.add(String(item.raw.id));
-					listener(item);
-				}
-			}
+	/**
+	 * Builds Supabase query and companion realtime filter from current `filters`.
+	 *
+	 * @param {'exact' | 'estimated' | 'planned'} [count] - Optional count mode.
+	 * @returns {{ query: any; realtime: string; select: string[] }} Query bundle.
+	 */
+	private build(count?: 'exact' | 'estimated' | 'planned') {
+		const fields = Array.from(
+			new SvelteSet([...this.required.map(String), 'id', 'archived'])
+		) as string[];
+		const query = this.struct.supabase
+			.schema(this.struct.schema)
+			.from(this.struct.table)
+			.select(fields.join(','), {
+				count
+			})
+			.filter('archived', 'eq', false);
+
+		if (this.filters === '*') {
+			return { query, realtime: '*', select: fields };
 		}
 
-		if (config?.fetch !== false) {
-			// default to true if not specified
-			this.then().then((result) => {
-				if (result.isOk()) {
-					for (const item of result.value) {
-						if (!done.has(String(item.id))) {
-							done.add(String(item.id));
-							listener(item);
-						}
+		type QueryBuilder = typeof query;
+
+		const apply = (builder: QueryBuilder, node: SearchQuery<Schema, RowName>): QueryBuilder => {
+			if ('field' in node) {
+				const field = String(node.field);
+				const value = node.value;
+				if (node.operator === 'in') {
+					if (!Array.isArray(value)) return builder;
+					return builder.filter(
+						field,
+						'in',
+						value as readonly (string | number | boolean | null | Record<string, unknown>)[]
+					);
+				}
+				return builder.filter(
+					field,
+					node.operator,
+					value as string | number | boolean | null | Record<string, unknown>
+				);
+			}
+
+			if (node.type === 'and') {
+				for (const condition of node.conditions) {
+					builder = apply(builder, condition);
+				}
+				return builder;
+			}
+
+			const orParts = node.conditions
+				.map((condition) => {
+					if (!('field' in condition)) return null;
+					const field = String(condition.field);
+					const value = condition.value;
+					if (condition.operator === 'in') {
+						if (!Array.isArray(value)) return null;
+						return `${field}.in.(${value.map((v) => String(v)).join(',')})`;
 					}
-				}
-			});
-		}
+					return `${field}.${condition.operator}.${this.normalize_realtime_value(value)}`;
+				})
+				.filter(Boolean)
+				.join(',');
 
-		if (config?.new !== false) {
-			const wrapper = (data: SupaStructData<Schema, RowName, Required>) => {
-				if (this.satisfies(data) && !done.has(String(data.raw.id))) {
-					done.add(String(data.raw.id));
-					listener(data);
-				}
-			};
-
-			return this.struct.on('new', wrapper);
-		}
-		return () => {};
-	}
-
-	first() {
-		return attemptAsync(async () => {
-			const res = await this.then();
-			return res.unwrap()[0] ?? null;
-		});
-	}
-
-	last() {
-		return attemptAsync(async () => {
-			const res = await this.then();
-			const data = res.unwrap();
-			return data[data.length - 1] ?? null;
-		});
-	}
-
-	_default: SupaStructData<Schema, RowName, Required> | null = $state(null);
-
-	default(
-		value: InsertWithoutArchived<Schema, Extract<RowName, InsertTableNames<Schema>>>
-	): SupaQuery<Schema, RowName, Required | 'id', true> {
-		const data = new SupaStructData<Schema, RowName, Required>(
-			this.struct,
-			{
-				id: '',
-				created_at: new SvelteDate().toISOString(),
-				archived: false,
-				...value
-			} as any,
-			{
-				is_temporary: true
-			}
-		);
-		return new SupaQuery<Schema, RowName, Required | 'id', true>(
-			this.struct,
-			this.satisfies,
-			this.fetch_all as any,
-			this.fetch_paginated as any,
-			this.required,
-			this.key,
-			this.hydrate_local,
-			data as any
-		);
-	}
-
-	get single(): Default extends false
-		? SupaStructData<Schema, RowName, Required> | null
-		: SupaStructData<Schema, RowName, Required> {
-		const [first, last] = [this.reactive[0], this._default];
-		if (!last) return null as any;
-		return first ?? last;
-	}
-}
-
-class SupaStream<
-	Schema extends RowSchemaName,
-	RowName extends RowTableNames<Schema>,
-	Required extends keyof RowWithoutArchived<Schema, RowName> = keyof RowWithoutArchived<
-		Schema,
-		RowName
-	>
-> extends Stream<SupaStructData<Schema, RowName, Required>> {
-	constructor(
-		private paginateQuery: (
-			page: number,
-			size: number
-		) => Promise<PaginatedResponse<SupaStructData<Schema, RowName, Required>>>,
-		private config: {
-			/**
-			 * Number of items to fetch per page. Adjust based on expected row size and network conditions.
-			 */
-			pageSize: number;
-			/**
-			 * Maximum number of concurrent page fetches. Higher values may speed up retrieval but increase load on the database and network.
-			 */
-			concurrent: number;
-		}
-	) {
-		super();
-	}
-
-	private running = false;
-	private currentPage = 1;
-	private activeFetches = 0;
-	private hasMore = true;
-
-	start() {
-		if (this.running) return;
-		this.running = true;
-		const { pageSize, concurrent } = this.config;
-
-		const fetchNext = async () => {
-			if (this.activeFetches >= concurrent || !this.hasMore || !this.running) return;
-			this.activeFetches++;
-			try {
-				const { data, count } = await this.paginateQuery(this.currentPage, pageSize);
-				for (const item of data) {
-					this.add(item); // emits each item to stream listeners
-				}
-				this.hasMore = this.currentPage * pageSize < count;
-
-				if (!this.hasMore) {
-					this.end();
-				}
-
-				this.currentPage++;
-				fetchNext(); // Trigger next fetch if possible
-			} catch (err) {
-				this.error(err instanceof Error ? err : new Error(String(err)));
-			} finally {
-				this.activeFetches--;
-			}
+			return orParts ? builder.or(orParts) : builder;
 		};
 
-		// Start initial fetches up to the concurrency limit
-		for (let i = 0; i < concurrent; i++) {
-			fetchNext();
-		}
+		return {
+			query: apply(query, this.filters),
+			realtime: this.build_realtime_string(this.filters),
+			select: fields
+		};
 	}
 
-	pause() {
-		this.running = false;
+	/**
+	 * Fetches all rows from Supabase and hydrates cache.
+	 *
+	 * @returns {ReturnType<typeof attemptAsync<SupaStructData<Schema, RowName, Required>[]>>} Result containing all matching rows.
+	 */
+	fetch_all() {
+		return attemptAsync(async () => {
+			await this.pull_dexie();
+			const built = this.build();
+			const res = await built.query;
+			const result = this.struct
+				.runTransaction({ data: res.data as any, error: res.error }, 'array', this.required as any)
+				.unwrap();
+
+			const hydrated = this.struct.Hydrate(result as any, this.required as any) as SupaStructData<
+				Schema,
+				RowName,
+				Required
+			>[];
+
+			return hydrated.filter((data) => this.matches_filter(data));
+		});
+	}
+
+	/**
+	 * Fetches a specific page directly from Supabase.
+	 *
+	 * @param {number} page - 1-based page number.
+	 * @param {number} size - Items per page.
+	 * @returns {ReturnType<typeof attemptAsync<PaginatedResponse<SupaStructData<Schema, RowName, Required>>>>} Paginated result.
+	 */
+	fetch_paginated(page: number, size: number) {
+		return attemptAsync(async () => {
+			await this.pull_dexie();
+			const built = this.build();
+			const from = (page - 1) * size;
+			const to = from + size - 1;
+			const res = await built.query.range(from, to);
+			const result = this.struct
+				.runTransaction({ data: res.data as any, error: res.error }, 'array', this.required as any)
+				.unwrap();
+
+			const hydrated = this.struct.Hydrate(result as any, this.required as any) as SupaStructData<
+				Schema,
+				RowName,
+				Required
+			>[];
+
+			return {
+				data: hydrated.filter((data) => this.matches_filter(data)),
+				count: res.count ?? hydrated.length
+			};
+		});
+	}
+
+	/**
+	 * Counts rows matching the current query.
+	 *
+	 * @returns {ReturnType<typeof attemptAsync<number>>} Total count.
+	 */
+	count() {
+		return attemptAsync(async () => {
+			const { count, error } = await this.build('exact').query.limit(0);
+			if (error) throw error;
+			return count ?? 0;
+		});
+	}
+
+	/**
+	 * Fetches first or last row based on `created_at` ordering.
+	 *
+	 * @param {'first' | 'last'} type - Selection direction.
+	 * @returns {ReturnType<typeof attemptAsync<SupaStructData<Schema, RowName, Required> | null>>} Selected row.
+	 */
+	private fetch_single(type: 'first' | 'last') {
+		return attemptAsync(async () => {
+			const built = this.build();
+			const res = await built.query.limit(1).order('created_at', {
+				ascending: type === 'first' ? true : false
+			});
+			const result = this.struct
+				.runTransaction({ data: res.data as any, error: res.error }, 'array', this.required as any)
+				.unwrap();
+
+			const hydrated = this.struct.Hydrate(result as any, this.required as any) as SupaStructData<
+				Schema,
+				RowName,
+				Required
+			>[];
+
+			return hydrated.find((data) => this.matches_filter(data)) ?? null;
+		});
+	}
+
+	/**
+	 * Fetches earliest row for the current query.
+	 *
+	 * @returns {ReturnType<typeof attemptAsync<SupaStructData<Schema, RowName, Required> | null>>} Selected row.
+	 */
+	first() {
+		return this.fetch_single('first');
+	}
+
+	/**
+	 * Fetches latest row for the current query.
+	 *
+	 * @returns {ReturnType<typeof attemptAsync<SupaStructData<Schema, RowName, Required> | null>>} Selected row.
+	 */
+	last() {
+		return this.fetch_single('last');
+	}
+
+	/**
+	 * Syncs query with cache TTL semantics.
+	 *
+	 * Flow: pull Dexie -> check query cache freshness -> fetch remote when stale -> upsert query cache row.
+	 *
+	 * @param {number} ttl - Cache freshness window in milliseconds.
+	 * @returns {Promise<any>} Fresh query result.
+	 */
+	sync(ttl: number) {
+		return this.pull_dexie().then(async () => {
+			if (!browser) {
+				return this.fetch_all();
+			}
+
+			const query_key = stable_stringify({
+				schema: this.struct.schema,
+				table: this.struct.table,
+				filters: this.filters,
+				required: this.required.map(String)
+			});
+			const cache_row_id = `${this.struct.schema}:${this.struct.table}:${query_key}`;
+			const cached = await QueryCache.get({
+				query: query_key,
+				schema: this.struct.schema,
+				table: this.struct.table
+			}).first();
+
+			if (cached.isOk() && cached.value) {
+				if (cached.value.raw.version !== QUERY_CACHE_VERSION) {
+					await cached.value.delete();
+				} else if (Date.now() - cached.value.raw.last_sync <= ttl) {
+					return this.reactive;
+				}
+			}
+
+			const built = this.build();
+			const res = await built.query;
+			const result = this.struct
+				.runTransaction({ data: res.data as any, error: res.error }, 'array', this.required as any)
+				.unwrap();
+
+			const hydrated = this.struct.Hydrate(result as any, this.required as any) as SupaStructData<
+				Schema,
+				RowName,
+				Required
+			>[];
+
+			await QueryCache.upsert({
+				query: query_key,
+				schema: this.struct.schema,
+				table: this.struct.table,
+				version: QUERY_CACHE_VERSION,
+				required: this.required.map(String).join(','),
+				last_sync: Date.now(),
+				created_at: new SvelteDate(),
+				id: cache_row_id
+			});
+
+			return hydrated.filter((data) => this.matches_filter(data));
+		});
+	}
+
+	/**
+	 * Registers a realtime subscription for this query filter.
+	 *
+	 * @param {(data: SupaStructData<Schema, RowName, Required>, event: 'UPDATE' | 'INSERT' | 'DELETE') => void} [_callback] - Optional event handler.
+	 * @returns {() => void} Unsubscribe callback.
+	 */
+	subscribe(
+		_callback?: (
+			data: SupaStructData<Schema, RowName, Required>,
+			event: 'UPDATE' | 'INSERT' | 'DELETE'
+		) => void
+	) {
+		const realtime = this.build().realtime;
+		// if (realtime === '*' && callback) {
+		// 		for (const row of this.reactive) {
+		// 			callback(row as SupaStructData<Schema, RowName, Required>, 'INSERT');
+		// 		}
+		// }
+
+		const unsub = add_subscription(this.struct.supabase, {
+			struct: this.struct,
+			filter: realtime as any
+			// callback: (payload) => {
+
+			// }
+		});
+
+		return () => {
+			void unsub;
+		};
+	}
+
+	/**
+	 * Promise-like interface resolving to full query results.
+	 *
+	 * @param {(value: Result<SupaStructData<Schema, RowName, Required>[]>) => void} [onfulfilled] - Success callback.
+	 * @param {(reason: any) => void} [onrejected] - Failure callback.
+	 * @returns {ReturnType<SupaQuery2<Schema, RowName, Required, HasDefault>['fetch_all']>} Query result promise wrapper.
+	 */
+	then(
+		onfulfilled?: (value: Result<SupaStructData<Schema, RowName, Required>[]>) => void,
+		onrejected?: (reason: any) => void
+	) {
+		const res = this.fetch_all();
+		res.then(onfulfilled).catch(onrejected);
+		return res;
+	}
+
+	/**
+	 * Sets a default row returned by `single` when query has no match.
+	 *
+	 * @param {SupaStructData<Schema, RowName, Required>} data - Default fallback row.
+	 * @returns {SupaQuery2<Schema, RowName, Required, true>} Query instance with default marker.
+	 */
+	default(data: SupaStructData<Schema, RowName, Required>) {
+		this._default = data;
+		return this as SupaQuery2<Schema, RowName, Required, true>;
+	}
+
+	/**
+	 * Fetches all rows and unwraps the `Result`.
+	 *
+	 * @returns {SupaStructData<Schema, RowName, Required>[]} Unwrapped rows.
+	 */
+	unwrap() {
+		return this.fetch_all().unwrap();
+	}
+
+	/**
+	 * Fetches all rows and returns fallback on failure.
+	 *
+	 * @param {SupaStructData<Schema, RowName, Required>[]} defaultValue - Fallback rows.
+	 * @returns {SupaStructData<Schema, RowName, Required>[]} Query rows or fallback.
+	 */
+	unwrapOr(defaultValue: SupaStructData<Schema, RowName, Required>[]) {
+		return this.fetch_all().unwrapOr(defaultValue);
 	}
 }
 
-class SupaPagination<
+/**
+ * Configuration accepted by `JoinQuery` for left/right projection and join matching behavior.
+ */
+type JoinConfig<
+	Schema extends RowSchemaName,
+	RowName extends RowTableNames<Schema>,
+	OtherSchema extends RowSchemaName,
+	OtherRowName extends RowTableNames<OtherSchema>,
+	RequiredA extends keyof RowWithoutArchived<Schema, RowName>,
+	RequiredB extends keyof RowWithoutArchived<OtherSchema, OtherRowName>
+> = {
+	requiredA?: readonly RequiredA[];
+	whereB?: Partial<RowWithoutArchived<OtherSchema, OtherRowName>>;
+	joinOn?: {
+		left: keyof RowWithoutArchived<Schema, RowName>;
+		right: keyof RowWithoutArchived<OtherSchema, OtherRowName>;
+	};
+} & ({ pullB?: true; requiredB?: readonly RequiredB[] } | { pullB: false; requiredB?: never });
+
+/**
+ * Join-focused query wrapper for `SupaStruct.join()`.
+ *
+ * This class performs relation-aware hydration for left-table rows while optionally
+ * projecting right-table rows, and supports fetch/pagination/count/sync utilities.
+ */
+class JoinQuery<
+	Schema extends RowSchemaName,
+	RowName extends RowTableNames<Schema>,
+	OtherSchema extends RowSchemaName,
+	OtherRowName extends RowTableNames<OtherSchema>,
+	RequiredA extends keyof RowWithoutArchived<Schema, RowName> = keyof RowWithoutArchived<
+		Schema,
+		RowName
+	>,
+	RequiredB extends keyof RowWithoutArchived<OtherSchema, OtherRowName> = keyof RowWithoutArchived<
+		OtherSchema,
+		OtherRowName
+	>,
+	HasDefault extends boolean = false
+> {
+	private _default: SupaStructData<Schema, RowName, RequiredA | 'id'> | null = null;
+	private _sort: (
+		a: SupaStructData<Schema, RowName, RequiredA | 'id'>,
+		b: SupaStructData<Schema, RowName, RequiredA | 'id'>
+	) => number = $state((a, b) =>
+		String(a.id) < String(b.id) ? -1 : String(a.id) > String(b.id) ? 1 : 0
+	);
+	private _reverse = $state(false);
+	private readonly matchedLeftIds = $state(new SvelteSet<string>());
+
+	/**
+	 * Creates a join query wrapper between two structs.
+	 *
+	 * @param {SupaStruct<Schema, RowName>} struct - Left-side struct.
+	 * @param {SupaStruct<OtherSchema, OtherRowName>} other - Right-side struct.
+	 * @param {JoinConfig<Schema, RowName, OtherSchema, OtherRowName, RequiredA, RequiredB>} [config] - Join behavior configuration.
+	 */
+	constructor(
+		public readonly struct: SupaStruct<Schema, RowName>,
+		public readonly other: SupaStruct<OtherSchema, OtherRowName>,
+		public readonly config?: JoinConfig<
+			Schema,
+			RowName,
+			OtherSchema,
+			OtherRowName,
+			RequiredA,
+			RequiredB
+		>
+	) {}
+
+	/**
+	 * Normalized required field list for left table projection.
+	 */
+	private get leftRequired() {
+		const required = (this.struct as any).getEffectiveRequiredFields(
+			this.config?.requiredA
+		) as readonly (RequiredA | 'id')[];
+		return Array.from(new SvelteSet([...required.map(String), 'id'])) as readonly (
+			RequiredA | 'id'
+		)[];
+	}
+
+	/**
+	 * Normalized required field list for right table projection.
+	 */
+	private get rightRequired() {
+		const required = (this.other as any).getEffectiveRequiredFields(
+			this.config?.pullB === false ? undefined : this.config?.requiredB
+		) as readonly (RequiredB | 'id')[];
+		const fields = Array.from(new SvelteSet([...required.map(String), 'id']));
+		for (const key of Object.keys(this.config?.whereB ?? {}))
+			if (!fields.includes(key)) fields.push(key);
+		return fields as readonly (RequiredB | 'id')[];
+	}
+
+	/**
+	 * Resolves join key mapping from explicit config or known conventions.
+	 */
+	private getJoinFields() {
+		if (this.config?.joinOn) {
+			return { left: String(this.config.joinOn.left), right: String(this.config.joinOn.right) };
+		}
+		const leftKeys = new SvelteSet((this.struct as any).getSchemaRowKeys().map(String));
+		const rightKeys = new SvelteSet((this.other as any).getSchemaRowKeys().map(String));
+		for (const candidate of [
+			{ left: 'id', right: `${String(this.struct.table)}_id` },
+			{ left: 'id', right: `${String(this.struct.table)}Id` },
+			{ left: 'number', right: `${String(this.struct.table)}_number` },
+			{ left: 'number', right: `${String(this.struct.table)}Number` },
+			{ left: 'number', right: 'team_number' },
+			{ left: 'id', right: 'id' }
+		]) {
+			if (leftKeys.has(candidate.left) && rightKeys.has(candidate.right)) return candidate;
+		}
+		return null;
+	}
+
+	/**
+	 * Deduplicates rows by id.
+	 */
+	private uniqueById<T extends { id?: string }>(rows: T[]) {
+		const byId = new SvelteMap<string, T>();
+		for (const row of rows) if (row?.id) byId.set(String(row.id), row);
+		return Array.from(byId.values());
+	}
+
+	/**
+	 * Hydrates left/right join rows and updates tracked matched-left ids.
+	 */
+	private hydrateJoin(
+		leftRows: PartialRow<Schema, RowName, RequiredA | 'id'>[],
+		rightRows: PartialRow<OtherSchema, OtherRowName, RequiredB | 'id'>[]
+	) {
+		this.matchedLeftIds.clear();
+		for (const row of leftRows) this.matchedLeftIds.add(String(row.id));
+		const left = this.struct.Hydrate(
+			leftRows,
+			this.leftRequired as readonly RequiredA[]
+		) as SupaStructData<Schema, RowName, RequiredA | 'id'>[];
+		const right =
+			this.config?.pullB === false
+				? []
+				: (this.other.Hydrate(
+						rightRows,
+						this.rightRequired as readonly RequiredB[]
+					) as SupaStructData<OtherSchema, OtherRowName, RequiredB | 'id'>[]);
+		return { left, right };
+	}
+
+	/**
+	 * Attempts join hydration from Dexie-backed local data first.
+	 */
+	private async pull_dexie() {
+		const dexieA = this.struct.getDexie(this.struct.getSchemaDefinition().Row as any);
+		const dexieB = this.other.getDexie(this.other.getSchemaDefinition().Row as any);
+		if (!dexieA || !dexieB) {
+			this.matchedLeftIds.clear();
+			return [] as SupaStructData<Schema, RowName, RequiredA | 'id'>[];
+		}
+
+		const rightResult = await dexieB.get((this.config?.whereB ?? {}) as any);
+		if (rightResult.isErr() || !rightResult.value.length) {
+			this.matchedLeftIds.clear();
+			return [] as SupaStructData<Schema, RowName, RequiredA | 'id'>[];
+		}
+		const rightRows = rightResult.value.map((row) => row.raw) as PartialRow<
+			OtherSchema,
+			OtherRowName,
+			RequiredB | 'id'
+		>[];
+		if (this.config?.pullB !== false)
+			this.other.Hydrate(rightRows, this.rightRequired as readonly RequiredB[]);
+
+		const joinFields = this.getJoinFields();
+		if (!joinFields) {
+			this.matchedLeftIds.clear();
+			return [] as SupaStructData<Schema, RowName, RequiredA | 'id'>[];
+		}
+
+		const leftAll = await dexieA.all();
+		if (leftAll.isErr()) {
+			this.matchedLeftIds.clear();
+			return [] as SupaStructData<Schema, RowName, RequiredA | 'id'>[];
+		}
+
+		const rightJoinValues = new SvelteSet(
+			rightRows
+				.map((row) => {
+					const value = (row as any)[joinFields.right];
+					return value === undefined || value === null ? null : String(value);
+				})
+				.filter((value): value is string => value !== null)
+		);
+		const leftRows = leftAll.value
+			.map((item) => item.raw as PartialRow<Schema, RowName, RequiredA | 'id'>)
+			.filter((row) => {
+				const value = (row as any)[joinFields.left];
+				return value !== undefined && value !== null && rightJoinValues.has(String(value));
+			});
+
+		return this.hydrateJoin(this.uniqueById(leftRows), this.uniqueById(rightRows)).left;
+	}
+
+	/**
+	 * Builds the Supabase join query for current join configuration.
+	 */
+	private build(count?: 'exact' | 'estimated' | 'planned') {
+		const leftFields = Array.from(
+			new SvelteSet([...this.leftRequired.map(String), 'id', 'archived'])
+		);
+		const rightFields = Array.from(
+			new SvelteSet([...this.rightRequired.map(String), 'id', 'archived'])
+		);
+		let query = this.struct.supabase
+			.schema(this.struct.schema)
+			.from(this.struct.table)
+			.select(
+				`${leftFields.join(',')}, ${String(this.other.table)}!inner(${rightFields.join(',')})`,
+				{ count }
+			)
+			.filter('archived', 'eq', false)
+			.filter(`${String(this.other.table)}.archived`, 'eq', false);
+		for (const [key, value] of Object.entries(this.config?.whereB ?? {})) {
+			query = query.filter(`${String(this.other.table)}.${key}`, 'eq', value as any);
+		}
+		return query;
+	}
+
+	/**
+	 * Reactive left-table rows currently matched by this join.
+	 */
+	get reactive() {
+		const rows = Array.from(this.struct.cache.values()).filter((item) =>
+			this.matchedLeftIds.has(String(item.id))
+		);
+		return rows.sort((a, b) => (this._reverse ? -1 : 1) * this._sort(a as any, b as any));
+	}
+
+	/**
+	 * First matched row or default fallback.
+	 */
+	get single(): HasDefault extends true
+		? SupaStructData<Schema, RowName, RequiredA>
+		: SupaStructData<Schema, RowName, RequiredA> | null {
+		const [first] = this.reactive;
+		if (first) return first as any;
+		if (this._default) return this._default as any;
+		return null as any;
+	}
+
+	/**
+	 * Pagination facade for join queries.
+	 */
+	get paginated() {
+		return {
+			page: async (page: number, size: number) => {
+				const res = await this.fetch_paginated(page, size);
+				if (res.isErr()) throw res.error;
+				return res.value;
+			}
+		};
+	}
+
+	/**
+	 * Sets sort comparator for matched rows.
+	 */
+	sort(
+		sort: (
+			a: SupaStructData<Schema, RowName, RequiredA | 'id'>,
+			b: SupaStructData<Schema, RowName, RequiredA | 'id'>
+		) => number
+	) {
+		this._sort = sort;
+		return this;
+	}
+	/**
+	 * Toggles reverse sort ordering.
+	 */
+	reverse() {
+		this._reverse = !this._reverse;
+		return this;
+	}
+
+	/**
+	 * Fetches all matched left-table rows for this join.
+	 */
+	fetch_all() {
+		return attemptAsync(async () => {
+			await this.pull_dexie();
+			const res = await this.build();
+			if (res.error) throw res.error;
+			const leftRows: PartialRow<Schema, RowName, RequiredA | 'id'>[] = [];
+			const rightRows: PartialRow<OtherSchema, OtherRowName, RequiredB | 'id'>[] = [];
+			for (const item of (res.data ?? []) as unknown as Array<Record<string, unknown>>) {
+				const nested = item[String(this.other.table)];
+				const { [String(this.other.table)]: _nested, ...leftOnly } = item;
+				const rightCandidates = Array.isArray(nested) ? nested : nested ? [nested] : [];
+				if (!rightCandidates.length) continue;
+				leftRows.push(leftOnly as PartialRow<Schema, RowName, RequiredA | 'id'>);
+				for (const candidate of rightCandidates)
+					if (
+						candidate &&
+						typeof candidate === 'object' &&
+						(candidate as { archived?: boolean }).archived !== true
+					)
+						rightRows.push(candidate as PartialRow<OtherSchema, OtherRowName, RequiredB | 'id'>);
+			}
+			return this.hydrateJoin(this.uniqueById(leftRows), this.uniqueById(rightRows)).left;
+		});
+	}
+
+	/**
+	 * Fetches a page of join-matched rows from Supabase.
+	 */
+	fetch_paginated(page: number, size: number) {
+		return attemptAsync(async () => {
+			await this.pull_dexie();
+			const from = (page - 1) * size;
+			const to = from + size - 1;
+			const res = await this.build('exact').range(from, to);
+			if (res.error) throw res.error;
+			const leftRows: PartialRow<Schema, RowName, RequiredA | 'id'>[] = [];
+			const rightRows: PartialRow<OtherSchema, OtherRowName, RequiredB | 'id'>[] = [];
+			for (const item of (res.data ?? []) as unknown as Array<Record<string, unknown>>) {
+				const nested = item[String(this.other.table)];
+				const { [String(this.other.table)]: _nested, ...leftOnly } = item;
+				const rightCandidates = Array.isArray(nested) ? nested : nested ? [nested] : [];
+				if (!rightCandidates.length) continue;
+				leftRows.push(leftOnly as PartialRow<Schema, RowName, RequiredA | 'id'>);
+				for (const candidate of rightCandidates)
+					if (
+						candidate &&
+						typeof candidate === 'object' &&
+						(candidate as { archived?: boolean }).archived !== true
+					)
+						rightRows.push(candidate as PartialRow<OtherSchema, OtherRowName, RequiredB | 'id'>);
+			}
+			const hydrated = this.hydrateJoin(this.uniqueById(leftRows), this.uniqueById(rightRows)).left;
+			return { data: hydrated, count: res.count ?? hydrated.length };
+		});
+	}
+
+	/**
+	 * Counts matched join rows.
+	 */
+	count() {
+		return attemptAsync(async () => {
+			const res = await this.build('exact').limit(0);
+			if (res.error) throw res.error;
+			return res.count ?? 0;
+		});
+	}
+	/**
+	 * Fetches first or last matched join row.
+	 */
+	fetch_single(type: 'first' | 'last') {
+		return attemptAsync(async () => {
+			const rows = await this.fetch_all();
+			if (rows.isErr()) throw rows.error;
+			return type === 'first' ? (rows.value[0] ?? null) : (rows.value.at(-1) ?? null);
+		});
+	}
+	/**
+	 * Convenience first-row helper.
+	 */
+	first() {
+		return this.fetch_single('first');
+	}
+	/**
+	 * Convenience last-row helper.
+	 */
+	last() {
+		return this.fetch_single('last');
+	}
+	/**
+	 * Syncs join result with query cache and TTL semantics.
+	 */
+	sync(ttl: number) {
+		return this.pull_dexie().then(async () => {
+			if (!browser) return this.fetch_all();
+			const query_key = stable_stringify({
+				schema: this.struct.schema,
+				table: this.struct.table,
+				other: this.other.table,
+				config: {
+					requiredA: this.config?.requiredA?.map(String),
+					requiredB:
+						this.config?.requiredB === undefined ? undefined : this.config.requiredB.map(String),
+					whereB: this.config?.whereB,
+					joinOn: this.config?.joinOn,
+					pullB: this.config?.pullB ?? true
+				}
+			});
+			const cache_row_id = `${this.struct.schema}:${this.struct.table}:${query_key}`;
+			const cached = await QueryCache.get({
+				query: query_key,
+				schema: this.struct.schema,
+				table: this.struct.table
+			}).first();
+			if (cached.isOk() && cached.value) {
+				if (cached.value.raw.version !== QUERY_CACHE_VERSION) await cached.value.delete();
+				else if (Date.now() - cached.value.raw.last_sync <= ttl) return this.reactive;
+			}
+			const hydrated = await this.fetch_all().unwrap();
+			await QueryCache.upsert({
+				query: query_key,
+				schema: this.struct.schema,
+				table: this.struct.table,
+				version: QUERY_CACHE_VERSION,
+				required: this.leftRequired.map(String).join(','),
+				last_sync: Date.now(),
+				created_at: new SvelteDate(),
+				id: cache_row_id
+			});
+			return hydrated;
+		});
+	}
+
+	/**
+	 * Registers realtime updates for left-table rows in this join.
+	 */
+	subscribe(
+		callback?: (
+			data: SupaStructData<Schema, RowName, RequiredA>,
+			event: 'UPDATE' | 'INSERT' | 'DELETE'
+		) => void
+	) {
+		if (!callback) return () => {};
+		const unsub = add_subscription(this.struct.supabase, {
+			struct: this.struct,
+			filter: '*',
+			callback: (payload) => {
+				const raw = payload.new as any;
+				if (!raw) return;
+				const row = this.struct.Generator(raw as any, {
+					required: this.leftRequired as any
+				}) as SupaStructData<Schema, RowName, RequiredA>;
+				if (this.matchedLeftIds.has(String(row.id))) callback(row, 'INSERT');
+			}
+		});
+		return () => {
+			void unsub;
+		};
+	}
+
+	/**
+	 * Promise-like interface resolving to full join results.
+	 */
+	then(
+		onfulfilled?: (value: Result<SupaStructData<Schema, RowName, RequiredA | 'id'>[]>) => void,
+		onrejected?: (reason: any) => void
+	) {
+		const res = this.fetch_all();
+		res.then(onfulfilled).catch(onrejected);
+		return res;
+	}
+	/**
+	 * Sets default fallback row for `single`.
+	 */
+	default(data: SupaStructData<Schema, RowName, RequiredA | 'id'>) {
+		this._default = data;
+		return this as JoinQuery<
+			Schema,
+			RowName,
+			OtherSchema,
+			OtherRowName,
+			RequiredA,
+			RequiredB,
+			true
+		>;
+	}
+	/**
+	 * Fetches and unwraps all join results.
+	 */
+	unwrap() {
+		return this.fetch_all().unwrap();
+	}
+	/**
+	 * Fetches join results with fallback on failure.
+	 */
+	unwrapOr(defaultValue: SupaStructData<Schema, RowName, RequiredA | 'id'>[]) {
+		return this.fetch_all().unwrapOr(defaultValue);
+	}
+}
+
+/**
+ * Pagination controller bound to a query result.
+ *
+ * This helper tracks current page state and keeps stable row ids for page slices
+ * so cache updates do not break displayed pagination lists.
+ */
+class _SupaPagination<
 	Schema extends RowSchemaName,
 	RowName extends RowTableNames<Schema>,
 	Required extends keyof RowWithoutArchived<Schema, RowName> = keyof RowWithoutArchived<
@@ -2988,21 +2745,31 @@ class SupaPagination<
 		RowName
 	>
 > {
+	/**
+	 * Current one-based page number.
+	 */
 	private _currentPage = $state(1);
+	/**
+	 * Number of rows requested per page.
+	 */
 	private _pageSize = $state(10);
+	/**
+	 * Total number of rows matching the current query.
+	 */
 	private _totalItems = $state(0);
 
-	// Track exact IDs for the current view, solving the Cache-Slice mismatch
+	/**
+	 * Exact row IDs for the active page view, used to avoid stale cache-slice mismatches.
+	 */
 	private _currentPageIds = $state<string[]>([]);
 
 	/**
-	 * Creates a pagination controller bound to a query and struct cache.
+	 * Creates a pagination controller bound to a parent struct and query.
 	 *
-	 * @param {SupaQuery<Schema, RowName, Required>} query - Parent query wrapper.
 	 * @param {SupaStruct<Schema, RowName>} struct - Owning struct.
-	 * @param {(page: number, size: number) => Promise<PaginatedResponse<SupaStructData<Schema, RowName, Required>>>} paginateQuery - Paginated fetch executor.
+	 * @param {(page: number, size: number) => Promise<PaginatedResponse<SupaStructData<Schema, RowName, Required>>>} paginateQuery - Pagination callback.
 	 * @example
-	 * const pager = new SupaPagination(query, struct, paginate);
+	 * const pager = new _SupaPagination(struct, paginateFn);
 	 */
 	constructor(
 		private readonly struct: SupaStruct<Schema, RowName>,
@@ -3193,6 +2960,16 @@ class SupaPagination<
 	}
 }
 
+/**
+ * Typed table adapter for a schema/table pair.
+ *
+ * A `SupaStructData` wraps raw row data with convenience mutation helpers and
+ * keeps object identity stable across cache refreshes.
+ *
+ * @example
+ * const profile = await users.fromId('abc123');
+ * await profile.update({ display_name: 'Ada' });
+ */
 export class SupaStructData<
 	Schema extends RowSchemaName,
 	RowName extends RowTableNames<Schema>,
@@ -3202,34 +2979,49 @@ export class SupaStructData<
 	>,
 	UpdateName extends UpdateTableNames<Schema> = Extract<RowName, UpdateTableNames<Schema>>
 > {
+	/**
+	 * Raw row payload backing this wrapper.
+	 *
+	 * This value is reactive and updated in place as row fields change.
+	 */
 	public readonly raw: PartialRow<Schema, RowName, Required> = $state({} as any);
 
 	/**
 	 * Creates a wrapped row instance tied to a parent struct.
 	 *
 	 * @param {SupaStruct<Schema, RowName>} struct - Parent struct.
-	 * @param {Row<Schema, RowName>} data - Initial row data.
+	 * @param {PartialRow<Schema, RowName, Required>} data - Initial row data.
+	 * @param {{ is_temporary?: boolean }} [config] - Optional local-only metadata.
 	 * @example
 	 * const item = new SupaStructData(struct, row);
 	 */
 	constructor(
+		/**
+		 * Parent struct that owns this row wrapper and its cache.
+		 */
 		public readonly struct: SupaStruct<Schema, RowName>,
 		data: PartialRow<Schema, RowName, Required>,
+		/**
+		 * Optional wrapper metadata, including whether this row is a local temporary draft.
+		 */
 		public readonly config?: { is_temporary?: boolean }
 	) {
 		this.raw = data;
 	}
 	/**
-	 * Row id convenience accessor.
+	 * Row identifier convenience accessor.
 	 *
 	 * @returns {string} Row id.
-	 * @example
-	 * console.log(item.id);
 	 */
 	get id() {
 		return this.raw.id;
 	}
 
+	/**
+	 * Indicates whether this row is a temporary local placeholder.
+	 *
+	 * @returns {boolean} True when the row is a transient draft.
+	 */
 	get temp() {
 		return this.config?.is_temporary ?? false;
 	}
@@ -3245,6 +3037,11 @@ export class SupaStructData<
 		return new SvelteDate(this.raw.created_at);
 	}
 
+	/**
+	 * Removes the current row from the local cache and Dexie store without touching the server.
+	 *
+	 * @returns {Promise<Result<void, SupaError>>} Local deletion result.
+	 */
 	_deleteLocal() {
 		return attemptAsync(async () => {
 			this.struct.cache.delete(String(this.id));

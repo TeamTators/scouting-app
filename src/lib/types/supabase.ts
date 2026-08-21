@@ -209,6 +209,38 @@ export type Database = {
 				};
 				Relationships: [];
 			};
+			session_tab: {
+				Row: {
+					archived: boolean;
+					created_at: string;
+					id: string;
+					session_id: string;
+					url: string;
+				};
+				Insert: {
+					archived?: boolean;
+					created_at?: string;
+					id?: string;
+					session_id: string;
+					url: string;
+				};
+				Update: {
+					archived?: boolean;
+					created_at?: string;
+					id?: string;
+					session_id?: string;
+					url?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'session_tab_session_id_fkey';
+						columns: ['session_id'];
+						isOneToOne: false;
+						referencedRelation: 'session';
+						referencedColumns: ['id'];
+					}
+				];
+			};
 		};
 		Views: {
 			[_ in never]: never;
@@ -265,6 +297,35 @@ export type Database = {
 	};
 	test: {
 		Tables: {
+			join_test: {
+				Row: {
+					archived: boolean;
+					created_at: string;
+					id: number;
+					test_id: string | null;
+				};
+				Insert: {
+					archived?: boolean;
+					created_at?: string;
+					id?: number;
+					test_id?: string | null;
+				};
+				Update: {
+					archived?: boolean;
+					created_at?: string;
+					id?: number;
+					test_id?: string | null;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'join_test_test_id_fkey';
+						columns: ['test_id'];
+						isOneToOne: false;
+						referencedRelation: 'test';
+						referencedColumns: ['id'];
+					}
+				];
+			};
 			test: {
 				Row: {
 					age: number;
@@ -492,6 +553,13 @@ export type DatabasePivoted = {
 				id: string;
 				prev_url: string | null;
 			};
+			session_tab: {
+				archived: boolean;
+				created_at: string;
+				id: string;
+				session_id: string;
+				url: string;
+			};
 		};
 		public: {
 			_template: {
@@ -501,6 +569,12 @@ export type DatabasePivoted = {
 			};
 		};
 		test: {
+			join_test: {
+				archived: boolean;
+				created_at: string;
+				id: number;
+				test_id: string | null;
+			};
 			test: {
 				age: number;
 				archived: boolean;
@@ -571,6 +645,13 @@ export type DatabasePivoted = {
 				id?: string;
 				prev_url?: string | null;
 			};
+			session_tab: {
+				archived?: boolean;
+				created_at?: string;
+				id?: string;
+				session_id: string;
+				url: string;
+			};
 		};
 		public: {
 			_template: {
@@ -580,6 +661,12 @@ export type DatabasePivoted = {
 			};
 		};
 		test: {
+			join_test: {
+				archived?: boolean;
+				created_at?: string;
+				id?: number;
+				test_id?: string | null;
+			};
 			test: {
 				age: number;
 				archived?: boolean;
@@ -650,6 +737,13 @@ export type DatabasePivoted = {
 				id?: string;
 				prev_url?: string | null;
 			};
+			session_tab: {
+				archived?: boolean;
+				created_at?: string;
+				id?: string;
+				session_id?: string;
+				url?: string;
+			};
 		};
 		public: {
 			_template: {
@@ -659,6 +753,12 @@ export type DatabasePivoted = {
 			};
 		};
 		test: {
+			join_test: {
+				archived?: boolean;
+				created_at?: string;
+				id?: number;
+				test_id?: string | null;
+			};
 			test: {
 				age?: number;
 				archived?: boolean;
@@ -677,11 +777,13 @@ export type DatabasePivoted = {
 			role: Database['core']['Tables']['role']['Relationships'];
 			role_account: Database['core']['Tables']['role_account']['Relationships'];
 			session: Database['core']['Tables']['session']['Relationships'];
+			session_tab: Database['core']['Tables']['session_tab']['Relationships'];
 		};
 		public: {
 			_template: Database['public']['Tables']['_template']['Relationships'];
 		};
 		test: {
+			join_test: Database['test']['Tables']['join_test']['Relationships'];
 			test: Database['test']['Tables']['test']['Relationships'];
 		};
 	};

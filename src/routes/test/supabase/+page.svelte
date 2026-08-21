@@ -10,141 +10,217 @@
 	let done = $state(false);
 	let pass = $state(false);
 
-	const ok = (name: string, detail: string) => results.push({ name, pass: true, detail });
-	const err = (name: string, detail: string) => results.push({ name, pass: false, detail });
+	const ok = (name: string, detail: string) => {
+		results.push({ name, pass: true, detail });
+	};
+
+	const err = (name: string, detail: string) => {
+		results.push({ name, pass: false, detail });
+	};
 
 	const run = async () => {
-		SupaStruct.initRealtime(data.supabase);
 		results = [];
 		done = false;
 		pass = false;
+
+		SupaStruct.initRealtime(data.supabase);
 
 		const prefix = `t-${Math.random().toString(36).slice(2, 7)}`;
 		const writer = SupaStruct.get({
 			client: data.supabase,
 			table: 'test',
 			schema: 'test',
-			index_db: false
+			index_db: false,
+			debug: false
+		});
+		const joinWriter = SupaStruct.get({
+			client: data.supabase,
+			table: 'join_test',
+			schema: 'test',
+			index_db: false,
+			debug: false
 		});
 
-		// Collect realtime events as they arrive
 		const ids: string[] = [];
+		const joinIds: number[] = [];
 
 		try {
-			const res = await writer.new(
-				...Array.from({ length: 5 }, (_, i) => ({ name: `${prefix}-${i}`, age: 20 + i }))
+			const created = await writer.new(
+				...Array.from({ length: 5 }, (_, i) => ({
+					// id: `${prefix}-${i}-${Date.now()}`,
+					id: crypto.randomUUID(),
+					name: `${prefix}-${i}`,
+					age: 20 + i,
+					archived: false,
+					created_at: new Date().toISOString()
+				}))
 			);
-			if (res.isErr()) {
-				err('create', res.error.message);
+			if (created.isErr()) {
+				err('create', created.error.message);
 			} else {
-				const rows = res.unwrap();
+				const rows = created.unwrap();
 				rows.forEach((row, i) => {
-					const id = String(row.id);
-					ids.push(id);
-					ok(`create-${i}`, `id=${id}`);
+					ids.push(String(row.id));
+					ok(`create-${i}`, `id=${row.id}`);
 				});
 			}
 
-			if (!ids.length) {
-				return;
-			}
+			if (!ids.length) throw new Error('No rows were created');
 
-			console.log('Found ids:', ids);
-
-			// ── fromId ────────────────────────────────────────────────────────
 			for (const id of ids) {
-				console.log(`fromId(${id})`);
-				const res = await writer.fromId(id);
-				if (res.isErr()) err(`fromId(${id})`, res.error.message);
-				else ok(`fromId`, `found id=${res.unwrap().id}`);
+				const row = await writer.fromId(id);
+				if (row.isErr()) err(`fromId-${id}`, row.error.message);
+				else ok('fromId', `found id=${row.unwrap().id}`);
 			}
 
-			console.log('fromId done');
+			const allRows = await writer.all();
+			const allList = (Array.isArray(allRows) ? allRows : allRows.unwrap()) as Array<{
+				raw: { name?: string };
+			}>;
+			const allMatches = allList.filter((row) =>
+				String(row.raw.name ?? '').startsWith(prefix)
+			).length;
+			if (allMatches >= 5) ok('all', `${allMatches} rows matched this prefix`);
+			else err('all', `expected at least 5, got ${allMatches}`);
 
-			// ── all() ─────────────────────────────────────────────────────────
-			const allRes = await writer.all();
-			if (allRes.isErr()) err('all', allRes.error.message);
+			const getRows = await writer.get({ name: `${prefix}-0` } as Parameters<typeof writer.get>[0]);
+			const getList = (Array.isArray(getRows) ? getRows : getRows.unwrap()) as Array<{
+				raw: { name?: string };
+			}>;
+			if (getList.some((row) => row.raw.name === `${prefix}-0`))
+				ok('get', `${getList.length} matching row(s)`);
+			else err('get', 'expected row matching name');
+
+			const getOrRows = await writer.getOR({
+				name: `${prefix}-0`,
+				age: 20
+			} as Parameters<typeof writer.getOR>[0]);
+			const getOrList = Array.isArray(getOrRows) ? getOrRows : getOrRows.unwrap();
+			if (getOrList.length >= 1) ok('getOR', `${getOrList.length} row(s) matched`);
+			else err('getOR', 'no rows matched getOR');
+
+			const searchRows = await writer.search({
+				type: 'and',
+				conditions: [
+					{ field: 'name', operator: 'ilike', value: `${prefix}%` },
+					{ field: 'age', operator: 'gte', value: 20 }
+				]
+			});
+			const searchList = Array.isArray(searchRows) ? searchRows : searchRows.unwrap();
+			if (searchList.length >= 5) ok('search', `${searchList.length} matched`);
+			else err('search', `expected >=5, got ${searchList.length}`);
+
+			const pagedQuery = writer.search({
+				field: 'name',
+				operator: 'ilike',
+				value: `${prefix}%`
+			});
+			const pageOne = await pagedQuery.paginated.page(1, 2);
+			const pageTwo = await pagedQuery.paginated.page(2, 2);
+			if (pageOne.data.length + pageTwo.data.length >= 4)
+				ok('paginate', `p1=${pageOne.data.length}, p2=${pageTwo.data.length}`);
+			else err('paginate', `p1+p2 was ${pageOne.data.length + pageTwo.data.length}`);
+
+			const firstRow = await pagedQuery.first();
+			if (firstRow.isErr()) err('first', firstRow.error.message);
+			else if (!firstRow.value) err('first', 'returned null');
+			else ok('first', `id=${firstRow.value.id}`);
+
+			const lastRow = await pagedQuery.last();
+			if (lastRow.isErr()) err('last', lastRow.error.message);
+			else if (!lastRow.value) err('last', 'returned null');
+			else ok('last', `id=${lastRow.value.id}`);
+
+			const syncRows = await pagedQuery.sync(0);
+			if (Array.isArray(syncRows)) ok('sync', `${syncRows.length} rows returned`);
+			else err('sync', 'unexpected sync result shape');
+
+			const joinRows = await joinWriter.new(
+				...ids.map((id, index) => ({
+					id: index + 1 + Math.floor(Date.now() / 1000),
+					test_id: id,
+					archived: false,
+					created_at: new Date().toISOString()
+				}))
+			);
+			if (joinRows.isErr()) err('join-create', joinRows.error.message);
 			else {
-				const mine = allRes.unwrap().filter((r) => r.raw.name?.startsWith(prefix));
-				if (mine.length < 5) err('all', `got ${mine.length}, expected 5`);
-				else ok('all', `${allRes.unwrap().length} total, ${mine.length} for this run`);
+				const rows = joinRows.unwrap();
+				rows.forEach((row) => joinIds.push(Number(row.id)));
+				ok('join-create', `${rows.length} join rows created`);
 			}
 
-			// ── get() ─────────────────────────────────────────────────────────
-			const getRes = await writer.get({ name: `${prefix}-0` } as Parameters<typeof writer.get>[0]);
-			if (getRes.isErr()) err('get', getRes.error.message);
-			else ok('get', `${getRes.unwrap().length} row(s)`);
+			const joinQuery = writer.join(joinWriter, {
+				whereB: { test_id: ids[0] },
+				requiredA: ['id', 'name', 'age'],
+				requiredB: ['id', 'test_id']
+			});
 
-			// ── search() ─────────────────────────────────────────────────────
-			const searchRes = await writer.search({ field: 'name', operator: 'ilike', value: prefix });
-			if (searchRes.isErr()) err('search', searchRes.error.message);
-			else ok('search', `${searchRes.unwrap().length} rows`);
+			const joinResult = await joinQuery.fetch_all();
+			if (joinResult.isErr()) err('join-fetch', joinResult.error.message);
+			else {
+				if (joinResult.value.length >= 1)
+					ok('join-fetch', `${joinResult.value.length} joined rows`);
+				else err('join-fetch', 'no join rows returned');
+			}
 
-			// ── pagination ────────────────────────────────────────────────────
-			const q = writer.search({ field: 'name', operator: 'ilike', value: prefix });
-			q.paginated.pageSize = 2;
-			const p1 = await q.paginated.page(1);
-			const p2 = await q.paginated.page(2);
-			if (p1.isErr()) err('paginate-p1', p1.error.message);
-			else if (p2.isErr()) err('paginate-p2', p2.error.message);
-			else
-				ok(
-					'paginate',
-					`total=${q.paginated.totalItems} pages=${q.paginated.pages} p1=${p1.unwrap().length} p2=${p2.unwrap().length}`
-				);
+			const joinCount = await joinQuery.count();
+			if (joinCount.isErr()) err('join-count', joinCount.error.message);
+			else ok('join-count', `count=${joinCount.value}`);
 
-			// ── update first row ──────────────────────────────────────────────
-			const rowRes = await writer.fromId(ids[0]);
-			if (rowRes.isErr()) {
-				err('update', rowRes.error.message);
-			} else {
-				const upRes = await rowRes.unwrap().update({ name: `${prefix}-updated` });
-				if (upRes.isErr()) err('update', upRes.error.message);
+			const joinPage = await joinQuery.paginated.page(1, 10);
+			ok('join-page', `page=${joinPage.data.length}`);
+
+			const joinFirst = await joinQuery.first();
+			if (joinFirst.isErr()) err('join-first', joinFirst.error.message);
+			else if (!joinFirst.value) err('join-first', 'null result');
+			else ok('join-first', `id=${joinFirst.value.id}`);
+
+			const joinLast = await joinQuery.last();
+			if (joinLast.isErr()) err('join-last', joinLast.error.message);
+			else if (!joinLast.value) err('join-last', 'null result');
+			else ok('join-last', `id=${joinLast.value.id}`);
+
+			const joinSync = await joinQuery.sync(0);
+			if (Array.isArray(joinSync)) ok('join-sync', `${joinSync.length} rows synced`);
+			else err('join-sync', 'unexpected join sync shape');
+
+			const updated = await writer.fromId(ids[0]);
+			if (updated.isErr()) err('update', updated.error.message);
+			else {
+				const save = await updated.unwrap().update({ age: 99, name: `${prefix}-updated` });
+				if (save.isErr()) err('update', save.error.message);
 				else {
-					const check = await writer.fromId(ids[0]);
-					if (check.isErr()) err('update-verify', check.error.message);
-					else if (check.unwrap().raw.name !== `${prefix}-updated`)
-						err('update-verify', `got ${check.unwrap().raw.name}`);
-					else ok('update', `name="${prefix}-updated" confirmed`);
+					const after = await writer.fromId(ids[0]);
+					if (after.isErr()) err('update-verify', after.error.message);
+					else if (
+						after.unwrap().raw.age !== 99 ||
+						after.unwrap().raw.name !== `${prefix}-updated`
+					) {
+						err('update-verify', 'updated data mismatch');
+					} else ok('update', 'row updated and verified');
 				}
 			}
 
-			// const updateReady = await waitFor(
-			// 	() => rtEvents.some((e) => e.type === 'update' && e.id === ids[0]),
-			// 	10000
-			// );
-			// if (!updateReady) err('realtime-update', `no update event for ${ids[0]}`);
-			// else ok('realtime-update', 'update event received');
-
-			// ── delete all rows ───────────────────────────────────────────────
 			for (const id of ids) {
-				const r = await writer.fromId(id);
-				if (r.isErr()) {
-					ok(`delete-${id}`, 'already gone');
-					continue;
-				}
-				const d = await r.unwrap().delete();
-				if (d.isErr()) err(`delete-${id}`, d.error.message);
+				const row = await writer.fromId(id);
+				if (row.isErr()) continue;
+				const del = await row.unwrap().delete();
+				if (del.isErr()) err(`delete-${id}`, del.error.message);
 				else ok(`delete-${id}`, 'deleted');
 			}
 
-			// const deletesReady = await waitFor(
-			// 	() => ids.every((id) => rtEvents.some((e) => e.type === 'delete' && e.id === id)),
-			// 	10000
-			// );
-			// if (!deletesReady) {
-			// 	const delCount = ids.filter((id) =>
-			// 		rtEvents.some((e) => e.type === 'delete' && e.id === id)
-			// 	).length;
-			// 	err('realtime-deletes', `got ${delCount}/${ids.length}`);
-			// } else {
-			// 	ok('realtime-deletes', `all ${ids.length} delete events received`);
-			// }
+			for (const id of joinIds) {
+				const row = await joinWriter.fromId(String(id));
+				if (row.isErr()) continue;
+				const del = await row.unwrap().delete();
+				if (del.isErr()) err(`join-delete-${id}`, del.error.message);
+				else ok(`join-delete-${id}`, 'deleted');
+			}
 		} catch (error) {
 			err('run', error instanceof Error ? error.message : String(error));
 		} finally {
-			stop();
-			pass = results.every((r) => r.pass);
+			pass = results.every((result) => result.pass);
 			done = true;
 		}
 	};
