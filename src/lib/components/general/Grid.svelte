@@ -35,7 +35,6 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		animateRows: true
 	}}
 	height="400px"
-	filter
 />
 ```
 -->
@@ -70,7 +69,6 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 	} from '$lib/utils/ag-grid/checkbox-select';
 
 	interface Props {
-		filter?: boolean;
 		opts: Omit<GridOptions<T>, 'rowData'>;
 		data: T[];
 		style?: string;
@@ -88,7 +86,6 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 	}
 
 	const {
-		filter,
 		opts,
 		data,
 		style,
@@ -181,22 +178,7 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 
 	let gridDiv: HTMLDivElement;
 	let grid: GridApi<T>;
-	let filterText: string = $state('');
-	let filterTimeout: ReturnType<typeof setTimeout> | null = null;
 
-	const onDataFilter = () => {
-		if (filterTimeout) {
-			clearTimeout(filterTimeout);
-		}
-		filterTimeout = setTimeout(() => {
-			grid.setGridOption('quickFilterText', filterText);
-			const nodes = grid
-				.getRenderedNodes()
-				.map((n) => n.data)
-				.filter(Boolean);
-			em.emit('filter', nodes);
-		}, 300);
-	};
 
 	const gridOptions: GridOptions<T> = $derived({
 		theme: gridTheme,
@@ -285,9 +267,8 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		});
 	};
 
-	const proxy_data = $derived(data.map(getCircularReplacer));
-
-	let prev_data: string[] = $state([]);
+	const static_data = $derived(data.map(getCircularReplacer));
+	let prev_static_data: string[] = $state([]);
 
 	const applyData = () => {
 		if (!grid) return;
@@ -298,13 +279,13 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 	$effect(() => {
 		log('Applying data changes to the grid');
 		let rendered = false;
-		if (data.length !== prev_data.length) {
+		if (data.length !== prev_static_data.length) {
 			rendered = true;
 			applyData();
 		} else {
-			const max = Math.max(proxy_data.length, prev_data.length);
+			const max = Math.max(static_data.length, prev_static_data.length);
 			for (let i = 0; i < max; i++) {
-				if (proxy_data[i] !== prev_data[i]) {
+				if (static_data[i] !== prev_static_data[i]) {
 					if (redraw_on_update) {
 						applyData();
 						break;
@@ -318,7 +299,7 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		}
 
 		if (rendered) {
-			prev_data = data.map(getCircularReplacer);
+			prev_static_data = data.map(getCircularReplacer);
 		}
 	});
 
@@ -343,21 +324,6 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 	});
 </script>
 
-<!-- Grid Container -->
-{#if filter}
-	<div class="col-md-8">
-		<div class="filter-container">
-			<input
-				type="text"
-				id="filter-text-box"
-				class="form-control me-2"
-				placeholder="Filter..."
-				oninput={onDataFilter}
-				bind:value={filterText}
-			/>
-		</div>
-	</div>
-{/if}
 <div
 	bind:this={gridDiv}
 	style={`
