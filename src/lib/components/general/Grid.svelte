@@ -95,7 +95,7 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		modules = [],
 		multiSelect = false,
 		debug,
-		redraw_on_update,
+		redraw_on_update
 	}: Props = $props();
 
 	$effect(() =>
@@ -124,7 +124,7 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		if (debug) {
 			console.log('[Grid API]', ...args);
 		}
-	}
+	};
 
 	export const on = em.on.bind(em);
 	export const off = em.off.bind(em);
@@ -178,7 +178,6 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 
 	let gridDiv: HTMLDivElement;
 	let grid: GridApi<T>;
-
 
 	const gridOptions: GridOptions<T> = $derived({
 		theme: gridTheme,
@@ -251,13 +250,13 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 			return true;
 		}
 		return false;
-	}
+	};
 
 	// used to copy objects with circular references safely
 	const getCircularReplacer = (data: unknown) => {
 		const seen = new WeakSet();
 		return JSON.stringify(data, (_key: string, value: unknown) => {
-			if (typeof value === "object" && value !== null) {
+			if (typeof value === 'object' && value !== null) {
 				if (seen.has(value)) {
 					return ''; // Drops the circular reference
 				}
@@ -274,7 +273,7 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		if (!grid) return;
 		log('Applying data to the grid');
 		grid.setGridOption('rowData', data);
-	}
+	};
 
 	$effect(() => {
 		log('Applying data changes to the grid');

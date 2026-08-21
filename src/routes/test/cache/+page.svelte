@@ -2,7 +2,7 @@
 	import Grid from '$lib/components/general/Grid.svelte';
 	import { onMount } from 'svelte';
 	import { contextmenu } from '$lib/utils/contextmenu.js';
-import { TextEditorModule, NumberEditorModule } from 'ag-grid-community';
+	import { TextEditorModule, NumberEditorModule } from 'ag-grid-community';
 
 	const { data } = $props();
 
@@ -38,7 +38,7 @@ import { TextEditorModule, NumberEditorModule } from 'ag-grid-community';
 				onCellValueChanged: (params) => {
 					if (!params.data) return;
 					params.data.update({
-						name: params.newValue,
+						name: params.newValue
 					});
 				}
 			},
@@ -50,7 +50,7 @@ import { TextEditorModule, NumberEditorModule } from 'ag-grid-community';
 					if (!params.data) return;
 					console.log('Updated age to', params.newValue);
 					params.data.update({
-						age: params.newValue,
+						age: params.newValue
 					});
 				}
 			}
@@ -66,12 +66,12 @@ import { TextEditorModule, NumberEditorModule } from 'ag-grid-community';
 						action: () => params.data?.delete(),
 						icon: {
 							type: 'material-icons',
-							name: 'delete',
+							name: 'delete'
 						}
 					}
 				]
 			});
-		},
+		}
 	}}
 	height="400px"
 	modules={[TextEditorModule, NumberEditorModule]}

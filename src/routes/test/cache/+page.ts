@@ -6,7 +6,7 @@ export const load = async (event) => {
 	const Test = SupaStruct.get({
 		client: parent.supabase,
 		schema: 'test',
-		table: 'test',
+		table: 'test'
 	});
 
 	const query = Test.all()
