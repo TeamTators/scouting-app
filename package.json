@@ -176,7 +176,7 @@
 		"puppeteer": "^24.42.0",
 		"qr-scanner": "^1.4.2",
 		"redis": "^5.7.0",
-		"supabase": "^2.105.0",
+		"supabase": "^2.115.0",
 		"svelte-filepond": "^0.2.2",
 		"svelte-portal": "^2.2.1",
 		"ts-to-zod": "^5.1.0",

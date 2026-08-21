@@ -1834,11 +1834,11 @@ class SupaQuery2<
 	 *
 	 * @returns {SupaStructData<Schema, RowName, Required>[]} Sorted matching rows.
 	 */
-	get reactive() {
+	get reactive(): SupaStructData<Schema, RowName, Required>[] {
 		const rows = Array.from(this.struct.cache.values()).filter((item) =>
 			this.matches_filter(item as any)
 		);
-		return rows.sort((a, b) => (this._reverse ? -1 : 1) * this._sort(a as any, b as any));
+		return rows.sort((a, b) => (this._reverse ? -1 : 1) * this._sort(a as any, b as any)) as SupaStructData<Schema, RowName, Required>[];
 	}
 
 	/**
