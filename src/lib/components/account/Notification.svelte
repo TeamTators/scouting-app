@@ -36,7 +36,16 @@ Notification card with read/unread and delete actions.
 	};
 </script>
 
-<div class="card mb-3 {!notification.raw.read ? 'border-' + notification.raw.severity : ''}">
+<div class="layer-3" style="
+	--bs-transparent: transparent;
+	padding: 1rem;
+	border-color: var(--bs-{notification.raw.read ? 'transparent' : 'danger'});
+	border-width: 1px;
+	border-style: solid;
+	border-radius: 4px;
+	margin-bottom: 1rem;
+	transition: border-color 0.3s ease;
+">
 	<div class="card-body layer-2">
 		<div class="d-flex align-items-center mb-2">
 			{#if notification.raw.icon}
