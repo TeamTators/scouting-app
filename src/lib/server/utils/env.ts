@@ -71,6 +71,8 @@ export default {
 	SMTP_USER: str('SMTP_USER', true, 'SMTP user for sending emails'),
 	SMTP_PASS: str('SMTP_PASS', true, 'SMTP password for sending emails'),
 	SMTP_ADMIN_EMAIL: str('SMTP_ADMIN_EMAIL', true, 'Admin email to receive notifications'),
+	RESEND_API_KEY: str('RESEND_API_KEY', true, 'Resend API Key for sending emails'),
+	RESEND_NAME: str('RESEND_NAME', true, 'Name to use as sender in Resend emails'),
 
 	OAUTH2_PROVIDER: str('OAUTH2_PROVIDER', true, 'OAuth2 provider for authentication'),
 	OAUTH2_CLIENT_ID: str('OAUTH2_CLIENT_ID', true, 'OAuth2 client ID for authentication'),
