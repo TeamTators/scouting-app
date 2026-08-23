@@ -3,7 +3,6 @@ onlyBuiltDependencies:
   - colors
   - drizzle-struct
   - esbuild
-  - html-constructor
   - math
   - msgpackr-extract
   - puppeteer
