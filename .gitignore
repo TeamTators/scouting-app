@@ -56,3 +56,5 @@ private/features.json
 private/backups/
 
 # supabase/migrations/
+
+src/lib/emails/index.ts

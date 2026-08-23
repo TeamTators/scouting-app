@@ -1,6 +1,8 @@
 import { defineConfig } from 'vitest/config';
 import { sveltekit } from '@sveltejs/kit/vite';
+import tailwindcss from '@tailwindcss/vite';
 import env from './src/lib/server/utils/env';
+import { email } from '@svelte-plugin/email/vite';
 
 const isTest = Boolean(process.env.VITEST);
 
@@ -8,7 +10,13 @@ export default defineConfig({
 	optimizeDeps: {
 		exclude: ['ts-utils']
 	},
-	plugins: [sveltekit()],
+	plugins: [
+		email({
+			dir: 'src/lib/emails'
+		}),
+		tailwindcss(),
+		sveltekit()
+	],
 	resolve: isTest
 		? {
 				conditions: ['browser', 'svelte', 'import', 'default']
