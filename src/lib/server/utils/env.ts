@@ -66,6 +66,7 @@ export default {
 		true,
 		'Supabase Storage Endpoint for file uploads'
 	),
+	API_EXTERNAL_URL: str('API_EXTERNAL_URL', true, 'External API URL for the application'),
 
 	SMTP_HOST: str('SMTP_HOST', true, 'SMTP host for sending emails'),
 	SMTP_USER: str('SMTP_USER', true, 'SMTP user for sending emails'),
