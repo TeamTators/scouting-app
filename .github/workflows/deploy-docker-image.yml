@@ -1,4 +1,4 @@
-name: 'Merge Template'
+name: 'Push Docker Image to Gitea Registry'
 
 on:
   release:
@@ -12,27 +12,34 @@ jobs:
     steps:
       - id: check
         run: |
-          if [[ "${{ github.event.release.name }}" == *deploy* ]]; then
-            echo "run_pipeline=true" >> $GITHUB_OUTPUT
+          if [[ \
+            "${{ github.event.repository.name }}" != "sveltekit-template" \
+          ]]; then
+            echo "run_pipeline=true" >> "$GITHUB_OUTPUT"
           else
-            echo "run_pipeline=false" >> $GITHUB_OUTPUT
+            echo "run_pipeline=false" >> "$GITHUB_OUTPUT"
           fi
+
   format:
     needs: pre-check
     if: needs.pre-check.outputs.run_pipeline == 'true'
     uses: ./.github/workflows/code-formatter.yml
+
   unit-tests:
     needs: pre-check
     if: needs.pre-check.outputs.run_pipeline == 'true'
     uses: ./.github/workflows/testing-unit.yml
+
   E2E:
     needs: pre-check
     if: needs.pre-check.outputs.run_pipeline == 'true'
     uses: ./.github/workflows/testing-e2e.yml
+
   check:
     needs: pre-check
     if: needs.pre-check.outputs.run_pipeline == 'true'
     uses: ./.github/workflows/testing-svelte-check.yml
+
   docker-compose:
     needs: pre-check
     if: needs.pre-check.outputs.run_pipeline == 'true'
@@ -41,6 +48,7 @@ jobs:
   push-docker-image:
     runs-on: self-hosted
     needs: [format, unit-tests, E2E, check, docker-compose]
+    if: needs.pre-check.outputs.run_pipeline == 'true'
     steps:
       - name: Log in to Gitea Registry
         uses: docker/login-action@v3.5.0
@@ -52,12 +60,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Retrieve credentials and push image
+      - name: Build and push Docker image
         run: |
-          TAG=${{ github.event.release.tag_name }}
-          REPOSITORY=$(basename $GITHUB_REPOSITORY)
+          set -euo pipefail
 
-          docker build -t ${{ secrets.GITEA_REGISTRY_URL }}/${{ secrets.GITEA_REGISTRY_USER }}/$REPOSITORY:${TAG} -t ${{ secrets.GITEA_REGISTRY_URL }}/${{ secrets.GITEA_REGISTRY_USER }}/$REPOSITORY:latest .
+          TAG="${{ github.event.release.tag_name }}"
+          REPOSITORY="$(basename "$GITHUB_REPOSITORY")"
+          IMAGE="${{ secrets.GITEA_REGISTRY_URL }}/${{ secrets.GITEA_REGISTRY_USER }}/${REPOSITORY}"
 
-          docker push ${{ secrets.GITEA_REGISTRY_URL }}/${{ secrets.GITEA_REGISTRY_USER }}/$REPOSITORY:${TAG}
-          docker push ${{ secrets.GITEA_REGISTRY_URL }}/${{ secrets.GITEA_REGISTRY_USER }}/$REPOSITORY:latest
+          docker build \
+            -t "${IMAGE}:${TAG}" \
+            -t "${IMAGE}:latest" \
+            .
+
+          docker push "${IMAGE}:${TAG}"
+          docker push "${IMAGE}:latest"
