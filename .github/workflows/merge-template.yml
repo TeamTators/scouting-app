@@ -5,24 +5,15 @@ on:
     types: [published]
 
 jobs:
-  pre-check:
-    env:
-      PUPPETEER_SKIP_DOWNLOAD: true
-    runs-on: ubuntu-latest
   format:
-    needs: pre-check
     uses: ./.github/workflows/code-formatter.yml
   unit-tests:
-    needs: pre-check
     uses: ./.github/workflows/testing-unit.yml
   E2E:
-    needs: pre-check
     uses: ./.github/workflows/testing-e2e.yml
   check:
-    needs: pre-check
     uses: ./.github/workflows/testing-svelte-check.yml
   docker-compose:
-    needs: pre-check
     uses: ./.github/workflows/docker-compose-test.yml
 
   merge-template:
