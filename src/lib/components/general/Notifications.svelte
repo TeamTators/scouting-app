@@ -58,5 +58,4 @@ Notifications offcanvas panel with unread count binding.
 			</li>
 		</ul>
 	</div>
-	<!-- <button type="button" class="btn btn-success" onclick={test}> Create Test Notification </button> -->
 </div>

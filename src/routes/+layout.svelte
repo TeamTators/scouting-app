@@ -15,6 +15,7 @@ Root layout wrapper for all routes. Acts as middleware for global bootstrapping.
 	const { children, data } = $props();
 
 	onMount(() => {
+		const unsub_notifications = data.notifications.subscribe();
 		const res = data.supabase.auth.onAuthStateChange((event, session) => {
 			if (session?.expires_at !== data.session?.expires_at) {
 				invalidate('supabase:auth');
@@ -23,6 +24,7 @@ Root layout wrapper for all routes. Acts as middleware for global bootstrapping.
 		Object.assign(window, { supabase: data.supabase, SupaStruct });
 		const off_network_listener = setup_network_listener(data.supabase);
 		return () => {
+			unsub_notifications();
 			res.data.subscription.unsubscribe();
 			off_network_listener();
 		};
@@ -30,7 +32,11 @@ Root layout wrapper for all routes. Acts as middleware for global bootstrapping.
 </script>
 
 <main>
-	<Navbar title={__APP_ENV__.name} notifications={[]} account={data.profile} />
+	<Navbar
+		title={__APP_ENV__.name}
+		notifications={data.notifications.reactive}
+		account={data.profile}
+	/>
 	{@render children()}
 	<ScrollToTop />
 	<Loading />
