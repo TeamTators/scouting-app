@@ -12,7 +12,6 @@ import Grid from '$lib/components/general/Grid.svelte';
 import DashboardComponent from '$lib/components/dashboard/Dashboard.svelte';
 import MinimizedCards from '$lib/components/dashboard/MinimizedCards.svelte';
 import { Dashboard } from '$lib/utils/dashboard.svelte';
-import { sleep } from 'ts-utils';
 
 vi.mock('ag-grid-community', () => {
 	const gridApi = {
