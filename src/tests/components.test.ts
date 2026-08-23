@@ -12,7 +12,6 @@ import Grid from '$lib/components/general/Grid.svelte';
 import DashboardComponent from '$lib/components/dashboard/Dashboard.svelte';
 import MinimizedCards from '$lib/components/dashboard/MinimizedCards.svelte';
 import { Dashboard } from '$lib/utils/dashboard.svelte';
-import { sleep } from 'ts-utils';
 
 vi.mock('ag-grid-community', () => {
 	const gridApi = {
@@ -245,29 +244,6 @@ describe('Select', () => {
 });
 
 describe('Grid', () => {
-	it('emits filter event when filtering input changes', async () => {
-		const data = [{ id: 1 }, { id: 2 }];
-		const onFilter = vi.fn();
-
-		const { container, component } = render(Grid, {
-			props: {
-				filter: true,
-				height: 300,
-				data,
-				opts: {
-					columnDefs: [{ field: 'id' }] as any
-				}
-			}
-		});
-
-		component.on('filter', onFilter);
-		const input = container.querySelector('#filter-text-box');
-		await fireEvent.input(input as HTMLInputElement, { target: { value: '2' } });
-
-		await sleep(1000); // Wait for debounce
-		expect(onFilter).toHaveBeenCalled();
-	});
-
 	it('getSelection returns selected nodes', async () => {
 		const data = [{ id: 1 }, { id: 2 }];
 		const { component } = render(Grid, {

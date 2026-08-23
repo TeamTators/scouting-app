@@ -1375,7 +1375,7 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 			? { type: 'and', conditions }
 			: '*';
 
-		return new SupaQuery2(this, search, required);
+		return new SupaQuery(this, search, required);
 	}
 
 	/**
@@ -1407,7 +1407,7 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 			? { type: 'and', conditions }
 			: '*';
 
-		return new SupaQuery2(this, search, required);
+		return new SupaQuery(this, search, required);
 	}
 
 	/**
@@ -1425,7 +1425,7 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		>
 	>(query: SearchQuery<Schema, RowName>, config?: ReadConfig<Schema, RowName, Required>) {
 		const required = this.getEffectiveRequiredFields(config?.only) as readonly (Required | 'id')[];
-		return new SupaQuery2(this, query, required);
+		return new SupaQuery(this, query, required);
 	}
 
 	/**
@@ -1510,7 +1510,7 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 			operator: 'in',
 			value: ids as any
 		};
-		return new SupaQuery2(this, search, required);
+		return new SupaQuery(this, search, required);
 	}
 
 	/**
@@ -1668,7 +1668,7 @@ export class SupaStruct<Schema extends RowSchemaName, RowName extends RowTableNa
 		>
 	>(config?: ReadConfig<Schema, RowName, Required>) {
 		const required = this.getEffectiveRequiredFields(config?.only) as readonly (Required | 'id')[];
-		return new SupaQuery2(this, '*', required);
+		return new SupaQuery(this, '*', required);
 	}
 }
 
@@ -1689,7 +1689,7 @@ type PaginatedResponse<T> = { data: T[]; count: number };
  * @template Required - Required projected fields.
  * @template HasDefault - Whether `default()` was called.
  */
-class SupaQuery2<
+class SupaQuery<
 	Schema extends RowSchemaName,
 	RowName extends RowTableNames<Schema>,
 	Required extends keyof RowWithoutArchived<Schema, RowName> = keyof RowWithoutArchived<
@@ -1834,11 +1834,13 @@ class SupaQuery2<
 	 *
 	 * @returns {SupaStructData<Schema, RowName, Required>[]} Sorted matching rows.
 	 */
-	get reactive() {
+	get reactive(): SupaStructData<Schema, RowName, Required>[] {
 		const rows = Array.from(this.struct.cache.values()).filter((item) =>
 			this.matches_filter(item as any)
 		);
-		return rows.sort((a, b) => (this._reverse ? -1 : 1) * this._sort(a as any, b as any));
+		return rows.sort(
+			(a, b) => (this._reverse ? -1 : 1) * this._sort(a as any, b as any)
+		) as SupaStructData<Schema, RowName, Required>[];
 	}
 
 	/**
@@ -1874,7 +1876,7 @@ class SupaQuery2<
 	 * Sets custom sort comparator for `reactive` rows.
 	 *
 	 * @param {(a: SupaStructData<Schema, RowName, Required>, b: SupaStructData<Schema, RowName, Required>) => number} sort - Comparator.
-	 * @returns {SupaQuery2<Schema, RowName, Required, HasDefault>} Current query instance.
+	 * @returns {SupaQuery<Schema, RowName, Required, HasDefault>} Current query instance.
 	 */
 	sort(
 		sort: (
@@ -1889,7 +1891,7 @@ class SupaQuery2<
 	/**
 	 * Toggles reverse ordering for `reactive` rows.
 	 *
-	 * @returns {SupaQuery2<Schema, RowName, Required, HasDefault>} Current query instance.
+	 * @returns {SupaQuery<Schema, RowName, Required, HasDefault>} Current query instance.
 	 */
 	reverse() {
 		this._reverse = !this._reverse;
@@ -2125,32 +2127,37 @@ class SupaQuery2<
 				filters: this.filters,
 				required: this.required.map(String)
 			});
+			console.log('Query Key:', query_key);
 			const cache_row_id = `${this.struct.schema}:${this.struct.table}:${query_key}`;
+			console.log('Cache Row ID:', cache_row_id);
 			const cached = await QueryCache.get({
 				query: query_key,
 				schema: this.struct.schema,
 				table: this.struct.table
 			}).first();
+			console.log('Cached: ', cached);
+			console.log('Now:', Date.now());
 
 			if (cached.isOk() && cached.value) {
 				if (cached.value.raw.version !== QUERY_CACHE_VERSION) {
 					await cached.value.delete();
 				} else if (Date.now() - cached.value.raw.last_sync <= ttl) {
+					console.log('Cache is fresh, using reactive data.');
 					return this.reactive;
 				}
 			}
 
 			const built = this.build();
 			const res = await built.query;
+			console.log('Supabase query', res);
 			const result = this.struct
 				.runTransaction({ data: res.data as any, error: res.error }, 'array', this.required as any)
 				.unwrap();
 
-			const hydrated = this.struct.Hydrate(result as any, this.required as any) as SupaStructData<
-				Schema,
-				RowName,
-				Required
-			>[];
+			const hydrated = this.struct.Hydrate(result as any, this.required as any, (data) =>
+				this.matches_filter(data)
+			) as SupaStructData<Schema, RowName, Required>[];
+			console.log('Hydrated', hydrated);
 
 			await QueryCache.upsert({
 				query: query_key,
@@ -2204,7 +2211,7 @@ class SupaQuery2<
 	 *
 	 * @param {(value: Result<SupaStructData<Schema, RowName, Required>[]>) => void} [onfulfilled] - Success callback.
 	 * @param {(reason: any) => void} [onrejected] - Failure callback.
-	 * @returns {ReturnType<SupaQuery2<Schema, RowName, Required, HasDefault>['fetch_all']>} Query result promise wrapper.
+	 * @returns {ReturnType<SupaQuery<Schema, RowName, Required, HasDefault>['fetch_all']>} Query result promise wrapper.
 	 */
 	then(
 		onfulfilled?: (value: Result<SupaStructData<Schema, RowName, Required>[]>) => void,
@@ -2219,11 +2226,11 @@ class SupaQuery2<
 	 * Sets a default row returned by `single` when query has no match.
 	 *
 	 * @param {SupaStructData<Schema, RowName, Required>} data - Default fallback row.
-	 * @returns {SupaQuery2<Schema, RowName, Required, true>} Query instance with default marker.
+	 * @returns {SupaQuery<Schema, RowName, Required, true>} Query instance with default marker.
 	 */
 	default(data: SupaStructData<Schema, RowName, Required>) {
 		this._default = data;
-		return this as SupaQuery2<Schema, RowName, Required, true>;
+		return this as SupaQuery<Schema, RowName, Required, true>;
 	}
 
 	/**
