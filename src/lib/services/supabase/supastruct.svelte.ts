@@ -1838,7 +1838,9 @@ class SupaQuery<
 		const rows = Array.from(this.struct.cache.values()).filter((item) =>
 			this.matches_filter(item as any)
 		);
-		return rows.sort((a, b) => (this._reverse ? -1 : 1) * this._sort(a as any, b as any)) as SupaStructData<Schema, RowName, Required>[];
+		return rows.sort(
+			(a, b) => (this._reverse ? -1 : 1) * this._sort(a as any, b as any)
+		) as SupaStructData<Schema, RowName, Required>[];
 	}
 
 	/**
@@ -2125,16 +2127,16 @@ class SupaQuery<
 				filters: this.filters,
 				required: this.required.map(String)
 			});
-			console.log('Query Key:', query_key)
+			console.log('Query Key:', query_key);
 			const cache_row_id = `${this.struct.schema}:${this.struct.table}:${query_key}`;
-			console.log('Cache Row ID:', cache_row_id)
+			console.log('Cache Row ID:', cache_row_id);
 			const cached = await QueryCache.get({
 				query: query_key,
 				schema: this.struct.schema,
 				table: this.struct.table
 			}).first();
-			console.log('Cached: ', cached)
-			console.log('Now:', Date.now())
+			console.log('Cached: ', cached);
+			console.log('Now:', Date.now());
 
 			if (cached.isOk() && cached.value) {
 				if (cached.value.raw.version !== QUERY_CACHE_VERSION) {
@@ -2152,11 +2154,9 @@ class SupaQuery<
 				.runTransaction({ data: res.data as any, error: res.error }, 'array', this.required as any)
 				.unwrap();
 
-			const hydrated = this.struct.Hydrate(result as any, this.required as any, data => this.matches_filter(data)) as SupaStructData<
-				Schema,
-				RowName,
-				Required
-			>[];
+			const hydrated = this.struct.Hydrate(result as any, this.required as any, (data) =>
+				this.matches_filter(data)
+			) as SupaStructData<Schema, RowName, Required>[];
 			console.log('Hydrated', hydrated);
 
 			await QueryCache.upsert({

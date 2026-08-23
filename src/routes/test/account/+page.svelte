@@ -12,17 +12,19 @@ Test account page at `/test/account`.
 	const error = $derived(data.error);
 	const message = $derived(data.message);
 
-	const Notification = $derived(SupaStruct.get({
-		client: data.supabase,
-		schema: 'core',
-		table: 'account_notification',
-	}));
+	const Notification = $derived(
+		SupaStruct.get({
+			client: data.supabase,
+			schema: 'core',
+			table: 'account_notification'
+		})
+	);
 
 	const notifs = $derived(Notification.get({ account_id: account?.id }));
 
 	onMount(() => {
 		notifs.subscribe();
-	})
+	});
 </script>
 
 {#if account}
@@ -42,19 +44,22 @@ Test account page at `/test/account`.
 {/if}
 
 {#if account}
-	<button class="btn btn-primary" onclick={() => {
-	if (!account) return;
-	Notification.new({
-		account_id: account.id,
-		icon: 'labs',
-		icon_type: 'material-icons',
-		title: 'Test Notification',
-		message: 'This is a test notification.',
-		severity: 'danger',
-	}).unwrap();
-}}>
-	Test Notification
-</button>
+	<button
+		class="btn btn-primary"
+		onclick={() => {
+			if (!account) return;
+			Notification.new({
+				account_id: account.id,
+				icon: 'labs',
+				icon_type: 'material-icons',
+				title: 'Test Notification',
+				message: 'This is a test notification.',
+				severity: 'danger'
+			}).unwrap();
+		}}
+	>
+		Test Notification
+	</button>
 {/if}
 
 {#each notifs.reactive as notification}

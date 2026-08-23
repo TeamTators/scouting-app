@@ -32,7 +32,11 @@ Root layout wrapper for all routes. Acts as middleware for global bootstrapping.
 </script>
 
 <main>
-	<Navbar title={__APP_ENV__.name} notifications={data.notifications.reactive} account={data.profile} />
+	<Navbar
+		title={__APP_ENV__.name}
+		notifications={data.notifications.reactive}
+		account={data.profile}
+	/>
 	{@render children()}
 	<ScrollToTop />
 	<Loading />

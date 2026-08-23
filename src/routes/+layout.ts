@@ -40,11 +40,11 @@ export const load = async (event) => {
 	const Notifications = SupaStruct.get({
 		client: supabase,
 		schema: 'core',
-		table: 'account_notification',
+		table: 'account_notification'
 	});
 
 	const notifications = Notifications.get({
-		account_id: String(event.data.profile?.id),
+		account_id: String(event.data.profile?.id)
 	});
 
 	notifications.sync(1000 * 60);
@@ -56,6 +56,6 @@ export const load = async (event) => {
 		is_student: event.data.is_student,
 		is_viewer: event.data.is_viewer,
 		profile: event.data.profile ? Profile.Generator(event.data.profile) : null,
-		notifications,
+		notifications
 	};
 };
