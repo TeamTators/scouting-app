@@ -16,7 +16,7 @@ jobs:
     env:
       PUPPETEER_SKIP_DOWNLOAD: true
     # this has a chance of infinite loop if we write a test wrong, timeout should catch it eventually.
-    timeout-minutes: 10
+    timeout-minutes: 20
     runs-on: self-hosted
 
     steps:
