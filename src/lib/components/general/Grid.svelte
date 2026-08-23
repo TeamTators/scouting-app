@@ -35,7 +35,6 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		animateRows: true
 	}}
 	height="400px"
-	filter
 />
 ```
 -->
@@ -70,7 +69,6 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 	} from '$lib/utils/ag-grid/checkbox-select';
 
 	interface Props {
-		filter?: boolean;
 		opts: Omit<GridOptions<T>, 'rowData'>;
 		data: T[];
 		style?: string;
@@ -83,10 +81,11 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		height: string | number;
 		modules?: Module[];
 		multiSelect?: boolean;
+		debug?: boolean;
+		redraw_on_update?: boolean;
 	}
 
 	const {
-		filter,
 		opts,
 		data,
 		style,
@@ -94,7 +93,9 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		layer = 1,
 		height,
 		modules = [],
-		multiSelect = false
+		multiSelect = false,
+		debug,
+		redraw_on_update
 	}: Props = $props();
 
 	$effect(() =>
@@ -118,6 +119,12 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		init: HTMLDivElement;
 		ready: GridApi<T>;
 	}>();
+
+	const log = (...args: unknown[]) => {
+		if (debug) {
+			console.log('[Grid API]', ...args);
+		}
+	};
 
 	export const on = em.on.bind(em);
 	export const off = em.off.bind(em);
@@ -171,27 +178,12 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 
 	let gridDiv: HTMLDivElement;
 	let grid: GridApi<T>;
-	let filterText: string = $state('');
-	let filterTimeout: ReturnType<typeof setTimeout> | null = null;
-
-	const onDataFilter = () => {
-		if (filterTimeout) {
-			clearTimeout(filterTimeout);
-		}
-		filterTimeout = setTimeout(() => {
-			grid.setGridOption('quickFilterText', filterText);
-			const nodes = grid
-				.getRenderedNodes()
-				.map((n) => n.data)
-				.filter(Boolean);
-			em.emit('filter', nodes);
-		}, 300);
-	};
 
 	const gridOptions: GridOptions<T> = $derived({
 		theme: gridTheme,
 		...opts,
-		rowData: data,
+		rowData: [],
+		getRowId: (params) => getRowKey(params.data),
 		columnDefs: [
 			...(rowNumbers
 				? [
@@ -243,7 +235,75 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		}
 	});
 
+	const getRowKey = (row: T, index?: number) => {
+		const candidate = row as T & { id?: string | number; raw?: { id?: string | number } };
+		return String(candidate.id ?? candidate.raw?.id ?? index ?? '');
+	};
+
+	const redrawNode = (index: number) => {
+		if (!grid) return;
+		log('Redrawing node at index:', index);
+		const rowNode = grid.getRowNode(getRowKey(data[index], index));
+		if (rowNode) {
+			rowNode.setData(data[index]);
+			grid.refreshCells({ rowNodes: [rowNode], force: true });
+			return true;
+		}
+		return false;
+	};
+
+	// used to copy objects with circular references safely
+	const getCircularReplacer = (data: unknown) => {
+		const seen = new WeakSet();
+		return JSON.stringify(data, (_key: string, value: unknown) => {
+			if (typeof value === 'object' && value !== null) {
+				if (seen.has(value)) {
+					return ''; // Drops the circular reference
+				}
+				seen.add(value);
+			}
+			return value;
+		});
+	};
+
+	const static_data = $derived(data.map(getCircularReplacer));
+	let prev_static_data: string[] = $state([]);
+
+	const applyData = () => {
+		if (!grid) return;
+		log('Applying data to the grid');
+		grid.setGridOption('rowData', data);
+	};
+
 	$effect(() => {
+		log('Applying data changes to the grid');
+		let rendered = false;
+		if (data.length !== prev_static_data.length) {
+			rendered = true;
+			applyData();
+		} else {
+			const max = Math.max(static_data.length, prev_static_data.length);
+			for (let i = 0; i < max; i++) {
+				if (static_data[i] !== prev_static_data[i]) {
+					if (redraw_on_update) {
+						applyData();
+						break;
+					}
+					rendered = redrawNode(i) || rendered;
+				}
+			}
+			if (!rendered) {
+				applyData();
+			}
+		}
+
+		if (rendered) {
+			prev_static_data = data.map(getCircularReplacer);
+		}
+	});
+
+	$effect(() => {
+		log('Grid options changed:', gridOptions);
 		if (gridDiv) {
 			grid?.destroy();
 			grid = createGrid(gridDiv, gridOptions);
@@ -263,21 +323,6 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 	});
 </script>
 
-<!-- Grid Container -->
-{#if filter}
-	<div class="col-md-8">
-		<div class="filter-container">
-			<input
-				type="text"
-				id="filter-text-box"
-				class="form-control me-2"
-				placeholder="Filter..."
-				oninput={onDataFilter}
-				bind:value={filterText}
-			/>
-		</div>
-	</div>
-{/if}
 <div
 	bind:this={gridDiv}
 	style={`
