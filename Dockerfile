@@ -20,7 +20,7 @@ COPY ./.env.example .env
 RUN pnpm install --no-frozen-lockfile
 RUN pnpm --filter ts-utils build
 
-# RUN pnpm build
+RUN pnpm build
 
 EXPOSE 3000
 CMD ["pnpm", "start"]
