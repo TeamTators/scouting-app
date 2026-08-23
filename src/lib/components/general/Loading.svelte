@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { loading_state } from '$lib/utils/loading.svelte.ts';
+	import { loading_state } from '$lib/utils/loading.svelte';
 
 	const message = $derived(loading_state.message);
 	const state = $derived(loading_state.state);

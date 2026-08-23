@@ -12,7 +12,7 @@ Popup notification history list.
 -->
 
 <script lang="ts">
-	import { history } from '$lib/utils/prompts';
+	import { history } from '$lib/utils/prompts.svelte';
 	import { onMount } from 'svelte';
 
 	interface Props {
@@ -23,21 +23,20 @@ Popup notification history list.
 
 	onMount(() => {
 		if (test) {
-			history.set([
-				{
-					autoHide: 1,
-					color: 'danger',
-					message: 'Hi',
-					title: 'Hello'
-				}
-			]);
+			history.push({
+				autoHide: 1,
+				color: 'danger',
+				message: 'Hi',
+				title: 'Hello',
+				id: crypto.randomUUID()
+			});
 		}
 	});
 </script>
 
 <div class="container-fluid">
-	{#if $history.length}
-		{#each $history as popup}
+	{#if history.length}
+		{#each history as popup (popup.id)}
 			<div class="row mb-3">
 				<div class="card">
 					<div

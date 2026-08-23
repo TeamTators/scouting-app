@@ -1,5 +1,8 @@
 # Package Managers
-package-lock.json
 pnpm-lock.yaml
 yarn.lock
-.github/copilot-instructions.md
+bun.lock
+bun.lockb
+
+# Miscellaneous
+/static/

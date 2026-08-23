@@ -1,5 +1,5 @@
 import { EventEmitter } from 'ts-utils';
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 import { get_last_interaction } from './interactivity';
 
 const em = new EventEmitter<{

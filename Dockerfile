@@ -7,7 +7,6 @@ RUN npm install -g typescript@latest
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml ./
-COPY ./config ./config
 
 # --- FORCE PNPM TO ALLOW BUILDING THE GIT DEPENDENCY ---
 RUN pnpm config set --global allowBuilds true
@@ -21,7 +20,7 @@ COPY ./.env.example .env
 RUN pnpm install --no-frozen-lockfile
 RUN pnpm --filter ts-utils build
 
-# RUN pnpm build
+RUN pnpm build
 
 EXPOSE 3000
 CMD ["pnpm", "start"]

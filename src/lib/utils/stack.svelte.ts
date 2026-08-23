@@ -6,7 +6,7 @@
  * const stack = new Stack({ name: 'editor' });
  * Stack.use(stack);
  */
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 import { Keyboard } from '../services/keybinds';
 import { EventEmitter } from 'ts-utils';
 

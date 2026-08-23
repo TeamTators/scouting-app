@@ -59,8 +59,7 @@ Floating label input supporting text, textarea, and select.
 			{name}
 			bind:value
 			oninput={(e) => onInput(e.currentTarget.value)}
-			onchange={(e) => onChange(e.currentTarget.value)}
-		></textarea>
+			onchange={(e) => onChange(e.currentTarget.value)}></textarea>
 	{:else if type === 'text'}
 		<input
 			{id}

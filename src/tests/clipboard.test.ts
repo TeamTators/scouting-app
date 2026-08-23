@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, test, vi } from 'vitest';
 
-vi.mock('$lib/utils/prompts', () => ({
+vi.mock('$lib/utils/prompts.svelte', () => ({
 	notify: vi.fn()
 }));
 
@@ -17,7 +17,7 @@ describe('clipboard utilities', () => {
 		const { copy } = await import('$lib/utils/clipboard');
 		copy('hello', true);
 
-		const { notify } = await import('$lib/utils/prompts');
+		const { notify } = await import('$lib/utils/prompts.svelte');
 		expect(writeText).toHaveBeenCalledWith('hello');
 		expect(notify).toHaveBeenCalledTimes(1);
 	});

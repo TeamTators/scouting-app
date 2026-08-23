@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import AdmZip from 'adm-zip';
 import supabase from '../../src/lib/server/services/supabase';
-import env from '../../src/lib/server/utils/env';
+// import env from '../../src/lib/server/utils/env';
 import path from 'path';
 import fs from 'fs';
 import * as csv from 'csv';
@@ -37,9 +37,9 @@ export default async (zip_path: string) => {
 	if (!zip_path.endsWith('.zip')) zip_path += '.zip';
 	if (!zip_path.startsWith('/')) zip_path = path.resolve(process.cwd(), 'backups', zip_path);
 	await export_zip(); // create a backup
-	let schemas = env.SB_SCHEMAS.slice();
-	schemas.push('auth', 'public');
-	schemas = Array.from(new Set(schemas));
+	// let schemas = env.SB_SCHEMAS.slice();
+	// schemas.push('auth', 'public');
+	// schemas = Array.from(new Set(schemas));
 
 	const { data, error } = await supabase.rpc('get_schemas_and_tables');
 
@@ -132,7 +132,9 @@ export default async (zip_path: string) => {
 						email: user.email,
 						password: user.encrypted_password || crypto.randomUUID(), // fallback or handle raw import safely
 						email_confirm: true,
-						user_metadata: user.raw_user_meta_data ? JSON.parse(user.raw_user_meta_data) : {}
+						user_metadata: user.raw_user_meta_data
+							? (JSON.parse(user.raw_user_meta_data) as object)
+							: {}
 					});
 					if (userError && !userError.message.includes('already registered')) {
 						console.error(`Failed to restore user ${user.email}: ${userError.message}`);

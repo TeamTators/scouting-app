@@ -25,16 +25,11 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+# Playwright
+test-results
 
-
-
-**/uploads/*
-private/emails/**.html
-
-backups/
-dist/
-
-# **/entitlements/*.yaml
+*storybook.log
+storybook-static
 
 *.log
 *.search
@@ -56,5 +51,11 @@ private/features.json
 private/backups/
 
 # supabase/migrations/
+supabase/.temp/
 
 src/lib/emails/index.ts
+
+backups/
+dist/
+
+vitest.shims.d.ts

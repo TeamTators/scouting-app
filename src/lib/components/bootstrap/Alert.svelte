@@ -25,7 +25,7 @@ Floating alert notification card.
 	/* eslint-disable @typescript-eslint/no-explicit-any */
 	import type { BootstrapColor } from 'colors/color';
 	import { onMount, type Snippet } from 'svelte';
-	import { notifs } from '$lib/utils/prompts';
+	import { notifs } from '$lib/utils/prompts.svelte';
 	import { fade } from 'svelte/transition';
 
 	interface Props {

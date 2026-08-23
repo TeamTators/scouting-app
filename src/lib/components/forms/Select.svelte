@@ -31,6 +31,8 @@ Simple select control with optional placeholder option.
 
 	const { options, value = $bindable(), default: defaultValue, onChange }: Props = $props();
 
+	const options_proxy = $derived(options.filter((o, i, arr) => arr.indexOf(o) === i));
+
 	let selected = $state(value);
 	export const select = (value: string) => {
 		selected = value;
@@ -46,7 +48,7 @@ Simple select control with optional placeholder option.
 	{#if defaultValue}
 		<option value="" disabled selected={!selected}>{defaultValue}</option>
 	{/if}
-	{#each options as option}
+	{#each options_proxy as option (option)}
 		<option value={option}>{option}</option>
 	{/each}
 </select>

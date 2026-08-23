@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { on_network_change, on_network_latency } from '$lib/utils/online.svelte.ts';
+	import { on_network_change, on_network_latency } from '$lib/utils/online.svelte';
 
 	let is_online = $state(true);
 	let latency = $state(0);

@@ -1,12 +1,7 @@
-onlyBuiltDependencies:
-  - '@parcel/watcher'
-  - colors
-  - drizzle-struct
-  - esbuild
-  - math
-  - msgpackr-extract
-  - puppeteer
-  - ts-utils
-
-overrides:
-  esbuild: 0.21.5
+allowBuilds:
+  '@parcel/watcher': true
+  colors: true
+  esbuild: true
+  msgpackr-extract: true
+  puppeteer: true
+  ts-utils: true

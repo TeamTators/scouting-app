@@ -7,7 +7,7 @@ Sign-up page at `/account/sign-up`.
 	import { passwordStrength } from 'check-password-strength';
 	// import type { ActionData } from './$types';
 	import Password from '$lib/components/forms/Password.svelte';
-	// import { browser } from '$app/environment';
+	// import { browser } from '$app/env';
 	import { goto } from '$app/navigation';
 	// import client from '$lib/services/supabase';
 

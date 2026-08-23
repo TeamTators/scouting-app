@@ -10,7 +10,7 @@
  * const users = _define('users', { name: 'string' });
  * await _init();
  */
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 import Dexie from 'dexie';
 import { ComplexEventEmitter } from 'ts-utils';
 import { z } from 'zod';
@@ -55,7 +55,7 @@ export type SchemaDefinition = {
 let initialized = false;
 let initPromise: Promise<typeof DB> | null = null;
 let openedSchemaSignature = '';
-let runtimeVersion = __APP_ENV__.indexed_db.version;
+let runtimeVersion = 1;
 
 const pendingSchemas: { [tableName: string]: string } = {};
 

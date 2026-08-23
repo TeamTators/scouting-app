@@ -175,9 +175,9 @@ const generateSvelteDocs = async () => {
 		{ root: path.join(ROOT, 'src', 'lib', 'components'), title: 'Components' },
 		{ root: path.join(ROOT, 'src', 'routes'), title: 'Routes (Svelte)' }
 	];
+	let entries: string[] = [];
 
 	for (const target of targets) {
-		let entries: string[] = [];
 		try {
 			const files = await glob('**/*.svelte', { cwd: target.root, nodir: true });
 			entries = [];
@@ -207,6 +207,7 @@ const generateSvelteDocs = async () => {
 			// ignore
 		}
 	}
+	return entries;
 };
 
 const writeSidebar = async () => {

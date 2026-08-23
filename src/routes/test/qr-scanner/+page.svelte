@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { scanQR } from '$lib/utils/qr';
 
-	let result: string | null = null;
+	let result: string | null = $state(null);
 </script>
 
 <div class="container">

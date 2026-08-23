@@ -1,4 +1,4 @@
-import { arr, bool, num, str, union } from './env-utils';
+import { arr, bool, num, str, union } from './env-utils.ts';
 
 export default {
 	ENVIRONMENT: union(
@@ -66,6 +66,7 @@ export default {
 		true,
 		'Supabase Storage Endpoint for file uploads'
 	),
+	API_EXTERNAL_URL: str('API_EXTERNAL_URL', true, 'External API URL for the application'),
 
 	SMTP_HOST: str('SMTP_HOST', true, 'SMTP host for sending emails'),
 	SMTP_USER: str('SMTP_USER', true, 'SMTP user for sending emails'),
@@ -90,11 +91,6 @@ export default {
 
 	INDEXED_DB_ENABLED: bool('INDEXED_DB_ENABLED', true, 'Whether to enable IndexedDB'),
 	INDEXED_DB_NAME: str('INDEXED_DB_NAME', true, 'The name of the IndexedDB database to use'),
-	INDEXED_DB_VERSION: num(
-		'INDEXED_DB_VERSION',
-		true,
-		'The version of the IndexedDB database to use'
-	),
 	INDEXED_DB_DEBUG: bool(
 		'INDEXED_DB_DEBUG',
 		false,

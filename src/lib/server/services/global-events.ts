@@ -12,6 +12,7 @@ import { ComplexEventEmitter } from 'ts-utils';
 /**
  * Map of event names to payload types.
  */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export type Events = {};
 
 /**

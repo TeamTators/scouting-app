@@ -13,7 +13,7 @@ Notifications offcanvas panel with unread count binding.
 <script lang="ts">
 	import { mount } from 'svelte';
 	import Notification from '../account/Notification.svelte';
-	import { rawModal } from '$lib/utils/prompts';
+	import { rawModal } from '$lib/utils/prompts.svelte';
 	import NotificationHistory from '../account/NotificationHistory.svelte';
 	import { SupaStructData } from '$lib/services/supabase/supastruct.svelte';
 
@@ -33,7 +33,7 @@ Notifications offcanvas panel with unread count binding.
 	</div>
 	<div class="offcanvas-body layer-1">
 		<ul class="list-unstyled">
-			{#each notifications as notification}
+			{#each notifications as notification (notification.raw.id)}
 				<Notification {notification} />
 			{/each}
 			<li class="w-100">

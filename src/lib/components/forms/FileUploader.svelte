@@ -51,7 +51,6 @@ File upload modal backed by Uppy dashboard.
 		path?: string;
 		message?: string;
 		uppyOpts?: UppyOptions<M, B>;
-		allowLocal?: boolean;
 
 		btn?: {
 			text?: string;

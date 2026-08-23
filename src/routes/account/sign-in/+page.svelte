@@ -8,7 +8,7 @@ Sign-in page at `/account/sign-in`.
 	import { Form } from '$lib/utils/form.svelte.js';
 	import { goto } from '$app/navigation';
 	import supabase from '$lib/services/supabase/index.js';
-	import { alert } from '$lib/utils/prompts.js';
+	import { alert } from '$lib/utils/prompts.svelte.js';
 
 	const { form, data } = $props();
 

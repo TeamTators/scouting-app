@@ -6,7 +6,7 @@
  * copy('Hello', true);
  */
 import { attemptAsync } from 'ts-utils';
-import { notify as notif } from './prompts';
+import { notify as notif } from '$lib/utils/prompts.svelte';
 
 /**
  * Copies text to the clipboard.

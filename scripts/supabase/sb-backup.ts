@@ -81,7 +81,6 @@ export default async (...args: string[]) => {
 			}
 
 			if (!table_data || table_data.length === 0) {
-				hasMore = false;
 				break;
 			}
 

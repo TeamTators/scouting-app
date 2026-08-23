@@ -8,7 +8,7 @@ import Uppy, {
 	type PluginOpts
 } from '@uppy/core';
 import { attemptAsync } from 'ts-utils';
-import { rawModal } from '$lib/utils/prompts';
+import { rawModal } from '$lib/utils/prompts.svelte';
 import { mount } from 'svelte';
 import '@uppy/core/css/style.min.css';
 import '@uppy/dashboard/css/style.min.css';

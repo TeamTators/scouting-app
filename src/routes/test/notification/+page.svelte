@@ -3,7 +3,7 @@
 Notification test page at `/test/notification`.
 -->
 <script lang="ts">
-	import { notify } from '$lib/utils/prompts';
+	import { notify } from '$lib/utils/prompts.svelte';
 
 	const addNotif = () =>
 		notify({

@@ -1,35 +1,55 @@
-import { defineConfig } from 'vitest/config';
-import { sveltekit } from '@sveltejs/kit/vite';
+/// <reference types="vitest/config" />
+import { mdsvex } from 'mdsvex';
 import tailwindcss from '@tailwindcss/vite';
-import env from './src/lib/server/utils/env';
+import { defineConfig } from 'vite';
+// import { playwright } from '@vitest/browser-playwright';
+import adapter from '@sveltejs/adapter-node';
+import { sveltekit } from '@sveltejs/kit/vite';
+// import path from 'node:path';
+// import { fileURLToPath } from 'node:url';
+// import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
 import { email } from '@svelte-plugin/email/vite';
+import env from './src/lib/server/utils/env.ts';
 
-const isTest = Boolean(process.env.VITEST);
+// const dirname =
+// 	typeof import.meta.dirname !== 'undefined'
+// 		? import.meta.dirname
+// 		: path.dirname(fileURLToPath(import.meta.url));
 
+// More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
-	optimizeDeps: {
-		exclude: ['ts-utils']
-	},
 	plugins: [
 		email({
 			dir: 'src/lib/emails'
 		}),
 		tailwindcss(),
-		sveltekit()
-	],
-	resolve: isTest
-		? {
-				conditions: ['browser', 'svelte', 'import', 'default']
+		sveltekit({
+			compilerOptions: {
+				// Force runes mode for the project, except for libraries. Can be removed in svelte 6.
+				runes: ({ filename }) =>
+					filename.split(/[/\\]/).includes('node_modules') ? undefined : true,
+				experimental: {
+					async: true
+				}
+			},
+			adapter: adapter(),
+			preprocess: [
+				mdsvex({
+					extensions: ['.svx', '.md']
+				})
+			],
+			extensions: ['.svelte', '.svx', '.md'],
+			experimental: {
+				remoteFunctions: true
+			},
+			alias: {
+				$lib: 'src/lib',
+				'#lib': 'src/lib'
 			}
-		: undefined,
-
-	test: {
-		include: ['src/**/*.{test,spec}.{js,ts}'],
-		watch: process.argv.includes('watch'),
-		environment: 'jsdom'
-	},
+		})
+	],
 	ssr: {
-		noExternal: ['node-html-parser', 'ts-utils', 'math', 'colors']
+		noExternal: ['node-html-parser', 'ts-utils', 'colors']
 	},
 	server: {
 		port: env.PORT,
@@ -57,7 +77,6 @@ export default defineConfig({
 				enabled: env.INDEXED_DB_ENABLED,
 				debug: env.INDEXED_DB_DEBUG,
 				name: env.INDEXED_DB_NAME,
-				version: env.INDEXED_DB_VERSION,
 				debounce_interval_ms: env.INDEXED_DB_DEBOUNCE_INTERVAL_MS
 			},
 			struct_cache: env.STRUCT_CACHE_ENABLED,

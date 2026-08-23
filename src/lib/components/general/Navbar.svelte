@@ -26,7 +26,7 @@ Top navigation bar with stack controls, theme toggle, account menu, and notifica
 		show_side_nav?: boolean;
 	}
 
-	const { title, account, notifications }: Props = $props();
+	const { title, account, notifications, show_side_nav: _show_side_nav }: Props = $props();
 	let notifs = $state(0);
 </script>
 
