@@ -10,9 +10,13 @@ export default defineConfig({
 	optimizeDeps: {
 		exclude: ['ts-utils']
 	},
-	plugins: [email({
-		dir: 'src/lib/emails',
-	}), tailwindcss(), sveltekit()],
+	plugins: [
+		email({
+			dir: 'src/lib/emails'
+		}),
+		tailwindcss(),
+		sveltekit()
+	],
 	resolve: isTest
 		? {
 				conditions: ['browser', 'svelte', 'import', 'default']
