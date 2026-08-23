@@ -1,6 +1,6 @@
 import { attemptAsync } from 'ts-utils';
-import { browser } from '$app/environment';
-import { rawModal } from './prompts';
+import { browser } from '$app/env';
+import { rawModal } from '$lib/utils/prompts.svelte';
 import { mount } from 'svelte';
 import QRScanner from '$lib/components/forms/QRScanner.svelte';
 

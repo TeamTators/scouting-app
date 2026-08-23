@@ -47,7 +47,7 @@ Toast notification rendered in a portal.
 		message,
 		color,
 		autoHide = 5000,
-		// icon,
+		icon: _icon,
 		animate,
 		textColor,
 		onHide,

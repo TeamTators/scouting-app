@@ -4,7 +4,7 @@
 	import { onMount } from 'svelte';
 
 	let fileUploader: FileUploader<Meta, Body>;
-	let uploadResult = '';
+	let uploadResult = $state('');
 
 	function onUpload(url: string, path: string) {
 		console.log('File uploaded:', { url, path });

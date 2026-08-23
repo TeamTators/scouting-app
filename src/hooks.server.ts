@@ -1,4 +1,4 @@
-import { type Handle } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import terminal from '$lib/server/utils/terminal';
 import '$lib/server/utils/files';
 import createTree from '../scripts/create-route-tree';
@@ -45,7 +45,7 @@ const include_in_session = (pathname: string) => {
 	});
 })();
 
-export const handle: Handle = async ({ event, resolve }) => {
+export const handle = async ({ event, resolve }) => {
 	// console.log('Request:', event.request.method, event.url.pathname);
 	event.locals.start = performance.now();
 	event.locals.supabase = Object.assign(
@@ -127,7 +127,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 		const res = await SessionStruct.new({
 			prev_url: event.url.pathname
 		});
-		// }
 
 		if (res.isErr()) {
 			terminal.error('Error creating new session:', res.error);
@@ -147,14 +146,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 			}
 		});
 		return res;
-	} catch (error) {
-		terminal.error(error);
+	} catch (e) {
+		terminal.error(e);
 		// redirect to error page
-		return new Response('Redirect', {
-			status: 500,
-			headers: {
-				location: `/status/500`
-			}
-		});
+		return error(500, 'Internal Server Error');
 	}
 };

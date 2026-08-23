@@ -5,7 +5,7 @@
  * import { getTitle } from '$lib/utils/pages';
  * const title = await getTitle('https://example.com').unwrap();
  */
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 import { attemptAsync } from 'ts-utils';
 
 /**

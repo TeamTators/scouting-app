@@ -1,78 +1,69 @@
-import prettier from 'eslint-config-prettier';
-import js from '@eslint/js';
-import { includeIgnoreFile } from '@eslint/compat';
-import svelte from 'eslint-plugin-svelte';
-import globals from 'globals';
-import { fileURLToPath } from 'node:url';
-import ts from 'typescript-eslint';
-const gitignorePath = fileURLToPath(new URL('./.gitignore', import.meta.url));
+// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
+// import storybook from 'eslint-plugin-storybook';
 
-export default ts.config(
+import prettier from 'eslint-config-prettier';
+import path from 'node:path';
+import js from '@eslint/js';
+import svelte from 'eslint-plugin-svelte';
+import { defineConfig, includeIgnoreFile } from 'eslint/config';
+import globals from 'globals';
+import ts from 'typescript-eslint';
+
+const gitignorePath = path.resolve(import.meta.dirname, '.gitignore');
+
+export default defineConfig(
 	includeIgnoreFile(gitignorePath),
 	js.configs.recommended,
-	...ts.configs.recommended,
-	...svelte.configs['flat/recommended'],
+	ts.configs.recommended,
+	svelte.configs.recommended,
 	prettier,
-	...svelte.configs['flat/prettier'],
+	svelte.configs.prettier,
 	{
-		files: ['**/*.ts', '**/*.d.ts'],
-		languageOptions: {
-			parser: ts.parser
+		languageOptions: { globals: { ...globals.browser, ...globals.node } },
+		rules: {
+			// typescript-eslint strongly recommend that you do not use the no-undef lint rule on TypeScript projects.
+			// see: https://typescript-eslint.io/troubleshooting/faqs/eslint/#i-get-errors-from-the-no-undef-rule-about-global-variables-not-being-defined-even-though-there-are-no-typescript-errors
+			'no-undef': 'off'
 		}
 	},
 	{
-		languageOptions: {
-			globals: {
-				...globals.browser,
-				...globals.node,
-				__APP_ENV__: 'readonly',
-				create: 'readonly'
-			}
-		}
-	},
-	{
-		files: ['**/*.d.ts'],
-		languageOptions: {
-			parser: ts.parser
-		}
-	},
-	{
-		files: ['**/*.svelte'],
-
+		files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
 		languageOptions: {
 			parserOptions: {
-				parser: ts.parser,
-				svelteFeatures: {
-					experimentalGenerics: true
-				}
+				projectService: true,
+				extraFileExtensions: ['.svelte'],
+				parser: ts.parser
 			}
-		}
+		},
+		ignores: [
+			'**/node_modules/**',
+			'**/.git/**',
+			'**/dist/**',
+			'**/build/**',
+			'**/out/**',
+			'**/coverage/**',
+			'docs/**',
+			'**/public/**',
+			'**/.svelte-kit/**',
+			'**/.temp/**'
+		]
 	},
 	{
+		// Override or add rule settings here, such as:
+		// 'svelte/button-has-type': 'error'
 		rules: {
+			// no unsed vars ignored if the variable starts with _
 			'@typescript-eslint/no-namespace': 'off',
-			'@typescript-eslint/no-this-alias': 'off',
+			'no-unused-vars': 'off',
 			'@typescript-eslint/no-unused-vars': [
 				'warn',
-				{ argsIgnorePattern: '^_', varsIgnorePattern: '^_' }
-			],
-			'@typescript-eslint/no-empty-object-type': 'off',
-			'svelte/valid-compile': 'error',
-			'svelte/require-each-key': 'off',
-			'svelte/no-navigation-without-resolve': [
-				'off',
 				{
-					ignoreGoto: false,
-					ignoreLinks: true,
-					ignorePushState: false,
-					ignoreReplaceState: false
+					argsIgnorePattern: '^_',
+					varsIgnorePattern: '^_',
+					caughtErrorsIgnorePattern: '^_',
+					destructuredArrayIgnorePattern: '^_'
 				}
-			],
-			'svelte/prefer-writable-derived': 'warn',
-			'svelte/prefer-svelte-reactivity': 'warn'
+			]
 		}
-	},
-	{
-		ignores: ['supabase/**', 'node_modules/**', 'dist/**', 'build/**', 'coverage/**']
 	}
 );

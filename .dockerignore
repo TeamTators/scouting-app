@@ -1,6 +1,12 @@
 node_modules
 .git
-logs
-dist
+.github
+.svelte-kit
+build
+coverage
+.vscode
+.idea
+*.log
 .env
-.docker.env
+.env.*
+!.env.example

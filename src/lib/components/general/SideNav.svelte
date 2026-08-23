@@ -72,11 +72,11 @@ Side navigation offcanvas that renders sections from the navbar registry.
 	</div>
 	<div class="offcanvas-body pt-0">
 		<ul class="list-unstyled">
-			{#each sections as section}
+			{#each sections as section (section.name)}
 				<li class="mb-3">
 					<h5>{section.name}</h5>
 					<ul class="list-unstyled">
-						{#each section.links as link}
+						{#each section.links as link (link.href)}
 							<li class="ps-3 mb-2">
 								<a
 									class:disabled={link.disabled}

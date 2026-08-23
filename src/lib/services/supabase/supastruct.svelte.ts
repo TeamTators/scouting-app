@@ -37,7 +37,7 @@ import { schemas } from '$lib/types/supabase-zod';
 import { z } from 'zod';
 import { type Database, type DatabasePivoted, type SchemaName } from '$lib/types/supabase';
 import { SvelteMap, SvelteDate, SvelteSet } from 'svelte/reactivity';
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 import { DexieTable } from '$lib/services/db/table';
 import { is_online, on_network_change } from '$lib/utils/online.svelte';
 import { stable_stringify } from '$lib/utils/json';

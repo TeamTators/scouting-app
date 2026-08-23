@@ -1,9 +1,9 @@
 // place files you want to import through the `$lib` alias in this folder.
 import '@total-typescript/ts-reset';
-import { fingerprint } from './utils/fingerprint';
+import { fingerprint } from '$lib/utils/fingerprint';
 
-import { Requests } from './utils/requests';
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
+import { metadata } from '$lib/utils/meta';
 import '$lib/imports';
 
 fingerprint();
@@ -14,8 +14,8 @@ export const ogFetch = (() => {
 	window.fetch = (url: URL | RequestInfo, config?: RequestInit) => {
 		const headers = new Headers(config?.headers);
 
-		for (const [k, v] of Object.entries(Requests.metadata)) {
-			headers.set(`X-${k}`, v as string);
+		for (const [key, value] of metadata.entries()) {
+			headers.set(key, value);
 		}
 
 		return og(url, {

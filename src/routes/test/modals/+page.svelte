@@ -3,7 +3,15 @@
 Modal test page at `/test/modals`.
 -->
 <script lang="ts">
-	import { prompt, alert, confirm, choose, select, colorPicker, notify } from '$lib/utils/prompts';
+	import {
+		prompt,
+		alert,
+		confirm,
+		choose,
+		select,
+		colorPicker,
+		notify
+	} from '$lib/utils/prompts.svelte';
 </script>
 
 <div class="container">

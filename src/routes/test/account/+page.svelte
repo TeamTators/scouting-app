@@ -62,7 +62,7 @@ Test account page at `/test/account`.
 	</button>
 {/if}
 
-{#each notifs.reactive as notification}
+{#each notifs.reactive as notification (notification.raw.id)}
 	<div class="notification">
 		<p><strong>{notification.raw.title}</strong></p>
 		<p>{notification.raw.message}</p>

@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from 'vitest';
 import { get } from 'svelte/store';
 
-vi.mock('$app/environment', () => ({ browser: true }));
+vi.mock('$app/env', () => ({ browser: true }));
 
 describe('theme utilities', () => {
 	test('setTheme updates store and persists', async () => {

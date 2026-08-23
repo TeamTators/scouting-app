@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import Password from '$lib/components/forms/Password.svelte';
 	import { passwordStrength } from 'check-password-strength';
-	import { alert } from '$lib/utils/prompts.js';
+	import { alert } from '$lib/utils/prompts.svelte.js';
 
 	const { data } = $props();
 

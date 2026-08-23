@@ -11,7 +11,7 @@
  * import { Keyboard } from '$lib/utils/keybinds';
  * Keyboard.on('ctrl+s', () => console.log('save'));
  */
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 
 /** Supported modifier keys for keyboard combinations */
 export type Modifier = 'ctrl' | 'shift' | 'alt' | 'meta';

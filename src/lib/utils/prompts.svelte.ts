@@ -15,10 +15,10 @@
  * and auto-focus on input elements for better UX.
  *
  * @example
- * import { prompt } from '$lib/utils/prompts';
+ * import { prompt } from '$lib/utils/prompts.svelte';
  * const name = await prompt('Name?');
  */
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 import { type BootstrapColor } from 'colors/color';
 import Modal from '$lib/components/bootstrap/Modal.svelte';
 import { createRawSnippet, mount, unmount } from 'svelte';
@@ -806,7 +806,7 @@ type NotificationConfig = {
  * Svelte store for managing notification history
  * Contains an array of notification configuration objects
  */
-export const history = writable<NotificationConfig[]>([]);
+export const history: (NotificationConfig & { id: string })[] = $state([]);
 
 /**
  * Shows a toast-style notification that appears in the document body
@@ -825,9 +825,9 @@ export const history = writable<NotificationConfig[]>([]);
 export const notify = (config: NotificationConfig) => {
 	if (!browser) throw new Error('Cannot show notification in non-browser environment');
 
-	history.update((d) => {
-		d.push(config);
-		return d;
+	history.push({
+		...config,
+		id: crypto.randomUUID()
 	});
 	// const notif = createNotif();
 	// if (!notif) return;

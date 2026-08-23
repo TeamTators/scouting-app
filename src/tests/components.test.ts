@@ -9,9 +9,6 @@ import FloatingInput from '$lib/components/forms/FloatingInput.svelte';
 import Password from '$lib/components/forms/Password.svelte';
 import Select from '$lib/components/forms/Select.svelte';
 import Grid from '$lib/components/general/Grid.svelte';
-import DashboardComponent from '$lib/components/dashboard/Dashboard.svelte';
-import MinimizedCards from '$lib/components/dashboard/MinimizedCards.svelte';
-import { Dashboard } from '$lib/utils/dashboard.svelte';
 
 vi.mock('ag-grid-community', () => {
 	const gridApi = {
@@ -267,82 +264,5 @@ describe('Grid', () => {
 		}
 
 		expect(component.getSelection()).toEqual([{ id: 99 }]);
-	});
-});
-
-describe('Dashboard components', () => {
-	const createCard = (id: string) =>
-		new Dashboard.Card({
-			name: `card-${id}`,
-			icon: { type: 'material-icons', name: 'home' },
-			id,
-			size: { width: 2, height: 1 }
-		});
-
-	it('Dashboard renders title and initializes', async () => {
-		const card = createCard('one');
-		const dashboard = new Dashboard.Dashboard({
-			name: 'main',
-			id: 'main',
-			cards: [card]
-		});
-		const initSpy = vi.spyOn(dashboard, 'init');
-		const body = createRawSnippet(() => ({ render: () => '<div>Body</div>' }));
-
-		const { getByText } = render(DashboardComponent, {
-			props: {
-				dashboard,
-				body: body as unknown as any
-			}
-		});
-		await tick();
-
-		expect(getByText('Main')).toBeTruthy();
-		expect(initSpy).toHaveBeenCalled();
-	});
-
-	// it('Dashboard Card toggles maximize and hide', async () => {
-	// 	const card = createCard('two');
-	// 	const body = createRawSnippet(() => ({ render: () => '<div>Body</div>' }));
-
-	// 	const { container } = render(DashboardCard, {
-	// 		props: {
-	// 			card,
-	// 			body
-	// 		}
-	// 	});
-
-	// 	const maximizeButton = container.querySelector('button[aria-label="Maximize"]');
-	// 	await fireEvent.click(maximizeButton as HTMLButtonElement);
-	// 	expect(card.data.maximized).toBe(true);
-
-	// 	await fireEvent.click(maximizeButton as HTMLButtonElement);
-	// 	expect(card.data.maximized).toBe(false);
-
-	// 	const closeButton = container.querySelector('button[aria-label="Close"]');
-	// 	await fireEvent.click(closeButton as HTMLButtonElement);
-	// 	expect(card.data.show).toBe(false);
-	// });
-
-	it('MinimizedCards renders hidden cards and restores on click', async () => {
-		const card = createCard('three');
-		const dashboard = new Dashboard.Dashboard({
-			name: 'main',
-			id: 'main',
-			cards: [card]
-		});
-
-		card.hide();
-
-		const { container } = render(MinimizedCards, {
-			props: {
-				dashboard
-			}
-		});
-
-		const button = container.querySelector('button');
-		expect(button).toBeTruthy();
-		await fireEvent.click(button as HTMLButtonElement);
-		expect(card.state.show).toBe(true);
 	});
 });

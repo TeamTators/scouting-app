@@ -7,7 +7,7 @@
  */
 import Modal from '../components/bootstrap/Modal.svelte';
 import { createRawSnippet, mount } from 'svelte';
-import { modalTarget, createButtons, clearModals } from './prompts';
+import { modalTarget, createButtons, clearModals } from '$lib/utils/prompts.svelte';
 import { attemptAsync } from 'ts-utils';
 
 type Option =
@@ -824,6 +824,7 @@ export class Form<T extends { [key: string]: Input<keyof Inputs> }> {
 	 * console.log(result.value);
 	 */
 	prompt(config: { title: string; send: boolean }) {
+		// eslint-disable-next-line @typescript-eslint/no-this-alias
 		const self = this;
 		return attemptAsync(async () => {
 			clearModals();
@@ -1229,7 +1230,7 @@ export class RangeSlider {
 					next = isStart ? sibling : maxBound;
 					break;
 				default:
-					return;
+					return next;
 			}
 
 			e.preventDefault();
@@ -1239,6 +1240,8 @@ export class RangeSlider {
 			} else {
 				applyEndValue(next, width);
 			}
+
+			return next;
 		};
 
 		const endTouchMove = (e: TouchEvent) => {

@@ -19,11 +19,7 @@ Datetime input that normalizes to an ISO string on change.
 		onChange: (value: string) => void;
 	}
 
-	let {
-		data = $bindable(),
-		// header,
-		onChange
-	}: Props = $props();
+	let { data = $bindable(), header: _header = '', onChange }: Props = $props();
 </script>
 
 <input

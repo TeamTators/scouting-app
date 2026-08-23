@@ -11,7 +11,7 @@
 import { attemptAsync, type ResultPromise } from 'ts-utils';
 import { Err, Ok, type Result } from 'ts-utils';
 import { _define, _init } from '.';
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 import { z } from 'zod';
 
 export type Row<_Name extends string, Schema extends z.ZodTypeAny> = z.output<Schema> & {

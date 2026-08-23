@@ -7,7 +7,8 @@
  */
 import { getCurrentBrowserFingerPrint } from '@rajesh896/broprint.js';
 import { attemptAsync } from 'ts-utils';
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
+import { metadata } from '$lib/utils/meta';
 
 /**
  * Computes a browser fingerprint and reports it to the server.
@@ -22,6 +23,7 @@ export const fingerprint = () => {
 			throw new Error('Failed to retrieve fingerprint');
 		}
 
+		metadata.set('fingerprint', fingerprint);
 		return fingerprint;
 	});
 };

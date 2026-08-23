@@ -5,7 +5,7 @@
  * import { fullscreen } from '$lib/utils/fullscreen';
  * const exit = fullscreen();
  */
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 import { attempt } from 'ts-utils';
 
 /**
