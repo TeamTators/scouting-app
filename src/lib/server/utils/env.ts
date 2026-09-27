@@ -1,6 +1,18 @@
+/**
+ * @fileoverview Central environment configuration schema for the application.
+ *
+ * This module declares the required runtime environment variables and default accessors for
+ * the server. Each exported value is resolved via the env utility helpers so the app can
+ * fail early on missing configuration.
+ *
+ * @example
+ * import env from '$lib/server/utils/env';
+ * console.log(env.APP_NAME);
+ */
 import { arr, bool, num, str, union } from './env-utils.ts';
 
 export default {
+	/** Current execution environment (`dev`, `staging`, `prod`). */
 	ENVIRONMENT: union(
 		'ENVIRONMENT',
 		['dev', 'staging', 'prod'],

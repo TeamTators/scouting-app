@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * @fileoverview
  * SupaStruct-style IndexedDB table gateway built on Dexie.
@@ -49,6 +50,88 @@ export type TableConfig<Name extends string, Schema extends z.ZodTypeAny> = {
 	schema: Schema;
 	debug?: boolean;
 };
+
+function unwrapDexieZodType(schema: z.ZodTypeAny): z.ZodTypeAny {
+	let current = schema;
+
+	while (current) {
+		const innerType = (current as any)._def?.innerType;
+		if (innerType && innerType !== current) {
+			current = innerType;
+			continue;
+		}
+
+		const candidate =
+			(current as any).innerType ?? (current as any).schema ?? (current as any).type ?? null;
+
+		if (candidate && candidate !== current) {
+			current = candidate;
+			continue;
+		}
+
+		break;
+	}
+
+	return current;
+}
+
+export function stringifyDexieValue(schema: z.ZodTypeAny, value: unknown): unknown {
+	if (value === null || value === undefined) return value;
+	const baseSchema = unwrapDexieZodType(schema);
+	if (
+		baseSchema instanceof z.ZodArray ||
+		baseSchema instanceof z.ZodObject ||
+		baseSchema instanceof z.ZodRecord ||
+		baseSchema instanceof z.ZodTuple ||
+		baseSchema instanceof z.ZodUnion ||
+		baseSchema instanceof z.ZodDiscriminatedUnion
+	) {
+		if (typeof value === 'string') return value;
+		if (typeof value === 'object' || Array.isArray(value)) return JSON.stringify(value);
+	}
+	return value;
+}
+
+export function parseDexieValue(schema: z.ZodTypeAny, value: unknown): unknown {
+	if (value === null || value === undefined) return value;
+	const baseSchema = unwrapDexieZodType(schema);
+	if (
+		baseSchema instanceof z.ZodArray ||
+		baseSchema instanceof z.ZodObject ||
+		baseSchema instanceof z.ZodRecord ||
+		baseSchema instanceof z.ZodTuple ||
+		baseSchema instanceof z.ZodUnion ||
+		baseSchema instanceof z.ZodDiscriminatedUnion
+	) {
+		if (typeof value === 'string') {
+			try {
+				return JSON.parse(value);
+			} catch {
+				return value;
+			}
+		}
+	}
+	return value;
+}
+
+export function transformDexieRow(
+	schema: z.ZodTypeAny,
+	row: Record<string, unknown>,
+	mode: 'serialize' | 'deserialize'
+): Record<string, unknown> {
+	if (!schema || !(schema instanceof z.ZodObject) || !schema.shape) return row;
+
+	for (const [key, valueSchema] of Object.entries(schema.shape)) {
+		if (!(key in row)) continue;
+		const current = row[key];
+		row[key] =
+			mode === 'serialize'
+				? stringifyDexieValue(valueSchema as z.ZodTypeAny, current)
+				: parseDexieValue(valueSchema as z.ZodTypeAny, current);
+	}
+
+	return row;
+}
 
 export class DexieTable<Name extends string, Schema extends z.ZodTypeAny> {
 	public static readonly tables = new Map<string, DexieTable<string, z.ZodTypeAny>>();
@@ -141,8 +224,10 @@ export class DexieTable<Name extends string, Schema extends z.ZodTypeAny> {
 		const db = await _init();
 		if (!db) return [];
 		this.log('Database initialized:', db);
-		// return this.tableDef().toArray();
-		return db.table(this.config.name).toArray();
+		const rows = await db.table(this.config.name).toArray();
+		return rows.map((row) =>
+			transformDexieRow(this.config.schema, row as Record<string, unknown>, 'deserialize')
+		);
 	}
 
 	Generator(row: Row<Name, Schema>) {
@@ -165,7 +250,7 @@ export class DexieTable<Name extends string, Schema extends z.ZodTypeAny> {
 		const allQuery = async () => {
 			this.log('Executing all() query');
 			const rows = await this.rows();
-			return rows.map((row) => this.Generator(row));
+			return rows.map((row) => this.Generator(row as any));
 		};
 
 		const paginateQuery = async (page: number, size: number) => {
@@ -175,7 +260,7 @@ export class DexieTable<Name extends string, Schema extends z.ZodTypeAny> {
 			const to = from + size;
 			const pageRows = rows.slice(from, to);
 			return {
-				data: pageRows.map((row) => this.Generator(row)),
+				data: pageRows.map((row) => this.Generator(row as any)),
 				count: rows.length
 			};
 		};
@@ -194,7 +279,7 @@ export class DexieTable<Name extends string, Schema extends z.ZodTypeAny> {
 		const allQuery = async () => {
 			this.log('Executing get() query with data', queryData);
 			const rows = await this.rows();
-			const filtered = rows.map((row) => this.Generator(row)).filter(satisfies);
+			const filtered = rows.map((row) => this.Generator(row as any)).filter(satisfies);
 			return filtered;
 		};
 
@@ -226,7 +311,7 @@ export class DexieTable<Name extends string, Schema extends z.ZodTypeAny> {
 			this.log('Executing getOR() query with data', queryData);
 			if (!entries.length) return [];
 			const rows = await this.rows();
-			return rows.map((row) => this.Generator(row)).filter(satisfies);
+			return rows.map((row) => this.Generator(row as any)).filter(satisfies);
 		};
 
 		const paginateQuery = async (page: number, size: number) => {
@@ -264,7 +349,7 @@ export class DexieTable<Name extends string, Schema extends z.ZodTypeAny> {
 		const allQuery = async () => {
 			this.log('Executing search() query with query', query);
 			const rows = await this.rows();
-			return rows.map((row) => this.Generator(row)).filter(satisfies);
+			return rows.map((row) => this.Generator(row as any)).filter(satisfies);
 		};
 
 		const paginateQuery = async (page: number, size: number) => {
@@ -295,7 +380,9 @@ export class DexieTable<Name extends string, Schema extends z.ZodTypeAny> {
 			if (!row) {
 				return undefined;
 			}
-			return this.Generator(row);
+			return this.Generator(
+				transformDexieRow(this.config.schema, row as Record<string, unknown>, 'deserialize') as any
+			);
 		});
 	}
 
@@ -305,7 +392,7 @@ export class DexieTable<Name extends string, Schema extends z.ZodTypeAny> {
 		const allQuery = async () => {
 			this.log('Executing fromIds() query with ids', ids);
 			const rows = await this.rows();
-			return rows.map((row) => this.Generator(row)).filter(satisfies);
+			return rows.map((row) => this.Generator(row as any)).filter(satisfies);
 		};
 
 		const paginateQuery = async (page: number, size: number) => {
@@ -339,8 +426,19 @@ export class DexieTable<Name extends string, Schema extends z.ZodTypeAny> {
 				...(data as object),
 				created_at: this.ensureDate(data.created_at, now)
 			} as Row<Name, Schema>;
-			await this.tableDef()?.add(row);
-			return this.Generator(row);
+			const persisted = transformDexieRow(
+				this.config.schema,
+				row as Record<string, unknown>,
+				'serialize'
+			) as Row<Name, Schema>;
+			await this.tableDef()?.add(persisted);
+			return this.Generator(
+				transformDexieRow(
+					this.config.schema,
+					persisted as Record<string, unknown>,
+					'deserialize'
+				) as any
+			);
 		});
 	}
 
@@ -361,8 +459,23 @@ export class DexieTable<Name extends string, Schema extends z.ZodTypeAny> {
 						created_at: this.ensureDate(item.created_at, now).toISOString()
 					}) as Row<Name, Schema>
 			);
-			await this.tableDef()?.bulkAdd(rows);
-			return rows.map((row) => this.Generator(row));
+			const persisted = rows.map(
+				(row) =>
+					transformDexieRow(this.config.schema, row as Record<string, unknown>, 'serialize') as Row<
+						Name,
+						Schema
+					>
+			);
+			await this.tableDef()?.bulkAdd(persisted);
+			return persisted.map((row) =>
+				this.Generator(
+					transformDexieRow(
+						this.config.schema,
+						row as Record<string, unknown>,
+						'deserialize'
+					) as any
+				)
+			);
 		});
 	}
 
@@ -380,8 +493,19 @@ export class DexieTable<Name extends string, Schema extends z.ZodTypeAny> {
 				...(data as object),
 				created_at: this.ensureDate(data.created_at, existing?.created_at ?? now).toISOString()
 			} as Row<Name, Schema>;
-			await this.tableDef()?.put(merged);
-			return this.Generator(merged);
+			const persisted = transformDexieRow(
+				this.config.schema,
+				merged as Record<string, unknown>,
+				'serialize'
+			) as Row<Name, Schema>;
+			await this.tableDef()?.put(persisted);
+			return this.Generator(
+				transformDexieRow(
+					this.config.schema,
+					persisted as Record<string, unknown>,
+					'deserialize'
+				) as any
+			);
 		});
 	}
 
@@ -403,8 +527,23 @@ export class DexieTable<Name extends string, Schema extends z.ZodTypeAny> {
 				} as Row<Name, Schema>;
 				rows.push(merged);
 			}
-			await this.tableDef()?.bulkPut(rows);
-			return rows.map((row) => this.Generator(row));
+			const persisted = rows.map(
+				(row) =>
+					transformDexieRow(this.config.schema, row as Record<string, unknown>, 'serialize') as Row<
+						Name,
+						Schema
+					>
+			);
+			await this.tableDef()?.bulkPut(persisted);
+			return persisted.map((row) =>
+				this.Generator(
+					transformDexieRow(
+						this.config.schema,
+						row as Record<string, unknown>,
+						'deserialize'
+					) as any
+				)
+			);
 		});
 	}
 

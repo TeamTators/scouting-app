@@ -47,6 +47,33 @@ describe('CRUD Tests', () => {
 		}
 	};
 
+	it('removes stale rows from cache after a paginated fetch returns no matches', async () => {
+		const staleId = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-stale-paginated`;
+		const staleName = `stale-query-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+		const staleRow = {
+			id: staleId,
+			name: staleName,
+			age: 42,
+			archived: false,
+			created_at: new Date().toISOString()
+		};
+		const stale = struct.Generator(staleRow as never);
+		struct.cache.set(staleId, stale);
+		await new Promise((resolve) => setTimeout(resolve, 10));
+		const query = struct.get({ name: staleName });
+		expect(query.reactive.some((item) => item.id === staleId)).toBe(true);
+
+		const result = await query.fetch_paginated(1, 10);
+		expect(result.isErr()).toBe(false);
+		if (result.isErr()) {
+			throw new Error(result.error.message);
+		}
+		expect(result.value.data).toHaveLength(0);
+		expect(query.reactive.some((row) => row.id === staleId)).toBe(false);
+
+		await stale.delete().catch(() => undefined);
+	});
+
 	it('runs exhaustive CRUD + join flow', async () => {
 		const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 		const idPrimary = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;

@@ -46,7 +46,6 @@ const include_in_session = (pathname: string) => {
 })();
 
 export const handle = async ({ event, resolve }) => {
-	// console.log('Request:', event.request.method, event.url.pathname);
 	event.locals.start = performance.now();
 	event.locals.supabase = Object.assign(
 		createServerClient<Database>(env.SB_PROJECT_URL, env.SB_PUBLIC_KEY, {
@@ -65,6 +64,12 @@ export const handle = async ({ event, resolve }) => {
 						terminal.error('Error setting cookies:', error);
 					}
 				}
+			},
+			auth: {
+				persistSession: true,
+				autoRefreshToken: true,
+				detectSessionInUrl: false,
+				skipAutoInitialize: true
 			}
 		}),
 		{
@@ -142,7 +147,7 @@ export const handle = async ({ event, resolve }) => {
 	try {
 		const res = await resolve(event, {
 			filterSerializedResponseHeaders: (name) => {
-				return ['content-range'].includes(name.toLowerCase());
+				return ['content-range', 'x-supabase-api-version'].includes(name.toLowerCase());
 			}
 		});
 		return res;

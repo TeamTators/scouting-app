@@ -1,3 +1,18 @@
+/**
+ * @fileoverview Uppy-powered upload helper for browser file uploads.
+ *
+ * This utility opens a modal-backed upload dashboard, configures optional plugins, and uploads
+ * files to a configured Supabase storage bucket. It keeps the browser file upload wiring in one
+ * reusable module instead of scattering it through components.
+ *
+ * @example
+ * import { upload } from '$lib/utils/upload';
+ * const res = await upload({
+ *   bucket: 'avatars',
+ *   client: supabase,
+ *   opts: { meta: { path: 'users' } }
+ * }).unwrap();
+ */
 import { type Client } from '$lib/services/supabase/supastruct.svelte';
 import Dashboard from '@uppy/svelte/dashboard';
 import Uppy, {
@@ -14,6 +29,12 @@ import '@uppy/core/css/style.min.css';
 import '@uppy/dashboard/css/style.min.css';
 import '@uppy/image-editor/css/style.min.css';
 
+/**
+ * Plugin constructor type for a dynamic Uppy plugin.
+ *
+ * @template M - Metadata shape.
+ * @template B - Body shape.
+ */
 type PluginClass<M extends Meta, B extends Body> = new (
 	uppy: Uppy<M, B>,
 	opts?: Record<string, unknown>

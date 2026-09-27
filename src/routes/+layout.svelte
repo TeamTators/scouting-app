@@ -36,6 +36,7 @@ Root layout wrapper for all routes. Acts as middleware for global bootstrapping.
 		title={data.env.name}
 		notifications={data.notifications.reactive}
 		account={data.profile}
+		supabase={data.supabase}
 	/>
 	{@render children()}
 	<ScrollToTop />

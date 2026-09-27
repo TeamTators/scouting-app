@@ -1,8 +1,25 @@
+/**
+ * @fileoverview Role and access helpers built on the project's typed Supabase layer.
+ *
+ * These functions validate whether the signed-in user has a role, grant role assignments,
+ * and enforce page-level access constraints in server routes.
+ *
+ * @example
+ * import { hasRole } from '$lib/server/utils/auth';
+ * const ok = await hasRole(supabase, 'Admin').unwrap();
+ */
 import { type Client, SupaStruct, SupaStructData } from '$lib/services/supabase/supastruct.svelte';
 import { attemptAsync } from 'ts-utils';
 import supabase from '$lib/server/services/supabase';
 import { fail, redirect } from '@sveltejs/kit';
 
+/**
+ * Checks whether the current authenticated user has a role assignment.
+ *
+ * @param {Client} client - Supabase client for the signed-in user.
+ * @param {SupaStructData<'core', 'role'> | string} role - Role row object or role name string.
+ * @returns {ReturnType<typeof attemptAsync<boolean>>} Result wrapping whether the user has the requested role.
+ */
 export const hasRole = (client: Client, role: SupaStructData<'core', 'role'> | string) => {
 	return attemptAsync(async () => {
 		if (typeof role === 'string') {

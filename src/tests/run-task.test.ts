@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Tests for task runner helpers.
+ * @description
+ * Verifies TypeScript execution and shell command helpers work as expected.
+ */
+
 import { describe, it, expect } from 'vitest';
 import { runTs, runTask } from '$lib/server/utils/task';
 

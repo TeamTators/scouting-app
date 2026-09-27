@@ -1,12 +1,32 @@
+/**
+ * @fileoverview Expiring in-memory map for short-lived caching.
+ *
+ * This helper provides a lightweight time-based lookup store that automatically evicts expired
+ * entries. It is useful for temporary values such as ephemeral memoization, request dedupe, or
+ * short-lived UI hints.
+ *
+ * @example
+ * const cache = new TempMap<string, number>({ defaultLifetime: 30000 });
+ * cache.set('user:42', 7);
+ * console.log(cache.get('user:42'));
+ */
 export class TempMap<K, V> {
+	/** Internal storage for the time-based key-value entries. */
 	private readonly map = new Map<
 		K,
 		{
+			/** Stored value. */
 			value: V;
+			/** Time at which the value expires. */
 			expiresAt: number;
 		}
 	>();
 
+	/**
+	 * Creates a transient cache with optional cleanup timings.
+	 *
+	 * @param {{ cleanupInterval?: number; defaultLifetime?: number }} [config] - Cache configuration.
+	 */
 	constructor(
 		public readonly config: {
 			cleanupInterval?: number;

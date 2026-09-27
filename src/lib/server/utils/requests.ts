@@ -1,8 +1,26 @@
+/**
+ * @fileoverview Cached HTTP request helper backed by SupaStruct.
+ *
+ * This utility stores GET results in the app’s cached request table to avoid re-fetching the
+ * same data while respecting TTL and response headers. It is intended for deterministic,
+ * low-frequency fetches rather than ad hoc runtime requests.
+ *
+ * @example
+ * import { request } from '$lib/server/utils/requests';
+ * const response = await request('https://example.com/data').unwrap();
+ */
 import { SupaStruct } from '$lib/services/supabase/supastruct.svelte';
 import { attemptAsync } from 'ts-utils';
 import client from '$lib/server/services/supabase';
 import { z } from 'zod';
 
+/**
+ * Fetches a URL while using the cached_request table for TTL-based GET caching.
+ *
+ * @param {string} url - Request URL.
+ * @param {RequestInit} [options] - Fetch options.
+ * @returns {ReturnType<typeof attemptAsync<Response>>} Result-wrapped Response object.
+ */
 export const request = (url: string, options?: RequestInit) => {
 	return attemptAsync(async () => {
 		if (['GET', 'QUERY'].includes(options?.method || 'GET')) {

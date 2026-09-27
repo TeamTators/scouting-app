@@ -1,12 +1,32 @@
+/**
+ * @fileoverview Connectivity and latency monitoring for the browser runtime.
+ *
+ * Emits events when the browser goes online/offline and tracks a rolling network latency metric.
+ * It is designed for lightweight UI features that need to react to connectivity changes without
+ * becoming a persistent app service.
+ *
+ * @example
+ * import { on_network_change, is_online } from '$lib/utils/online.svelte';
+ * on_network_change((online) => console.log('online:', online));
+ */
 import { EventEmitter } from 'ts-utils';
 import { browser } from '$app/env';
 import { get_last_interaction } from './interactivity';
 
+/**
+ * Event bus for connectivity and latency changes.
+ */
 const em = new EventEmitter<{
 	change: boolean;
 	latency: number;
 }>();
 
+/**
+ * Subscribes to connectivity changes.
+ *
+ * @param {(online: boolean) => void} fn - Callback to receive the online/offline flag.
+ * @returns {() => void} Unsubscribe function.
+ */
 export const on_network_change = (fn: (online: boolean) => void) => {
 	return em.on('change', fn);
 };

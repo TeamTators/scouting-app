@@ -8,12 +8,24 @@ import '$lib/imports';
 
 fingerprint();
 
+export const shouldPatchBrowserFetch = (url: URL | RequestInfo) => {
+	if (typeof url === 'string') {
+		return new URL(url, window.location.href).origin !== window.location.origin;
+	}
+
+	const requestUrl = url instanceof Request ? url.url : url.toString();
+	return new URL(requestUrl, window.location.href).origin !== window.location.origin;
+};
+
 export const ogFetch = (() => {
 	if (!browser) return fetch;
 	const og = window.fetch;
 	window.fetch = (url: URL | RequestInfo, config?: RequestInit) => {
-		const headers = new Headers(config?.headers);
+		if (!shouldPatchBrowserFetch(url)) {
+			return og(url, config);
+		}
 
+		const headers = new Headers(config?.headers);
 		for (const [key, value] of metadata.entries()) {
 			headers.set(key, value);
 		}

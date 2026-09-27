@@ -1,88 +1,50 @@
 # src/lib/server/services
 
-Similar to the front-end, back-end services are systems that maintain their own state and typically are long-lived. They provide functionality to other parts of the application and often interact with external resources such as databases, APIs, or other services. Back-end services are designed to be reusable and modular, allowing them to be easily integrated into different parts of the server-side application.
+This folder contains the server-side runtime services used across the app. These modules are expected to be long-lived, state-aware, and integration-heavy, and they are the server analog to `src/lib/services`.
+
+## When to place code here
+
+Use this folder for server-side services that:
+- maintain shared runtime state
+- coordinate cross-module events
+- wrap external APIs or infrastructure integrations
+- provide long-lived server capabilities such as PDF generation, email dispatch, and configured Supabase clients
+
+Examples in this repo:
+- `supabase.ts` for server-side Supabase client construction
+- `email.ts` for transactional email delivery
+- `pdf.ts` for Puppeteer-based PDF rendering
+- `global-events.ts` for shared event emitters
+
+## When not to place code here
+
+Do not put one-off helper logic here if it is truly stateless and not runtime-persistent. For server-only utilities without app-wide state, use `src/lib/server/utils` instead.
 
 ## Conventions
 
-- If a service requires singleton behavior, (i.e. only one instance should exist throughout the application), it must be implemented using the singleton pattern:
+- Use singleton or shared-instance patterns for long-lived services.
+- Keep external integration code typed and explicit.
+- Prefer async, Result-based fallible flows when the operation can fail.
+- Keep state management and configuration in the service layer, not scattered through route handlers.
+
+## Typical service examples
 
 ```ts
-export default new (class MyService {
-	// service implementation
-})();
-```
-
-Or:
-
-```ts
-class MyService {
-	private static instance: MyService;
-	constructor() {
-		// private constructor to prevent direct instantiation
-		if (MyService.instance) throw new Error('More than one instance of MyService created');
-		MyService.instance = this;
-	}
-	init() {
-		// initialization code
-	}
-}
-const myService = new MyService();
-// do any initialization here
-myService.init();
-export default myService;
-```
-
-## PDF Service
-
-The PDF service in [src/lib/server/services/pdf.ts](src/lib/server/services/pdf.ts) is a utility wrapper around Puppeteer for generating, loading, and serving PDF files.
-
-### Create PDFs
-
-```ts
+import supabase from '$lib/server/services/supabase';
+import { send_email } from '$lib/server/services/email';
 import { PDF } from '$lib/server/services/pdf';
 
-const fromHtml = await PDF.fromHTML('invoice', '<h1>Invoice</h1>', {
-	pdf: {
-		format: 'A4',
-		printBackground: true
-	}
-}).unwrap();
-
-const fromUrl = await PDF.fromURL('report', 'https://example.com/report', {
-	emulateMediaType: 'print',
-	waitUntil: 'networkidle0'
+const user = await supabase.auth.getUser();
+await send_email({
+  from: 'support',
+  to: 'hello@example.com',
+  subject: 'Welcome',
+  type: 'welcome',
+  data: { name: 'Ava' }
 }).unwrap();
 ```
 
-### Open and Save PDFs
+## Rule of thumb
 
-```ts
-import { PDF } from '$lib/server/services/pdf';
-
-const pdf = await PDF.open('/absolute/path/report.pdf').unwrap();
-
-await pdf.save('/absolute/path/output/report-copy.pdf').unwrap();
-```
-
-### Convert and Serve
-
-```ts
-import { PDF } from '$lib/server/services/pdf';
-
-const pdf = await PDF.fromBuffer('statement', buffer).unwrap();
-
-const base64 = pdf.toBase64();
-const dataUrl = pdf.src();
-const hash = pdf.hash('sha256');
-
-const response = pdf.toResponse({
-	download: true,
-	cacheControl: 'no-store'
-});
-```
-
-### Notes
-
-- File paths for `open` and `save` must be absolute.
-- Names are normalized to include `.pdf` when missing.
-- Input buffers are checked for a PDF signature (`%PDF-`) before loading.
+If the code is a server-side runtime object or infrastructure service, it belongs here.
+If the code is a server-only helper function, it belongs in `src/lib/server/utils`.
