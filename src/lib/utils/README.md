@@ -5,6 +5,7 @@ This folder holds browser-side helpers that are intentionally small, reusable, a
 ## When to place code here
 
 Use `src/lib/utils` for:
+
 - DOM helpers and browser wrappers
 - form and UI convenience functions
 - pure transforms, validators, serializers, and formatters
@@ -12,6 +13,7 @@ Use `src/lib/utils` for:
 - logic that can be called in isolation without a shared singleton instance
 
 Examples in this repo include:
+
 - `clipboard.ts` for copy operations
 - `downloads.ts` for file download helpers
 - `fullscreen.ts` for browser fullscreen toggling
@@ -21,6 +23,7 @@ Examples in this repo include:
 ## When not to place code here
 
 Do not place code in this folder if it:
+
 - maintains app-wide memory
 - subscribes to background listeners across routes
 - functions as a service singleton or shared cache

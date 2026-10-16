@@ -5,12 +5,14 @@ This folder contains the server-side runtime services used across the app. These
 ## When to place code here
 
 Use this folder for server-side services that:
+
 - maintain shared runtime state
 - coordinate cross-module events
 - wrap external APIs or infrastructure integrations
 - provide long-lived server capabilities such as PDF generation, email dispatch, and configured Supabase clients
 
 Examples in this repo:
+
 - `supabase.ts` for server-side Supabase client construction
 - `email.ts` for transactional email delivery
 - `pdf.ts` for Puppeteer-based PDF rendering
@@ -36,11 +38,11 @@ import { PDF } from '$lib/server/services/pdf';
 
 const user = await supabase.auth.getUser();
 await send_email({
-  from: 'support',
-  to: 'hello@example.com',
-  subject: 'Welcome',
-  type: 'welcome',
-  data: { name: 'Ava' }
+	from: 'support',
+	to: 'hello@example.com',
+	subject: 'Welcome',
+	type: 'welcome',
+	data: { name: 'Ava' }
 }).unwrap();
 ```
 

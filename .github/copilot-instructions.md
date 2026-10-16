@@ -2,10 +2,10 @@
 
 ## Basics for housekeeping
 
-
 ### VERY IMPORTANT: DO NOT TOUCH THESE FILES OR FOLDERS
 
 Do not touch these files under ANY circumstances:
+
 - `.github/`
 - `pnpm-lock.yaml`
 - `tsconfig.json`
@@ -19,7 +19,6 @@ Do not touch these files under ANY circumstances:
 - `/supabase/**`
 
 If there are issues with these files, ALWAYS prompt before attempting modifications.
-
 
 ### Casing
 
@@ -56,9 +55,11 @@ Use this decision tree before creating or editing code:
 ## When to use each folder
 
 ### `src/lib/utils`
+
 Use this folder for stateless or short-lived logic that can be called without holding onto background state.
 
 Good candidates:
+
 - DOM helpers (`clipboard`, `fullscreen`, `contextmenu`, `downloads`)
 - pure formatting/parsing helpers (`json`, `pages`, `meta`, `theme`, `generate-type`)
 - ephemeral UI state stored only inside a component lifecycle (`loading.svelte.ts`, `mouse.svelte.ts`, `stack.svelte.ts`)
@@ -67,9 +68,11 @@ Good candidates:
 Avoid placing long-lived singleton state here. If a module keeps global state, caches, subscriptions, or event listeners across the app, move it to `src/lib/services`.
 
 ### `src/lib/services`
+
 Use this folder for application services that live beyond a single function call.
 
 Good candidates:
+
 - shared keyboard shortcut state (`keybinds.ts`)
 - app-level client-side service instances (`SupaStruct` layer and DB access helpers)
 - time, sync, or network-based runtime systems
@@ -78,9 +81,11 @@ Good candidates:
 This folder is also the home for object and class-style APIs that hold persistent state or singleton-like behavior.
 
 ### `src/lib/server/utils`
+
 Use this folder for server-only utilities, filesystem logic, env parsing, task runners, auth checks, feature metadata, and other isolated functions that run on the server.
 
 Good candidates:
+
 - `env.ts` and `env-utils.ts` for runtime configuration
 - `auth.ts` for role and access checks
 - `task.ts` for command execution helpers
@@ -90,9 +95,11 @@ Good candidates:
 Keep these functions deterministic, explicit, and idempotent when possible.
 
 ### `src/lib/server/services`
+
 Use this folder for server-side services that maintain long-lived runtime behavior or shared resources.
 
 Good candidates:
+
 - database client wiring (`supabase.ts`)
 - email delivery (`email.ts`)
 - cross-module event fan-out (`global-events.ts`)
@@ -152,7 +159,7 @@ result.isErr(); // Returns true if the result is an error, false otherwise.
 result.isOk(); // Returns true if the result is successful, false otherwise.
 if (result.isErr()) console.log('Error: (<Result description>)', result.error); // Replace <Result description> with a meaningful description of the operation that failed.
 if (result.isOk()) {
-  // use its value via `result.value`
+	// use its value via `result.value`
 }
 const unwrapped = result.unwrap(); // Will throw if the result is an error, otherwise returns the value.
 const unwrapped_or = result.unwrapOr(defaultValue); // Returns the value if the result is successful, otherwise returns `defaultValue`.

@@ -9,8 +9,4 @@
 	const { account, supabase }: Props = $props();
 </script>
 
-<div class="container">
-	<div class="row mb-3">
-		<p>Quick settings content goes here.</p>
-	</div>
-</div>
+<div class="container"></div>

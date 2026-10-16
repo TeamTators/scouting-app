@@ -69,7 +69,29 @@ export type KeyName =
 	| 'F10'
 	| 'F11'
 	| 'F12'
-	| ' ';
+	| ' '
+	| '+'
+	| '-'
+	| '='
+	| '['
+	| ']'
+	| '\\'
+	| ';'
+	| "'"
+	| ','
+	| '.'
+	| '/'
+	| '`'
+	| '0'
+	| '1'
+	| '2'
+	| '3'
+	| '4'
+	| '5'
+	| '6'
+	| '7'
+	| '8'
+	| '9';
 
 /** Template for building modifier key combinations (0-3 modifiers) */
 type ComboPrefix =
@@ -160,7 +182,7 @@ export class Keyboard {
 	 * @returns Array of handler functions, or undefined if none found
 	 */
 	public static get(key: KeyCombo) {
-		return this._current.listeners.get(key) || this.global.get(key);
+		return this._current.listeners.get(key.toLowerCase()) || this.global.get(key.toLowerCase());
 	}
 
 	/**
@@ -181,9 +203,9 @@ export class Keyboard {
 	 * @returns Cleanup function to remove this shortcut
 	 */
 	public on(key: KeyCombo, fn: KeyFn) {
-		const fns = this.listeners.get(key) || [];
+		const fns = this.listeners.get(key.toLowerCase()) || [];
 		fns.push(fn);
-		this.listeners.set(key, fns);
+		this.listeners.set(key.toLowerCase(), fns);
 
 		return () => this.off(key, fn);
 	}
@@ -194,7 +216,7 @@ export class Keyboard {
 	 * @param fn - The specific function to remove
 	 */
 	public off(key: KeyCombo, fn: KeyFn) {
-		const fns = this.listeners.get(key) || [];
+		const fns = this.listeners.get(key.toLowerCase()) || [];
 		const index = fns.indexOf(fn);
 		if (index !== -1) fns.splice(index, 1);
 	}
@@ -206,8 +228,8 @@ export class Keyboard {
 	public combine(...keyboard: Keyboard[]) {
 		for (const kb of keyboard) {
 			for (const [key, fns] of kb.listeners) {
-				const current = this.listeners.get(key) || [];
-				this.listeners.set(key, current.concat(fns));
+				const current = this.listeners.get(key.toLowerCase()) || [];
+				this.listeners.set(key.toLowerCase(), current.concat(fns));
 			}
 		}
 	}

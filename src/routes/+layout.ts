@@ -20,7 +20,10 @@ export const load = async (event) => {
 							persistSession: true,
 							autoRefreshToken: true,
 							detectSessionInUrl: false,
-							skipAutoInitialize: true
+							flowType: 'pkce'
+						},
+						cookieOptions: {
+							name: 'sbid'
 						}
 					}
 				),
@@ -47,8 +50,10 @@ export const load = async (event) => {
 						auth: {
 							persistSession: true,
 							autoRefreshToken: true,
-							detectSessionInUrl: false,
-							skipAutoInitialize: true
+							detectSessionInUrl: false
+						},
+						cookieOptions: {
+							name: 'sbid'
 						}
 					}
 				),
@@ -57,9 +62,7 @@ export const load = async (event) => {
 				}
 			);
 
-	const session = isBrowser()
-		? (await supabase.auth.getSession()).data.session
-		: null;
+	const session = isBrowser() ? (await supabase.auth.getSession()).data.session : null;
 
 	const Profile = SupaStruct.get({
 		client: supabase,
@@ -77,11 +80,17 @@ export const load = async (event) => {
 		account_id: String(event.data.profile?.id)
 	});
 
+	if (event.data.profile) notifications.sync(1000 * 60);
+	if (event.data.profile) notifications.subscribe();
+
 	return {
 		supabase,
 		session,
+		is_mentor: event.data.is_mentor,
+		is_student: event.data.is_student,
+		is_viewer: event.data.is_viewer,
 		profile: event.data.profile ? Profile.Generator(event.data.profile) : null,
 		notifications,
-		env: event.data.env,
+		env: event.data.env
 	};
 };

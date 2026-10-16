@@ -125,6 +125,14 @@ const parse_zod_field = (
 	};
 };
 
+const normalize_schema_key = (key: string) => {
+	const trimmed = key.trim();
+	if (trimmed.length >= 2 && trimmed.startsWith('"') && trimmed.endsWith('"')) {
+		return trimmed.slice(1, -1);
+	}
+	return trimmed;
+};
+
 const parse_schema = (
 	schema: z.ZodTypeAny
 ): Record<
@@ -150,11 +158,12 @@ const parse_schema = (
 			nullable: boolean;
 		}
 	> = {};
-	for (const key in shape) {
+	for (const raw_key in shape) {
+		const key = normalize_schema_key(raw_key);
 		if (['id', '_id', 'created_at', 'archived'].includes(key)) {
 			continue; // Skip reserved fields
 		}
-		parsed[key] = parse_zod_field((shape as any)[key]);
+		parsed[key] = parse_zod_field((shape as any)[raw_key]);
 	}
 	return parsed;
 };

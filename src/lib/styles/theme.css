@@ -3,7 +3,7 @@
 /* @import url('./scss/colors.scss'); */
 
 body[data-bs-theme='dark'] {
-	background: linear-gradient(45deg, var(--layer-0) 20%, #201030 100%);
+	background: linear-gradient(45deg, var(--layer-0) 60%, var(--primary-dark) 100%);
 	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 	color: var(--text-layer-0);
 	min-height: 100vh;
@@ -11,7 +11,7 @@ body[data-bs-theme='dark'] {
 }
 
 body[data-bs-theme='light'] {
-	background: linear-gradient(45deg, var(--layer-0) 20%, #443256 100%);
+	background: linear-gradient(45deg, var(--layer-0) 20%, var(--primary-light) 40%);
 	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 	color: var(--text-layer-0);
 	min-height: 100vh;

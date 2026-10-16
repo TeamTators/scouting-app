@@ -1,6 +1,6 @@
 ---
 name: bootstrap-modal-prompts
-description: "Use when: building Bootstrap-based modal flows, text prompts, confirmations, alerts, choice dialogs, notification toasts, or upload modals in a Svelte or front-end app."
+description: 'Use when: building Bootstrap-based modal flows, text prompts, confirmations, alerts, choice dialogs, notification toasts, or upload modals in a Svelte or front-end app.'
 ---
 
 # Bootstrap modal prompting workflow
@@ -8,6 +8,7 @@ description: "Use when: building Bootstrap-based modal flows, text prompts, conf
 This skill covers the reusable modal and prompt system used in this repo for user-interaction flows, notably the patterns in [src/lib/utils/prompts.svelte.ts](../../../src/lib/utils/prompts.svelte.ts).
 
 Use this workflow when you need to:
+
 - collect text from a user with validation
 - confirm destructive actions or choice-based decisions
 - show simple alerts or notification toasts
@@ -38,17 +39,18 @@ The app keeps a stable root for modal overlays:
 
 ```ts
 export const modalTarget = (() => {
-  if (browser) {
-    const target = document.createElement('div');
-    target.id = 'modal-target';
-    document.body.appendChild(target);
-    return target;
-  }
-  return null;
+	if (browser) {
+		const target = document.createElement('div');
+		target.id = 'modal-target';
+		document.body.appendChild(target);
+		return target;
+	}
+	return null;
 })();
 ```
 
 This is the right pattern when you want:
+
 - layered modals without leaking into arbitrary component DOM trees
 - stable overlay management
 - predictable cleanup through `clearModals()`
@@ -59,10 +61,10 @@ The modal helpers all return `Promise<...>` and resolve on interaction:
 
 ```ts
 export const prompt = async (message: string, config?: PromptConfig) => {
-  return new Promise<string | null>((res, rej) => {
-    if (!modalTarget) return rej('Cannot show prompt in non-browser environment');
-    // mount + handlers + resolve / reject
-  });
+	return new Promise<string | null>((res, rej) => {
+		if (!modalTarget) return rej('Cannot show prompt in non-browser environment');
+		// mount + handlers + resolve / reject
+	});
 };
 ```
 
@@ -71,6 +73,7 @@ Use this pattern whenever a UI action needs to return a user choice or input val
 ### 3. Keyboard support is part of the contract
 
 The repo treats keyboard behavior as a first-class feature:
+
 - Enter confirms
 - Escape cancels
 - Arrow keys or letter shortcuts work for binary choices
@@ -80,16 +83,16 @@ Example:
 
 ```ts
 const onkeydown = (e: KeyboardEvent) => {
-  if (e.key === 'Escape') {
-    e.preventDefault();
-    res(null);
-    modal.hide();
-  }
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    res(true);
-    modal.hide();
-  }
+	if (e.key === 'Escape') {
+		e.preventDefault();
+		res(null);
+		modal.hide();
+	}
+	if (e.key === 'Enter') {
+		e.preventDefault();
+		res(true);
+		modal.hide();
+	}
 };
 ```
 
@@ -99,13 +102,14 @@ The cleanest lifecycle is:
 
 ```ts
 modal.once('hide', () => {
-  res(null);
-  document.removeEventListener('keydown', onkeydown);
-  unmount(modal);
+	res(null);
+	document.removeEventListener('keydown', onkeydown);
+	unmount(modal);
 });
 ```
 
 This pattern prevents:
+
 - duplicate global listeners
 - stuck promise resolution
 - DOM leaks when users dismiss or close modals repeatedly
@@ -113,6 +117,7 @@ This pattern prevents:
 ### 5. Build bodies with raw snippets or DOM queries
 
 The repo mixes:
+
 - `createRawSnippet()` for simple string-based markup
 - `querySelector()` to find the actual input element after mount
 - `setup` hooks to attach runtime listeners
@@ -125,25 +130,25 @@ Toasts use the `Alert` component and are mounted directly on `document.body` rat
 
 ```ts
 export const notify = (config: NotificationConfig) => {
-  if (!browser) throw new Error('Cannot show notification in non-browser environment');
+	if (!browser) throw new Error('Cannot show notification in non-browser environment');
 
-  history.push({ ...config, id: crypto.randomUUID() });
+	history.push({ ...config, id: crypto.randomUUID() });
 
-  const mounted = mount(Alert, {
-    target: document.body,
-    props: {
-      title: config.title,
-      message: config.message,
-      color: config.color,
-      autoHide: config.autoHide ?? 0,
-      textColor: config.textColor,
-      onHide: () => {
-        unmount(mounted);
-      }
-    }
-  });
+	const mounted = mount(Alert, {
+		target: document.body,
+		props: {
+			title: config.title,
+			message: config.message,
+			color: config.color,
+			autoHide: config.autoHide ?? 0,
+			textColor: config.textColor,
+			onHide: () => {
+				unmount(mounted);
+			}
+		}
+	});
 
-  return mounted;
+	return mounted;
 };
 ```
 
@@ -152,49 +157,61 @@ This keeps notification behavior non-blocking and separate from full-screen dial
 ## Decision points
 
 ### When to use `prompt()`
+
 Use it for freeform user input such as a name, label, or value that must be validated before submission.
 
 Choose `prompt` when:
+
 - there is one required input
 - the value needs validation
 - you want a single field with optional parsing
 
 ### When to use `select()`
+
 Use it when the user must choose from a list of known options.
 
 Prefer `select` when:
+
 - the options are static or already known
 - the user chooses one item from a list
 - a dropdown is clearer than a binary choice
 
 ### When to use `choose()`
+
 Use it for binary or two-option decision flows.
 
 Preferred when:
+
 - only two options exist
 - keyboard shortcuts matter
 - the options can be raw values or `{ value, text }` objects
 
 ### When to use `confirm()`
+
 Use it when the user is confirming a destructive or irreversible action.
 
 Prefer `confirm` over raw `alert` when you need a yes/no answer and a return value.
 
 ### When to use `alert()`
+
 Use it for informational messages where the user only needs to acknowledge.
 
 ### When to use `notify()`
+
 Use it for non-blocking side-channel feedback such as success, warning, or failed background actions.
 
 ### When to use `rawModal()`
+
 Use it when the content is custom or highly dynamic and needs a custom mount callback.
 
 This is the escape hatch for:
+
 - embedded components
 - custom uploader UIs
 - specialized editing surfaces inside a modal
 
 ### When to use `upload()`
+
 Use it when the interaction involves a drag-and-drop or multi-file uploader with a provider backend and a bucket path.
 
 This repo’s upload helper wraps Uppy + Supabase storage and keeps the file upload modal flow inside the same modal contract.
@@ -234,6 +251,7 @@ This repo’s upload helper wraps Uppy + Supabase storage and keeps the file upl
 ## Quality checklist
 
 Before treating a modal prompt flow as complete, check:
+
 - it fails clearly in non-browser contexts
 - it resolves the correct value type on confirm/cancel
 - input validation blocks invalid submission
@@ -256,46 +274,55 @@ Before treating a modal prompt flow as complete, check:
 ## Example patterns
 
 ### Text prompt
+
 ```ts
 const name = await prompt('What is your name?', {
-  validate: (value) => value.trim().length > 2,
-  placeholder: 'Jane Doe'
+	validate: (value) => value.trim().length > 2,
+	placeholder: 'Jane Doe'
 });
 ```
 
 ### Confirmation
+
 ```ts
 const confirmed = await confirm('Delete this item?', {
-  title: 'Delete item',
-  yes: 'Delete',
-  no: 'Keep'
+	title: 'Delete item',
+	yes: 'Delete',
+	no: 'Keep'
 });
 ```
 
 ### Binary choice
+
 ```ts
 const result = await choose(
-  'Which path should we take?',
-  { value: 'first', text: 'Use first option' },
-  { value: 'second', text: 'Use second option' }
+	'Which path should we take?',
+	{ value: 'first', text: 'Use first option' },
+	{ value: 'second', text: 'Use second option' }
 );
 ```
 
 ### Raw modal
+
 ```ts
-const modal = rawModal('Custom editor', [
-  { text: 'Save', color: 'primary', onClick: () => modal.hide() },
-  { text: 'Cancel', color: 'secondary', onClick: () => modal.hide() }
-], (body) => mount(MyCustomEditor, { target: body }));
+const modal = rawModal(
+	'Custom editor',
+	[
+		{ text: 'Save', color: 'primary', onClick: () => modal.hide() },
+		{ text: 'Cancel', color: 'secondary', onClick: () => modal.hide() }
+	],
+	(body) => mount(MyCustomEditor, { target: body })
+);
 ```
 
 ### Notification
+
 ```ts
 notify({
-  title: 'Saved',
-  message: 'Your update was saved successfully.',
-  color: 'success',
-  autoHide: 2500
+	title: 'Saved',
+	message: 'Your update was saved successfully.',
+	color: 'success',
+	autoHide: 2500
 });
 ```
 
@@ -308,6 +335,7 @@ notify({
 ## Typical prompt starters
 
 Use this skill with prompts like:
+
 - "Create a Bootstrap confirm modal that returns true/false with keyboard support."
 - "Add a text prompt with validation and a custom parser for a front-end form."
 - "Build a choice modal with shortcut keys and custom labels in Svelte."

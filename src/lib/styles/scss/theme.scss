@@ -4,12 +4,13 @@ $white: #ffffff;
 $theme-colors: (
 	'light': #e0e7ff,
 	'dark': #0a0e12,
-	'primary': #3ea8fc,
-	'secondary': #8c5ad8,
-	'info': #2be3e7,
-	'success': #34d399,
-	'warning': #fbbf24,
-	'danger': #ef4444,
+	'primary': #2e42d9,
+	// 'primary': #142BD6,
+	'secondary': #6b16dd,
+	'info': #3ebbd8,
+	'success': #14bb1f,
+	'warning': #bbb11b,
+	'danger': #ff1d17,
 	'gray': #6c757d
 );
 
@@ -32,17 +33,25 @@ $theme-colors: (
 	}
 }
 
+@function text-contrast($background) {
+	@if color.channel($background, 'lightness', $space: hsl) > 50% {
+		@return #000; // Use black text for lighter backgrounds
+	} @else {
+		@return #fff; // Use white text for darker backgrounds
+	}
+}
+
 :root {
 	@each $color, $value in $theme-colors {
 		$lighten-percentage: 10%;
-		$darken-percentage: 10%;
+		$darken-percentage: -10%;
 
 		--#{$color}: #{$value};
-		--#{$color}-transparent: rgba($value, 0);
-		--#{$color}-light: lighten($value, $lighten-percentage);
-		--#{$color}-dark: darken($value, $darken-percentage);
+		--#{$color}-transparent: rgba(var(--#{$color}), 0);
+		--#{$color}-light: color-mix(in srgb, var(--#{$color}) 20%, #fff 80%);
+		--#{$color}-dark: color-mix(in srgb, var(--#{$color}) 30%, #000 70%);
 
-		--bg-#{$color}: var(--#{$color});
+		--bg-#{$color}: #fff;
 
 		.bg-#{$color} {
 			background-color: var(--#{$color});
@@ -81,13 +90,13 @@ $theme-colors: (
 		}
 
 		.btn-#{$color} {
-			color: #{text-contrast($value)};
+			color: contrast-color($value);
 			background-color: var(--#{$color});
 			border-color: var(--#{$color});
 		}
 
 		.btn-#{$color}:hover {
-			color: #{text-contrast($value)};
+			color: contrast-color($value);
 			background-color: var(--#{$color}-dark);
 			border-color: var(--#{$color});
 		}
@@ -99,7 +108,7 @@ $theme-colors: (
 
 		.btn-#{$color}.disabled,
 		.btn-#{$color}:disabled {
-			color: #{text-contrast($value)};
+			color: contrast-color($value);
 			background-color: var(--#{$color}-light);
 			border-color: var(--#{$color}-light);
 		}
@@ -107,7 +116,7 @@ $theme-colors: (
 		.btn-#{$color}:not(:disabled):not(.disabled):active,
 		.btn-#{$color}:not(:disabled):not(.disabled).active,
 		.show > .btn-#{$color}.dropdown-toggle {
-			color: #{text-contrast($value)};
+			color: contrast-color($value);
 			background-color: var(--#{$color}-dark);
 			border-color: var(--#{$color});
 		}
@@ -173,19 +182,19 @@ $theme-colors: (
 		}
 
 		.table .thead-#{$color} th {
-			color: #{text-contrast($value)};
+			color: contrast-color($value);
 			background-color: var(--#{$color}-dark);
 			border-color: var(--#{$color});
 		}
 
 		.badge-#{$color} {
-			color: #{text-contrast($value)};
+			color: contrast-color($value);
 			background-color: var(--#{$color});
 		}
 
 		.alert-#{$color} {
-			color: var(--#{$color}-dark);
-			background-color: var(--#{$color}-light);
+			color: var(--#{$color}-light);
+			background-color: var(--#{$color}-dark);
 			border-color: var(--#{$color});
 		}
 
@@ -204,14 +213,87 @@ $theme-colors: (
 
 		.list-group-item-#{$color}.list-group-item-action:hover,
 		.list-group-item-#{$color}.list-group-item-action:focus {
-			color: #{text-contrast($value)};
+			color: contrast-color($value);
 			background-color: var(--#{$color});
 		}
 
 		.list-group-item-#{$color}.list-group-item-action.active {
-			color: #{text-contrast($value)};
+			color: contrast-color($value);
 			background-color: var(--#{$color});
 			border-color: var(--#{$color}-dark);
 		}
+
+		.radial-glow.radial-glow-#{$color} {
+			--glow-color: var(--#{$color});
+		}
 	}
+}
+@property --angle {
+	syntax: '<angle>';
+	inherits: false;
+	initial-value: 0deg;
+}
+
+@keyframes spin {
+	to {
+		--angle: 360deg;
+	}
+}
+
+.radial-glow {
+	position: relative;
+	isolation: isolate;
+	--glow-width: 25%;
+}
+
+.radial-glow::before {
+	content: '';
+	position: absolute;
+	inset: -2px;
+	border-radius: inherit;
+	background: conic-gradient(
+		from var(--angle),
+		var(--glow-color),
+		white var(--glow-width),
+		var(--glow-color),
+		var(--glow-color),
+		var(--glow-color)
+	);
+	filter: blur(4px);
+	animation: spin 3s linear infinite;
+	z-index: -2;
+	pointer-events: none;
+}
+
+.radial-glow::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	border: inherit;
+	z-index: -1;
+}
+
+.btn.radial-glow::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	background: var(--bs-btn-bg);
+	z-index: -1;
+}
+
+.radial-glow.btn:hover {
+	// --glow-color: var(--bs-light);
+	--bs-btn-hover-bg: var(--bs-btn-bg);
+	--bs-btn-hover-border-color: var(--bs-btn-border-color);
+	background-color: var(--bs-btn-bg);
+	border-color: var(--bs-btn-border-color);
+	background: none;
+}
+
+.radial-glow.btn:hover {
+	// Don't hide the button background on hover
+	// background-color: inherit;
+	--glow-color: var(--bs-light);
 }

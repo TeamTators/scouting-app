@@ -15,6 +15,32 @@ import path from 'path';
 import { z } from 'zod';
 dotenv();
 
+const overwrite = (filename: string) => {
+	const content = fs.existsSync(filename) ? fs.readFileSync(filename, 'utf-8') : '';
+	// parse env
+	const lines = content.split('\n').map((l) => l.trim());
+	for (const line of lines) {
+		// remove everything after #
+		const hashIndex = line.indexOf('#');
+		const cleanLine = hashIndex >= 0 ? line.slice(0, hashIndex).trim() : line;
+		if (!cleanLine) continue;
+		const [key, ...rest] = cleanLine.split('=');
+		process.env[key.toUpperCase()] = rest.join('=');
+	}
+};
+
+{
+	console.log('Current MODE:', process.env.MODE);
+	switch (process.env.MODE) {
+		case 'dev':
+			overwrite('.env.dev');
+			break;
+		case 'prod':
+			overwrite('.env.prod');
+			break;
+	}
+}
+
 let timeout: ReturnType<typeof setTimeout>;
 const keys = new Map<
 	string,
@@ -59,7 +85,6 @@ type EnvConfig<T> = {
 };
 
 const exampleFilepath = path.join(process.cwd(), '.env.example');
-const envFilepath = path.join(process.cwd(), '.env');
 let current = '';
 try {
 	current = fs.readFileSync(exampleFilepath, 'utf-8');
@@ -425,5 +450,5 @@ export const set = (vars: Record<string, string>) => {
 			currentLines.push(`${key}=${value}`);
 		}
 	}
-	fs.writeFileSync(envFilepath, currentLines.join('\n'));
+	fs.writeFileSync(exampleFilepath, currentLines.join('\n'));
 };

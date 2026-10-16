@@ -1,3 +1,4 @@
+import '$lib/server';
 import { error } from '@sveltejs/kit';
 import terminal from '$lib/server/utils/terminal';
 import '$lib/server/utils/files';
@@ -7,7 +8,6 @@ import env from '$lib/server/utils/env';
 import type { Database } from '$lib/types/supabase';
 import { SupaStruct } from '$lib/services/supabase/supastruct.svelte';
 import supabase from '$lib/server/services/supabase';
-import '$lib/server';
 import ignore from 'ignore';
 
 const include = ignore();
@@ -68,8 +68,13 @@ export const handle = async ({ event, resolve }) => {
 			auth: {
 				persistSession: true,
 				autoRefreshToken: true,
-				detectSessionInUrl: false,
-				skipAutoInitialize: true
+				detectSessionInUrl: false
+			},
+			cookieOptions: {
+				name: 'sbid'
+			},
+			global: {
+				fetch: event.fetch
 			}
 		}),
 		{
@@ -101,10 +106,14 @@ export const handle = async ({ event, resolve }) => {
 				terminal.error('Error creating new session:', res.error);
 			} else {
 				event.locals.session = res.value[0];
-				event.cookies.set('ssid', res.value[0].raw.id, {
-					httpOnly: true,
-					path: '/'
-				});
+				try {
+					event.cookies.set('ssid', res.value[0].raw.id, {
+						httpOnly: true,
+						path: '/'
+					});
+				} catch (error) {
+					terminal.error('Error setting cookies: ', error);
+				}
 			}
 		}
 		if (sessionRes.isOk() && sessionRes.value) {
@@ -137,10 +146,14 @@ export const handle = async ({ event, resolve }) => {
 			terminal.error('Error creating new session:', res.error);
 		} else {
 			event.locals.session = res.value[0];
-			event.cookies.set('ssid', res.value[0].raw.id, {
-				httpOnly: true,
-				path: '/'
-			});
+			try {
+				event.cookies.set('ssid', res.value[0].raw.id, {
+					httpOnly: true,
+					path: '/'
+				});
+			} catch (error) {
+				terminal.error('Error setting cookies: ', error);
+			}
 		}
 	}
 

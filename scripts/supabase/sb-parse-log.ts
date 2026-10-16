@@ -1,92 +1,44 @@
+import sbParseLog from './sb-parse-log';
 import fs from 'fs';
 import path from 'path';
-import { z } from 'zod';
-// import os from 'os';
 
-export type SupabaseStartParams = Record<string, string>;
+const setEnvFileVars = (vars: Record<string, string>) => {
+	const envPath = path.join(process.cwd(), '.env');
+	const existing = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
+	const lines = existing.length ? existing.split(/\r?\n/) : [];
 
-const rowRegex = /^\s*[|│]\s*([^|│]+?)\s*[|│]\s*([^|│]+?)\s*[|│]\s*$/;
-const sectionRegex = /^\s*[|│]\s*([^|│]+?)\s*[|│]\s*$/;
-
-const normalizeKey = (key: string) =>
-	key
-		.trim()
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, '_')
-		.replace(/^_+|_+$/g, '');
-
-const normalizeSection = (section: string) =>
-	normalizeKey(section.trim().replace(/^[^a-zA-Z0-9]+/, ''));
-
-/**
- * Parse Supabase CLI startup output and extract all section parameters
- * as normalized variable-name key/value pairs.
- */
-export const parseSupabaseStartLog = (contents: string) => {
-	const params: Record<string, string> = {};
-
-	let currentSection = '';
-	for (const line of contents.split(/\r?\n/)) {
-		const rowMatch = line.match(rowRegex);
-		if (rowMatch) {
-			const rawKey = rowMatch[1]?.trim();
-			const rawValue = rowMatch[2]?.trim();
-			if (!rawKey || !rawValue) continue;
-
-			const sectionName = currentSection || 'global';
-			const key = normalizeKey(rawKey);
-			if (!key) continue;
-
-			params[`${sectionName}_${key}`] = rawValue;
-			continue;
-		}
-
-		const sectionMatch = line.match(sectionRegex);
-		if (sectionMatch) {
-			const normalizedSection = normalizeSection(sectionMatch[1] || '');
-			if (normalizedSection) {
-				currentSection = normalizedSection;
-			}
+	for (const [key, value] of Object.entries(vars)) {
+		const line = `${key}=${value}`;
+		const index = lines.findIndex((entry) => entry.startsWith(`${key}=`));
+		if (index === -1) {
+			lines.push(line);
+		} else {
+			lines[index] = line;
 		}
 	}
 
-	if (Object.keys(params).length === 0) {
-		throw new Error('Could not parse any parameters from log.');
-	}
-
-	const zod = z.object({
-		development_tools_studio: z.string(),
-		development_tools_mailpit: z.string(),
-		development_tools_mcp: z.string(),
-		apis_project_url: z.string(),
-		apis_rest: z.string(),
-		apis_graphql: z.string(),
-		apis_edge_functions: z.string(),
-		database_url: z.string(),
-		authentication_keys_publishable: z.string(),
-		authentication_keys_secret: z.string(),
-		storage_s3_url: z.string(),
-		storage_s3_access_key: z.string(),
-		storage_s3_secret_key: z.string(),
-		storage_s3_region: z.string()
-	});
-
-	return zod.parse(params);
+	const output = lines.join('\n').trimEnd() + '\n';
+	fs.writeFileSync(envPath, output, 'utf-8');
 };
 
-export default () => {
-	const logPath = 'supabase/sb-start.log';
-	const absolutePath = path.isAbsolute(logPath) ? logPath : path.join(process.cwd(), logPath);
+export default async () => {
+	const parsed = sbParseLog();
+	const vars = {
+		SB_STUDIO_URL: parsed.development_tools_studio,
+		SB_MAILPIT_URL: parsed.development_tools_mailpit,
+		SB_MCP_URL: parsed.development_tools_mcp,
+		SB_PROJECT_URL: parsed.apis_project_url.replace('127.0.0.1', 'localhost'),
+		SB_DB_URL: parsed.database_url,
+		SB_PUBLIC_KEY: parsed.authentication_keys_publishable,
+		SB_SECRET_KEY: parsed.authentication_keys_secret,
+		SB_STORAGE_ENDPOINT: parsed.storage_s3_url.replace(parsed.apis_project_url, ''),
+		SB_STORAGE_ACCESS_KEY: parsed.storage_s3_access_key,
+		SB_STORAGE_SECRET_KEY: parsed.storage_s3_secret_key,
+		SB_REGION: parsed.storage_s3_region,
+		SB_PUBLIC_URL: parsed.apis_project_url.replace('127.0.0.1', 'localhost'),
+		SB_POSTGRES_PASSWORD: 'postgres',
+		SB_TENANT_ID: ''
+	};
 
-	if (!fs.existsSync(absolutePath)) {
-		throw new Error(`Log file not found: ${absolutePath}`);
-	}
-
-	const contents = fs.readFileSync(absolutePath, 'utf-8');
-	// match all [<number>m
-	// eslint-disable-next-line no-control-regex
-	const cleanedContents = contents.replace(/\x1b\[\d+m/g, '');
-	fs.writeFileSync(absolutePath, cleanedContents, 'utf8');
-
-	return parseSupabaseStartLog(cleanedContents);
+	setEnvFileVars(vars);
 };

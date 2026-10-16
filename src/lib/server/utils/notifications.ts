@@ -1,8 +1,36 @@
+import { SupaStruct } from '$lib/services/supabase/supastruct.svelte';
+import client from '$lib/server/services/supabase';
+import { type Icon } from '$lib/types/icons';
+
+export const notify = (config: {
+	icon: Icon;
+	link?: string;
+	message: string;
+	severity: 'info' | 'warning' | 'error' | 'success';
+	title: string;
+	account_id: string;
+}) => {
+	const Notification = SupaStruct.get({
+		client,
+		schema: 'core',
+		table: 'account_notification'
+	});
+
+	return Notification.new({
+		icon: config.icon.name,
+		icon_type: config.icon.type,
+		account_id: config.account_id,
+		link: config.link,
+		message: config.message,
+		severity: config.severity,
+		title: config.title
+	});
+};
+
 /**
  * @fileoverview Global notification service for broadcasting notifications to all users.
  * Provides utilities for creating and distributing system-wide notifications across the application.
  */
-import type { Icon } from '$lib/types/icons';
 import { attemptAsync } from 'ts-utils';
 import supabase from '../services/supabase';
 
@@ -18,7 +46,7 @@ import supabase from '../services/supabase';
  * @param {string} [notif.link] - Optional URL to navigate to when notification is clicked.
  * @returns {ResultPromise<void, Error>} Resolves when all notifications are created, or rejects if account fetch fails.
  * @example
- * const res = await globalNotification({
+ * const res = await global_notify({
  *   title: 'System Maintenance',
  *   message: 'Scheduled maintenance starting at 2:00 AM',
  *   severity: 'warning',
@@ -26,7 +54,7 @@ import supabase from '../services/supabase';
  *   link: '/maintenance-info'
  * }).unwrap();
  */
-export const globalNotification = (notif: {
+export const global_notify = (notif: {
 	title: string;
 	message: string;
 	severity: 'info' | 'warning' | 'danger' | 'success';

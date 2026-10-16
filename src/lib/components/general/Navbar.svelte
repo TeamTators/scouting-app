@@ -20,8 +20,8 @@ Top navigation bar with stack controls, theme toggle, account menu, and notifica
 	import { Navbar } from '$lib/nav/index.svelte';
 	import { rawModal } from '$lib/utils/prompts.svelte';
 	import { mount } from 'svelte';
-	import { type Client } from '$lib/services/supabase/supastruct.svelte';
 	import QuickSettings from '$lib/components/account/QuickSettings.svelte';
+	import { type Client } from '$lib/services/supabase/supastruct.svelte';
 
 	interface Props {
 		title: string;
@@ -36,8 +36,9 @@ Top navigation bar with stack controls, theme toggle, account menu, and notifica
 		account,
 		notifications,
 		show_side_nav: _show_side_nav,
-		supabase,
+		supabase
 	}: Props = $props();
+
 	let notifs = $state(0);
 </script>
 
@@ -72,14 +73,6 @@ Top navigation bar with stack controls, theme toggle, account menu, and notifica
 				<i class="material-icons">redo</i>
 			</button> -->
 			<div class="dropdown">
-				<button
-					class="btn dropdown-toggle px-2"
-					type="button"
-					data-bs-toggle="dropdown"
-					aria-expanded="false"
-				>
-					<i class="material-icons">account_circle</i>
-				</button>
 				<div
 					class="dropdown-menu animate__animated animate__fadeInDown animate__faster"
 					style="
@@ -140,6 +133,9 @@ Top navigation bar with stack controls, theme toggle, account menu, and notifica
 										>
 									</li>
 								{:else}
+									<li>
+										Signed in as {account.raw.username}
+									</li>
 									<li>
 										<a class="dropdown-item" href="/account/sign-out">
 											<i class="material-icons">logout</i>
@@ -216,5 +212,11 @@ Top navigation bar with stack controls, theme toggle, account menu, and notifica
 		aspect-ratio: 1 / 1;
 		width: min-content;
 		margin: 0;
+	}
+
+	.navbar {
+		position: sticky;
+		top: 0px;
+		z-index: 1000;
 	}
 </style>

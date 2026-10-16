@@ -159,7 +159,7 @@ export class DexieTable<Name extends string, Schema extends z.ZodTypeAny> {
 
 	private log(...args: unknown[]) {
 		if (this.config.debug) {
-			console.log(`[Table:${this.config.name}] (${new Date().toISOString()})`, ...args);
+			console.trace(`[Table:${this.config.name}] (${new Date().toISOString()})`, ...args);
 		}
 	}
 
@@ -548,15 +548,17 @@ export class DexieTable<Name extends string, Schema extends z.ZodTypeAny> {
 	}
 
 	private remove(id: string) {
-		const normalizedId = String(id);
-		this.log('Removing row with id', normalizedId);
-		this.cache.delete(normalizedId);
+		return attemptAsync(async () => {
+			const normalizedId = String(id);
+			this.log('Removing row with id', normalizedId);
+			this.cache.delete(normalizedId);
 
-		// Delete from IndexedDB and await completion so callers can rely on persistence state.
-		return _init().then(async (db) => {
-			if (!db) return;
-			await db.table(this.config.name).delete(normalizedId);
-			await this.tableDef()?.delete(normalizedId);
+			// Delete from IndexedDB and await completion so callers can rely on persistence state.
+			return _init().then(async (db) => {
+				if (!db) return;
+				await db.table(this.config.name).delete(normalizedId);
+				await this.tableDef()?.delete(normalizedId);
+			});
 		});
 	}
 

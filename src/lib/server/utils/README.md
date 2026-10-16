@@ -7,6 +7,7 @@ This folder contains server-only helper functions and small runtime utilities. T
 Use this folder for server-side logic that is deterministic, isolated, and not itself a long-lived application service.
 
 Good candidates include:
+
 - environment parsing and validation (`env.ts`, `env-utils.ts`)
 - auth or access checks (`auth.ts`)
 - filesystem and metadata utilities (`files.ts`, `features.ts`, `file-match.ts`)

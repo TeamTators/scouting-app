@@ -28,6 +28,7 @@ export type MultiSearchSelectCellEditorParams = ICellEditorParams & {
 	maxDropdownHeight?: number;
 	delimiter?: string;
 	placeholder?: string;
+	render?: (value: string) => string;
 };
 
 export type MaterialIconSelectCellEditorParams = ICellEditorParams & {
@@ -128,6 +129,36 @@ const createOption = (label: string) => {
 	return row;
 };
 
+const createSubmitButton = (onSubmit: () => void) => {
+	const button = document.createElement('button');
+	button.type = 'button';
+	button.textContent = 'Submit';
+	button.style.alignSelf = 'stretch';
+	button.style.justifySelf = 'end';
+	button.style.padding = '6px 12px';
+	button.style.border = `1px solid ${BORDER_COLOR}`;
+	button.style.borderRadius = '6px';
+	button.style.background = OPTION_BG_HOVER;
+	button.style.color = TEXT_COLOR;
+	button.style.cursor = 'pointer';
+	button.style.font = 'inherit';
+	button.style.fontSize = '12px';
+	button.addEventListener('mousedown', (e) => {
+		e.preventDefault();
+		onSubmit();
+	});
+	return button;
+};
+
+const createSubmitRow = (onSubmit: () => void) => {
+	const row = document.createElement('div');
+	row.style.display = 'flex';
+	row.style.justifyContent = 'flex-end';
+	row.style.paddingTop = '4px';
+	row.appendChild(createSubmitButton(onSubmit));
+	return row;
+};
+
 const applyHoverStyles = (item: HTMLElement) => {
 	item.addEventListener('mouseenter', () => {
 		if (item.dataset['active'] !== 'true') {
@@ -180,6 +211,12 @@ export class SearchSelectCellEditor implements ICellEditorComp {
 
 		this.eList = createList(params.maxDropdownHeight);
 		this.eRoot.appendChild(this.eList);
+		this.eRoot.appendChild(
+			createSubmitRow(() => {
+				this.value = this.eInput.value;
+				this.params.api.stopEditing();
+			})
+		);
 
 		this.filteredValues = [...this.allValues];
 		this.filterList(this.eInput.value);
@@ -343,6 +380,11 @@ export class MultiSearchSelectCellEditor implements ICellEditorComp {
 
 		this.eList = createList(params.maxDropdownHeight);
 		this.eRoot.appendChild(this.eList);
+		this.eRoot.appendChild(
+			createSubmitRow(() => {
+				this.params.api.stopEditing();
+			})
+		);
 
 		this.filteredValues = [...this.allValues];
 		this.renderChips();
@@ -429,7 +471,7 @@ export class MultiSearchSelectCellEditor implements ICellEditorComp {
 		for (const value of this.selected) {
 			const chip = document.createElement('button');
 			chip.type = 'button';
-			chip.textContent = value;
+			chip.textContent = this.params.render ? this.params.render(value) : value;
 			chip.style.border = `1px solid ${BORDER_COLOR}`;
 			chip.style.background = OPTION_BG_ACTIVE;
 			chip.style.color = TEXT_COLOR;
@@ -472,7 +514,7 @@ export class MultiSearchSelectCellEditor implements ICellEditorComp {
 			marker.style.color = TEXT_COLOR;
 
 			const label = document.createElement('span');
-			label.textContent = val;
+			label.textContent = this.params.render ? this.params.render(val) : val;
 			label.style.whiteSpace = 'nowrap';
 			label.style.overflow = 'hidden';
 			label.style.textOverflow = 'ellipsis';
@@ -531,6 +573,11 @@ export class MaterialIconSelectCellEditor implements ICellEditorComp {
 
 		this.eList = createList(params.maxDropdownHeight);
 		this.eRoot.appendChild(this.eList);
+		this.eRoot.appendChild(
+			createSubmitRow(() => {
+				this.params.api.stopEditing();
+			})
+		);
 
 		this.filterList(this.value);
 
@@ -694,6 +741,11 @@ export class ColorSelectCellEditor implements ICellEditorComp {
 		this.eSwatches.style.gap = '6px';
 		this.eSwatches.style.padding = '2px';
 		this.eRoot.appendChild(this.eSwatches);
+		this.eRoot.appendChild(
+			createSubmitRow(() => {
+				this.params.api.stopEditing();
+			})
+		);
 
 		this.renderSwatches(
 			params.presetColors ?? [

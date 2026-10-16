@@ -14,7 +14,7 @@ import path from 'path';
 import { z } from 'zod';
 import type { Icon } from '$lib/types/icons';
 import { type Feature } from '../../types/features';
-import { globalNotification } from '../model/notifications';
+import { global_notify } from '../utils/notifications';
 
 /**
  * Reads the cached feature ID list from the private feature cache.
@@ -48,7 +48,7 @@ export const makeFeatureNotifications = () => {
 
 		await Promise.all(
 			newFeatures.map((f) =>
-				globalNotification({
+				global_notify({
 					title: `New Feature: ${f.name}`,
 					message: f.description,
 					severity: 'info',

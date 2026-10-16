@@ -1,49 +1,37 @@
 # src/lib/services
 
-This folder contains client-side application services: long-lived runtime objects, shared caches, stateful wrappers, and integration points that outlive a single function call or component render.
-
-## When to place code here
-
-Use `src/lib/services` for:
-- app-wide stateful objects
-- reusable client-side interactions with external systems
-- classes that maintain listeners, caches, or runtime subscriptions
-- singleton or shared service instances used across multiple routes/components
-- typed data access layers such as the Supabase `SupaStruct` system
-
-Examples in this repo include:
-- `keybinds.ts` for keyboard shortcut management
-- `supastruct.svelte.ts` for typed cached Supabase table access
-- `db/` for Dexie-backed persistence utilities
-- `ntp.ts` for long-lived time-sync concerns
-
-## When not to place code here
-
-Do not put pure utility logic in this folder when it can safely be a small browser helper. If the module is stateless and short-lived, it usually belongs in `src/lib/utils` instead.
+Services are systems that maintain their own state and provide functionality to other parts of the application. They often interact with external resources such as APIs, databases, or other services. Services are typically long-lived and designed to be reusable and modular, allowing them to be easily integrated into different parts of the application.
 
 ## Conventions
 
-- Prefer a shared instance when the module needs persistent runtime behavior.
-- Keep service APIs explicit and typed.
-- Avoid recreating a new service instance repeatedly in components when a singleton or stable registry is appropriate.
-- Use the existing project patterns around `Result` wrappers and typed data access when working with async logic.
-
-## Singleton and stateful patterns
-
-If a service needs a single global instance, prefer a stable module singleton or a class that enforces one instance.
+- If a service requires singleton behavior, (i.e. only one instance should exist throughout the application), it must be implemented using the singleton pattern:
 
 ```ts
 export default new (class MyService {
-	public value = 0;
-	increment() {
-		this.value += 1;
-	}
+	// service implementation
 })();
 ```
 
-For service classes that do not require a singleton, regular exported classes are fine.
+Or:
 
-## Rule of thumb
+```ts
+class MyService {
+	private static instance: MyService;
 
-If the logic has long-lived state, cross-route reuse, cache behavior, subscriptions, or service lifecycle concerns, it belongs here.
-If it is just a transform or browser helper, it belongs in `src/lib/utils`.
+	constructor() {
+		// private constructor to prevent direct instantiation
+		if (MyService.instance) throw new Error('More than one instance of MyService created');
+		MyService.instance = this;
+	}
+
+	init() {
+		// initialization code
+	}
+}
+const myService = new MyService();
+// do any initialization here
+myService.init();
+export default myService;
+```
+
+- Services that do not require singleton behavior can be implemented as regular classes or modules. (View `src/lib/services/struct/index.ts` for an example of a non-singleton service).

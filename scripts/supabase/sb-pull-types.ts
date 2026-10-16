@@ -67,6 +67,39 @@ export function generateZodSchemaString(tsCode: string): string {
 
 	const zodSchemas: Record<string, Record<string, Record<string, string>>> = {};
 
+	function parseTypeNodeToZod(typeNode: ts.TypeNode): string {
+		if (ts.isArrayTypeNode(typeNode)) {
+			return `z.array(${parseTypeNodeToZod(typeNode.elementType)})`;
+		}
+
+		if (ts.isParenthesizedTypeNode(typeNode)) {
+			return parseTypeNodeToZod(typeNode.type);
+		}
+
+		if (ts.isUnionTypeNode(typeNode)) {
+			const nonNullMembers = typeNode.types.filter(
+				(member) =>
+					!ts.isLiteralTypeNode(member) || member.literal.kind !== ts.SyntaxKind.NullKeyword
+			);
+			const hasNull = typeNode.types.some(
+				(member) =>
+					ts.isLiteralTypeNode(member) && member.literal.kind === ts.SyntaxKind.NullKeyword
+			);
+			const baseType = nonNullMembers.length === 1 ? nonNullMembers[0] : null;
+
+			if (baseType && hasNull) {
+				return `${parseTypeNodeToZod(baseType)}.nullable()`;
+			}
+		}
+
+		const typeText = typeNode.getText();
+		if (typeText.includes('number')) return 'z.number()';
+		if (typeText.includes('string')) return 'z.string()';
+		if (typeText.includes('boolean')) return 'z.boolean()';
+		if (typeText.includes('Json')) return 'z.unknown()';
+		return 'z.unknown()';
+	}
+
 	function parseTypeLiteralToZod(obj: ts.TypeNode): Record<string, string> {
 		if (!ts.isTypeLiteralNode(obj)) return {};
 
@@ -76,20 +109,8 @@ export function generateZodSchemaString(tsCode: string): string {
 			if (!ts.isPropertySignature(member) || !member.type) return;
 
 			const key = member.name.getText();
-			const typeText = member.type.getText();
-			let zodType = 'z.unknown()';
+			let zodType = parseTypeNodeToZod(member.type);
 
-			if (typeText.includes('number')) zodType = 'z.number()';
-			else if (typeText.includes('string')) zodType = 'z.string()';
-			else if (typeText.includes('boolean')) zodType = 'z.boolean()';
-			else if (typeText.includes('Json')) zodType = 'z.unknown()';
-
-			// Use .nullable() instead of .optional() for null types
-			if (typeText.includes('null')) {
-				zodType += '.nullable()';
-			}
-
-			// If it has ?, it’s optional (may be undefined)
 			if (member.questionToken) {
 				zodType += '.optional()';
 			}

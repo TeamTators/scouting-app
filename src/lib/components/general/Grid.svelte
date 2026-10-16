@@ -78,6 +78,7 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		modules?: Module[];
 		debug?: boolean;
 		redraw_on_update?: boolean;
+		enable_column_moving?: boolean;
 	}
 
 	const {
@@ -89,7 +90,8 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		height,
 		modules = [],
 		debug,
-		redraw_on_update
+		redraw_on_update,
+		enable_column_moving: enable_column_moving
 	}: Props = $props();
 	// $inspect('data', data);
 
@@ -173,7 +175,7 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 	);
 
 	let gridDiv: HTMLDivElement;
-	let grid: GridApi<T>;
+	let grid!: GridApi<T>;
 	const transientRowKeys = new WeakMap<object, string>();
 	let transientRowKeySeed = 0;
 
@@ -196,51 +198,56 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 		return `__grid_primitive_${String(row)}_${index ?? transientRowKeySeed++}`;
 	};
 
+	export const to_csv = () => grid.getDataAsCsv();
+
+	const build_column_defs = () => [
+		...(rowNumbers
+			? [
+					{
+						headerName: '',
+						valueGetter: (params: ValueGetterParams<T>) => {
+							if (typeof rowNumbers === 'object') {
+								return rowNumbers.start + (params.node?.rowIndex || 0);
+							} else {
+								return (params.node?.rowIndex || 0) + 1;
+							}
+						},
+						width: 50,
+						suppressMovable: true,
+						cellClass: 'text-center',
+						cellStyle: {
+							backgroundColor: 'var(--ag-chrome-background-color)'
+						},
+						cellRenderer: (params: ICellRendererParams<T>) => {
+							const div = document.createElement('div');
+							div.innerText = String(params.value);
+							div.style.cursor = 'pointer';
+
+							div.onclick = () => {
+								const node = params.node as any;
+								node.checkboxSelected = !node.checkboxSelected;
+								params.api.refreshCells({ rowNodes: [params.node], force: true });
+								params.api.refreshHeader();
+							};
+
+							return div;
+						}
+					}
+				]
+			: []),
+		...(opts.columnDefs || [])
+	];
+
 	const gridOptions: GridOptions<T> = $derived({
 		theme: gridTheme,
 		...opts,
 		rowData: [],
 		getRowId: (params) => getRowKey(params.data),
-		columnDefs: [
-			...(rowNumbers
-				? [
-						{
-							headerName: '',
-							valueGetter: (params: ValueGetterParams<T>) => {
-								if (typeof rowNumbers === 'object') {
-									return rowNumbers.start + (params.node?.rowIndex || 0);
-								} else {
-									return (params.node?.rowIndex || 0) + 1;
-								}
-							},
-							width: 50,
-							suppressMovable: true,
-							cellClass: 'text-center',
-							cellStyle: {
-								backgroundColor: 'var(--ag-chrome-background-color)'
-							},
-							cellRenderer: (params: ICellRendererParams<T>) => {
-								const div = document.createElement('div');
-								div.innerText = String(params.value);
-								div.style.cursor = 'pointer';
-
-								div.onclick = () => {
-									const node = params.node as any;
-									node.checkboxSelected = !node.checkboxSelected;
-									params.api.refreshCells({ rowNodes: [params.node], force: true });
-									params.api.refreshHeader();
-								};
-
-								return div;
-							}
-						}
-					]
-				: []),
-			...(opts.columnDefs || [])
-		],
+		columnDefs: build_column_defs(),
 		getRowClass: (params) => {
 			return (params.node as any).checkboxSelected ? 'row-checked' : '';
-		}
+		},
+		suppressMovableColumns: enable_column_moving === undefined ? true : !enable_column_moving
 	});
 
 	const redrawNode = (index: number) => {
@@ -306,12 +313,9 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 	});
 
 	$effect(() => {
-		log('Grid options changed:', gridOptions);
-		if (gridDiv) {
-			grid?.destroy();
-			grid = createGrid(gridDiv, gridOptions);
-			em.emit('ready', grid);
-		}
+		if (!grid) return;
+		log('Grid options changed (in-place update)');
+		grid.setGridOption('columnDefs', build_column_defs());
 	});
 
 	onMount(() => {
@@ -319,9 +323,11 @@ See AG Grid docs: https://www.ag-grid.com/javascript-data-grid/getting-started/
 			throw new Error('Column definitions are required');
 		}
 		em.emit('init', gridDiv);
+		grid = createGrid(gridDiv, gridOptions);
+		em.emit('ready', grid);
 
 		return () => {
-			grid.destroy();
+			if (grid) grid.destroy();
 		};
 	});
 </script>

@@ -32,7 +32,7 @@ export const load = async (event) => {
 		};
 	}
 
-	const profileRes = await ProfileStruct.fromId(parent.user.id);
+	const profileRes = await ProfileStruct.fromId(parent.user.user.id);
 
 	if (profileRes.isErr()) {
 		terminal.error('Error fetching profile:', profileRes.error);

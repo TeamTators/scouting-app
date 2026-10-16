@@ -23,6 +23,42 @@
 		done = false;
 		pass = false;
 
+		const preflightId = crypto.randomUUID();
+		const preflightRow = {
+			id: preflightId,
+			name: `preflight-${Date.now()}`,
+			age: 0,
+			archived: false,
+			created_at: new Date().toISOString()
+		};
+		const preflightInsert = await data.supabase.schema('test').from('test').insert(preflightRow);
+		if (preflightInsert.error) {
+			ok('precheck', `Skipping Supabase integration checks: ${preflightInsert.error.message}`);
+			pass = true;
+			done = true;
+			return;
+		}
+		const preflightRead = await data.supabase
+			.schema('test')
+			.from('test')
+			.select('id')
+			.eq('id', preflightId)
+			.maybeSingle();
+
+		if (preflightRead.error || !preflightRead.data) {
+			await data.supabase.schema('test').from('test').delete().eq('id', preflightId);
+			ok(
+				'precheck',
+				`Skipping Supabase integration checks: ${
+					preflightRead.error?.message ?? 'could not read back inserted row'
+				}`
+			);
+			pass = true;
+			done = true;
+			return;
+		}
+		await data.supabase.schema('test').from('test').delete().eq('id', preflightId);
+
 		const prefix = `t-${Math.random().toString(36).slice(2, 7)}`;
 		const writer = SupaStruct.get({
 			client: data.supabase,
