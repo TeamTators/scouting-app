@@ -1,19 +1,3 @@
-CREATE TRIGGER supabase_webhook AFTER INSERT OR DELETE OR UPDATE ON core.account_notification FOR EACH ROW EXECUTE FUNCTION public.dispatch_table_webhook();
-
-CREATE TRIGGER supabase_webhook AFTER INSERT OR DELETE OR UPDATE ON core.admin FOR EACH ROW EXECUTE FUNCTION public.dispatch_table_webhook();
-
-CREATE TRIGGER supabase_webhook AFTER INSERT OR DELETE OR UPDATE ON core.cached_request FOR EACH ROW EXECUTE FUNCTION public.dispatch_table_webhook();
-
-CREATE TRIGGER supabase_webhook AFTER INSERT OR DELETE OR UPDATE ON core.profile FOR EACH ROW EXECUTE FUNCTION public.dispatch_table_webhook();
-
-CREATE TRIGGER supabase_webhook AFTER INSERT OR DELETE OR UPDATE ON core.role FOR EACH ROW EXECUTE FUNCTION public.dispatch_table_webhook();
-
-CREATE TRIGGER supabase_webhook AFTER INSERT OR DELETE OR UPDATE ON core.role_account FOR EACH ROW EXECUTE FUNCTION public.dispatch_table_webhook();
-
-CREATE TRIGGER supabase_webhook AFTER INSERT OR DELETE OR UPDATE ON core.session FOR EACH ROW EXECUTE FUNCTION public.dispatch_table_webhook();
-
-CREATE TRIGGER supabase_webhook AFTER INSERT OR DELETE OR UPDATE ON core.session_tab FOR EACH ROW EXECUTE FUNCTION public.dispatch_table_webhook();
-
 set check_function_bodies = off;
 
 CREATE OR REPLACE FUNCTION public.dispatch_table_webhook()
@@ -111,6 +95,24 @@ begin
 end;
 $function$
 ;
+
+
+CREATE TRIGGER supabase_webhook AFTER INSERT OR DELETE OR UPDATE ON core.account_notification FOR EACH ROW EXECUTE FUNCTION public.dispatch_table_webhook();
+
+CREATE TRIGGER supabase_webhook AFTER INSERT OR DELETE OR UPDATE ON core.admin FOR EACH ROW EXECUTE FUNCTION public.dispatch_table_webhook();
+
+CREATE TRIGGER supabase_webhook AFTER INSERT OR DELETE OR UPDATE ON core.cached_request FOR EACH ROW EXECUTE FUNCTION public.dispatch_table_webhook();
+
+CREATE TRIGGER supabase_webhook AFTER INSERT OR DELETE OR UPDATE ON core.profile FOR EACH ROW EXECUTE FUNCTION public.dispatch_table_webhook();
+
+CREATE TRIGGER supabase_webhook AFTER INSERT OR DELETE OR UPDATE ON core.role FOR EACH ROW EXECUTE FUNCTION public.dispatch_table_webhook();
+
+CREATE TRIGGER supabase_webhook AFTER INSERT OR DELETE OR UPDATE ON core.role_account FOR EACH ROW EXECUTE FUNCTION public.dispatch_table_webhook();
+
+CREATE TRIGGER supabase_webhook AFTER INSERT OR DELETE OR UPDATE ON core.session FOR EACH ROW EXECUTE FUNCTION public.dispatch_table_webhook();
+
+CREATE TRIGGER supabase_webhook AFTER INSERT OR DELETE OR UPDATE ON core.session_tab FOR EACH ROW EXECUTE FUNCTION public.dispatch_table_webhook();
+
 
 CREATE TRIGGER supabase_webhook AFTER INSERT OR DELETE OR UPDATE ON public._template FOR EACH ROW EXECUTE FUNCTION public.dispatch_table_webhook();
 
